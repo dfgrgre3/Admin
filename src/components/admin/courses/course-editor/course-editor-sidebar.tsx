@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import {
   ExternalLink,
   FileText,
@@ -68,7 +68,7 @@ const CourseHealthCard = ({
 
       {/* Progress Bar */}
       <div className="h-1.5 rounded-full bg-border/30 overflow-hidden mb-3">
-        <motion.div
+        <m.div
           initial={{ width: 0 }}
           animate={{ width: `${progressPercent}%` }}
           transition={{ duration: 0.6, ease: "easeOut" }}
@@ -117,25 +117,25 @@ const CurriculumLinkCard = ({
     <div className="mb-4 grid grid-cols-2 gap-3">
       <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
         <p className="text-[10px] text-slate-400">الفصول</p>
-        <motion.p
+        <m.p
           key={chaptersCount}
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
           className="mt-1 text-xl font-black"
         >
           {isCurriculumLoading ? "..." : chaptersCount}
-        </motion.p>
+        </m.p>
       </div>
       <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
         <p className="text-[10px] text-slate-400">الدروس</p>
-        <motion.p
+        <m.p
           key={lessonsCount}
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
           className="mt-1 text-xl font-black"
         >
           {isCurriculumLoading ? "..." : lessonsCount}
-        </motion.p>
+        </m.p>
       </div>
     </div>
     <p className="text-xs leading-6 text-slate-300">
@@ -204,13 +204,13 @@ export function CourseEditorSidebar({
               <Icon className="h-4 w-4" />
               <span className="font-bold flex-1 text-right">{tab.label}</span>
               {isCompleted && (
-                <motion.div
+                <m.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                </motion.div>
+                </m.div>
               )}
             </TabsTrigger>
           );

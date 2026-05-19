@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { X, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -57,7 +57,7 @@ export function MobileSidebar({
       {/* Overlay */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -71,7 +71,7 @@ export function MobileSidebar({
       {/* Sidebar Panel */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
+          <m.div
             initial={{
               x: side === "right" ? "100%" : "-100%",
             }}
@@ -113,7 +113,7 @@ export function MobileSidebar({
                 side === "right" ? "left-1" : "right-1"
               )}
             />
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </>

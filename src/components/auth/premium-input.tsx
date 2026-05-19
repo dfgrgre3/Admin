@@ -38,13 +38,34 @@ export function PremiumInput({
   const errorMessage = typeof error === 'string' ? error : error?.message;
   const PasswordToggleIcon = showPassword ? EyeOff : Eye;
 
+  // Compute derived style/animation values to reduce cognitive complexity
+  let borderColor = "rgba(255,255,255,0.08)";
+  let backgroundColor = "rgba(255,255,255,0.04)";
+  let scale = 1;
+  let iconColor = "text-gray-500";
+  let labelColor = "rgba(107,114,128,1)";
+
+  if (isFocused) {
+    borderColor = "rgba(255,109,0,0.5)";
+    backgroundColor = "rgba(255,255,255,0.08)";
+    scale = 1.01;
+    iconColor = "text-primary scale-110";
+    labelColor = "rgba(255,109,0,0.9)";
+  } else if (errorMessage) {
+    borderColor = "rgba(239,68,68,0.4)";
+    iconColor = "text-red-400";
+    labelColor = "rgba(239,68,68,1)";
+  }
+
+  const labelAnimate = isActive ? { y: -18, scale: 0.75, x: 10 } : { y: 0, scale: 1, x: 0 };
+
   return (
     <div className="space-y-2 group/input" dir={dir}>
       <m.div
         animate={{
-          borderColor: isFocused ? "rgba(255,109,0,0.5)" : errorMessage ? "rgba(239,68,68,0.4)" : "rgba(255,255,255,0.08)",
-          backgroundColor: isFocused ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)",
-          scale: isFocused ? 1.01 : 1,
+          borderColor,
+          backgroundColor,
+          scale,
         }}
         transition={{ duration: 0.3, ease: "easeOut" }}
         className={cn(
@@ -55,7 +76,7 @@ export function PremiumInput({
       >
         <div className={cn(
           "absolute right-5 top-1/2 -translate-y-1/2 transition-all duration-300 z-10",
-          isFocused ? "text-primary scale-110" : errorMessage ? "text-red-400" : "text-gray-500"
+          iconColor
         )}>
           {typeof Icon === 'function' ? React.createElement(Icon as React.ElementType, { size: 22, strokeWidth: 2.5 }) : Icon}
         </div>
@@ -79,10 +100,8 @@ export function PremiumInput({
 
         <m.label
           animate={{
-            y: isActive ? -18 : 0,
-            scale: isActive ? 0.75 : 1,
-            x: isActive ? 10 : 0,
-            color: isFocused ? "rgba(255,109,0,0.9)" : errorMessage ? "rgba(239,68,68,1)" : "rgba(107,114,128,1)",
+            ...labelAnimate,
+            color: labelColor,
           }}
           className={cn(
             "absolute right-14 top-1/2 -translate-y-1/2 font-bold pointer-events-none origin-right transition-all z-10",

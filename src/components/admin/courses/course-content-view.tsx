@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 import { CourseCard } from "./course-card";
@@ -112,7 +112,7 @@ export function CourseContentView({
     }
 
     return (
-      <motion.div
+      <m.div
         layout
         className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
       >
@@ -137,7 +137,7 @@ export function CourseContentView({
             />
           ))}
         </AnimatePresence>
-      </motion.div>
+      </m.div>
     );
   }
 
