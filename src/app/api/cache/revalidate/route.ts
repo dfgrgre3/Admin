@@ -18,10 +18,10 @@ const ALLOW_PREFIX = [
   "/billing",
 ] as const;
 
-function isAllowedRevalidatePath(p: string): boolean {
-  if (p === "/") return true;
+function isAllowedRevalidatePath(path: string): boolean {
+  if (path === "/") return true;
   return ALLOW_PREFIX.some(
-    (prefix) => p === prefix || p.startsWith(`${prefix}/`),
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`),
   );
 }
 
@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
     headers: { Cookie: cookie },
     cache: "no-store",
   });
+
   if (!me.ok) {
     return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
   }
@@ -59,23 +60,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "paths مطلوب" }, { status: 400 });
   }
 
-  for (const p of paths) {
-    if (typeof p !== "string" || !p.startsWith("/")) {
+  for (const path of paths) {
+    if (typeof path !== "string" || !path.startsWith("/")) {
       return NextResponse.json(
         { error: "كل مسار يجب أن يبدأ بـ /" },
         { status: 400 },
       );
     }
-    if (!isAllowedRevalidatePath(p)) {
+
+    if (!isAllowedRevalidatePath(path)) {
       return NextResponse.json(
-        { error: `مسار غير مسموح لإبطال الكاش: ${p}` },
+        { error: `مسار غير مسموح لإبطال الكاش: ${path}` },
         { status: 400 },
       );
     }
   }
 
-  for (const p of paths as string[]) {
-    revalidatePath(p);
+  for (const path of paths as string[]) {
+    revalidatePath(path);
   }
 
   return NextResponse.json({ ok: true, revalidated: paths });

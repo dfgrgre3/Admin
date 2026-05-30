@@ -37,6 +37,7 @@ import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-pu
 import { usePermission } from "@/components/auth/PermissionGuard";
 import { MarkdownEditor } from "@/components/admin/ui/markdown-editor";
 import { logAdminAction } from "@/lib/admin-audit";
+import { PERMISSIONS } from "@/lib/permissions";
 
 interface Announcement {
   id: string;
@@ -75,7 +76,7 @@ type AnnouncementFormValues = z.infer<typeof announcementSchema>;
 
 export default function AdminAnnouncementsPage() {
   const { hasPermission } = usePermission();
-  const canManageAnnouncements = hasPermission("ANNOUNCEMENTS_MANAGE");
+  const canManageAnnouncements = hasPermission(PERMISSIONS.ANNOUNCEMENTS_MANAGE);
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = React.useState<Announcement | null>(null);
   const [deleteDialog, setDeleteDialog] = React.useState<{ open: boolean; id: string | null }>({

@@ -36,6 +36,7 @@ import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-pu
 import { usePermission } from "@/components/auth/PermissionGuard";
 import { exportToCSV, ExportColumn } from '@/lib/export-utils';
 import { logAdminAction } from "@/lib/admin-audit";
+import { PERMISSIONS } from "@/lib/permissions";
 
 interface Exam {
   id: string;
@@ -84,7 +85,7 @@ type ExamFormValues = z.infer<typeof examSchema>;
 
 export default function AdminExamsPage() {
   const { hasPermission } = usePermission();
-  const canManageExams = hasPermission("EXAMS_MANAGE");
+  const canManageExams = hasPermission(PERMISSIONS.EXAMS_MANAGE);
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editingExam, setEditingExam] = React.useState<Exam | null>(null);
   const [previewExam, setPreviewExam] = React.useState<Exam | null>(null);

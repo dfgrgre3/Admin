@@ -1,24 +1,13 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { getBackendOrigin } from '@/lib/api/config';
 
 type HeaderWithSetCookie = Headers & {
   getSetCookie?: () => string[];
   raw?: () => Record<string, string[]>;
 };
 
-export const BACKEND_URL = (() => {
-  const url = (
-    process.env.INTERNAL_API_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    'http://127.0.0.1:8082'
-  ).replace(/\/api$/, '');
-  
-  // Ensure protocol
-  if (!url.startsWith('http')) {
-    return `http://${url}`;
-  }
-  return url;
-})();
+export const BACKEND_URL = getBackendOrigin();
 
 /** Forward browser session / bearer token to the Go API (matches client `apiClient` + `credentials: 'include'`). */
 export function upstreamAuthHeaders(request: NextRequest): Record<string, string> {

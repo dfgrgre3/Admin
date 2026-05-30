@@ -35,6 +35,7 @@ import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-pu
 import { usePermission } from "@/components/auth/PermissionGuard";
 import { exportToCSV, ExportColumn } from '@/lib/export-utils';
 import { logAdminAction } from "@/lib/admin-audit";
+import { PERMISSIONS } from "@/lib/permissions";
 
 interface Book {
   id: string;
@@ -91,7 +92,7 @@ type BookFormValues = z.infer<typeof bookSchema>;
 
 export default function AdminBooksPage() {
   const { hasPermission } = usePermission();
-  const canManageBooks = hasPermission("BOOKS_MANAGE");
+  const canManageBooks = hasPermission(PERMISSIONS.BOOKS_MANAGE);
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editingBook, setEditingBook] = React.useState<Book | null>(null);
   const [deleteDialog, setDeleteDialog] = React.useState<{ open: boolean; id: string | null }>({

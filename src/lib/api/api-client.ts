@@ -3,7 +3,7 @@
  * This replaces all custom apiFetch instances across the app to reduce over-engineering.
  */
 import { performanceMonitor } from '../metrics/performance';
-import { trimTrailingSlashes } from '../utils';
+import { buildRuntimeApiUrl, DEFAULT_BACKEND_ORIGIN } from './config';
 
 // NOTE: ErrorManager is intentionally NOT imported at the top level.
 // Doing so creates a circular dependency:
@@ -46,24 +46,11 @@ class ApiError extends Error {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const DEFAULT_API_URL = 'http://127.0.0.1:8082/api';
-
-const BASE_API_URL = trimTrailingSlashes(typeof window !== 'undefined' ? '/api' : (process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL));
+export const DEFAULT_API_URL = `${DEFAULT_BACKEND_ORIGIN}/api`;
 
 function normalizeEndpoint(endpoint: string): string {
     if (!endpoint) return '';
-    if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
-        return endpoint;
-    }
-
-    const normalized = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    if (normalized.startsWith('/api/')) {
-        return normalized;
-    }
-    if (BASE_API_URL.endsWith('/api')) {
-        return `${BASE_API_URL}${normalized}`;
-    }
-    return `${BASE_API_URL}/api${normalized}`;
+    return buildRuntimeApiUrl(endpoint);
 }
 
 function unwrapApiEnvelope<T>(payload: T | ApiEnvelope<T>): T {

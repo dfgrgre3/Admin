@@ -5,6 +5,7 @@ import {
   backendJsonResponse,
   upstreamAuthHeaders,
 } from '@/app/api/auth/_utils';
+import { getApiTimeoutMs } from '@/lib/api/timeouts';
 
 /**
  * Server-side proxy to the Go API with the same auth as the browser (cookies + optional Authorization).
@@ -35,6 +36,7 @@ export async function forwardToGoApi(
     ...init,
     headers,
     cache: 'no-store',
+    signal: init.signal || AbortSignal.timeout(getApiTimeoutMs(path)),
   });
 
   return backendJsonResponse(response);

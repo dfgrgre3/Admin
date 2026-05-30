@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const BACKEND_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8082/api';
+import { buildBackendApiUrl } from '@/lib/api/config';
 
 /**
  * GET /api/progress/summary
@@ -19,7 +18,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Forward the request to the Go backend
-        const backendUrl = `${BACKEND_API_URL}/progress/summary?userId=${encodeURIComponent(userId)}`;
+        const backendUrl = `${buildBackendApiUrl('/progress/summary')}?userId=${encodeURIComponent(userId)}`;
         
         // Build headers for the backend request
         const headers: Record<string, string> = {

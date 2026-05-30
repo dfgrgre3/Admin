@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BACKEND_URL, upstreamAuthHeaders } from '@/app/api/auth/_utils';
+import { getApiTimeoutMs } from '@/lib/api/timeouts';
 import { trimTrailingSlashes } from '@/lib/utils';
 
 /**
@@ -65,6 +66,7 @@ async function handleProxy(
   const primaryOrigin = trimTrailingSlashes(BACKEND_URL);
   const origins = getOrigins(primaryOrigin);
   const options = await buildProxyRequestOptions(request, headers);
+  const timeoutMs = getApiTimeoutMs(`/api/${path}`);
 
   let lastError: any = null;
 
@@ -75,7 +77,7 @@ async function handleProxy(
 
       const response = await fetch(targetUrl, {
         ...options,
-        signal: AbortSignal.timeout(15000), // 15s timeout
+        signal: AbortSignal.timeout(timeoutMs),
       });
 
       if (!response.ok) {

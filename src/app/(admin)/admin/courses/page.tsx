@@ -25,12 +25,20 @@ import { CourseEmptyState } from "@/components/admin/courses/course-empty-state"
 import { cn, formatPrice } from "@/lib/utils";
 import { apiRoutes } from "@/lib/api/routes";
 import { adminFetch } from "@/lib/api/admin-api";
+import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
 import { usePermission } from "@/components/auth/PermissionGuard";
 import { readJsonOrThrow, throwIfApiError } from "@/lib/api/api-error-utils";
+import { PERMISSIONS } from "@/lib/permissions";
 import type { Course, CourseCategory } from "./_components/types";
 import { createCourseColumns } from "./_components/course-columns";
 import { CourseFormDialog, QuickCourseValues, quickCourseSchema, quickCourseDefaults } from "./_components/course-form-dialog";
 import { CategoryDialog, CategoryFormValues, categorySchema, defaultCategoryValues } from "./_components/category-dialog";
+
+const COURSE_PUBLIC_CACHE_PATHS = ["/courses", "/learning"];
+
+function revalidateCoursePublicCache() {
+  return requestPublicCacheRevalidation(COURSE_PUBLIC_CACHE_PATHS);
+}
 
 interface CoursesResponse {
   data: {
@@ -50,7 +58,7 @@ interface CoursesResponse {
 export default function AdminCoursesPage() {
   const router = useRouter();
   const { hasPermission } = usePermission();
-  const canManageCourses = hasPermission("SUBJECTS_MANAGE");
+  const canManageCourses = hasPermission(PERMISSIONS.SUBJECTS_MANAGE);
 
   const [quickCreateOpen, setQuickCreateOpen] = React.useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = React.useState(false);
@@ -238,6 +246,7 @@ export default function AdminCoursesPage() {
       setQuickCreateOpen(false);
       setEditingCourse(null);
       quickForm.reset(quickCourseDefaults);
+      void revalidateCoursePublicCache().catch(() => {});
       await refetch();
       if (!editingCourse && createdCourseId) {
         router.push(`/admin/courses/${createdCourseId}/curriculum`);
@@ -259,6 +268,7 @@ export default function AdminCoursesPage() {
       });
       await throwIfApiError(response, "تعذر حذف الدورة");
       toast.success("تم حذف الدورة بنجاح");
+      void revalidateCoursePublicCache().catch(() => {});
       await refetch();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء الاتصال بالخادم");
@@ -276,6 +286,7 @@ export default function AdminCoursesPage() {
       });
       await throwIfApiError(response, "فشل تحديث الحالة");
       toast.success(course.isPublished ? "تم إخفاء الدورة" : "تم نشر الدورة بنجاح");
+      void revalidateCoursePublicCache().catch(() => {});
       await refetch();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "فشل تحديث الحالة");
@@ -296,6 +307,7 @@ export default function AdminCoursesPage() {
       setCategoryDialogOpen(false);
       setEditingCategory(null);
       categoryForm.reset(defaultCategoryValues);
+      void revalidateCoursePublicCache().catch(() => {});
       await refetchCategories();
       await refetch();
     } catch (error) {
@@ -313,6 +325,7 @@ export default function AdminCoursesPage() {
       });
       await throwIfApiError(response, "تعذر حذف التصنيف");
       toast.success("تم حذف التصنيف");
+      void revalidateCoursePublicCache().catch(() => {});
       await refetchCategories();
       await refetch();
     } catch (error) {
@@ -331,6 +344,7 @@ export default function AdminCoursesPage() {
       });
       const result = await readJsonOrThrow<{ message?: string }>(response, "فشل الاستنساخ");
       toast.success(result.message || "تم استنساخ الدورة بنجاح");
+      void revalidateCoursePublicCache().catch(() => {});
       await refetch();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حدث خطأ غير متوقع");
@@ -350,6 +364,7 @@ export default function AdminCoursesPage() {
         return;
       }
       toast.success(course.isActive ? "✅ تم إيقاف الدورة" : "✅ تم تفعيل الدورة بنجاح");
+      void revalidateCoursePublicCache().catch(() => {});
       await refetch();
     } catch {
       toast.error("فشل تحديث الحالة");
@@ -368,6 +383,7 @@ export default function AdminCoursesPage() {
       const result = await readJsonOrThrow<{ message?: string }>(response, "فشلت العملية الجماعية");
       toast.success(result.message || "تم تنفيذ العملية الجماعية");
       setSelectedIds([]);
+      void revalidateCoursePublicCache().catch(() => {});
       await refetch();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حدث خطأ غير متوقع");

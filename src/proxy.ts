@@ -1,4 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBackendOrigin } from '@/lib/api/config';
+import {
+  getRequiredPermissionForAdminApiRequest,
+  getRequiredPermissionForAdminPath,
+} from '@/lib/admin-panel-route-access';
+import { hasPermission } from '@/lib/permissions';
 
 const ADMIN_PATH_PREFIX = '/admin';
 const ADMIN_LOGIN_PATH = '/admin-login';
@@ -18,20 +24,15 @@ function isAdminApiPath(pathname: string): boolean {
   return pathname.startsWith(PROTECTED_API_PREFIX);
 }
 
-const BACKEND_URL = (() => {
-  const url = (
-    process.env.INTERNAL_API_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    'http://127.0.0.1:8082'
-  ).replace(/\/api$/, '');
-  
-  if (!url.startsWith('http')) {
-    return `http://${url}`;
-  }
-  return url;
-})();
+const BACKEND_URL = getBackendOrigin();
 
-async function verifyAdminSession(request: NextRequest): Promise<{ isAuthenticated: boolean; isAdmin: boolean }> {
+type VerifiedAdminSession = {
+  isAuthenticated: boolean;
+  isAdmin: boolean;
+  user: { role: string; permissions?: string[] | null } | null;
+};
+
+async function verifyAdminSession(request: NextRequest): Promise<VerifiedAdminSession> {
   const targetUrl = `${BACKEND_URL}/api/auth/me`;
   
   try {
@@ -51,22 +52,22 @@ async function verifyAdminSession(request: NextRequest): Promise<{ isAuthenticat
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      return { isAuthenticated: false, isAdmin: false };
+      return { isAuthenticated: false, isAdmin: false, user: null };
     }
 
     const data = await response.json();
     const user = data?.user;
     
     if (!user) {
-      return { isAuthenticated: false, isAdmin: false };
+      return { isAuthenticated: false, isAdmin: false, user: null };
     }
 
     const role = user.role?.toUpperCase();
     const isAdmin = role === 'ADMIN' || role === 'MODERATOR';
 
-    return { isAuthenticated: true, isAdmin };
+    return { isAuthenticated: true, isAdmin, user };
   } catch {
-    return { isAuthenticated: false, isAdmin: false };
+    return { isAuthenticated: false, isAdmin: false, user: null };
   }
 }
 
@@ -93,6 +94,21 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!session.isAdmin) {
+    return NextResponse.redirect(new URL('/unauthorized', request.url));
+  }
+
+  const requiredPermission = isProtectedApi
+    ? getRequiredPermissionForAdminApiRequest(pathname, request.method)
+    : getRequiredPermissionForAdminPath(pathname);
+
+  if (requiredPermission && !hasPermission(session.user, requiredPermission)) {
+    if (isProtectedApi) {
+      return NextResponse.json(
+        { error: 'Forbidden', requiredPermission },
+        { status: 403 },
+      );
+    }
+
     return NextResponse.redirect(new URL('/unauthorized', request.url));
   }
 

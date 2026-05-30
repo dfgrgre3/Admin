@@ -39,6 +39,7 @@ import { apiRoutes } from "@/lib/api/routes";
 import { throwIfApiError } from "@/lib/api/api-error-utils";
 import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
 import { usePermission } from "@/components/auth/PermissionGuard";
+import { PERMISSIONS } from "@/lib/permissions";
 
 interface Subject {
   id: string;
@@ -96,7 +97,7 @@ type SubjectFormValues = z.infer<typeof subjectSchema>;
 export default function AdminSubjectsPage() {
   const router = useRouter();
   const { hasPermission } = usePermission();
-  const canManageSubjects = hasPermission("SUBJECTS_MANAGE");
+  const canManageSubjects = hasPermission(PERMISSIONS.SUBJECTS_MANAGE);
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editingSubject, setEditingSubject] = React.useState<Subject | null>(null);
   const [deleteDialog, setDeleteDialog] = React.useState<{ open: boolean; id: string | null }>({

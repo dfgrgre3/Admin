@@ -43,6 +43,7 @@ import { MarkdownEditor } from "@/components/admin/ui/markdown-editor";
 import { AdminUpload } from "@/components/admin/ui/admin-upload";
 import { logAdminAction } from "@/lib/admin-audit";
 import { exportToCSV, ExportColumn } from '@/lib/export-utils';
+import { PERMISSIONS } from "@/lib/permissions";
 
 interface BlogPost {
   id: string;
@@ -96,7 +97,7 @@ type BlogPostFormValues = z.infer<typeof blogPostSchema>;
 
 export default function AdminBlogPage() {
   const { hasPermission } = usePermission();
-  const canManageBlog = hasPermission("BLOG_MANAGE");
+  const canManageBlog = hasPermission(PERMISSIONS.BLOG_MANAGE);
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editingPost, setEditingPost] = React.useState<BlogPost | null>(null);
   const [deleteDialog, setDeleteDialog] = React.useState<{ open: boolean; id: string | null }>({

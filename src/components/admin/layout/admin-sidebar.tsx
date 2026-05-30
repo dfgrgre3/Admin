@@ -7,6 +7,8 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
 import { usePermission } from "@/components/auth/PermissionGuard";
+import { getRequiredPermissionForAdminPath } from "@/lib/admin-panel-route-access";
+import { PERMISSIONS, resolvePermissionInput } from "@/lib/permissions";
 import {
   LayoutDashboard,
   Users,
@@ -335,21 +337,21 @@ const infrastructureNavItems: SidebarNavItem[] = [
     href: "/admin/infrastructure",
     icon: Monitor,
     color: "bg-blue-600",
-    permission: "SETTINGS_MANAGE",
+    permission: PERMISSIONS.SETTINGS_VIEW,
   },
   {
     title: "قواعد البيانات",
     href: "/admin/infrastructure/partitions",
     icon: Split,
     color: "bg-indigo-600",
-    permission: "SETTINGS_MANAGE",
+    permission: PERMISSIONS.SETTINGS_VIEW,
   },
   {
     title: "النسخ الاحتياطي",
     href: "/admin/backups",
     icon: Database,
     color: "bg-emerald-600",
-    permission: "SETTINGS_MANAGE",
+    permission: PERMISSIONS.SETTINGS_VIEW,
   },
   {
     title: "تذاكر الدعم الفني",
@@ -472,8 +474,20 @@ export function AdminSidebar() {
   const { user } = useAuth();
   const { hasPermission } = usePermission();
 
-  const filterByPermission = (items: SidebarNavItem[]) => 
-    items.filter(item => !item.permission || hasPermission(item.permission as any));
+  const canAccessNavItem = (item: SidebarNavItem) => {
+    const routePermission = getRequiredPermissionForAdminPath(item.href);
+    const explicitPermission = item.permission
+      ? resolvePermissionInput(item.permission)
+      : null;
+    const requiredPermission = routePermission || explicitPermission;
+
+    if (!requiredPermission) return true;
+
+    return hasPermission(requiredPermission);
+  };
+
+  const filterByPermission = (items: SidebarNavItem[]) =>
+    items.filter(canAccessNavItem);
 
   const filteredMainNav = filterByPermission(mainNavItems);
   const filteredContentNav = filterByPermission(contentNavItems);
@@ -481,7 +495,13 @@ export function AdminSidebar() {
   const filteredCommunityNav = filterByPermission(communityNavItems);
   const filteredFinancialNav = filterByPermission(financialNavItems);
   const filteredInfrastructureNav = filterByPermission(infrastructureNavItems);
-  const filteredQuickActions = quickActions.filter(action => !action.permission || hasPermission(action.permission as any));
+  const filteredQuickActions = quickActions.filter((action) => {
+    const requiredPermission = action.permission
+      ? resolvePermissionInput(action.permission)
+      : getRequiredPermissionForAdminPath(action.href);
+
+    return !requiredPermission || hasPermission(requiredPermission);
+  });
 
   const [bookmarks, setBookmarks] = React.useState<BookmarkItem[]>([]);
 
@@ -673,7 +693,7 @@ export function AdminSidebar() {
             href: "/admin/settings",
             icon: Settings,
             color: "bg-gray-500",
-            permission: "SETTINGS_MANAGE",
+            permission: PERMISSIONS.SETTINGS_VIEW,
           }}
           pathname={pathname}
           collapsed={collapsed}
