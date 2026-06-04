@@ -113,7 +113,7 @@ test.describe("Admin CRUD Operations", () => {
     });
 
     test("should upload subject image", async () => {
-      await page.goto("/admin/subjects/new");
+      await page.goto("/admin/subjects?create=1");
 
       await page.fill('[name="name"]', "Subject with Image");
 

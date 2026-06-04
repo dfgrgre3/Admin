@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BACKEND_URL, upstreamAuthHeaders } from '@/app/api/auth/_utils';
+import { assertAdminApiPermission } from '@/app/api/admin/_proxy';
 import { getApiTimeoutMs } from '@/lib/api/timeouts';
 import { trimTrailingSlashes } from '@/lib/utils';
 
@@ -60,6 +61,10 @@ async function handleProxy(
 ) {
   const params = await props.params;
   const path = params.path.join('/');
+  const pathname = `/api/${path}`;
+  const permissionError = await assertAdminApiPermission(request, pathname);
+  if (permissionError) return permissionError;
+
   const { search } = new URL(request.url);
   const headers = upstreamAuthHeaders(request);
   

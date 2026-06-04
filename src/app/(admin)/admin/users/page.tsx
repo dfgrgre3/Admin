@@ -322,6 +322,7 @@ export default function AdminUsersPage() {
           searchPlaceholder="ابحث في سجلات المستخدمين..."
           serverSide
           selectable
+          virtualized
           bulkActions={[
             {
               label: "إرسال رسالة جماعية",
@@ -346,12 +347,12 @@ export default function AdminUsersPage() {
           }}
           toolbar={
             <div className="flex items-center gap-2">
-              <div className="relative group">
+              <div className="relative group w-full sm:w-auto">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <input
                   type="text"
                   placeholder="فلترة السجلات..."
-                  className="bg-accent/10 border border-border rounded-xl h-10 px-10 text-sm focus:ring-1 ring-primary outline-none w-64 font-bold"
+                  className="bg-accent/10 border border-border rounded-xl h-10 px-10 text-sm focus:ring-1 ring-primary outline-none w-full sm:w-64 font-bold"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />

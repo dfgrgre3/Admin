@@ -147,7 +147,7 @@ export default function UserEditPage() {
           form.reset({
             name: data.name || "",
             username: data.username || "",
-            email: data.email,
+            email: data.email || "",
             phone: data.phone || "",
             role: data.role,
             bio: data.bio || "",
@@ -237,7 +237,7 @@ export default function UserEditPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`تعديل: ${user.name || user.email}`}
+        title={`تعديل: ${user.name || user.email || "مستخدم"}`}
         description="تعديل بيانات المستخدم"
       >
         <Button variant="outline" onClick={() => router.push(`/admin/users/${userId}`)}>
@@ -255,7 +255,7 @@ export default function UserEditPage() {
                 <Avatar className="h-24 w-24 mx-auto mb-4">
                   <AvatarImage src={user.avatar || undefined} />
                   <AvatarFallback className="text-2xl">
-                    {user.name?.charAt(0) || user.email.charAt(0).toUpperCase()}
+                    {user.name?.charAt(0) || user.email?.charAt(0)?.toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
                 <CardTitle>{user.name || "بدون اسم"}</CardTitle>

@@ -45,6 +45,8 @@ import {
   Send,
   Hammer,
   Sparkles,
+  QrCode,
+  Printer,
 } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useForm } from "react-hook-form";
@@ -54,6 +56,8 @@ import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog";
 import { apiRoutes } from "@/lib/api/routes";
 import { adminFetch } from "@/lib/api/admin-api";
+import { COMMERCE_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
+import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
 import { m } from "framer-motion";
 
 interface Coupon {
@@ -86,10 +90,26 @@ const couponSchema = z.object({
 
 type CouponFormValues = z.infer<typeof couponSchema>;
 
+const bulkCouponSchema = z.object({
+  prefix: z.string().min(2, "Prefix is required").max(12),
+  count: z.coerce.number().int().min(1).max(1000),
+  discountType: z.enum(["PERCENTAGE", "FIXED"]),
+  discountValue: z.coerce.number().min(1),
+  description: z.string().optional(),
+  maxUses: z.coerce.number().optional(),
+  expiryDate: z.string().optional(),
+  minOrderAmount: z.coerce.number().optional(),
+  isActive: z.boolean(),
+});
+
+type BulkCouponValues = z.infer<typeof bulkCouponSchema>;
+
 export default function AdminCouponsPage() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [bulkDialogOpen, setBulkDialogOpen] = React.useState(false);
   const [editingCoupon, setEditingCoupon] = React.useState<Coupon | null>(null);
+  const [lastGeneratedCodes, setLastGeneratedCodes] = React.useState<string[]>([]);
   const [deleteDialog, setDeleteDialog] = React.useState<{ open: boolean; id: string | null }>({
     open: false,
     id: null,
@@ -129,6 +149,21 @@ export default function AdminCouponsPage() {
     },
   });
 
+  const bulkForm = useForm<BulkCouponValues>({
+    resolver: zodResolver(bulkCouponSchema),
+    defaultValues: {
+      prefix: "CARD",
+      count: 50,
+      discountType: "FIXED",
+      discountValue: 100,
+      description: "",
+      maxUses: 1,
+      expiryDate: "",
+      minOrderAmount: 0,
+      isActive: true,
+    },
+  });
+
   const createMutation = useMutation({
     mutationFn: async (values: CouponFormValues) => {
       const method = editingCoupon ? "PATCH" : "POST";
@@ -148,6 +183,7 @@ export default function AdminCouponsPage() {
       toast.success(editingCoupon ? "تم تحديث كود الخصم" : "تم إنشاء كود الخصم بنجاح");
       setDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
+      void requestPublicCacheRevalidation(COMMERCE_PUBLIC_CACHE_PATHS).catch(() => {});
     },
     onError: (err: Error) => {
       toast.error(err.message);
@@ -162,6 +198,7 @@ export default function AdminCouponsPage() {
     onSuccess: () => {
       toast.success("تم حذف كود الخصم");
       queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
+      void requestPublicCacheRevalidation(COMMERCE_PUBLIC_CACHE_PATHS).catch(() => {});
     },
     onError: () => {
       toast.error("فشل في حذف الكود");
@@ -180,6 +217,7 @@ export default function AdminCouponsPage() {
     onSuccess: () => {
       toast.success("تم تحديث حالة الكود");
       queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
+      void requestPublicCacheRevalidation(COMMERCE_PUBLIC_CACHE_PATHS).catch(() => {});
     },
   });
 
@@ -214,6 +252,116 @@ export default function AdminCouponsPage() {
 
   const handleSubmit = (values: CouponFormValues) => {
     createMutation.mutate({ ...values, code: values.code.toUpperCase() });
+  };
+
+  const generateCouponCodes = (prefix: string, count: number) => {
+    const normalizedPrefix = prefix.trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+    const codes = new Set<string>();
+    while (codes.size < count) {
+      const randomPart = crypto
+        .getRandomValues(new Uint32Array(2))
+        .join("")
+        .slice(0, 10);
+      codes.add(`${normalizedPrefix}-${randomPart}`);
+    }
+    return [...codes];
+  };
+
+  const createBulkMutation = useMutation({
+    mutationFn: async (values: BulkCouponValues) => {
+      const codes = generateCouponCodes(values.prefix, values.count);
+      const payloads = codes.map((code) => ({
+        code,
+        discountType: values.discountType,
+        discountValue: values.discountValue,
+        description: values.description || `Bulk generated card ${code}`,
+        maxUses: values.maxUses || 1,
+        expiryDate: values.expiryDate || undefined,
+        minOrderAmount: values.minOrderAmount || 0,
+        isActive: values.isActive,
+      }));
+
+      const results = await Promise.allSettled(
+        payloads.map((payload) =>
+          adminFetch(apiRoutes.admin.coupons, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }),
+        ),
+      );
+
+      const failed = results.filter((result) => result.status === "rejected").length;
+      const badResponses = results.filter(
+        (result) => result.status === "fulfilled" && !result.value.ok,
+      ).length;
+      if (failed + badResponses > 0) {
+        throw new Error(`Failed to create ${failed + badResponses} coupon cards`);
+      }
+
+      return codes;
+    },
+    onSuccess: (codes) => {
+      setLastGeneratedCodes(codes);
+      setBulkDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
+      void requestPublicCacheRevalidation(COMMERCE_PUBLIC_CACHE_PATHS).catch(() => {});
+      toast.success(`تم توليد ${codes.length} كارت شحن بنجاح`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "فشل توليد كروت الشحن");
+    },
+  });
+
+  const handleBulkSubmit = (values: BulkCouponValues) => {
+    createBulkMutation.mutate(values);
+  };
+
+  const exportCodesPdf = async (codes: string[]) => {
+    if (codes.length === 0) {
+      toast.error("لا توجد أكواد للطباعة");
+      return;
+    }
+
+    const [{ default: jsPDF }, QRCode] = await Promise.all([
+      import("jspdf"),
+      import("qrcode"),
+    ]);
+
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const columns = 2;
+    const rows = 5;
+    const cardWidth = 90;
+    const cardHeight = 52;
+    const marginX = 10;
+    const marginY = 10;
+    const gapX = 8;
+    const gapY = 4;
+
+    for (let index = 0; index < codes.length; index += 1) {
+      if (index > 0 && index % (columns * rows) === 0) {
+        doc.addPage();
+      }
+
+      const pageIndex = index % (columns * rows);
+      const col = pageIndex % columns;
+      const row = Math.floor(pageIndex / columns);
+      const x = marginX + col * (cardWidth + gapX);
+      const y = marginY + row * (cardHeight + gapY);
+      const code = codes[index]!;
+      const qrDataUrl = await QRCode.toDataURL(code, { margin: 1, width: 160 });
+
+      doc.roundedRect(x, y, cardWidth, cardHeight, 2, 2);
+      doc.setFontSize(10);
+      doc.text("Thanawy Recharge Card", x + 6, y + 8);
+      doc.setFontSize(15);
+      doc.text(code, x + 6, y + 24);
+      doc.setFontSize(8);
+      doc.text("Scan or enter this code in the student checkout.", x + 6, y + 34);
+      doc.addImage(qrDataUrl, "PNG", x + cardWidth - 34, y + 12, 26, 26);
+    }
+
+    doc.save(`coupon-cards-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
   const handleDelete = () => {
@@ -410,6 +558,18 @@ export default function AdminCouponsPage() {
         title="إدارة أكواد الخصم والترويج 🎫"
         description="إنشاء وإدارة أكواد الخصم، متابعة الاستخدام، وتحليل أداء العروض الترويجية."
       >
+        {lastGeneratedCodes.length > 0 && (
+          <AdminButton
+            variant="outline"
+            icon={Printer}
+            onClick={() => void exportCodesPdf(lastGeneratedCodes)}
+          >
+            طباعة آخر دفعة
+          </AdminButton>
+        )}
+        <AdminButton variant="outline" icon={QrCode} onClick={() => setBulkDialogOpen(true)}>
+          توليد كروت شحن
+        </AdminButton>
         <AdminButton icon={Plus} onClick={() => handleOpenDialog()}>
           إنشاء كود جديد
         </AdminButton>
@@ -491,6 +651,171 @@ export default function AdminCouponsPage() {
           }
         />
       </m.div>
+
+      <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
+        <DialogContent className="max-w-xl bg-card/90 backdrop-blur-xl border-white/10 rounded-[2rem]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-2xl font-black">
+              <QrCode className="h-6 w-6 text-primary" />
+              توليد كروت شحن مطبوعة
+            </DialogTitle>
+            <DialogDescription>
+              أنشئ دفعة أكواد فريدة قابلة للطباعة كـ PDF مع QR Code لكل كارت.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...bulkForm}>
+            <form onSubmit={bulkForm.handleSubmit(handleBulkSubmit)} className="space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={bulkForm.control}
+                  name="prefix"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>بادئة الكود</FormLabel>
+                      <FormControl>
+                        <Input {...field} dir="ltr" className="font-mono uppercase" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={bulkForm.control}
+                  name="count"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>عدد الكروت</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="number" min={1} max={1000} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={bulkForm.control}
+                  name="discountType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>نوع القيمة</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="FIXED">رصيد ثابت</SelectItem>
+                          <SelectItem value="PERCENTAGE">خصم نسبة</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={bulkForm.control}
+                  name="discountValue"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>القيمة</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="number" min={1} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={bulkForm.control}
+                  name="maxUses"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>الاستخدام</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="number" min={1} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={bulkForm.control}
+                  name="minOrderAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>حد الطلب</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="number" min={0} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={bulkForm.control}
+                  name="expiryDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>الصلاحية</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="date" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={bulkForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>وصف الدفعة</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} rows={3} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={bulkForm.control}
+                name="isActive"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between rounded-xl border p-4">
+                    <FormLabel>تفعيل الأكواد فورًا</FormLabel>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <AdminButton
+                  type="button"
+                  variant="outline"
+                  onClick={() => setBulkDialogOpen(false)}
+                >
+                  إلغاء
+                </AdminButton>
+                <AdminButton type="submit" icon={QrCode} loading={createBulkMutation.isPending}>
+                  توليد الدفعة
+                </AdminButton>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

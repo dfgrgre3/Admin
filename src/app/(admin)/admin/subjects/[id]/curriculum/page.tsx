@@ -60,6 +60,8 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { AdminUpload } from "@/components/admin/ui/admin-upload";
+import { SUBJECT_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
+import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
 
 type Lesson = {
   id: string;
@@ -389,6 +391,7 @@ export default function CurriculumEditorPage() {
        });
 
        if (res.ok) {
+         await requestPublicCacheRevalidation(SUBJECT_PUBLIC_CACHE_PATHS);
          toast.success('تم حفظ المنهج بنجاح!');
        } else {
          const error = await res.json();

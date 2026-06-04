@@ -33,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { apiRoutes } from "@/lib/api/routes";
 import { adminFetch } from "@/lib/api/admin-api";
+import { COURSE_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
 import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
 
 interface CourseCategory {
@@ -120,7 +121,7 @@ export default function AdminCourseCategoriesPage() {
       setDialogOpen(false);
       setEditingCategory(null);
       form.reset(defaultValues);
-      await requestPublicCacheRevalidation(["/courses"]);
+      await requestPublicCacheRevalidation(COURSE_PUBLIC_CACHE_PATHS);
       await refetch();
     } catch {
       toast.error("حدث خطأ أثناء الاتصال بالخادم");
@@ -144,7 +145,7 @@ export default function AdminCourseCategoriesPage() {
       }
 
       toast.success("تم حذف التصنيف بنجاح");
-      await requestPublicCacheRevalidation(["/courses"]);
+      await requestPublicCacheRevalidation(COURSE_PUBLIC_CACHE_PATHS);
       await refetch();
     } catch {
       toast.error("حدث خطأ أثناء الاتصال بالخادم");

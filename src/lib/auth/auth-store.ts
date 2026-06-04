@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 import { clearUserId, setUserId } from '@/lib/user-utils';
 
 
@@ -37,8 +36,6 @@ export interface AuthUser {
   bio?: string | null;
 }
 
-type PersistedUser = Pick<AuthUser, 'id' | 'email' | 'role' | 'permissions' | 'level'>;
-
 interface AuthState {
   user: AuthUser | null;
   isLoading: boolean;
@@ -56,40 +53,24 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      isLoading: true,
-      isAuthenticated: false,
-      isRefreshing: false,
-      setUser: (user) => {
-        if (user?.id) {
-          setUserId(user.id);
-        } else {
-          clearUserId();
-        }
-        set({ user, isAuthenticated: !!user, isLoading: false });
-      },
-      setIsLoading: (isLoading) => set({ isLoading }),
-      setIsRefreshing: (isRefreshing) => set({ isRefreshing }),
-      reset: () => {
-        set({ user: null, isAuthenticated: false, isLoading: false });
+  (set) => ({
+    user: null,
+    isLoading: true,
+    isAuthenticated: false,
+    isRefreshing: false,
+    setUser: (user) => {
+      if (user?.id) {
+        setUserId(user.id);
+      } else {
         clearUserId();
       }
-    }),
-    {
-      name: 'auth-storage',
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        isAuthenticated: state.isAuthenticated,
-        user: state.user ? {
-          id: state.user.id,
-          email: state.user.email,
-          role: state.user.role,
-          permissions: state.user.permissions,
-          level: state.user.level,
-        } : null,
-      })
+      set({ user, isAuthenticated: !!user, isLoading: false });
+    },
+    setIsLoading: (isLoading) => set({ isLoading }),
+    setIsRefreshing: (isRefreshing) => set({ isRefreshing }),
+    reset: () => {
+      set({ user: null, isAuthenticated: false, isLoading: false });
+      clearUserId();
     }
-  )
+  })
 );

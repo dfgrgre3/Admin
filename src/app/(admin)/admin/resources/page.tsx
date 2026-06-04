@@ -47,6 +47,8 @@ import { TableSkeleton } from "@/components/admin/ui/loading-skeleton";
 import { m } from "framer-motion";
 import { adminFetch } from "@/lib/api/admin-api";
 import { apiRoutes } from "@/lib/api/routes";
+import { LIBRARY_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
+import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
 
 import { logger } from '@/lib/logger';
 
@@ -188,6 +190,7 @@ export default function AdminResourcesPage() {
       if (response.ok) {
         toast.success(editingResource ? "تم تحديث ميثاق المورد" : "تم حفظ مورد جديد في الأرشيف الإمبراطوري");
         setDialogOpen(false);
+        await requestPublicCacheRevalidation(LIBRARY_PUBLIC_CACHE_PATHS);
         fetchResources();
       } else {
         toast.error("فشل في تدوين المورد");
@@ -210,6 +213,7 @@ export default function AdminResourcesPage() {
 
       if (response.ok) {
         toast.success("تم مسح المورد من السجلات");
+        await requestPublicCacheRevalidation(LIBRARY_PUBLIC_CACHE_PATHS);
         fetchResources();
       } else {
         toast.error("فشل في الإتلاف");

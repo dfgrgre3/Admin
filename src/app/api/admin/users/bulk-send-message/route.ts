@@ -4,9 +4,13 @@ import {
   backendJsonResponse,
   upstreamAuthHeaders,
 } from '@/app/api/auth/_utils';
+import { assertAdminApiPermission } from '@/app/api/admin/_proxy';
 
 export async function POST(request: NextRequest) {
   try {
+    const permissionError = await assertAdminApiPermission(request);
+    if (permissionError) return permissionError;
+
     const body = await request.json();
     
     // Transform frontend request format to backend expected format

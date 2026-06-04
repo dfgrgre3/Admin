@@ -32,6 +32,7 @@ import { BulkUploadDialog } from "@/components/admin/exams/bulk-upload-dialog";
 import { m } from "framer-motion";
 import { adminFetch } from "@/lib/api/admin-api";
 import { apiRoutes } from "@/lib/api/routes";
+import { EXAM_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
 import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
 import { usePermission } from "@/components/auth/PermissionGuard";
 import { exportToCSV, ExportColumn } from '@/lib/export-utils';
@@ -180,7 +181,7 @@ export default function AdminExamsPage() {
       if (response.ok) {
         toast.success(editingExam ? "تم تحديث بيانات الامتحان بنجاح" : "تم إضافة امتحان جديد بنجاح");
         setDialogOpen(false);
-        await requestPublicCacheRevalidation(["/exams"]);
+        await requestPublicCacheRevalidation(EXAM_PUBLIC_CACHE_PATHS);
         refetch();
       } else {
         toast.error("فشل في حفظ الاختبار");
@@ -201,7 +202,7 @@ export default function AdminExamsPage() {
 
       if (response.ok) {
         toast.success("تم حذف الاختبار من السجلات");
-        await requestPublicCacheRevalidation(["/exams"]);
+        await requestPublicCacheRevalidation(EXAM_PUBLIC_CACHE_PATHS);
         refetch();
       } else {
         toast.error("فشل في الحذف");
@@ -412,14 +413,14 @@ export default function AdminExamsPage() {
           actions={{ onRefresh: () => refetch() }}
           toolbar={
             <div className="flex items-center gap-2">
-              <div className="relative group">
+              <div className="relative group w-full sm:w-auto">
                 <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <input
                   type="text"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="ابحث في سجلات الاختبارات..."
-                  className="h-10 w-72 rounded-xl border border-border bg-accent/10 px-10 text-sm outline-none ring-primary transition focus:ring-1 font-bold"
+                  className="h-10 w-full sm:w-72 rounded-xl border border-border bg-accent/10 px-10 text-sm outline-none ring-primary transition focus:ring-1 font-bold"
                 />
               </div>
             </div>
@@ -463,7 +464,7 @@ export default function AdminExamsPage() {
                   )}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="subjectId"
@@ -507,7 +508,7 @@ export default function AdminExamsPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="type"

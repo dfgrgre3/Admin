@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/admin/ui/page-header";
 import { AdminDataTable, RowActions } from "@/components/admin/ui/admin-table";
 import { AdminButton } from "@/components/admin/ui/admin-button";
@@ -150,6 +151,8 @@ const ChallengeStatusCell = ({ active }: { active: boolean }) => (
 );
 
 export default function AdminChallengesPage() {
+  const searchParams = useSearchParams();
+  const openedCreateParamRef = React.useRef(false);
   const [challenges, setChallenges] = React.useState<Challenge[]>([]);
   const [subjects, setSubjects] = React.useState<Subject[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -231,6 +234,13 @@ export default function AdminChallengesPage() {
     }
     setDialogOpen(true);
   };
+
+  React.useEffect(() => {
+    if (!openedCreateParamRef.current && searchParams.get("create") === "1") {
+      openedCreateParamRef.current = true;
+      handleOpenDialog();
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (values: ChallengeFormValues) => {
     try {

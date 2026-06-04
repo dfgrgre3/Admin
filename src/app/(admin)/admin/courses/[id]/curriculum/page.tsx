@@ -60,6 +60,8 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { AdminUpload } from "@/components/admin/ui/admin-upload";
+import { COURSE_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
+import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
 
 type LessonAttachment = {
   id: string;
@@ -432,6 +434,7 @@ export default function CourseCurriculumPage() {
       }
 
       setChapters(result.data?.curriculum || chapters);
+      await requestPublicCacheRevalidation(COURSE_PUBLIC_CACHE_PATHS);
       toast.success("تم حفظ منهج الدورة بنجاح");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "فشل حفظ المنهج");

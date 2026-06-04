@@ -157,7 +157,7 @@ export default function AdminAuditLogsPage() {
             <Avatar className="h-10 w-10 border-2 border-white/10 shadow-lg rounded-2xl">
               <AvatarImage src={log.user.avatar || undefined} />
               <AvatarFallback className="rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-black">
-                {log.user.name?.charAt(0) || log.user.email.charAt(0).toUpperCase()}
+                {log.user.name?.charAt(0) || log.user.email?.charAt(0)?.toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
             <div>

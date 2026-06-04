@@ -4,9 +4,13 @@ import {
   backendJsonResponse,
   upstreamAuthHeaders,
 } from '@/app/api/auth/_utils';
+import { assertAdminApiPermission } from '@/app/api/admin/_proxy';
 
 export async function GET(request: NextRequest) {
   try {
+    const permissionError = await assertAdminApiPermission(request);
+    if (permissionError) return permissionError;
+
     const response = await fetch(
       `${BACKEND_URL}/api/admin/security/sessions`,
       {
@@ -30,6 +34,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const permissionError = await assertAdminApiPermission(request);
+    if (permissionError) return permissionError;
+
     const body = await request.json();
     const { action, sessionId } = body as {
       action?: string;

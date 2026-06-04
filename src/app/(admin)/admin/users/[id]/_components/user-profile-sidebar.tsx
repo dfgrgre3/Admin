@@ -46,7 +46,7 @@ export function UserProfileSidebar({
             <Avatar className="h-32 w-32 border-4 border-background shadow-2xl transition-transform duration-300 group-hover:scale-105">
               <AvatarImage src={user.avatar || undefined} className="object-cover" />
               <AvatarFallback className="text-4xl bg-primary/10 text-primary font-bold">
-                {user.name?.charAt(0) || user.email.charAt(0).toUpperCase()}
+                {user.name?.charAt(0) || user.email?.charAt(0)?.toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
             {user.emailVerified &&

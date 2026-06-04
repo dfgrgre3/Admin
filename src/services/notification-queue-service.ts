@@ -60,7 +60,7 @@ export class NotificationQueueService {
         }
     }
 
-    static async processJob(): Promise<void> {
+    static async processJob(job?: unknown): Promise<void> {
         throw new Error('Notification processing has moved to the Go backend. Use enqueueNotification instead.');
     }
 }

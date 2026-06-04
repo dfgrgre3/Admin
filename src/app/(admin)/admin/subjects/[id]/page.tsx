@@ -474,7 +474,7 @@ export default function SubjectDetailPage() {
                           <Avatar className="h-10 w-10">
                             <AvatarImage src={student.avatar || undefined} />
                             <AvatarFallback>
-                              {student.name?.charAt(0) || student.email.charAt(0).toUpperCase()}
+                              {student.name?.charAt(0) || student.email?.charAt(0)?.toUpperCase() || "U"}
                             </AvatarFallback>
                           </Avatar>
                           <div>
@@ -511,7 +511,7 @@ export default function SubjectDetailPage() {
                           <Avatar className="h-8 w-8">
                             <AvatarImage src={activity.user.avatar || undefined} />
                             <AvatarFallback>
-                              {activity.user.name?.charAt(0) || activity.user.email.charAt(0).toUpperCase()}
+                              {activity.user.name?.charAt(0) || activity.user.email?.charAt(0)?.toUpperCase() || "U"}
                             </AvatarFallback>
                           </Avatar>
                           <div>

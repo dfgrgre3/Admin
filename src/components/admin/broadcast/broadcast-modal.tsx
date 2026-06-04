@@ -1,6 +1,7 @@
 "use client";
 
 import { adminFetch } from "@/lib/api/admin-api";
+import { apiRoutes } from "@/lib/api/routes";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -159,7 +160,7 @@ export function BroadcastModal({
     setIsSending(true);
 
     try {
-      const response = await adminFetch("/admin/users/bulk-send-message", {
+      const response = await adminFetch(apiRoutes.admin.notificationBroadcast, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -167,7 +168,7 @@ export function BroadcastModal({
           title: formData.title,
           message: formData.message,
           type: formData.type,
-          channels: selectedChannels,
+          channels: selectedChannels.map((channel) => channel === "app" ? "in-app" : channel),
           actionUrl: formData.actionUrl,
         }),
       });
@@ -175,8 +176,12 @@ export function BroadcastModal({
       const data = await response.json();
 
       if (response.ok) {
+        const summary = data?.data?.summary || data?.summary;
+        const successCount = summary?.success ?? summary?.sent ?? selectedUserIds.length;
+        const failureCount = summary?.failure ?? summary?.failed ?? 0;
+
         toast.success(`تم بث الرسالة بنجاح`, {
-          description: `وصلت الرسالة لـ ${data.data.summary.success} مستخدم | الفشل: ${data.data.summary.failure}`,
+          description: `وصلت الرسالة لـ ${successCount} مستخدم | الفشل: ${failureCount}`,
         });
         onOpenChange(false);
         // Reset state

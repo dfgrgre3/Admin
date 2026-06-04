@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { formatNumber } from "@/lib/utils";
 import { PageHeader } from "@/components/admin/ui/page-header";
 import { AdminDataTable, RowActions } from "@/components/admin/ui/admin-table";
@@ -37,6 +37,7 @@ import { m } from "framer-motion";
 import { adminFetch } from "@/lib/api/admin-api";
 import { apiRoutes } from "@/lib/api/routes";
 import { throwIfApiError } from "@/lib/api/api-error-utils";
+import { SUBJECT_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
 import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
 import { usePermission } from "@/components/auth/PermissionGuard";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -96,8 +97,10 @@ type SubjectFormValues = z.infer<typeof subjectSchema>;
 
 export default function AdminSubjectsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { hasPermission } = usePermission();
   const canManageSubjects = hasPermission(PERMISSIONS.SUBJECTS_MANAGE);
+  const openedCreateParamRef = React.useRef(false);
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editingSubject, setEditingSubject] = React.useState<Subject | null>(null);
   const [deleteDialog, setDeleteDialog] = React.useState<{ open: boolean; id: string | null }>({
@@ -193,6 +196,17 @@ export default function AdminSubjectsPage() {
     setDialogOpen(true);
   };
 
+  React.useEffect(() => {
+    if (
+      !openedCreateParamRef.current &&
+      canManageSubjects &&
+      searchParams.get("create") === "1"
+    ) {
+      openedCreateParamRef.current = true;
+      handleOpenDialog();
+    }
+  }, [canManageSubjects, searchParams]);
+
   const onSubmit = async (values: SubjectFormValues) => {
     try {
       const method = editingSubject ? "PATCH" : "POST";
@@ -205,7 +219,7 @@ export default function AdminSubjectsPage() {
       await throwIfApiError(response, "فشل في حفظ البيانات");
       toast.success(editingSubject ? "تم تحديث بيانات المادة بنجاح" : "تمت إضافة مادة جديدة للمنصة");
       setDialogOpen(false);
-      await requestPublicCacheRevalidation(["/courses"]);
+      await requestPublicCacheRevalidation(SUBJECT_PUBLIC_CACHE_PATHS);
       refetch();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "خطأ في الاتصال");
@@ -222,7 +236,7 @@ export default function AdminSubjectsPage() {
       });
       await throwIfApiError(response, "فشل الحذف");
       toast.success("تم حذف المادة من السجلات");
-      await requestPublicCacheRevalidation(["/courses"]);
+      await requestPublicCacheRevalidation(SUBJECT_PUBLIC_CACHE_PATHS);
       refetch();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "خطأ في الخادم");

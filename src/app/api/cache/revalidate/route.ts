@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { BACKEND_URL } from "@/app/api/auth/_utils";
+import { BACKEND_URL, upstreamAuthHeaders } from "@/app/api/auth/_utils";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +9,7 @@ const ALLOW_PREFIX = [
   "/courses",
   "/learning",
   "/announcements",
+  "/notifications",
   "/exams",
   "/teacher-exams",
   "/library",
@@ -26,9 +27,8 @@ function isAllowedRevalidatePath(path: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  const cookie = request.headers.get("cookie") || "";
   const me = await fetch(`${BACKEND_URL}/api/auth/me`, {
-    headers: { Cookie: cookie },
+    headers: upstreamAuthHeaders(request),
     cache: "no-store",
   });
 

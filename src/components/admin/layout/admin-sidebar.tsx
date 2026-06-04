@@ -370,11 +370,11 @@ const infrastructureNavItems: SidebarNavItem[] = [
 ];
 
 const quickActions: QuickAction[] = [
-  { title: "إضافة مستخدم", href: "/admin/users/new", icon: UserPlus, color: "blue", permission: "USERS_MANAGE" },
-  { title: "إضافة محتوى", href: "/admin/subjects/new", icon: FilePlus, color: "green", permission: "SUBJECTS_MANAGE" },
-  { title: "إضافة مهمة", href: "/admin/challenges/new", icon: ClipboardList, color: "orange", permission: "CHALLENGES_MANAGE" },
+  { title: "إضافة مستخدم", href: "/admin/users/create", icon: UserPlus, color: "blue", permission: "USERS_MANAGE" },
+  { title: "إضافة محتوى", href: "/admin/subjects?create=1", icon: FilePlus, color: "green", permission: "SUBJECTS_MANAGE" },
+  { title: "إضافة مهمة", href: "/admin/challenges?create=1", icon: ClipboardList, color: "orange", permission: "CHALLENGES_MANAGE" },
   { title: "المساعد الذكي", href: "/admin/ai", icon: Bot, color: "red", permission: "AI_MANAGE" },
-  { title: "إرسال إعلان", href: "/admin/announcements/new", icon: Bell, color: "purple", permission: "ANNOUNCEMENTS_MANAGE" },
+  { title: "إرسال إعلان", href: "/admin/announcements?create=1", icon: Bell, color: "purple", permission: "ANNOUNCEMENTS_MANAGE" },
 ];
 
 function SidebarNavLink({ item, pathname, collapsed }: SidebarNavLinkProps) {

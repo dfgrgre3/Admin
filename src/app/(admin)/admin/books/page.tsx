@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { adminFetch } from "@/lib/api/admin-api";
 import { apiRoutes } from "@/lib/api/routes";
+import { LIBRARY_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
 import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
 import { usePermission } from "@/components/auth/PermissionGuard";
 import { exportToCSV, ExportColumn } from '@/lib/export-utils';
@@ -190,7 +191,7 @@ export default function AdminBooksPage() {
       if (response.ok) {
         toast.success(editingBook ? "تم تحديث المجلد الملكي" : "تم تدوين كتاب جديد بالمكتبة");
         setDialogOpen(false);
-        await requestPublicCacheRevalidation(["/library"]);
+        await requestPublicCacheRevalidation(LIBRARY_PUBLIC_CACHE_PATHS);
         refetch();
       } else {
         toast.error("فشل في حفظ الكتاب");
@@ -212,7 +213,7 @@ export default function AdminBooksPage() {
 
       if (response.ok) {
         toast.success("تم حرق المجلد من السجلات");
-        await requestPublicCacheRevalidation(["/library"]);
+        await requestPublicCacheRevalidation(LIBRARY_PUBLIC_CACHE_PATHS);
         refetch();
       } else {
         toast.error("فشل في الحذف");
@@ -404,7 +405,7 @@ export default function AdminBooksPage() {
                 toast.success(`تم حذف ${ids.length} كتاب`);
                 logAdminAction("DELETE", "book", { details: { count: ids.length } });
                 refetch();
-                void requestPublicCacheRevalidation(["/library"]).catch(() => {});
+                void requestPublicCacheRevalidation(LIBRARY_PUBLIC_CACHE_PATHS).catch(() => {});
               } else {
                 toast.error("فشل في حذف الكتب");
               }

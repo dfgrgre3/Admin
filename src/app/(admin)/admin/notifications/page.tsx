@@ -7,6 +7,8 @@ import { AdminButton } from "@/components/admin/ui/admin-button";
 import { AdminCard } from "@/components/admin/ui/admin-card";
 import { Badge } from "@/components/ui/badge";
 import { useUnifiedNotifications } from "@/hooks/use-unified-notifications";
+import { ANNOUNCEMENT_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
+import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
 
 export default function AdminNotificationsPage() {
   const {
@@ -19,6 +21,16 @@ export default function AdminNotificationsPage() {
     isCancelling,
     isResending,
   } = useUnifiedNotifications();
+
+  const handleCancelBroadcast = (broadcastId: string) => {
+    cancelBroadcast(broadcastId);
+    void requestPublicCacheRevalidation(ANNOUNCEMENT_PUBLIC_CACHE_PATHS).catch(() => {});
+  };
+
+  const handleResendFailed = (broadcastId: string) => {
+    resendFailed(broadcastId);
+    void requestPublicCacheRevalidation(ANNOUNCEMENT_PUBLIC_CACHE_PATHS).catch(() => {});
+  };
 
   return (
     <div className="space-y-6 pb-10" dir="rtl">
@@ -93,7 +105,7 @@ export default function AdminNotificationsPage() {
                     size="sm"
                     icon={XCircle}
                     loading={isCancelling}
-                    onClick={() => cancelBroadcast(broadcast.id)}
+                    onClick={() => handleCancelBroadcast(broadcast.id)}
                   >
                     إلغاء
                   </AdminButton>
@@ -104,7 +116,7 @@ export default function AdminNotificationsPage() {
                     size="sm"
                     icon={RotateCcw}
                     loading={isResending}
-                    onClick={() => resendFailed(broadcast.id)}
+                    onClick={() => handleResendFailed(broadcast.id)}
                   >
                     إعادة المحاولة
                   </AdminButton>

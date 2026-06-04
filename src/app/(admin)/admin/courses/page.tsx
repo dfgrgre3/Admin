@@ -25,6 +25,7 @@ import { CourseEmptyState } from "@/components/admin/courses/course-empty-state"
 import { cn, formatPrice } from "@/lib/utils";
 import { apiRoutes } from "@/lib/api/routes";
 import { adminFetch } from "@/lib/api/admin-api";
+import { COURSE_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
 import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
 import { usePermission } from "@/components/auth/PermissionGuard";
 import { readJsonOrThrow, throwIfApiError } from "@/lib/api/api-error-utils";
@@ -33,8 +34,6 @@ import type { Course, CourseCategory } from "./_components/types";
 import { createCourseColumns } from "./_components/course-columns";
 import { CourseFormDialog, QuickCourseValues, quickCourseSchema, quickCourseDefaults } from "./_components/course-form-dialog";
 import { CategoryDialog, CategoryFormValues, categorySchema, defaultCategoryValues } from "./_components/category-dialog";
-
-const COURSE_PUBLIC_CACHE_PATHS = ["/courses", "/learning"];
 
 function revalidateCoursePublicCache() {
   return requestPublicCacheRevalidation(COURSE_PUBLIC_CACHE_PATHS);

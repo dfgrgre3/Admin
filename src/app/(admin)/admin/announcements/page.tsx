@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/admin/ui/page-header";
 import { AdminDataTable, RowActions } from "@/components/admin/ui/admin-table";
 import { AdminButton } from "@/components/admin/ui/admin-button";
@@ -33,6 +34,7 @@ import { useQuery } from "@tanstack/react-query";
 import { m } from "framer-motion";
 import { adminFetch } from "@/lib/api/admin-api";
 import { apiRoutes } from "@/lib/api/routes";
+import { ANNOUNCEMENT_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
 import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
 import { usePermission } from "@/components/auth/PermissionGuard";
 import { MarkdownEditor } from "@/components/admin/ui/markdown-editor";
@@ -75,8 +77,10 @@ const announcementSchema = z.object({
 type AnnouncementFormValues = z.infer<typeof announcementSchema>;
 
 export default function AdminAnnouncementsPage() {
+  const searchParams = useSearchParams();
   const { hasPermission } = usePermission();
   const canManageAnnouncements = hasPermission(PERMISSIONS.ANNOUNCEMENTS_MANAGE);
+  const openedCreateParamRef = React.useRef(false);
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = React.useState<Announcement | null>(null);
   const [deleteDialog, setDeleteDialog] = React.useState<{ open: boolean; id: string | null }>({
@@ -200,6 +204,17 @@ export default function AdminAnnouncementsPage() {
     setDialogOpen(true);
   };
 
+  React.useEffect(() => {
+    if (
+      !openedCreateParamRef.current &&
+      canManageAnnouncements &&
+      searchParams.get("create") === "1"
+    ) {
+      openedCreateParamRef.current = true;
+      handleOpenDialog();
+    }
+  }, [canManageAnnouncements, searchParams]);
+
   const handleSubmit = async (values: AnnouncementFormValues) => {
     try {
       const method = editingAnnouncement ? "PATCH" : "POST";
@@ -225,7 +240,7 @@ export default function AdminAnnouncementsPage() {
         );
 
         setDialogOpen(false);
-        await requestPublicCacheRevalidation(["/announcements"]);
+        await requestPublicCacheRevalidation(ANNOUNCEMENT_PUBLIC_CACHE_PATHS);
         refetch();
       } else {
         toast.error("فشل في حفظ الإعلان");
@@ -253,7 +268,7 @@ export default function AdminAnnouncementsPage() {
           entityName: announcementToDelete?.title,
         });
 
-        await requestPublicCacheRevalidation(["/announcements"]);
+        await requestPublicCacheRevalidation(ANNOUNCEMENT_PUBLIC_CACHE_PATHS);
         refetch();
       } else {
         toast.error("فشل في حذف الإعلان");

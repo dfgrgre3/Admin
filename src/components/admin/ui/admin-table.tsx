@@ -16,6 +16,7 @@ import {
 
   PaginationState } from
 "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   Table,
   TableBody,
@@ -77,6 +78,7 @@ interface AdminDataTableProps<TData, TValue> {
     description?: string;
   };
   className?: string;
+  virtualized?: boolean;
   // Server-side pagination
   serverSide?: boolean;
   pageCount?: number;
@@ -107,6 +109,7 @@ export function AdminDataTable<TData, TValue>({
   actions,
   emptyMessage,
   className,
+  virtualized = false,
   // Server-side pagination
   serverSide = false,
   pageCount: serverPageCount,
@@ -125,6 +128,9 @@ export function AdminDataTable<TData, TValue>({
     pageIndex: serverCurrentPage - 1,
     pageSize
   });
+
+  const parentRef = React.useRef<HTMLDivElement>(null);
+
 
   // Sync pagination with server
   React.useEffect(() => {
@@ -180,6 +186,22 @@ export function AdminDataTable<TData, TValue>({
   const selectedCount = table.getFilteredSelectedRowModel().rows.length;
   const pageCount = serverSide ? serverPageCount : table.getPageCount();
   const selectedRows = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
+
+  const { rows } = table.getRowModel();
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 52,
+    overscan: 5,
+    enabled: virtualized,
+  });
+
+  const virtualItems = rowVirtualizer.getVirtualItems();
+  const paddingTop = virtualItems.length > 0 && virtualItems[0] ? virtualItems[0].start : 0;
+  const totalSize = rowVirtualizer.getTotalSize();
+  const paddingBottom = virtualItems.length > 0 && virtualItems[virtualItems.length - 1]
+    ? totalSize - (virtualItems[virtualItems.length - 1]?.end ?? 0)
+    : 0;
 
   return (
     <div className={cn("w-full space-y-4", className)}>
@@ -311,9 +333,15 @@ export function AdminDataTable<TData, TValue>({
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border overflow-hidden bg-card">
+      <div
+        ref={parentRef}
+        className={cn(
+          "rounded-xl border bg-card",
+          virtualized ? "max-h-[600px] overflow-auto" : "overflow-hidden"
+        )}
+      >
         <Table>
-          <TableHeader>
+          <TableHeader className={cn(virtualized && "sticky top-0 bg-card z-10")}>
             {table.getHeaderGroups().map((headerGroup) =>
             <TableRow key={headerGroup.id} className="bg-muted/30 hover:bg-muted/30">
                 {headerGroup.headers.map((header) => {
@@ -346,19 +374,52 @@ export function AdminDataTable<TData, TValue>({
               )}
                 </TableRow>
             ) :
-            table.getRowModel().rows?.length ?
-            table.getRowModel().rows.map((row) =>
-            <TableRow
-              key={row.id}
-              data-state={row.getIsSelected() && "selected"}
-              className="transition-colors hover:bg-muted/30">
-              
-                  {row.getVisibleCells().map((cell) =>
-              <TableCell key={cell.id} className="py-3">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-              )}
-                </TableRow>
+            rows.length ? (
+              virtualized ? (
+                <>
+                  {paddingTop > 0 && (
+                    <tr>
+                      <td colSpan={columns.length} style={{ height: `${paddingTop}px` }} />
+                    </tr>
+                  )}
+                  {virtualItems.map((virtualRow) => {
+                    const row = rows[virtualRow.index];
+                    if (!row) return null;
+                    return (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && "selected"}
+                        className="transition-colors hover:bg-muted/30"
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id} className="py-3">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    );
+                  })}
+                  {paddingBottom > 0 && (
+                    <tr>
+                      <td colSpan={columns.length} style={{ height: `${paddingBottom}px` }} />
+                    </tr>
+                  )}
+                </>
+              ) : (
+                rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className="transition-colors hover:bg-muted/30"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="py-3">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              )
             ) :
 
             <TableRow>

@@ -82,9 +82,9 @@ export function CommandPalette() {
     { id: "nav-analytics", title: "مركز الاستخبارات", description: "تحليلات البيانات العميقة", group: "التنقل الاستراتيجي", icon: Zap, onSelect: () => router.push("/admin/analytics") },
     
     // Actions - Operations
-    { id: "action-add-user", title: "تجنيد طالب جديد", description: "إضافة ملف طالب للقاعدة", group: "إجراءات ميدانية", icon: UserPlus, onSelect: () => router.push("/admin/users?add=true") },
-    { id: "action-add-subject", title: "إنشاء مادة دراسية", description: "بناء مسار تعليمي جديد", group: "إجراءات ميدانية", icon: Plus, onSelect: () => router.push("/admin/subjects?add=true") },
-    { id: "action-send-notif", title: "إصدار نداء عام (إعلان)", description: "إرسال تنبيه لجميع المحاربين", group: "إجراءات ميدانية", icon: Bell, onSelect: () => router.push("/admin/announcements/new") },
+    { id: "action-add-user", title: "تجنيد طالب جديد", description: "إضافة ملف طالب للقاعدة", group: "إجراءات ميدانية", icon: UserPlus, onSelect: () => router.push("/admin/users/create") },
+    { id: "action-add-subject", title: "إنشاء مادة دراسية", description: "بناء مسار تعليمي جديد", group: "إجراءات ميدانية", icon: Plus, onSelect: () => router.push("/admin/subjects?create=1") },
+    { id: "action-send-notif", title: "إصدار نداء عام (إعلان)", description: "إرسال تنبيه لجميع المحاربين", group: "إجراءات ميدانية", icon: Bell, onSelect: () => router.push("/admin/announcements?create=1") },
     { id: "action-royal-call", title: "نداء ملكي عاجل", description: "إرسال رسالة فورية لجميع المحاربين", group: "إجراءات ميدانية", icon: Zap, onSelect: () => { setOpen(false); window.dispatchEvent(new CustomEvent("open-royal-call")); } },
     { id: "action-gen-report", title: "استخراج تقرير الحالة", description: "توليد ملف PDF للأداء العام", group: "إجراءات ميدانية", icon: FileText, onSelect: () => router.push("/admin/reports") },
     

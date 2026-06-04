@@ -7,6 +7,7 @@ import { useAuthStore, type AuthUser } from '@/lib/auth/auth-store';
 import { logger } from '@/lib/logger';
 import { apiRoutes } from '@/lib/api/routes';
 import { authApiService } from '@/services/auth/auth-api-service';
+import { isStaffAdminPanelRole } from '@/lib/auth/admin-panel-roles';
 
 const isTimeoutError = (error: unknown) => {
   return error === 'timeout' ||
@@ -307,23 +308,8 @@ export function AuthProvider({
         };
       }
 
-      // Keep initial user payload for immediate UI updates.
-      if (data.user) {
-        setUser({
-          id: data.user.id,
-          email: data.user.email,
-          username: data.user.username ?? null,
-          name: data.user.name ?? data.user.username ?? null,
-          avatar: data.user.avatar ?? null,
-          role: data.user.role ?? 'USER',
-          emailVerified: data.user.emailVerified ?? null,
-          phoneVerified: data.user.phoneVerified ?? null,
-          permissions: data.user.permissions ?? []
-        });
-      }
-
       // Post-login hydration can race with cookie persistence in some browsers.
-      // Give a tiny initial delay for cookies to settle, then retry briefly.
+      // Only trust the session after /api/auth/me confirms the server-side cookies.
       await delay(50);
       let hydrated = await refreshUser({ clearOnFailure: false });
       if (!hydrated) {
@@ -335,9 +321,21 @@ export function AuthProvider({
         hydrated = await refreshUser({ clearOnFailure: false });
       }
 
-      if (!hydrated && !data.user) {
+      if (!hydrated) {
         setUser(null);
+        clearUserId();
         return { success: false, error: 'Unable to restore your session. Please try again.' };
+      }
+
+      const hydratedUser = useAuthStore.getState().user;
+      if (!isStaffAdminPanelRole(hydratedUser?.role)) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include'
+        }).catch(() => undefined);
+        setUser(null);
+        clearUserId();
+        return { success: false, error: 'ليس لديك صلاحيات الوصول إلى لوحة التحكم' };
       }
 
       return { success: true };
@@ -368,22 +366,33 @@ export function AuthProvider({
         return { success: false, error: data.error || '2FA verification failed' };
       }
 
-      if (data.user) {
-        setUser({
-          id: data.user.id,
-          email: data.user.email,
-          username: data.user.username ?? null,
-          name: data.user.name ?? data.user.username ?? null,
-          avatar: data.user.avatar ?? null,
-          role: data.user.role ?? 'USER',
-          emailVerified: data.user.emailVerified ?? null,
-          phoneVerified: data.user.phoneVerified ?? null,
-          permissions: data.user.permissions ?? []
-        });
+      await delay(50);
+      let hydrated = await refreshUser({ clearOnFailure: false });
+      if (!hydrated) {
+        await delay(150);
+        hydrated = await refreshUser({ clearOnFailure: false });
+      }
+      if (!hydrated) {
+        await delay(300);
+        hydrated = await refreshUser({ clearOnFailure: false });
       }
 
-      await delay(50);
-      await refreshUser({ clearOnFailure: false });
+      if (!hydrated) {
+        setUser(null);
+        clearUserId();
+        return { success: false, error: 'Unable to restore your session. Please try again.' };
+      }
+
+      const hydratedUser = useAuthStore.getState().user;
+      if (!isStaffAdminPanelRole(hydratedUser?.role)) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include'
+        }).catch(() => undefined);
+        setUser(null);
+        clearUserId();
+        return { success: false, error: 'ليس لديك صلاحيات الوصول إلى لوحة التحكم' };
+      }
 
       return { success: true };
     } catch {

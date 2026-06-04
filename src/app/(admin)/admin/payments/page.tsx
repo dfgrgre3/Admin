@@ -37,6 +37,8 @@ import { useQuery } from "@tanstack/react-query";
 import { m } from "framer-motion";
 import { toast } from "sonner";
 import { exportToCSV, ExportColumn } from "@/lib/export-utils";
+import { COMMERCE_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
+import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
 import {
   Select,
   SelectContent,
@@ -134,10 +136,12 @@ export default function AdminPaymentsPage() {
   const { isConnected: isWsConnected } = usePaymentRealtime(
     () => {
       refetch();
+      void requestPublicCacheRevalidation(COMMERCE_PUBLIC_CACHE_PATHS).catch(() => {});
       toast.info("دفعة جديدة وصلت!");
     },
     () => {
       refetch();
+      void requestPublicCacheRevalidation(COMMERCE_PUBLIC_CACHE_PATHS).catch(() => {});
     }
   );
 
@@ -221,6 +225,7 @@ export default function AdminPaymentsPage() {
         setSelectedPayment(null);
         setRefundAmount("");
         setRefundReason("");
+        await requestPublicCacheRevalidation(COMMERCE_PUBLIC_CACHE_PATHS);
         refetch();
       } else {
         const error = await response.json();
@@ -429,6 +434,7 @@ export default function AdminPaymentsPage() {
           data={payments}
           loading={isLoading}
           serverSide
+          virtualized
           totalRows={pagination?.total || 0}
           pageCount={pagination?.totalPages || 1}
           currentPage={page}
@@ -438,14 +444,14 @@ export default function AdminPaymentsPage() {
           actions={{ onRefresh: () => refetch() }}
           toolbar={
             <div className="flex items-center gap-3">
-              <div className="relative group">
+              <div className="relative group w-full sm:w-auto">
                 <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="ابحث بالاسم أو البريد..."
-                  className="h-10 w-64 rounded-xl border border-border bg-accent/10 px-10 text-sm outline-none ring-primary transition focus:ring-1 font-bold"
+                  className="h-10 w-full sm:w-64 rounded-xl border border-border bg-accent/10 px-10 text-sm outline-none ring-primary transition focus:ring-1 font-bold"
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
