@@ -6,7 +6,7 @@ import {
 } from '@/lib/admin-panel-route-access';
 import { hasPermission } from '@/lib/permissions';
 
-const ADMIN_PATH_PREFIX = '/admin';
+const PROTECTED_PAGE_PREFIXES = ['/admin', '/coupons', '/revenue', '/subjects'];
 const ADMIN_LOGIN_PATH = '/admin-login';
 const PROTECTED_API_PREFIX = '/api/admin';
 
@@ -16,8 +16,8 @@ function isPublicPath(pathname: string): boolean {
   return PUBLIC_ADMIN_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-function isAdminPath(pathname: string): boolean {
-  return pathname === ADMIN_PATH_PREFIX || pathname.startsWith(`${ADMIN_PATH_PREFIX}/`);
+function isProtectedPagePath(pathname: string): boolean {
+  return PROTECTED_PAGE_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
 function isAdminApiPath(pathname: string): boolean {
@@ -78,7 +78,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const isProtectedPage = isAdminPath(pathname);
+  const isProtectedPage = isProtectedPagePath(pathname);
   const isProtectedApi = isAdminApiPath(pathname);
 
   if (!isProtectedPage && !isProtectedApi) {
@@ -118,6 +118,9 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     '/admin/:path*',
+    '/coupons/:path*',
+    '/revenue/:path*',
+    '/subjects/:path*',
     '/api/admin/:path*',
   ],
 };
