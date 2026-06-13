@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Alexandria } from 'next/font/google';
 import { GlobalProviders } from '@/providers';
 import { SWRegistration } from '@/components/sw-registration';
+import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 
 const alexandria = Alexandria({
@@ -34,7 +35,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = await cookies();
-  const hasAuthToken = cookieStore.has('access_token') || cookieStore.has('refresh_token') || cookieStore.has('session_id');
+  const hasAuthToken = cookieStore.has('access_token') || cookieStore.has('refresh_token') || cookieStore.has('session_id') || cookieStore.has('__client_uat');
 
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning data-scroll-behavior="smooth">
@@ -46,18 +47,20 @@ export default async function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
       </head>
       <body className={`${alexandria.variable} font-sans`} suppressHydrationWarning>
-        <SWRegistration />
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem={false}
-          disableTransitionOnChange
-          storageKey="tolo-theme"
-        >
-          <GlobalProviders initialAuthHint={hasAuthToken}>
-            {children}
-          </GlobalProviders>
-        </ThemeProvider>
+        <ClerkProvider>
+          <SWRegistration />
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem={false}
+            disableTransitionOnChange
+            storageKey="tolo-theme"
+          >
+            <GlobalProviders initialAuthHint={hasAuthToken}>
+              {children}
+            </GlobalProviders>
+          </ThemeProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

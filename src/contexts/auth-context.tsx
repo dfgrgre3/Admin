@@ -1,33 +1,26 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useCallback, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { clearUserId } from '@/lib/user-utils';
+import { useAuth as useClerkAuth, useUser as useClerkUser, useClerk } from '@clerk/nextjs';
 import { useAuthStore, type AuthUser } from '@/lib/auth/auth-store';
 import { logger } from '@/lib/logger';
-import { apiRoutes } from '@/lib/api/routes';
 import { authApiService } from '@/services/auth/auth-api-service';
 import { isStaffAdminPanelRole } from '@/lib/auth/admin-panel-roles';
 
-const isTimeoutError = (error: unknown) => {
-  return error === 'timeout' ||
-    (error instanceof Error && (error.name === 'AbortError' || error.message.includes('timeout')));
-};
-
-const fetchWithTimeout = async (url: string, options: RequestInit, ms: number = 10000) => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort('timeout'), ms);
-  try {
-    return await fetch(url, { ...options, signal: controller.signal });
-  } finally {
-    clearTimeout(timeoutId);
+// Helper to extract Clerk error messages safely
+function getClerkErrorMessage(err: unknown, fallback: string): string {
+  if (err && typeof err === 'object') {
+    const clerkErr = err as { errors?: { message?: string }[]; message?: string };
+    if (Array.isArray(clerkErr.errors) && clerkErr.errors.length > 0) {
+      return clerkErr.errors[0]?.message || fallback;
+    }
+    if (typeof clerkErr.message === 'string') {
+      return clerkErr.message;
+    }
   }
-};
-
-/**
- * AuthContext - Client-side authentication state management.
- * (Now backed by Zustand for better performance and smaller context size)
- */
+  return fallback;
+}
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -35,25 +28,12 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<{success: boolean; requires2FA?: boolean; userId?: string; error?: string;}>;
   register: (
-  data: {
-    email: string;
-    password: string;
-    username?: string;
-    role?: string;
-    country?: string;
-    dateOfBirth?: string | null;
-    gender?: string;
-    phone?: string;
-    alternativePhone?: string;
-    gradeLevel?: string;
-    educationType?: string;
-    section?: string;
-    interestedSubjects?: string[];
-    studyGoal?: string;
-    subjectsTaught?: string[];
-    classesTaught?: string[];
-    experienceYears?: string;
-  }
+    data: {
+      email: string;
+      password: string;
+      username?: string;
+      role?: string;
+    }
   ) => Promise<{success: boolean; error?: string; message?: string; autoLoggedIn?: boolean;}>;
   logout: (allDevices?: boolean) => Promise<void>;
   verify2FA: (userId: string, token: string, rememberMe?: boolean) => Promise<{success: boolean; error?: string;}>;
@@ -68,527 +48,358 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-/**
- * AuthProvider - Wraps the app to provide authentication state.
- * Syncs internal logic with useAuthStore.
- */
 export function AuthProvider({
   children,
-  initialAuthHint = true
+  initialAuthHint,
 }: {children: React.ReactNode; initialAuthHint?: boolean;}) {
-  const {
-    user,
-    isLoading,
-    setIsLoading,
-    setUser,
-    reset: _resetStore,
-    isRefreshing: _isRefreshingStore,
-    setIsRefreshing: _setIsRefreshingStore
-  } = useAuthStore();
+  const { isLoaded: isClerkLoaded, userId, getToken } = useClerkAuth();
+  const { user: clerkUser, isLoaded: isUserLoaded } = useClerkUser();
+  const { setUser, reset: resetStore } = useAuthStore();
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  const router = useRouter();
-  const isRefreshing = useRef(false);
-  const refreshPromise = useRef<Promise<boolean> | null>(null);
-  const _userFetchPromise = useRef<Promise<boolean> | null>(null);
+  const lastSyncedId = useRef<string | null>(null);
+  const currentUserIdRef = useRef<string | null>(null);
 
-  // Ensure isLoading reflects initialAuthHint on server-side hint
+  // Sync ref with current userId to prevent race conditions during async calls
   useEffect(() => {
-    if (initialAuthHint !== undefined && !user) {
-      setIsLoading(initialAuthHint);
-    }
-  }, [initialAuthHint, user, setIsLoading]);
+    currentUserIdRef.current = userId || null;
+  }, [userId]);
 
-  const delay = useCallback((ms: number) => {
-    return new Promise<void>((resolve) => {
-      setTimeout(resolve, ms);
-    });
-  }, []);
-
-  /**
-   * Attempt to refresh the access token.
-   * Uses a ref to ensure only one refresh happens at a time (deduplication).
-   */
-  const refreshToken = useCallback(async (): Promise<boolean> => {
-    // If already refreshing, wait for the existing promise
-    if (isRefreshing.current && refreshPromise.current) {
-      return refreshPromise.current;
-    }
-
-    isRefreshing.current = true;
-
-    refreshPromise.current = (async () => {
-      try {
-        const response = await fetchWithTimeout(apiRoutes.auth.refresh, {
-          method: 'POST',
-          credentials: 'include'
-        }, 10000);
-
-        return response.ok;
-      } catch (error) {
-        if (isTimeoutError(error)) {
-          logger.warn('refreshToken timed out after 10s');
-        } else {
-          logger.error('refreshToken unexpected error:', error);
-        }
-        return false;
-      } finally {
-        isRefreshing.current = false;
-        refreshPromise.current = null;
+  // Safety timeout: if Clerk fails to load, force loading to false to fallback
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isClerkLoaded) {
+        logger.warn('Clerk failed to load within 5 seconds in Admin Panel.');
+        resetStore();
+        setIsInitialLoad(false);
       }
-    })();
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [isClerkLoaded, resetStore]);
 
-    return refreshPromise.current;
-  }, []);
+  // Map Clerk user to local AuthUser model and sync with Zustand store
+  useEffect(() => {
+    if (!isClerkLoaded) return;
 
-  /**
-   * Fetch wrapper that automatically handles 401 responses.
-   * On 401, we attempt /api/auth/refresh once, then retry the original request.
-   * This is used for API calls OTHER than /api/auth/me (which handles refresh internally).
-   */
-  const fetchWithAuth = useCallback(async (url: string, options: RequestInit = {}): Promise<Response> => {
-    const response = await fetch(url, {
-      ...options,
-      credentials: 'include'
-    });
+    if (!userId || (isUserLoaded && !clerkUser)) {
+      lastSyncedId.current = null;
+      resetStore();
+      setIsInitialLoad(false);
+      return;
+    }
 
-    if (response.status === 401) {
-      // Try to refresh via the dedicated endpoint
-      const refreshed = await refreshToken();
+    let isCancelled = false;
 
-      if (refreshed) {
-        // Retry the original request with new token
-        return fetch(url, {
-          ...options,
-          credentials: 'include'
-        });
+    if (isUserLoaded && clerkUser) {
+      const currentStoreUser = useAuthStore.getState().user;
+
+      const mappedUser: AuthUser = {
+        id: clerkUser.id,
+        email: clerkUser.emailAddresses[0]?.emailAddress || '',
+        username: clerkUser.username || null,
+        name: clerkUser.fullName || clerkUser.username || null,
+        avatar: clerkUser.imageUrl || null,
+        role: (clerkUser.publicMetadata?.role as string) || 'STUDENT',
+        emailVerified: clerkUser.emailAddresses[0]?.verification?.status === 'verified',
+        permissions: Array.isArray(clerkUser.publicMetadata?.permissions)
+          ? (clerkUser.publicMetadata.permissions as string[])
+          : [],
+      };
+
+      // Set user immediately from Clerk to prevent loading UI hangs
+      if (lastSyncedId.current !== userId || currentStoreUser?.id !== userId) {
+        setUser(mappedUser);
       }
 
-      // Refresh failed - user needs to login again
-      setUser(null);
-      clearUserId();
-      if (typeof window !== 'undefined') {
-        const fullPath = `${window.location.pathname}${window.location.search}`;
-        const redirectPath = sanitizeRedirectPath(fullPath, '/admin');
-        const loginUrl = redirectPath === '/admin-login' ?
-          '/admin-login' :
-          `/admin-login?redirect=${encodeURIComponent(redirectPath)}`;
-        router.replace(loginUrl);
-      } else {
-        router.replace('/admin-login');
+      if (lastSyncedId.current === userId && currentStoreUser?.id === userId) {
+        setIsInitialLoad(false);
+        return;
       }
-    }
 
-    return response;
-  }, [refreshToken, router, setUser]);
+      lastSyncedId.current = userId;
 
-  const attemptUserFetch = useCallback(async () => {
-    const response = await fetchWithTimeout('/api/auth/me', {
-      credentials: 'include',
-      cache: 'no-store'
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      setUser(data.user);
-      return true;
-    }
-    return false;
-  }, [setUser]);
+      const syncProfile = async () => {
+        try {
+          const token = await getToken();
+          if (isCancelled || currentUserIdRef.current !== userId) return;
 
-  const handle401Retry = useCallback(async () => {
-    const refreshed = await refreshToken();
-    if (!refreshed) return false;
+          const response = await fetch('/api/auth/me', {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            cache: 'no-store',
+          });
 
-    try {
-      return await attemptUserFetch();
-    } catch (retryError) {
-      if (isTimeoutError(retryError)) {
-        logger.warn('refreshUser retry timed out');
-        return false;
-      }
-      throw retryError;
-    }
-  }, [refreshToken, attemptUserFetch]);
+          if (isCancelled || currentUserIdRef.current !== userId) return;
 
-  /**
-   * Fetch current user profile from the server.
-   * Centralizes auth state restoration.
-   */
-  const refreshUser = useCallback(async (options?: {clearOnFailure?: boolean;}) => {
-    const clearOnFailure = options?.clearOnFailure ?? true;
+          if (response.ok) {
+            const data = await response.json();
+            if (data.user) {
+              const mergedUser: AuthUser = {
+                ...mappedUser,
+                ...data.user, // Merge GORM fields including XP, streakes, levels, role, and permissions
+              };
 
-    // Deduplicate concurrent user refresh calls to prevent hammering the server
-    // and overlapping timeouts.
-    if (_userFetchPromise.current) {
-      return _userFetchPromise.current;
-    }
+              // Role validation for Admin route
+              if (!isStaffAdminPanelRole(mergedUser.role)) {
+                logger.warn('Unauthorized admin panel access attempt by role:', mergedUser.role);
+                resetStore();
+                setIsInitialLoad(false);
+                return;
+              }
 
-    _userFetchPromise.current = (async () => {
-      try {
-        // Priority: if we're already refreshing tokens, wait for that first
-        if (isRefreshing.current && refreshPromise.current) {
-          try {
-            await refreshPromise.current;
-          } catch (e) {
-            // Ignore refresh promise errors here as we'll handle failure in the fetch
+              setUser(mergedUser);
+            }
+          }
+        } catch (e) {
+          logger.error('Failed to load secure profile details in Admin Panel:', e);
+        } finally {
+          if (!isCancelled && currentUserIdRef.current === userId) {
+            setIsInitialLoad(false);
           }
         }
+      };
 
-        const response = await fetchWithTimeout('/api/auth/me', {
-          credentials: 'include',
-          cache: 'no-store'
+      syncProfile();
+    }
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [clerkUser, isClerkLoaded, isUserLoaded, userId, setUser, resetStore, getToken]);
+
+  const router = useRouter();
+  const clerk = useClerk();
+  const getClerkInstance = useCallback(() => {
+    if (clerk) return clerk;
+    if (typeof window !== 'undefined') {
+      return (window as unknown as { Clerk?: typeof clerk }).Clerk || null;
+    }
+    return null;
+  }, [clerk]);
+
+  const user = useAuthStore((state) => state.user);
+  const isStoreLoading = useAuthStore((state) => state.isLoading);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  const isLoading = isStoreLoading || isInitialLoad;
+
+  const fetchWithAuth = useCallback(async (...args: Parameters<typeof fetch>): Promise<Response> => {
+    const [input, init] = args;
+    const token = await getToken();
+    const headers = new Headers(init?.headers || {});
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+    return fetch(input, {
+      ...init,
+      headers,
+    });
+  }, [getToken]);
+
+  const login = useCallback(async (email: string, password: string, rememberMe?: boolean) => {
+    const activeClerk = getClerkInstance();
+    if (!activeClerk) return { success: false, error: 'نظام المصادقة غير جاهز بعد' };
+    try {
+      const result = await activeClerk.client.signIn.create({
+        identifier: email,
+        password,
+        strategy: 'password',
+      });
+      if (result.status === 'complete') {
+        await activeClerk.setActive({ session: result.createdSessionId });
+        
+        // Wait a brief moment for session token to settle
+        await new Promise((resolve) => setTimeout(resolve, 200));
+
+        // Verify role on backend
+        const token = await getToken();
+        const response = await fetch('/api/auth/me', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          cache: 'no-store',
         });
-
-        if (response.status === 401) {
-          const success = await handle401Retry();
-          if (success) return true;
-        } else if (response.ok) {
+        if (response.ok) {
           const data = await response.json();
-          setUser(data.user);
-          return true;
+          if (data.user) {
+            const role = data.user.role;
+            if (!isStaffAdminPanelRole(role)) {
+              await activeClerk.signOut();
+              return { success: false, error: 'ليس لديك صلاحيات الوصول إلى لوحة التحكم' };
+            }
+          }
         }
-
-        if (clearOnFailure) {
-          setUser(null);
-          clearUserId();
-        }
-        return false;
-      } catch (error) {
-        if (isTimeoutError(error)) {
-          logger.warn('refreshUser timed out or was aborted (background check)');
-        } else {
-          logger.error('refreshUser error:', error);
-        }
-
-        if (clearOnFailure) {
-          setUser(null);
-          clearUserId();
-        }
-        return false;
-      } finally {
-        _userFetchPromise.current = null;
+        return { success: true };
       }
-    })();
-
-    return _userFetchPromise.current;
-  }, [handle401Retry, setUser]);
-
-  /**
-   * Login function - authenticates with the API and updates state.
-   */
-  const login = useCallback(async (
-    email: string,
-    password: string,
-    rememberMe: boolean = false
-  ): Promise<{success: boolean; requires2FA?: boolean; userId?: string; error?: string;}> => {
-    try {
-      const response = await fetch('/api/auth/admin-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, rememberMe }),
-        credentials: 'include'
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        // 403 means valid credentials but insufficient role
-        if (response.status === 403) {
-          return { success: false, error: data.error || 'ليس لديك صلاحيات الوصول إلى لوحة التحكم' };
-        }
-        return { success: false, error: data.error || 'فشل تسجيل الدخول' };
+      if (result.status === 'needs_second_factor') {
+        return { success: true, requires2FA: true, userId: result.id };
       }
-
-      // If 2FA is required, return early with relevant data
-      if (data.requires2FA) {
-        return {
-          success: true,
-          requires2FA: true,
-          userId: data.user?.id
-        };
-      }
-
-      // Post-login hydration can race with cookie persistence in some browsers.
-      // Only trust the session after /api/auth/me confirms the server-side cookies.
-      await delay(50);
-      let hydrated = await refreshUser({ clearOnFailure: false });
-      if (!hydrated) {
-        await delay(150);
-        hydrated = await refreshUser({ clearOnFailure: false });
-      }
-      if (!hydrated) {
-        await delay(300);
-        hydrated = await refreshUser({ clearOnFailure: false });
-      }
-
-      if (!hydrated) {
-        setUser(null);
-        clearUserId();
-        return { success: false, error: 'Unable to restore your session. Please try again.' };
-      }
-
-      const hydratedUser = useAuthStore.getState().user;
-      if (!isStaffAdminPanelRole(hydratedUser?.role)) {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          credentials: 'include'
-        }).catch(() => undefined);
-        setUser(null);
-        clearUserId();
-        return { success: false, error: 'ليس لديك صلاحيات الوصول إلى لوحة التحكم' };
-      }
-
-      return { success: true };
-    } catch {
-      return { success: false, error: 'Network error. Please try again.' };
+      return { success: false, error: `الخطوات الإضافية مطلوبة: ${result.status}` };
+    } catch (err: unknown) {
+      logger.error('Admin Login error:', err);
+      return { success: false, error: getClerkErrorMessage(err, 'فشل تسجيل الدخول') };
     }
-  }, [delay, refreshUser, setUser]);
+  }, [getClerkInstance, getToken]);
 
-  /**
-   * Verify 2FA token and complete login.
-   */
-  const verify2FA = useCallback(async (
-    userId: string,
-    token: string,
-    rememberMe: boolean = false
-  ): Promise<{success: boolean; error?: string;}> => {
-    try {
-      const response = await fetch('/api/auth/2fa/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, token, rememberMe }),
-        credentials: 'include'
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { success: false, error: data.error || '2FA verification failed' };
-      }
-
-      await delay(50);
-      let hydrated = await refreshUser({ clearOnFailure: false });
-      if (!hydrated) {
-        await delay(150);
-        hydrated = await refreshUser({ clearOnFailure: false });
-      }
-      if (!hydrated) {
-        await delay(300);
-        hydrated = await refreshUser({ clearOnFailure: false });
-      }
-
-      if (!hydrated) {
-        setUser(null);
-        clearUserId();
-        return { success: false, error: 'Unable to restore your session. Please try again.' };
-      }
-
-      const hydratedUser = useAuthStore.getState().user;
-      if (!isStaffAdminPanelRole(hydratedUser?.role)) {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          credentials: 'include'
-        }).catch(() => undefined);
-        setUser(null);
-        clearUserId();
-        return { success: false, error: 'ليس لديك صلاحيات الوصول إلى لوحة التحكم' };
-      }
-
-      return { success: true };
-    } catch {
-      return { success: false, error: 'Network error. Please try again.' };
-    }
-  }, [delay, refreshUser, setUser]);
-
-  /**
-   * Register function - creates account via API.
-   */
   const register = useCallback(async (
-    dataPayload: {
+    data: {
       email: string;
       password: string;
       username?: string;
       role?: string;
-      country?: string;
-      dateOfBirth?: string | null;
-      gender?: string;
-      phone?: string;
-      alternativePhone?: string;
-      gradeLevel?: string;
-      educationType?: string;
-      section?: string;
-      interestedSubjects?: string[];
-      studyGoal?: string;
-      subjectsTaught?: string[];
-      classesTaught?: string[];
-      experienceYears?: string;
     }
   ): Promise<{success: boolean; error?: string; message?: string; autoLoggedIn?: boolean;}> => {
+    const activeClerk = getClerkInstance();
+    if (!activeClerk) return { success: false, error: 'نظام المصادقة غير جاهز بعد' };
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataPayload),
-        credentials: 'include'
+      const result = await activeClerk.client.signUp.create({
+        emailAddress: data.email,
+        password: data.password,
+        username: data.username,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: data.error || data.details?.[0] || 'Registration failed'
-        };
+      if (result.status === 'complete') {
+        await activeClerk.setActive({ session: result.createdSessionId });
+        return { success: true, autoLoggedIn: true };
       }
+      return { success: true, autoLoggedIn: false };
+    } catch (err: unknown) {
+      logger.error('Registration error:', err);
+      return { success: false, error: getClerkErrorMessage(err, 'فشل إنشاء الحساب') };
+    }
+  }, [getClerkInstance]);
 
-      // Prefer server-driven auto-login from /api/auth/register when available.
-      if (data?.autoLoggedIn === true) {
+  const logout = useCallback(async () => {
+    const activeClerk = getClerkInstance();
+    if (activeClerk) {
+      await activeClerk.signOut();
+    }
+    resetStore();
+    router.replace('/admin-login');
+  }, [getClerkInstance, resetStore, router]);
+
+  const verify2FA = useCallback(async (userId: string, token: string, rememberMe?: boolean): Promise<{success: boolean; error?: string;}> => {
+    const activeClerk = getClerkInstance();
+    if (!activeClerk) return { success: false, error: 'نظام المصادقة غير جاهز بعد' };
+    try {
+      const signIn = activeClerk.client.signIn;
+      if (signIn.id !== userId) {
+        return { success: false, error: 'محاولة تسجيل دخول غير صالحة' };
+      }
+      const factor = signIn.supportedSecondFactors?.find(
+        (f) => (f as { strategy: string }).strategy === 'totp' || 
+               (f as { strategy: string }).strategy === 'phone_code' || 
+               (f as { strategy: string }).strategy === 'email_code' || 
+               (f as { strategy: string }).strategy === 'backup_code'
+      );
+      const strategy = ((factor as { strategy: string } | undefined)?.strategy || 'totp') as 'phone_code' | 'email_code' | 'totp' | 'backup_code';
+      const result = await signIn.attemptSecondFactor({
+        strategy,
+        code: token,
+      });
+      if (result.status === 'complete') {
+        await activeClerk.setActive({ session: result.createdSessionId });
+        return { success: true };
+      }
+      return { success: false, error: `الخطوات الإضافية مطلوبة: ${result.status}` };
+    } catch (err: unknown) {
+      logger.error('2FA verification error:', err);
+      return { success: false, error: getClerkErrorMessage(err, 'رمز التحقق غير صحيح') };
+    }
+  }, [getClerkInstance]);
+
+  const refreshUser = useCallback(async (options?: {clearOnFailure?: boolean;}) => {
+    if (!userId || !clerkUser) {
+      if (options?.clearOnFailure) {
+        resetStore();
+      }
+      return false;
+    }
+    try {
+      await clerkUser.reload();
+      const token = await getToken();
+      const response = await fetch('/api/auth/me', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        cache: 'no-store'
+      });
+      if (response.ok) {
+        const data = await response.json();
         if (data.user) {
           setUser({
-            id: data.user.id,
-            email: data.user.email,
-            username: data.user.username ?? null,
-            name: data.user.name ?? data.user.username ?? null,
-            avatar: data.user.avatar ?? null,
-            role: data.user.role ?? 'USER',
-            emailVerified: data.user.emailVerified ?? null,
-            phoneVerified: data.user.phoneVerified ?? null,
-            permissions: data.user.permissions ?? []
+            id: clerkUser.id,
+            email: clerkUser.emailAddresses[0]?.emailAddress || '',
+            username: clerkUser.username || null,
+            name: clerkUser.fullName || clerkUser.username || null,
+            avatar: clerkUser.imageUrl || null,
+            role: data.user.role || 'STUDENT',
+            emailVerified: clerkUser.emailAddresses[0]?.verification?.status === 'verified',
+            permissions: data.user.permissions || [],
+            ...data.user,
           });
+          return true;
         }
-
-        await delay(50);
-        let hydrated = await refreshUser({ clearOnFailure: false });
-        if (!hydrated) {
-          await delay(150);
-          hydrated = await refreshUser({ clearOnFailure: false });
-        }
-        if (!hydrated) {
-          await delay(300);
-          hydrated = await refreshUser({ clearOnFailure: false });
-        }
-
-        if (!hydrated && !data.user) {
-          setUser(null);
-          return {
-            success: false,
-            error: 'Unable to restore your session after registration. Please sign in.'
-          };
-        }
-
-        return {
-          success: true,
-          message: data.message,
-          autoLoggedIn: true
-        };
       }
-
-      // Backward-compatible fallback: try immediate sign-in client-side.
-      const loginResult = await login(dataPayload.email.trim().toLowerCase(), dataPayload.password, false);
-      if (loginResult.success) {
-        return { success: true, message: data.message, autoLoggedIn: true };
+      if (options?.clearOnFailure) {
+        resetStore();
       }
-
-      return { success: true, message: data.message, autoLoggedIn: false };
-    } catch {
-      return { success: false, error: 'Network error. Please try again.' };
+      return false;
+    } catch (e) {
+      logger.error('Failed to refresh user profile:', e);
+      if (options?.clearOnFailure) {
+        resetStore();
+      }
+      return false;
     }
-  }, [delay, login, refreshUser, setUser]);
+  }, [userId, clerkUser, getToken, setUser, resetStore]);
 
-  /**
-   * Logout function - clears session and redirects to login.
-   */
-  const logout = useCallback(async (allDevices: boolean = false) => {
+  const forgotPassword = useCallback(async (email: string) => authApiService.forgotPassword(email), []);
+  const resetPassword = useCallback(async (token: string, newPassword: string) => authApiService.resetPassword(token, newPassword), []);
+  const verifyEmail = useCallback(async (token: string) => authApiService.verifyEmail(token), []);
+  const resendVerification = useCallback(async (email: string) => authApiService.resendVerification(email), []);
+  const requestMagicLink = useCallback(async (email: string): Promise<{success: boolean; error?: string;}> => {
+    const activeClerk = getClerkInstance();
+    if (!activeClerk) return { success: false, error: 'نظام المصادقة غير جاهز بعد' };
     try {
-      await fetch(`/api/auth/logout${allDevices ? '?all=true' : ''}`, {
-        method: 'POST',
-        credentials: 'include',
-        cache: 'no-store',
-        signal: AbortSignal.timeout(5000) // 5s timeout for logout
+      const result = await activeClerk.client.signIn.create({
+        identifier: email,
       });
-    } catch {
-      // Even if API call fails, clear local state
+      const firstFactor = result.supportedFirstFactors?.find(
+        (f) => (f as { strategy: string }).strategy === 'email_code'
+      ) as { strategy: string; emailAddressId?: string } | undefined;
+      if (firstFactor && firstFactor.emailAddressId) {
+        await activeClerk.client.signIn.prepareFirstFactor({
+          strategy: 'email_code',
+          emailAddressId: firstFactor.emailAddressId,
+        });
+        return { success: true };
+      }
+      return { success: false, error: 'طريقة الدخول السريع غير مدعومة لهذا الحساب' };
+    } catch (err: unknown) {
+      logger.error('Magic link request error:', err);
+      return { success: false, error: getClerkErrorMessage(err, 'فشل إرسال كود الدخول السريع') };
     }
-    setUser(null);
-    clearUserId();
-    router.replace('/admin-login');
-    router.refresh();
-  }, [router, setUser]);
-
-  // Check auth state on mount
-  useEffect(() => {
-    let mounted = true;
-
-    const checkAuth = async () => {
-      if (initialAuthHint === false) {
-        setIsLoading(false);
-        return;
-      }
-      try {
-        await refreshUser();
-      } catch {
-        // Ensure loading stops even on unexpected errors
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    checkAuth();
-
-    // Safety timeout: force isLoading to false after 8s to prevent permanent loading screen
-    const safetyTimer = setTimeout(() => {
-      if (mounted) {
-        setIsLoading(false);
-      }
-    }, 8000);
-
-    return () => {
-      mounted = false;
-      clearTimeout(safetyTimer);
-    };
-  }, [refreshUser, setIsLoading]);
-
-  const sanitizeRedirectPath = (path: string, fallback: string = '/'): string => {
-    if (!path || path.includes('//') || !path.startsWith('/')) return fallback;
-    return path;
-  };
+  }, [getClerkInstance]);
 
   const value: AuthContextType = {
     user,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated,
     login,
     register,
     logout,
     verify2FA,
     refreshUser,
     fetchWithAuth,
-    forgotPassword: authApiService.forgotPassword,
-    resetPassword: authApiService.resetPassword,
-    verifyEmail: authApiService.verifyEmail,
-    resendVerification: authApiService.resendVerification,
-    requestMagicLink: authApiService.requestMagicLink
+    forgotPassword,
+    resetPassword,
+    verifyEmail,
+    resendVerification,
+    requestMagicLink,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-/**
- * useAuth hook - Provides access to the authentication context.
- * Must be used within an AuthProvider.
- */
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
-
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-
   return context;
 }
