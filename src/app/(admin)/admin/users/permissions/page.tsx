@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { adminApi, adminFetch } from "@/lib/api/admin-api";
+import { adminFetch } from "@/lib/api/admin-api";
 import { apiRoutes } from "@/lib/api/routes";
 import { PageHeader } from "@/components/admin/ui/page-header";
 import { AdminDataTable } from "@/components/admin/ui/admin-table";

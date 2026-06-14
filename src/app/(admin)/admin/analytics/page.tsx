@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Users, BookOpen, FileText, Trophy, Target, Activity, Zap, RefreshCw, Download, Move, Settings, Search, ArrowRight, MousePointerClick, TrendingUp, DollarSign, Wallet, Percent, PieChart, Award, ClipboardList, CreditCard
+  Users, BookOpen, FileText, Target, Activity, Zap, RefreshCw, Download, Move, Settings, Search, ArrowRight, MousePointerClick, TrendingUp, DollarSign, Wallet, Percent, PieChart, Award, ClipboardList, CreditCard
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { AnalyticsSkeleton } from "@/components/admin/ui/loading-skeleton";
@@ -254,15 +254,13 @@ export default function AdminAnalyticsPage() {
     return metricsData?.data?.dailyActiveUsers || 0;
   }, [metricsData]);
 
-  if (loading && !data) return <AnalyticsSkeleton />;
-
   const roleChartData = React.useMemo(() => {
     if (!data?.users?.byRole) return [];
     return Object.entries(data.users.byRole).map(([role, count]) => ({
       name: roleLabels[role] || role,
       value: typeof count === "number" ? count : Number(count ?? 0),
     }));
-  }, [data?.users?.byRole]);
+  }, [data?.users?.byRole, roleLabels]);
 
   // Calculate financial metrics from real data
   const financialMetrics = React.useMemo(() => {
@@ -295,6 +293,8 @@ export default function AdminAnalyticsPage() {
       totalTransactions,
     };
   }, [revenueData, data]);
+
+  if (loading && !data) return <AnalyticsSkeleton />;
 
   return (
     <div className="space-y-6 pb-20">
