@@ -4,7 +4,7 @@ import { AdminLayout } from "@/components/admin/layout/admin-layout";
 import { useAuth } from "@/contexts/auth-context";
 import { isStaffAdminPanelRole } from "@/lib/auth/admin-panel-roles";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 /**
  * Guard component that redirects unauthenticated or non‑admin users to the
@@ -14,14 +14,26 @@ import { useEffect } from "react";
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (isLoading || hasRedirected.current) return;
+
+    if (!isAuthenticated) {
+      hasRedirected.current = true;
       router.replace("/admin-login");
-    } else if (!isLoading && isAuthenticated && !isStaffAdminPanelRole(user?.role)) {
-      router.replace("/");
+    } else if (isAuthenticated && !isStaffAdminPanelRole(user?.role)) {
+      hasRedirected.current = true;
+      // Redirect to admin-login with error param to prevent looping back
+      // when Clerk middleware / admin-login page would redirect to /admin again
+      router.replace("/admin-login?error=unauthorized_role");
     }
   }, [isLoading, isAuthenticated, user, router]);
+
+  // Reset the redirect guard if deps change substantially
+  useEffect(() => {
+    hasRedirected.current = false;
+  }, [user?.id]);
 
   if (isLoading) {
     return (

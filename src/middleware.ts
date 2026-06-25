@@ -2,7 +2,8 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 const isProtectedRoute = createRouteMatcher([
-  "/admin(.*)",
+  "/admin",
+  "/admin/(.*)",
   "/coupons(.*)",
   "/revenue(.*)",
   "/subjects(.*)",
@@ -12,11 +13,6 @@ const isProtectedRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
   const url = new URL(req.url);
-
-  // If user is authenticated and on login page, redirect to admin dashboard
-  if (userId && url.pathname === "/admin-login") {
-    return NextResponse.redirect(new URL("/admin", req.url));
-  }
 
   if (isProtectedRoute(req)) {
     if (!userId) {

@@ -33,7 +33,13 @@ function AdminLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
-  const [errorStatus, setErrorStatus] = useState<string | null>(null);
+  const [errorStatus, setErrorStatus] = useState<string | null>(() => {
+    // Check for query param error from AdminGuard redirect
+    if (searchParams.get('error') === 'unauthorized_role') {
+      return 'ليس لديك صلاحيات الوصول إلى لوحة التحكم. هذا القسم مخصص للمشرفين فقط.';
+    }
+    return null;
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [requires2FA, setRequires2FA] = useState(false);
