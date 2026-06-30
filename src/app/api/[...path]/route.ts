@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BACKEND_URL, upstreamAuthHeaders } from '@/app/api/auth/_utils';
+import { BACKEND_URL, upstreamAuthHeaders, forwardSetCookie } from '@/app/api/auth/_utils';
 import { assertAdminApiPermission } from '@/app/api/admin/_proxy';
 import { getApiTimeoutMs } from '@/lib/api/timeouts';
 import { trimTrailingSlashes } from '@/lib/utils';
@@ -98,13 +98,22 @@ async function handleProxy(
       }
 
       // Success! Return the response
-      return new NextResponse(response.body, {
+      const nextResponse = new NextResponse(response.body, {
         status: response.status,
         headers: {
           'Content-Type': response.headers.get('content-type') || 'application/json',
           'Cache-Control': response.headers.get('cache-control') || 'no-store',
         },
       });
+
+      // Forward CSRF token if present
+      const csrfToken = response.headers.get('X-CSRF-Token');
+      if (csrfToken) {
+        nextResponse.headers.set('X-CSRF-Token', csrfToken);
+      }
+
+      forwardSetCookie(response, nextResponse);
+      return nextResponse;
     } catch (error: any) {
       console.warn(`[API Proxy] Attempt failed for ${origin}:`, error.message);
       lastError = error;
@@ -124,4 +133,3 @@ export const PUT = handleProxy;
 export const PATCH = handleProxy;
 export const DELETE = handleProxy;
 export const OPTIONS = handleProxy;
-

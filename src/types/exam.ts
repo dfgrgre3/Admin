@@ -21,9 +21,9 @@ export interface Question {
   difficulty: DifficultyLevel;
   points: number;
   explanation?: string;
-  options?: QuestionOption[] | Record<string, any>; 
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  options?: QuestionOption[]; 
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Exam {
@@ -37,8 +37,8 @@ export interface Exam {
   passingScore: number;
   isActive: boolean;
   questions?: Question[];
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ExamResult {
@@ -49,7 +49,7 @@ export interface ExamResult {
   score: number;
   passed: boolean;
   timeSpentSeconds: number;
-  answers?: UserAnswer[] | Record<string, UserAnswer>;
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  answers?: UserAnswer[];
+  createdAt: string;
+  updatedAt: string;
 }

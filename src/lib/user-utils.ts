@@ -7,6 +7,7 @@
 
 import { safeGetItem, safeSetItem } from './safe-client-utils';
 import { logger } from '@/lib/logger';
+import { apiRoutes } from '@/lib/api/routes';
 
 const LOCAL_USER_KEY = 'tw_user_id';
 
@@ -26,7 +27,7 @@ function normalizeUserId(value: unknown): string | null {
 
 async function getAuthenticatedUser(): Promise<string | null> {
   try {
-    const response = await fetch('/api/auth/me', {
+    const response = await fetch(apiRoutes.auth.me, {
       credentials: 'include',
       cache: 'no-store'
     });
@@ -48,7 +49,7 @@ async function getAuthenticatedUser(): Promise<string | null> {
 async function createGuestUser(): Promise<string | null> {
   try {
     // The Go backend uses GET /api/users/guest
-    const response = await fetch('/api/auth/guest', {
+    const response = await fetch(apiRoutes.users.guest, {
       method: 'GET',
       cache: 'no-store'
     });

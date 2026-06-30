@@ -4,6 +4,7 @@ import * as React from "react";
 import { createContext, useContext, useEffect, useLayoutEffect, useState } from "react";
 import { logger } from "@/lib/logger";
 import { apiClient } from "@/lib/api/api-client";
+import { apiRoutes } from "@/lib/api/routes";
 
 const SETTINGS_CACHE_KEY = "tolo-system-settings-v1";
 
@@ -90,7 +91,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   const fetchSettings = async () => {
     try {
-      const data = await apiClient.get<{ settings: SystemSettings }>("/settings");
+      const data = await apiClient.get<{ settings: SystemSettings }>(apiRoutes.settings.system);
       if (data && data.settings) {
         writeSettingsToStorage(data.settings);
         setSettings(data.settings);

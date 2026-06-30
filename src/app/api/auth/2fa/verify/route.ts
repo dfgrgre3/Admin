@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Request body is empty' }, { status: 400 });
     }
 
-    const targetUrl = `${BACKEND_URL}/api/auth/2fa/verify`;
+    const targetUrl = `${BACKEND_URL}/api/auth/mfa/verify`;
     console.log(`[API Proxy] POST 2FA verify to: ${targetUrl}`);
 
     const response = await fetch(targetUrl, {

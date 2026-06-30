@@ -2,22 +2,20 @@
  * Authentication Navigation Utilities
  */
 
-export const DEFAULT_AUTHENTICATED_ROUTE = '/dashboard';
-const DEFAULT_UNAUTHENTICATED_ROUTE = '/login';
-const PUBLIC_ROUTES = ['/', '/login', '/register', '/forgot-password', '/reset-password'];
+export const DEFAULT_AUTHENTICATED_ROUTE = '/admin';
+const DEFAULT_UNAUTHENTICATED_ROUTE = '/admin-login';
+const PUBLIC_ROUTES = ['/', '/admin-login', '/unauthorized'];
 
 /**
- * Sanitizes a redirect path to ensure it's a relative path and not a malicious external URL.
+ * Sanitizes a redirect path to ensure it's a relative admin path and not a malicious external URL.
  */
 export function sanitizeRedirectPath(path: string | null | undefined, fallback: string = DEFAULT_AUTHENTICATED_ROUTE): string {
   if (!path) return fallback;
 
-  // Ensure the path is relative (starts with / but not //)
-  if (path.startsWith('/') && !path.startsWith('//')) {
+  if (path.startsWith('/admin') && !path.startsWith('//') && path !== '/admin-login' && !path.startsWith('/admin-login/')) {
     return path;
   }
 
-  // If it's an absolute URL, check if it's the same origin (optional, but safer to just fallback)
   return fallback;
 }
 

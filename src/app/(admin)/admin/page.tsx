@@ -40,6 +40,10 @@ const DistributionChart = dynamic(() => import("@/components/admin/dashboard/dis
   ssr: false,
   loading: () => <div className="h-[300px] w-full animate-pulse bg-white/5 rounded-[2rem] border border-white/10" />
 });
+const SystemPulse = dynamic(() => import("@/components/admin/dashboard/system-pulse").then(mod => mod.SystemPulse), {
+  ssr: false,
+  loading: () => <div className="h-[300px] w-full animate-pulse bg-white/5 rounded-[2rem] border border-white/10" />
+});
 
 import { SmartAlerts, generateSmartAlerts } from "@/components/admin/dashboard/smart-alerts";
 import { GoalsKPIs } from "@/components/admin/dashboard/goals-kpis";
@@ -219,6 +223,69 @@ export default function AdminDashboardPage() {
     activity: []
   };
 
+  const alertData = React.useMemo(() => {
+    if (!data) return [];
+    return generateSmartAlerts({
+      users: {
+        total: safeStats.totalUsers,
+        new: safeStats.newUsersToday,
+        active: safeStats.newUsersThisWeek,
+      },
+      content: {
+        subjects: safeStats.totalSubjects,
+        exams: safeStats.totalExams,
+        resources: safeStats.totalResources,
+      },
+      activity: {
+        studySessions: safeActivity.studyMinutes > 0 ? Math.round(safeActivity.studyMinutes / 45) : 0,
+        tasksCompleted: safeActivity.tasksCompleted,
+      },
+      trends: {
+        userGrowth: safeTrends.userGrowth,
+        studyTime: safeTrends.studyTime,
+      }
+    });
+  }, [data, safeStats, safeActivity, safeTrends]);
+
+  const distributionData = React.useMemo(() => {
+    return [
+      { name: "المواد الدراسية", value: safeStats.totalSubjects, color: "#10b981" },
+      { name: "الامتحانات", value: safeStats.totalExams, color: "#8b5cf6" },
+      { name: "المصادر التعليمية", value: safeStats.totalResources, color: "#3b82f6" },
+    ];
+  }, [safeStats]);
+
+  const heatmapData = React.useMemo(() => {
+    const today = new Date();
+    const result: Array<{ date: string; count: number }> = [];
+    
+    // Map existing activity sessions to YYYY-MM-DD
+    const activityMap = new Map<string, number>();
+    if (safeCharts.activity) {
+      safeCharts.activity.forEach((act: any) => {
+        if (act.day && act.day.includes("/")) {
+          const [dayStr, monthStr] = act.day.split("/");
+          const year = today.getFullYear();
+          const d = new Date(year, parseInt(monthStr, 10) - 1, parseInt(dayStr, 10));
+          const dateKey = d.toISOString().split("T")[0];
+          if (dateKey) {
+            activityMap.set(dateKey, act.sessions || 0);
+          }
+        }
+      });
+    }
+
+    // Generate 84 days (12 weeks) of records
+    for (let i = 83; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const dateStr = d.toISOString().split("T")[0]!;
+      const count = activityMap.get(dateStr) || 0;
+      result.push({ date: dateStr, count });
+    }
+    return result;
+  }, [safeCharts.activity]);
+
   const sections = [
     {
       id: "quick-actions",
@@ -377,10 +444,47 @@ export default function AdminDashboardPage() {
                     </AdminButton>
                  </div>
               </div>
-           </div>
-        </div>
+            </div>
+         </div>
+        )
+     },
+     {
+       id: "system-diagnostics",
+       content: (
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+           <SystemPulse />
+           <SmartAlerts 
+             alerts={alertData} 
+             title="التنبيهات والتحليلات الذكية"
+             className="h-full"
+           />
+         </div>
        )
-    }
+     },
+     {
+       id: "activity-and-distribution",
+       content: (
+         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+           <div className="lg:col-span-2">
+             <ActivityHeatmap 
+               data={heatmapData} 
+               title="خريطة دراسة ونشاط الطلاب" 
+               color="purple" 
+               className="h-full"
+             />
+           </div>
+           <div>
+             <DistributionChart 
+               data={distributionData} 
+               title="توزيع المحتوى التعليمي" 
+               description="عرض لنسب تصنيف المحتوى الدراسي"
+               className="h-full"
+               height={260}
+             />
+           </div>
+         </div>
+       )
+     }
   ];
 
   return (

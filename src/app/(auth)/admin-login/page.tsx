@@ -235,7 +235,7 @@ function AdminLoginContent() {
               </div>
 
               <div className="mt-8 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-                 <Link href="/login" className="text-sm font-bold text-gray-500 hover:text-white transition-colors flex items-center gap-2 group">
+                 <Link href="/" className="text-sm font-bold text-gray-500 hover:text-white transition-colors flex items-center gap-2 group">
                     <ArrowRight className="h-4 w-4 rotate-180 group-hover:translate-x-1 transition-transform" />
                     العودة لصفحة الطلاب
                  </Link>

@@ -25,7 +25,6 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
     } else if (isAuthenticated && !isStaffAdminPanelRole(user?.role)) {
       hasRedirected.current = true;
       // Redirect to admin-login with error param to prevent looping back
-      // when Clerk middleware / admin-login page would redirect to /admin again
       router.replace("/admin-login?error=unauthorized_role");
     }
   }, [isLoading, isAuthenticated, user, router]);

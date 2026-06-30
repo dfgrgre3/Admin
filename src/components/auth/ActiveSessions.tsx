@@ -17,6 +17,7 @@ import {
 import { m, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { apiRoutes } from '@/lib/api/routes';
 
 interface UserSession {
   id: string;
@@ -37,7 +38,7 @@ export function ActiveSessions() {
   const fetchSessions = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/auth/sessions', { credentials: 'include' });
+      const res = await fetch(apiRoutes.auth.sessions, { credentials: 'include' });
       const data = await res.json();
       if (data.success) {
         setSessions(data.sessions || []);
@@ -58,7 +59,7 @@ export function ActiveSessions() {
   const handleRevoke = async (sessionId: string) => {
     setIsRevoking(sessionId);
     try {
-      const res = await fetch(`/api/auth/sessions?sessionId=${sessionId}`, {
+      const res = await fetch(apiRoutes.auth.revokeSession(sessionId), {
         method: 'DELETE',
         credentials: 'include'
       });

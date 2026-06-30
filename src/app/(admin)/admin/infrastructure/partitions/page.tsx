@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import { m, AnimatePresence } from "framer-motion";
@@ -21,6 +21,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { apiRoutes } from "@/lib/api/routes";
 
 const STYLES = {
   glass: "relative overflow-hidden rounded-[2.5rem] border border-white/5 bg-card/40 shadow-2xl backdrop-blur-3xl ring-1 ring-white/5",
@@ -39,7 +40,7 @@ export default function PartitionsHealthPage() {
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['admin', 'infrastructure', 'partitions'],
     queryFn: async () => {
-      const response = await fetch('/api/database-partitions?action=health');
+      const response = await fetch(apiRoutes.admin.databasePartitions + '?action=health');
       if (!response.ok) throw new Error('Failed to fetch partition health');
       return await response.json();
     },
