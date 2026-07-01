@@ -1,3 +1,5 @@
+import { apiClient } from "./api/api-client";
+
 type AdminAction = "CREATE" | "UPDATE" | "DELETE" | "VIEW" | "PUBLISH" | "UNPUBLISH" | "LOGIN" | "LOGOUT";
 
 interface AuditLogEntry {
@@ -34,12 +36,8 @@ function saveAuditLogs(logs: AuditLogEntry[]) {
 
 async function sendAuditLogToServer(entry: AuditLogEntry) {
   try {
-    await fetch("/api/admin/audit-logs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(entry),
-    });
+    // Use apiClient.post so the X-CSRF-Token header is automatically injected
+    await apiClient.post("/api/admin/audit-logs", entry);
   } catch {
     // Server logging is optional, don't block the UI
   }

@@ -1,11 +1,11 @@
 "use client";
 
 import type { UserDetails } from "./types";
-import { gradeLabels } from "./types";
+import { resolveGradeLabel, resolveEducationTypeLabel } from "./types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen } from "lucide-react";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { ar } from "date-fns/locale";
 
 export function AcademicTab({ user }: { user: UserDetails }) {
@@ -31,7 +31,7 @@ export function AcademicTab({ user }: { user: UserDetails }) {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {user.examResults.length > 0 ? (
+                {user.examResults?.length > 0 ? (
                   user.examResults.map((result) => (
                     <tr key={result.id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-6 py-4 font-bold text-sm">{result.exam.title}</td>
@@ -47,7 +47,9 @@ export function AcademicTab({ user }: { user: UserDetails }) {
                         </Badge>
                       </td>
                       <td className="px-6 py-4 text-sm text-muted-foreground">
-                        {format(new Date(result.takenAt), "d MMM yyyy", { locale: ar })}
+                        {result.takenAt && isValid(new Date(result.takenAt))
+                          ? format(new Date(result.takenAt), "d MMM yyyy", { locale: ar })
+                          : "-"}
                       </td>
                     </tr>
                   ))
@@ -73,11 +75,11 @@ export function AcademicTab({ user }: { user: UserDetails }) {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-muted/30 p-4 rounded-2xl">
                 <p className="text-xs text-muted-foreground mb-1">المرحلة الدراسية</p>
-                <p className="font-bold">{gradeLabels[user.gradeLevel || ""] || user.gradeLevel || "غير محدد"}</p>
+                <p className="font-bold">{resolveGradeLabel(user.gradeLevel)}</p>
               </div>
               <div className="bg-muted/30 p-4 rounded-2xl">
                 <p className="text-xs text-muted-foreground mb-1">نوع التعليم</p>
-                <p className="font-bold">{user.educationType || "عام"}</p>
+                <p className="font-bold">{resolveEducationTypeLabel(user.educationType)}</p>
               </div>
               <div className="bg-muted/30 p-4 rounded-2xl">
                 <p className="text-xs text-muted-foreground mb-1">الشعبة</p>
@@ -97,7 +99,7 @@ export function AcademicTab({ user }: { user: UserDetails }) {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {user.interestedSubjects.length > 0 ? (
+              {user.interestedSubjects?.length > 0 ? (
                 user.interestedSubjects.map((subject, i) => (
                   <Badge key={i} variant="outline" className="px-4 py-1.5 rounded-xl border-primary/20 bg-primary/5 text-primary">
                     {subject}

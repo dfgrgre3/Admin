@@ -10,7 +10,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   TrendingUp,
   Users,
-  Trophy,
   Target,
   Clock,
   Calendar,
@@ -22,6 +21,7 @@ import {
   Sparkles,
   RefreshCw,
   ClipboardList,
+  Megaphone,
 } from "lucide-react";
 
 // Activity Feed Widget
@@ -58,7 +58,7 @@ const activityConfig: Record<ActivityItem["type"], { icon: React.ElementType; co
   comment: { icon: MessageSquare, color: "text-pink-500", bg: "bg-pink-500/10", label: "تعليق" },
 };
 
-export function ActivityFeed({
+export const ActivityFeed = React.memo(function ActivityFeed({
   activities,
   title = "آخر النشاطات",
   maxItems = 5,
@@ -68,7 +68,10 @@ export function ActivityFeed({
   loading = false,
   className,
 }: ActivityFeedProps) {
-  const displayActivities = activities.slice(0, maxItems);
+  const displayActivities = React.useMemo(
+    () => activities.slice(0, maxItems),
+    [activities, maxItems]
+  );
 
   return (
     <AdminCard className={cn("flex flex-col h-full", className)}>
@@ -161,7 +164,7 @@ export function ActivityFeed({
       </div>
     </AdminCard>
   );
-}
+});
 
 // Quick Actions Widget
 interface QuickAction {
@@ -291,7 +294,7 @@ interface UpcomingEvent {
   id: string;
   title: string;
   date: Date;
-  type: "exam" | "event" | "deadline" | "meeting";
+  type: "exam" | "event" | "deadline" | "meeting" | "challenge" | "announcement";
   location?: string;
   participants?: number;
 }
@@ -308,15 +311,20 @@ const eventConfig = {
   event: { icon: Calendar, color: "text-green-500", bg: "bg-green-500/10", label: "فعالية" },
   deadline: { icon: Clock, color: "text-yellow-500", bg: "bg-yellow-500/10", label: "موعد نهائي" },
   meeting: { icon: Users, color: "text-blue-500", bg: "bg-blue-500/10", label: "اجتماع إداري" },
-};
+  challenge: { icon: ClipboardList, color: "text-purple-500", bg: "bg-purple-500/10", label: "تحدي" },
+  announcement: { icon: Megaphone, color: "text-cyan-500", bg: "bg-cyan-500/10", label: "إعلان" },
+} as const;
 
-export function UpcomingEvents({
+export const UpcomingEvents = React.memo(function UpcomingEvents({
   events,
   title = "جدول المواعيد",
   maxItems = 4,
   className,
 }: UpcomingEventsProps) {
-  const displayEvents = events.slice(0, maxItems);
+  const displayEvents = React.useMemo(
+    () => events.slice(0, maxItems),
+    [events, maxItems]
+  );
 
   return (
     <div className={cn("admin-glass p-8 border-primary/10", className)}>
@@ -380,7 +388,7 @@ export function UpcomingEvents({
       </div>
     </div>
   );
-}
+});
 
 // Top Performers Widget
 interface Performer {
@@ -399,7 +407,7 @@ interface TopPerformersProps {
   className?: string;
 }
 
-export function TopPerformers({
+export const TopPerformers = React.memo(function TopPerformers({
   performers,
   title = "لوحة المتميزين",
   className,
@@ -460,7 +468,7 @@ export function TopPerformers({
       </div>
     </div>
   );
-}
+});
 
 // Progress Overview Widget
 interface ProgressItem {
@@ -477,7 +485,7 @@ interface ProgressOverviewProps {
   className?: string;
 }
 
-export function ProgressOverview({
+export const ProgressOverview = React.memo(function ProgressOverview({
   items,
   title = "لوحة المتابعة والتقدم",
   className,
@@ -541,4 +549,4 @@ export function ProgressOverview({
       </div>
     </div>
   );
-}
+});

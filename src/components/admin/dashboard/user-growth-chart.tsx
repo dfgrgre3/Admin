@@ -1,4 +1,4 @@
-﻿import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3 } from "lucide-react";
 import {
   AreaChart,
@@ -29,7 +29,7 @@ export function UserGrowthChart({ data }: UserGrowthChartProps) {
         </div>
       </CardHeader>
       <CardContent className="pt-2 pb-4">
-        <ResponsiveContainer width="100%" height={280}>
+        <ResponsiveContainer width="100%" height={280} minWidth={1} minHeight={1}>
           <AreaChart data={data}>
             <defs>
               <linearGradient id="userGradient" x1="0" y1="0" x2="0" y2="1">

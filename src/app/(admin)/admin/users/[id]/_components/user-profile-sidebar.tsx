@@ -1,7 +1,7 @@
 "use client";
 
-import type { UserDetails } from "./types";
-import { roleLabels, gradeLabels } from "./types";
+import type { UserDetails, UserStatus } from "./types";
+import { roleLabels, resolveGradeLabel, statusLabels, statusColors, computeLevelProgress } from "./types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
@@ -15,24 +15,43 @@ import {
   Edit,
   Lock,
   ShieldCheck,
-  ArrowRight
+  ArrowRight,
+  KeyRound,
+  Shield,
+  Ban,
+  AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AdminBadge } from "@/components/admin/ui/admin-badge";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { ar } from "date-fns/locale";
+import { toast } from "sonner";
+import * as React from "react";
 
 export function UserProfileSidebar({
   user,
   setActiveTab,
-  router
+  router,
+  onChangePassword,
+  canManage = false
 }: {
   user: UserDetails;
   setActiveTab: (tab: string) => void;
   router: ReturnType<typeof import("next/navigation").useRouter>;
+  onChangePassword?: () => void;
+  canManage?: boolean;
 }) {
-  const xpToNextLevel = user.level * 1000 - user.totalXP % 1000;
-  const levelProgress = user.totalXP % 1000 / 1000 * 100;
+  const { level, levelProgress, xpToNextLevel } = computeLevelProgress(user);
+
+  const handleChangePassword = () => {
+    if (onChangePassword) {
+      onChangePassword();
+    } else {
+      toast.info("سيتم توجيهك إلى صفحة تغيير كلمة المرور", {
+        description: "هذه الميزة قيد التطوير حالياً"
+      });
+    }
+  };
 
   return (
     <div className="lg:col-span-1 space-y-8">
@@ -72,9 +91,15 @@ export function UserProfileSidebar({
               </AdminBadge>
               {user.gradeLevel &&
                 <AdminBadge color="purple" variant="outline" className="px-4 py-1.5 rounded-full font-black text-[10px] border-white/10">
-                  {gradeLabels[user.gradeLevel] || user.gradeLevel}
+                  {resolveGradeLabel(user.gradeLevel)}
                 </AdminBadge>
               }
+              {user.status && user.status !== "ACTIVE" && (
+                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black border ${statusColors[user.status] || ''}`}>
+                  {user.status === "SUSPENDED" ? <AlertTriangle className="h-3 w-3" /> : <Ban className="h-3 w-3" />}
+                  {statusLabels[user.status] || user.status}
+                </span>
+              )}
             </div>
 
             <div className="pt-6 border-t w-full space-y-4 text-right">
@@ -106,7 +131,9 @@ export function UserProfileSidebar({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-foreground">
-                    {format(new Date(user.createdAt), "d MMMM yyyy", { locale: ar })}
+                    {user.createdAt && isValid(new Date(user.createdAt))
+                      ? format(new Date(user.createdAt), "d MMMM yyyy", { locale: ar })
+                      : "-"}
                   </p>
                   <p className="text-xs text-muted-foreground">تاريخ الانضمام</p>
                 </div>
@@ -116,7 +143,7 @@ export function UserProfileSidebar({
 
           <div className="mt-8 w-full">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-bold text-primary">المستوى {user.level}</span>
+              <span className="text-sm font-bold text-primary">المستوى {level}</span>
               <span className="text-xs text-muted-foreground">{xpToNextLevel} XP للمستوى القادم</span>
             </div>
             <Progress value={levelProgress} className="h-2 rounded-full bg-primary/10" />
@@ -124,7 +151,7 @@ export function UserProfileSidebar({
         </div>
       </Card>
 
-      <Card className="border-none shadow-lg">
+      {canManage && <Card className="border-none shadow-lg">
         <CardHeader className="pb-4">
           <CardTitle className="text-sm font-bold flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -139,16 +166,36 @@ export function UserProfileSidebar({
             <Edit className="h-4 w-4" />
             تعديل البيانات
           </Button>
-          <Button variant="outline" className="w-full justify-start rounded-xl gap-2 h-11">
-            <Lock className="h-4 w-4" />
+          <Button
+            variant="outline"
+            className="w-full justify-start rounded-xl gap-2 h-11"
+            onClick={handleChangePassword}>
+            <KeyRound className="h-4 w-4" />
             تغيير كلمة المرور
           </Button>
-          <Button variant="outline" className="w-full justify-start rounded-xl gap-2 h-11" onClick={() => router.push("/admin/users/permissions")}>
+          <Button
+            variant="outline"
+            className="w-full justify-start rounded-xl gap-2 h-11"
+            onClick={() => router.push(`/admin/users/${user.id}/permissions`)}>
             <ShieldCheck className="h-4 w-4" />
             إدارة الصلاحيات
           </Button>
+          <Button
+            variant="outline"
+            className="w-full justify-start rounded-xl gap-2 h-11"
+            onClick={() => setActiveTab("security")}>
+            <Shield className="h-4 w-4" />
+            الأمان والحظر
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full justify-start rounded-xl gap-2 h-11"
+            onClick={() => router.push(`/admin/users/${user.id}/edit`)}>
+            <ArrowRight className="h-4 w-4" />
+            تعديل متقدم
+          </Button>
         </CardContent>
-      </Card>
+      </Card>}
     </div>
   );
 }

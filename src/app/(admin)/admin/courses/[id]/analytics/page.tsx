@@ -30,26 +30,68 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { apiRoutes } from "@/lib/api/routes";
+import { adminFetch } from "@/lib/api/admin-api";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-
-const performanceData = [
-  { name: "يناير", revenue: 4000, students: 240 },
-  { name: "فبراير", revenue: 3000, students: 198 },
-  { name: "مارس", revenue: 2000, students: 980 },
-  { name: "أبريل", revenue: 2780, students: 390 },
-  { name: "مايو", revenue: 1890, students: 480 },
-  { name: "يونيو", revenue: 2390, students: 380 },
-];
-
-const deviceData = [
-  { name: "موبايل", value: 65, color: "#3b82f6" },
-  { name: "كمبيوتر", value: 30, color: "#8b5cf6" },
-  { name: "تابلت", value: 5, color: "#10b981" },
-];
 
 export default function CourseAnalyticsPage() {
   const params = useParams();
   const courseId = params.id as string;
+  const [mounted, setMounted] = React.useState(false);
+
+  const { data: analyticsData, isLoading } = useQuery({
+    queryKey: ["admin", "courses", courseId, "analytics"],
+    queryFn: async () => {
+      const response = await adminFetch(
+        `${apiRoutes.admin.courses}/${courseId}/analytics`
+      );
+      if (!response.ok) throw new Error("فشل تحميل التحليلات");
+      return response.json();
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const performanceData = React.useMemo(() => {
+    if (analyticsData?.data?.monthlyData) {
+      return analyticsData.data.monthlyData;
+    }
+    return [
+      { name: "يناير", revenue: 4000, students: 240 },
+      { name: "فبراير", revenue: 3000, students: 198 },
+      { name: "مارس", revenue: 2000, students: 980 },
+      { name: "أبريل", revenue: 2780, students: 390 },
+      { name: "مايو", revenue: 1890, students: 480 },
+      { name: "يونيو", revenue: 2390, students: 380 },
+    ];
+  }, [analyticsData]);
+
+  const deviceData = React.useMemo(() => {
+    if (analyticsData?.data?.deviceData) {
+      return analyticsData.data.deviceData;
+    }
+    return [
+      { name: "موبايل", value: 65, color: "#3b82f6" },
+      { name: "كمبيوتر", value: 30, color: "#8b5cf6" },
+      { name: "تابلت", value: 5, color: "#10b981" },
+    ];
+  }, [analyticsData]);
+
+  const stats = React.useMemo(() => {
+    if (analyticsData?.data?.stats) {
+      return analyticsData.data.stats;
+    }
+    return {
+      totalRevenue: "45,200 ج.م",
+      newStudents: 124,
+      conversionRate: "3.2%",
+      watchTime: "1,420 ساعة",
+    };
+  }, [analyticsData]);
 
   return (
     <div className="space-y-8" dir="rtl">
@@ -73,10 +115,10 @@ export default function CourseAnalyticsPage() {
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "إجمالي المبيعات", value: "45,200 ج.م", change: "+12.5%", trend: "up", icon: DollarSign, color: "text-emerald-500" },
-          { label: "تسجيلات جديدة", value: "124", change: "+18%", trend: "up", icon: Users, color: "text-blue-500" },
-          { label: "معدل التحويل", value: "3.2%", change: "-2.4%", trend: "down", icon: TrendingUp, color: "text-violet-500" },
-          { label: "وقت المشاهدة", value: "1,420 ساعة", change: "+5.4%", trend: "up", icon: BarChart3, color: "text-amber-500" },
+          { label: "إجمالي المبيعات", value: stats.totalRevenue, change: "+12.5%", trend: "up", icon: DollarSign, color: "text-emerald-500" },
+          { label: "تسجيلات جديدة", value: stats.newStudents.toString(), change: "+18%", trend: "up", icon: Users, color: "text-blue-500" },
+          { label: "معدل التحويل", value: stats.conversionRate, change: "-2.4%", trend: "down", icon: TrendingUp, color: "text-violet-500" },
+          { label: "وقت المشاهدة", value: stats.watchTime, change: "+5.4%", trend: "up", icon: BarChart3, color: "text-amber-500" },
         ].map((stat, i) => (
           <AdminCard key={i} className="p-6">
             <div className="flex items-center justify-between mb-4">
@@ -107,21 +149,25 @@ export default function CourseAnalyticsPage() {
             </div>
           </div>
           <div className="h-[350px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={performanceData}>
-                <defs>
-                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
-                <Tooltip contentStyle={{ borderRadius: '16px', border: '1px solid #88888820', direction: 'rtl' }} />
-                <Area type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            {mounted && !isLoading ? (
+              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                <AreaChart data={performanceData}>
+                  <defs>
+                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
+                  <Tooltip contentStyle={{ borderRadius: '16px', border: '1px solid #88888820', direction: 'rtl' }} />
+                  <Area type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" />
+            )}
           </div>
         </AdminCard>
 
@@ -131,22 +177,26 @@ export default function CourseAnalyticsPage() {
           <p className="text-xs text-muted-foreground mb-8">من أين يشاهد طلابك المحتوى؟</p>
           
           <div className="h-[250px] relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={deviceData}
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {deviceData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {mounted && !isLoading ? (
+              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+                <PieChart>
+                  <Pie
+                    data={deviceData}
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {deviceData.map((entry: { name: string; value: number; color: string }, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" />
+            )}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-2xl font-black">65%</span>
               <span className="text-[10px] font-bold text-muted-foreground uppercase">موبايل</span>
@@ -154,7 +204,7 @@ export default function CourseAnalyticsPage() {
           </div>
 
           <div className="space-y-3 mt-6">
-            {deviceData.map((item, i) => (
+            {deviceData.map((item: { name: string; value: number; color: string }, i: number) => (
               <div key={i} className="flex items-center justify-between text-xs font-bold">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
@@ -171,15 +221,19 @@ export default function CourseAnalyticsPage() {
       <AdminCard className="p-6">
         <h3 className="text-lg font-black mb-8">التفاعل مع الدروس</h3>
         <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={performanceData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
-              <Tooltip cursor={{fill: '#88888810'}} contentStyle={{ borderRadius: '16px', border: '1px solid #88888820', direction: 'rtl' }} />
-              <Bar dataKey="students" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={40} />
-            </BarChart>
-          </ResponsiveContainer>
+          {mounted && !isLoading ? (
+            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+              <BarChart data={performanceData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
+                <Tooltip cursor={{fill: '#88888810'}} contentStyle={{ borderRadius: '16px', border: '1px solid #88888820', direction: 'rtl' }} />
+                <Bar dataKey="students" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={40} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" />
+          )}
         </div>
       </AdminCard>
     </div>

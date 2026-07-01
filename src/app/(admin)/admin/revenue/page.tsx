@@ -31,33 +31,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import dynamic from "next/dynamic";
-
-const AreaChart = dynamic(
-  () => import("recharts").then((mod) => mod.AreaChart),
-  { ssr: false }
-);
-const Area = dynamic(() => import("recharts").then((mod) => mod.Area), {
-  ssr: false,
-});
-const XAxis = dynamic(() => import("recharts").then((mod) => mod.XAxis), {
-  ssr: false,
-});
-const YAxis = dynamic(() => import("recharts").then((mod) => mod.YAxis), {
-  ssr: false,
-});
-const CartesianGrid = dynamic(
-  () => import("recharts").then((mod) => mod.CartesianGrid),
-  { ssr: false }
-);
-const Tooltip = dynamic(
-  () => import("recharts").then((mod) => mod.Tooltip),
-  { ssr: false }
-);
-const ResponsiveContainer = dynamic(
-  () => import("recharts").then((mod) => mod.ResponsiveContainer),
-  { ssr: false }
-);
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 interface RevenueStats {
   summary: {
@@ -81,6 +63,11 @@ const periodLabels: Record<PeriodFilter, string> = {
 
 export default function AdminRevenuePage() {
   const [period, setPeriod] = React.useState<PeriodFilter>("month");
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { data: stats, isLoading, refetch, isFetching, error } = useQuery({
     queryKey: ["admin", "revenue", period],
@@ -256,8 +243,8 @@ export default function AdminRevenuePage() {
             </h3>
           </div>
           <div className="h-[350px] w-full">
-            {safeStats.chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
+            {mounted && safeStats.chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={350} minWidth={1}>
                 <AreaChart data={safeStats.chartData}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -302,6 +289,8 @@ export default function AdminRevenuePage() {
                   />
                 </AreaChart>
               </ResponsiveContainer>
+            ) : safeStats.chartData.length > 0 ? (
+              <div className="h-[350px] w-full animate-pulse bg-white/5 rounded-[2rem] border border-white/10" />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                 <PieChart className="w-16 h-16 mb-4 opacity-30" />

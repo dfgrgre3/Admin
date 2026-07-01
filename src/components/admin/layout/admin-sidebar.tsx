@@ -20,6 +20,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   FileText,
   Gift,
   Target,
@@ -53,6 +54,7 @@ import {
   DollarSign,
   ClipboardList,
   Database,
+  Activity,
 } from "lucide-react";
 import { IconButton } from "@/components/admin/ui/admin-button";
 import {
@@ -68,6 +70,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useUIState } from "@/hooks/use-ui-state";
 
 interface SidebarNavItem {
   title: string;
@@ -90,13 +93,14 @@ interface BookmarkItem {
   id: string;
   title: string;
   href: string;
-  icon: React.ElementType;
+  iconName: string;
 }
 
 interface SidebarNavLinkProps {
   item: SidebarNavItem;
   pathname: string | null;
   collapsed: boolean;
+  onBookmarkToggle?: (item: SidebarNavItem) => void;
 }
 
 interface SidebarNavSectionProps {
@@ -104,6 +108,9 @@ interface SidebarNavSectionProps {
   items: SidebarNavItem[];
   pathname: string | null;
   collapsed: boolean;
+  onBookmarkToggle?: (item: SidebarNavItem) => void;
+  isCollapsed?: boolean;
+  onToggle?: () => void;
 }
 
 const mainNavItems: SidebarNavItem[] = [
@@ -333,6 +340,20 @@ const financialNavItems: SidebarNavItem[] = [
 
 const infrastructureNavItems: SidebarNavItem[] = [
   {
+    title: "مركز المراقبة والآمان",
+    href: "/admin/live",
+    icon: ShieldCheck,
+    color: "bg-red-500",
+    permission: "LIVE_MONITOR_VIEW",
+  },
+  {
+    title: "صحة خفايا المملكة ⚔️",
+    href: "/admin/health",
+    icon: Activity,
+    color: "bg-purple-600",
+    permission: "LIVE_MONITOR_VIEW",
+  },
+  {
     title: "مراقبة الأداء",
     href: "/admin/infrastructure",
     icon: Monitor,
@@ -377,7 +398,7 @@ const quickActions: QuickAction[] = [
   { title: "إرسال إعلان", href: "/admin/announcements?create=1", icon: Bell, color: "purple", permission: "ANNOUNCEMENTS_MANAGE" },
 ];
 
-function SidebarNavLink({ item, pathname, collapsed }: SidebarNavLinkProps) {
+function SidebarNavLink({ item, pathname, collapsed, onBookmarkToggle }: SidebarNavLinkProps) {
   const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
   const Icon = item.icon;
 
@@ -385,11 +406,12 @@ function SidebarNavLink({ item, pathname, collapsed }: SidebarNavLinkProps) {
     <Link
       href={item.href}
       className={cn(
-        "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+        "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
         isActive
           ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
           : "text-muted-foreground hover:bg-accent hover:text-foreground"
       )}
+      aria-current={isActive ? "page" : undefined}
     >
       {isActive && (
         <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-1 h-6 rounded-l-full bg-primary" />
@@ -406,18 +428,34 @@ function SidebarNavLink({ item, pathname, collapsed }: SidebarNavLinkProps) {
       >
         <Icon
           className={cn(
-            "h-4.5 w-4.5 transition-transform duration-200",
+            "h-4 w-4 transition-transform duration-200",
             "group-hover:scale-110"
           )}
+          aria-hidden="true"
         />
       </div>
 
-      {!collapsed && <span className="truncate">{item.title}</span>}
+      {!collapsed && <span className="truncate flex-1">{item.title}</span>}
 
       {!collapsed && item.badge && (
         <span className="mr-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground px-1">
           {item.badge}
         </span>
+      )}
+
+      {!collapsed && onBookmarkToggle && (
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onBookmarkToggle(item);
+          }}
+          className="p-1 rounded-md transition-all opacity-0 group-hover:opacity-100 hover:bg-muted"
+          aria-label="إضافة للمفضلة"
+          title="إضافة للمفضلة"
+        >
+          <Star className="h-3.5 w-3.5 text-muted-foreground hover:text-yellow-500" />
+        </button>
       )}
     </Link>
   );
@@ -443,36 +481,64 @@ function SidebarNavSection({
   items,
   pathname,
   collapsed,
+  onBookmarkToggle,
+  isCollapsed,
+  onToggle,
 }: SidebarNavSectionProps) {
   if (items.length === 0) return null;
   return (
     <div className="space-y-1">
       {!collapsed && (
-        <h3 className="px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">
-          {title}
-        </h3>
+        <button
+          onClick={onToggle}
+          type="button"
+          className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-foreground transition-colors group select-none text-right"
+        >
+          <span>{title}</span>
+          <ChevronDown
+            className={cn(
+              "h-3.5 w-3.5 transition-transform duration-200 opacity-60 group-hover:opacity-100",
+              isCollapsed ? "rotate-90" : "rotate-0"
+            )}
+          />
+        </button>
       )}
       {collapsed && <div className="mx-3 my-2 h-px bg-border/50" />}
-      <nav className="space-y-0.5">
-        {items.map((item) => (
-          <SidebarNavLink
-            key={item.href}
-            item={item}
-            pathname={pathname}
-            collapsed={collapsed}
-          />
-        ))}
-      </nav>
+      
+      <div
+        className={cn(
+          "space-y-0.5 overflow-hidden transition-all duration-300 ease-in-out",
+          !collapsed && isCollapsed ? "max-h-0 opacity-0 pointer-events-none" : "max-h-[1000px] opacity-100"
+        )}
+      >
+        <nav className="space-y-0.5">
+          {items.map((item) => (
+            <SidebarNavLink
+              key={item.href}
+              item={item}
+              pathname={pathname}
+              collapsed={collapsed}
+              onBookmarkToggle={onBookmarkToggle}
+            />
+          ))}
+        </nav>
+      </div>
     </div>
   );
 }
 
 export function AdminSidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = React.useState(false);
+  const [collapsed, setCollapsed] = useUIState<boolean>("sidebar-collapsed", false);
   const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [collapsedSections, setCollapsedSections] = useUIState<Record<string, boolean>>("sidebar-collapsed-sections", {});
   const { user } = useAuth();
   const { hasPermission } = usePermission();
+
+  const toggleSection = (title: string) => {
+    setCollapsedSections((prev) => ({ ...prev, [title]: !prev[title] }));
+  };
 
   const canAccessNavItem = (item: SidebarNavItem) => {
     const routePermission = getRequiredPermissionForAdminPath(item.href);
@@ -486,53 +552,95 @@ export function AdminSidebar() {
     return hasPermission(requiredPermission);
   };
 
-  const filterByPermission = (items: SidebarNavItem[]) =>
-    items.filter(canAccessNavItem);
+  const filterBySearchAndPermission = React.useCallback(
+    (items: SidebarNavItem[]) => {
+      return items.filter((item) => {
+        if (!canAccessNavItem(item)) return false;
+        if (!searchQuery) return true;
+        return item.title.toLowerCase().includes(searchQuery.toLowerCase());
+      });
+    },
+    [canAccessNavItem, searchQuery]
+  );
 
-  const filteredMainNav = filterByPermission(mainNavItems);
-  const filteredContentNav = filterByPermission(contentNavItems);
-  const filteredEngagementNav = filterByPermission(engagementNavItems);
-  const filteredCommunityNav = filterByPermission(communityNavItems);
-  const filteredFinancialNav = filterByPermission(financialNavItems);
-  const filteredInfrastructureNav = filterByPermission(infrastructureNavItems);
-  const filteredQuickActions = quickActions.filter((action) => {
-    const requiredPermission = action.permission
-      ? resolvePermissionInput(action.permission)
-      : getRequiredPermissionForAdminPath(action.href);
+  const filteredMainNav = React.useMemo(() => filterBySearchAndPermission(mainNavItems), [filterBySearchAndPermission]);
+  const filteredContentNav = React.useMemo(() => filterBySearchAndPermission(contentNavItems), [filterBySearchAndPermission]);
+  const filteredEngagementNav = React.useMemo(() => filterBySearchAndPermission(engagementNavItems), [filterBySearchAndPermission]);
+  const filteredCommunityNav = React.useMemo(() => filterBySearchAndPermission(communityNavItems), [filterBySearchAndPermission]);
+  const filteredFinancialNav = React.useMemo(() => filterBySearchAndPermission(financialNavItems), [filterBySearchAndPermission]);
+  const filteredInfrastructureNav = React.useMemo(() => filterBySearchAndPermission(infrastructureNavItems), [filterBySearchAndPermission]);
+  const filteredQuickActions = React.useMemo(() => {
+    return quickActions.filter((action) => {
+      const requiredPermission = action.permission
+        ? resolvePermissionInput(action.permission)
+        : getRequiredPermissionForAdminPath(action.href);
 
-    return !requiredPermission || hasPermission(requiredPermission);
-  });
+      return !requiredPermission || hasPermission(requiredPermission);
+    });
+  }, [hasPermission]);
 
   const [bookmarks, setBookmarks] = React.useState<BookmarkItem[]>([]);
 
+  // Load bookmarks from localStorage
   React.useEffect(() => {
-    const savedState = window.localStorage.getItem("admin-sidebar-collapsed");
-    if (savedState) {
-      setCollapsed(savedState === "true");
+    try {
+      const saved = window.localStorage.getItem("admin-sidebar-bookmarks");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setBookmarks(parsed);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load bookmarks:", error);
     }
   }, []);
 
   const toggleCollapsed = () => {
-    setCollapsed((previous) => {
-      const next = !previous;
-      window.localStorage.setItem("admin-sidebar-collapsed", String(next));
-      return next;
-    });
+    setCollapsed((previous) => !previous);
   };
 
   const removeBookmark = (id: string) => {
     const bookmark = bookmarks.find(b => b.id === id);
-    setBookmarks(prev => prev.filter(b => b.id !== id));
+    const updated = bookmarks.filter(b => b.id !== id);
+    setBookmarks(updated);
+    window.localStorage.setItem("admin-sidebar-bookmarks", JSON.stringify(updated));
     if (bookmark) {
       toast.success(`تمت إزالة "${bookmark.title}" من المفضلة`);
     }
   };
 
+  const toggleBookmark = (item: SidebarNavItem) => {
+    const existing = bookmarks.find(b => b.href === item.href);
+    if (existing) {
+      removeBookmark(existing.id);
+    } else {
+      const iconComponent = item.icon as any;
+      const newBookmark: BookmarkItem = {
+        id: `bookmark-${Date.now()}`,
+        title: item.title,
+        href: item.href,
+        iconName: iconComponent.displayName || iconComponent.name || 'Bookmark',
+      };
+      const updated = [...bookmarks, newBookmark];
+      setBookmarks(updated);
+      window.localStorage.setItem("admin-sidebar-bookmarks", JSON.stringify(updated));
+      toast.success(`تمت إضافة "${item.title}" إلى المفضلة`);
+    }
+  };
+
+  const isBookmarked = (href: string) => bookmarks.some(b => b.href === href);
+
   // Keyboard shortcuts
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShortcutsOpen(false);
-      if (e.key === '?' && !e.ctrlKey && !e.metaKey) setShortcutsOpen(prev => !prev);
+      if (e.key === 'Escape') {
+        setShortcutsOpen(false);
+      }
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey && document.activeElement?.tagName !== 'INPUT') {
+        e.preventDefault();
+        setShortcutsOpen(prev => !prev);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -544,18 +652,20 @@ export function AdminSidebar() {
         "flex h-screen flex-col border-l border-border/60 bg-card/80 backdrop-blur-xl transition-all duration-300 ease-in-out",
         collapsed ? "w-[72px]" : "w-[260px]"
       )}
+      aria-label="القائمة الجانبية للإدارة"
     >
       {/* Header */}
       <div className="flex h-16 items-center justify-between border-b px-3">
         {!collapsed && (
           <div className="flex items-center gap-2.5 pr-1">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden bg-white border border-primary/20 shadow-lg shadow-primary/10">
-              <Image 
-                src="/logo-tolo.jpg" 
-                alt="TOLO" 
+              <Image
+                src="/logo-tolo.jpg"
+                alt="TOLO"
                 width={36}
                 height={36}
                 className="h-full w-full object-cover"
+                priority
               />
             </div>
             <div>
@@ -571,6 +681,7 @@ export function AdminSidebar() {
               label="البحث"
               variant="ghost"
               onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
+              aria-label="البحث"
             />
           )}
           <IconButton
@@ -579,6 +690,7 @@ export function AdminSidebar() {
             variant="ghost"
             onClick={toggleCollapsed}
             className={collapsed ? "mx-auto" : ""}
+            aria-label={collapsed ? "توسيع القائمة الجانبية" : "طي القائمة الجانبية"}
           />
         </div>
       </div>
@@ -586,8 +698,41 @@ export function AdminSidebar() {
       {!collapsed && user && (
         <div className="border-b px-3 py-3">
           <div className="rounded-2xl border border-primary/10 bg-gradient-to-br from-primary/10 via-background to-background p-3">
-            <p className="text-[11px] font-black text-foreground">{user.name || "Admin"}</p>
-            <p className="mt-1 text-[11px] text-muted-foreground">{user.email || "admin@tolo.com"}</p>
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-violet-500 text-white font-bold text-xs shadow-md shadow-primary/20">
+                {(user.name || "A").substring(0, 2).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-black text-foreground">{user.name || "Admin"}</p>
+                <p className="truncate mt-0.5 text-[10px] text-muted-foreground">{user.email || "admin@tolo.com"}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Search Input */}
+      {!collapsed && (
+        <div className="px-3 pt-2 pb-2 border-b">
+          <div className="relative">
+            <Search className="absolute right-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="بحث سريع في القائمة..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl bg-muted/60 pl-8 pr-9 py-2 text-xs transition-all duration-200 hover:bg-muted focus:bg-background focus:outline-none focus:ring-1 focus:ring-primary border border-transparent focus:border-border text-foreground text-right"
+              dir="rtl"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute left-3 top-2 text-muted-foreground hover:text-foreground text-xs p-0.5"
+                type="button"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -632,7 +777,49 @@ export function AdminSidebar() {
           </h3>
           <nav className="space-y-0.5 mt-1">
             {bookmarks.map((bookmark) => {
-              const Icon = bookmark.icon;
+              const iconMap: Record<string, React.ElementType> = {
+                'LayoutDashboard': LayoutDashboard,
+                'Users': Users,
+                'BookOpen': BookOpen,
+                'Trophy': Trophy,
+                'Bell': Bell,
+                'MessageSquare': MessageSquare,
+                'Calendar': Calendar,
+                'Settings': Settings,
+                'FileText': FileText,
+                'Gift': Gift,
+                'Target': Target,
+                'Award': Award,
+                'Medal': Medal,
+                'Newspaper': Newspaper,
+                'Gamepad2': Gamepad2,
+                'BarChart3': BarChart3,
+                'Monitor': Monitor,
+                'ScrollText': ScrollText,
+                'Home': Home,
+                'GraduationCap': GraduationCap,
+                'Search': Search,
+                'Keyboard': Keyboard,
+                'Star': Star,
+                'Zap': Zap,
+                'UserPlus': UserPlus,
+                'FilePlus': FilePlus,
+                'Bookmark': Bookmark,
+                'Bot': Bot,
+                'Radio': Radio,
+                'TableProperties': TableProperties,
+                'Send': Send,
+                'Split': Split,
+                'Workflow': Workflow,
+                'PlayCircle': PlayCircle,
+                'ShieldCheck': ShieldCheck,
+                'CreditCard': CreditCard,
+                'Ticket': Ticket,
+                'DollarSign': DollarSign,
+                'ClipboardList': ClipboardList,
+                'Database': Database,
+              };
+              const IconComponent = iconMap[bookmark.iconName] || Bookmark;
               const isActive = pathname === bookmark.href;
               return (
                 <div
@@ -648,7 +835,7 @@ export function AdminSidebar() {
                         : "text-muted-foreground hover:bg-accent hover:text-foreground"
                     )}
                   >
-                    <Icon className="h-3.5 w-3.5" />
+                    <IconComponent className="h-3.5 w-3.5" />
                     <span className="truncate">{bookmark.title}</span>
                   </Link>
                   <button
@@ -665,17 +852,65 @@ export function AdminSidebar() {
       )}
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin">
-        <SidebarNavSection title="الرئيسية" items={filteredMainNav} pathname={pathname} collapsed={collapsed} />
-        <SidebarNavSection title="المحتوى التعليمي" items={filteredContentNav} pathname={pathname} collapsed={collapsed} />
-        <SidebarNavSection title="الأنشطة والتحفيز" items={filteredEngagementNav} pathname={pathname} collapsed={collapsed} />
-        <SidebarNavSection title="المجتمع" items={filteredCommunityNav} pathname={pathname} collapsed={collapsed} />
-        <SidebarNavSection title="الإدارة المالية" items={filteredFinancialNav} pathname={pathname} collapsed={collapsed} />
-        <SidebarNavSection title="البنية التحتية" items={filteredInfrastructureNav} pathname={pathname} collapsed={collapsed} />
+      <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin" role="navigation" aria-label="القائمة الرئيسية">
+        <SidebarNavSection
+          title="الرئيسية"
+          items={filteredMainNav}
+          pathname={pathname}
+          collapsed={collapsed}
+          onBookmarkToggle={toggleBookmark}
+          isCollapsed={searchQuery ? false : !!collapsedSections["الرئيسية"]}
+          onToggle={() => toggleSection("الرئيسية")}
+        />
+        <SidebarNavSection
+          title="المحتوى التعليمي"
+          items={filteredContentNav}
+          pathname={pathname}
+          collapsed={collapsed}
+          onBookmarkToggle={toggleBookmark}
+          isCollapsed={searchQuery ? false : !!collapsedSections["المحتوى التعليمي"]}
+          onToggle={() => toggleSection("المحتوى التعليمي")}
+        />
+        <SidebarNavSection
+          title="الأنشطة والتحفيز"
+          items={filteredEngagementNav}
+          pathname={pathname}
+          collapsed={collapsed}
+          onBookmarkToggle={toggleBookmark}
+          isCollapsed={searchQuery ? false : !!collapsedSections["الأنشطة والتحفيز"]}
+          onToggle={() => toggleSection("الأنشطة والتحفيز")}
+        />
+        <SidebarNavSection
+          title="المجتمع"
+          items={filteredCommunityNav}
+          pathname={pathname}
+          collapsed={collapsed}
+          onBookmarkToggle={toggleBookmark}
+          isCollapsed={searchQuery ? false : !!collapsedSections["المجتمع"]}
+          onToggle={() => toggleSection("المجتمع")}
+        />
+        <SidebarNavSection
+          title="الإدارة المالية"
+          items={filteredFinancialNav}
+          pathname={pathname}
+          collapsed={collapsed}
+          onBookmarkToggle={toggleBookmark}
+          isCollapsed={searchQuery ? false : !!collapsedSections["الإدارة المالية"]}
+          onToggle={() => toggleSection("الإدارة المالية")}
+        />
+        <SidebarNavSection
+          title="البنية التحتية"
+          items={filteredInfrastructureNav}
+          pathname={pathname}
+          collapsed={collapsed}
+          onBookmarkToggle={toggleBookmark}
+          isCollapsed={searchQuery ? false : !!collapsedSections["البنية التحتية"]}
+          onToggle={() => toggleSection("البنية التحتية")}
+        />
       </div>
 
       {/* Footer */}
-      <div className="border-t p-3 space-y-0.5">
+      <div className="border-t p-3 space-y-0.5" role="navigation" aria-label="التذييل">
         <SidebarNavLink
           item={{
             title: "سجل النظام",
@@ -698,11 +933,11 @@ export function AdminSidebar() {
           pathname={pathname}
           collapsed={collapsed}
         />
-        
+
         {!collapsed && (
           <button
             onClick={() => setShortcutsOpen(true)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50">
               <Keyboard className="h-4 w-4" />
@@ -710,30 +945,30 @@ export function AdminSidebar() {
             <span>اختصارات لوحة المفاتيح</span>
           </button>
         )}
-        
+
         <div className={cn("pt-2 mt-2 border-t", collapsed && "px-0")}>
-            <Link
-              href="/"
-              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50">
-                <Home className="h-4.5 w-4.5" />
-              </div>
-              {!collapsed && <span>العودة للموقع</span>}
-            </Link>
+          <Link
+            href="/"
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50">
+              <Home className="h-4 w-4" />
+            </div>
+            {!collapsed && <span>العودة للموقع</span>}
+          </Link>
         </div>
       </div>
 
       {/* Keyboard Shortcuts Dialog */}
       <Dialog open={shortcutsOpen} onOpenChange={setShortcutsOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-labelledby="shortcuts-dialog-title">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle id="shortcuts-dialog-title" className="flex items-center gap-2">
               <Keyboard className="h-5 w-5" />
               اختصارات لوحة المفاتيح
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-3" role="list" aria-label="قائمة الاختصارات">
             {[
               { keys: ["Ctrl", "K"], action: "البحث السريع" },
               { keys: ["Ctrl", "/"], action: "لوحة الأوامر" },
@@ -749,12 +984,12 @@ export function AdminSidebar() {
               { keys: ["Ctrl", "Shift", "?"], action: "عرض الاختصارات" },
               { keys: ["Esc"], action: "إغلاق القوائم/النوافذ" },
             ].map((shortcut, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
+              <div key={i} className="flex items-center justify-between py-2 border-b last:border-0" role="listitem">
                 <span className="text-sm">{shortcut.action}</span>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1" aria-label={`مفاتيح الاختصار: ${shortcut.keys.join(' + ')}`}>
                   {shortcut.keys.map((key, j) => (
                     <kbd key={j} className="px-2 py-1 text-xs font-mono bg-muted rounded border">
-                       {key}
+                      {key}
                     </kbd>
                   ))}
                 </div>

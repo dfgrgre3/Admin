@@ -19,7 +19,24 @@ import dynamic from "next/dynamic";
 import { AnalyticsSkeleton } from "@/components/admin/ui/loading-skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { AiCommandCenter } from "@/components/admin/dashboard/ai-command-center";
-import { Reorder } from "framer-motion";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { m } from "framer-motion";
 import { toast } from "sonner";
 import { apiRoutes } from "@/lib/api/routes";
 import { adminFetch } from "@/lib/api/admin-api";
@@ -102,10 +119,82 @@ interface ActivityMetricsData {
   };
 }
 
+interface SortableWidgetBlockProps {
+  id: string;
+  isEditMode: boolean;
+  children: React.ReactNode;
+}
+
+const SortableWidgetBlock = React.memo(function SortableWidgetBlock({
+  id,
+  isEditMode,
+  children,
+}: SortableWidgetBlockProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, disabled: !isEditMode });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : "auto",
+    position: "relative",
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="group relative">
+      <m.div
+        animate={{
+          scale: isDragging ? 1.01 : 1,
+          boxShadow: isDragging ? "0 10px 30px rgba(0,0,0,0.15)" : "0 0 0 rgba(0,0,0,0)",
+        }}
+        transition={{ duration: 0.2 }}
+        className={`relative ${isEditMode ? "cursor-grab active:cursor-grabbing border-2 border-dashed border-primary/50 rounded-3xl p-2 bg-primary/5" : ""}`}
+        {...attributes}
+        {...listeners}
+      >
+        {isEditMode && (
+          <div className="absolute top-4 right-4 z-10 p-2 bg-background border border-border rounded-lg shadow-xl text-primary flex items-center gap-2 font-black">
+            <Move className="w-4 h-4" /> اسحب لتغيير الترتيب
+          </div>
+        )}
+        {children}
+      </m.div>
+    </div>
+  );
+});
+
 export default function AdminAnalyticsPage() {
   const [period, setPeriod] = React.useState("month");
   const [isEditMode, setIsEditMode] = React.useState(false);
   const [widgetOrder, setWidgetOrder] = React.useState(["users", "activity", "finance", "content"]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setWidgetOrder((currentItems) => {
+        const oldIndex = currentItems.indexOf(active.id as string);
+        const newIndex = currentItems.indexOf(over.id as string);
+        return arrayMove(currentItems, oldIndex, newIndex);
+      });
+    }
+  };
 
   const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError, refetch: refetchAnalytics } = useQuery<AnalyticsData>({
     queryKey: ['admin', 'analytics', period],
@@ -358,14 +447,19 @@ export default function AdminAnalyticsPage() {
 
            <AiCommandCenter />
 
-           <Reorder.Group axis="y" values={widgetOrder} onReorder={setWidgetOrder} className="space-y-6">
+           <DndContext
+             sensors={sensors}
+             collisionDetection={closestCenter}
+             onDragEnd={handleDragEnd}
+           >
+             <SortableContext items={widgetOrder} strategy={verticalListSortingStrategy}>
+               <div className="space-y-6">
               {widgetOrder.map((widgetBlock) => (
-                 <Reorder.Item 
-                    key={widgetBlock} 
-                    value={widgetBlock} 
-                    drag={isEditMode ? "y" : false}
-                    className={`relative ${isEditMode ? "cursor-grab active:cursor-grabbing border-2 border-dashed border-primary/50 rounded-3xl p-2 bg-primary/5" : ""}`}
-                 >
+                  <SortableWidgetBlock
+                     key={widgetBlock}
+                     id={widgetBlock}
+                     isEditMode={isEditMode}
+                  >
                     {isEditMode && (
                       <div className="absolute top-4 right-4 z-10 p-2 bg-background border border-border rounded-lg shadow-xl text-primary flex items-center gap-2 font-black">
                          <Move className="w-4 h-4" /> اسحب لتغيير الترتيب
@@ -438,9 +532,11 @@ export default function AdminAnalyticsPage() {
                          </AdminGridCard>
                        </div>
                     )}
-                 </Reorder.Item>
-              ))}
-           </Reorder.Group>
+                    </SortableWidgetBlock>
+               ))}
+               </div>
+             </SortableContext>
+           </DndContext>
         </TabsContent>
 
         {/* ====================================

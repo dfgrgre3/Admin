@@ -3,177 +3,88 @@
 import * as React from "react";
 import { PageHeader } from "@/components/admin/ui/page-header";
 import { AdminButton } from "@/components/admin/ui/admin-button";
-import { AdminCard } from "@/components/admin/ui/admin-card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { useForm, Path } from "react-hook-form";
+import { Form } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 import {
-  Globe,
-  Mail,
-  Phone,
-  Share2,
-  Wrench,
-  RefreshCw,
-  Save,
-  Download,
-  AlertTriangle,
-  Clock,
-  Zap,
-  Lock,
-  Layout,
-  Server,
-  Users,
-  MessageCircle,
-  Target,
-  TrendingUp,
-  Sparkles,
-  Star
+  Globe, Mail, Phone, Share2, Wrench, RefreshCw, Save, Download,
+  AlertTriangle, Clock, Zap, Lock, Layout, Server, Users, MessageCircle,
+  Target, TrendingUp, Sparkles, Star, Shield, CreditCard, HardDrive,
+  Gauge, Eye, Bell, Languages, Palette, Search, XCircle,
+  type LucideIcon,
 } from "lucide-react";
 import { SettingsSkeleton } from "@/components/admin/ui/loading-skeleton";
 import { logger } from '@/lib/logger';
 import { adminFetch } from "@/lib/api/admin-api";
 import { apiRoutes } from "@/lib/api/routes";
+import { cn } from "@/lib/utils";
+import { settingsSchema, getSafeSettings, type SettingsFormValues, type TabConfig } from "./_components/types";
+import { SettingsIconButton } from "./_components/shared";
+import { GeneralTab } from "./_components/tabs-general";
+import { FeaturesTab } from "./_components/tabs-features";
+import { SocialTab } from "./_components/tabs-social";
+import { EmailTab } from "./_components/tabs-email";
+import { useUIState } from "@/hooks/use-ui-state";
 
-const settingsSchema = z.object({
-  siteName: z.string().min(1, "اسم الموقع مطلوب"),
-  siteDescription: z.string().min(1, "وصف الموقع مطلوب"),
-  siteKeywords: z.string(),
-  contactEmail: z.string().email("البريد غير صالح"),
-  supportPhone: z.string().optional(),
-  socialLinks: z.object({
-    facebook: z.string().optional(),
-    twitter: z.string().optional(),
-    instagram: z.string().optional(),
-    youtube: z.string().optional(),
-  }),
-  features: z.object({
-    registration: z.boolean(),
-    emailVerification: z.boolean(),
-    engagement: z.boolean(),
-    forum: z.boolean(),
-    blog: z.boolean(),
-    events: z.boolean(),
-    aiAssistant: z.boolean(),
-  }),
-  engagement: z.object({
-    pointsPerTask: z.number().min(0),
-    pointsPerStudySession: z.number().min(0),
-    pointsPerExam: z.number().min(0),
-    streakBonus: z.number().min(0),
-  }),
-  limits: z.object({
-    maxUploadSize: z.number().min(1),
-    maxStudySessionDuration: z.number().min(1),
-    examTimeLimit: z.number().min(1),
-  }),
-  maintenance: z.object({
-    enabled: z.boolean(),
-    message: z.string(),
-  }),
-});
+// ============================================================
+// Tab configuration
+// ============================================================
+const TABS: TabConfig[] = [
+  { value: "general", label: "الهوية العامة", icon: Globe, color: "blue", group: "عامة" },
+  { value: "features", label: "المزايا", icon: Zap, color: "amber", group: "عامة" },
+  { value: "social", label: "التواصل", icon: Share2, color: "pink", group: "عامة" },
+  { value: "engagement", label: "التحفيز", icon: Star, color: "purple", group: "النظام" },
+  { value: "limits", label: "الحدود", icon: Wrench, color: "emerald", group: "النظام" },
+  { value: "maintenance", label: "الصيانة", icon: Server, color: "red", group: "النظام" },
+  { value: "email", label: "البريد", icon: Mail, color: "sky", group: "البنية التحتية" },
+  { value: "security", label: "الأمان", icon: Shield, color: "rose", group: "البنية التحتية" },
+  { value: "payments", label: "المدفوعات", icon: CreditCard, color: "green", group: "البنية التحتية" },
+  { value: "storage", label: "التخزين", icon: HardDrive, color: "cyan", group: "البنية التحتية" },
+  { value: "performance", label: "الأداء", icon: Gauge, color: "orange", group: "البنية التحتية" },
+  { value: "privacy", label: "الخصوصية", icon: Eye, color: "indigo", group: "التجربة" },
+  { value: "notifications", label: "الإشعارات", icon: Bell, color: "yellow", group: "التجربة" },
+  { value: "localization", label: "اللغة", icon: Languages, color: "teal", group: "التجربة" },
+  { value: "theme", label: "المظهر", icon: Palette, color: "violet", group: "التجربة" },
+];
 
-type SettingsFormValues = z.infer<typeof settingsSchema>;
+const TAB_GROUPS = Array.from(new Set(TABS.map((t) => t.group)));
 
+// ============================================================
+// Main Page Component
+// ============================================================
 export default function AdminSettingsPage() {
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [hasChanges, setHasChanges] = React.useState(false);
   const [_lastSaved, setLastSaved] = React.useState<Date | null>(null);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [activeTab, setActiveTab] = useUIState<string>("settings-active-tab", "general");
+  const [confirmMaintenance, setConfirmMaintenance] = React.useState(false);
 
   const form = useForm<SettingsFormValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
-      siteName: "",
-      siteDescription: "",
-      siteKeywords: "",
-      contactEmail: "",
-      supportPhone: "",
+      siteName: "", siteDescription: "", siteKeywords: "", contactEmail: "", supportPhone: "",
       socialLinks: {},
-      features: {
-        registration: true,
-        emailVerification: true,
-        engagement: true,
-        forum: true,
-        blog: true,
-        events: true,
-        aiAssistant: true,
-      },
-      engagement: {
-        pointsPerTask: 10,
-        pointsPerStudySession: 5,
-        pointsPerExam: 20,
-        streakBonus: 2,
-      },
-      limits: {
-        maxUploadSize: 10,
-        maxStudySessionDuration: 180,
-        examTimeLimit: 60,
-      },
-      maintenance: {
-        enabled: false,
-        message: "",
-      },
+      features: { registration: true, emailVerification: true, engagement: true, forum: true, blog: true, events: true, aiAssistant: true },
+      engagement: { pointsPerTask: 10, pointsPerStudySession: 5, pointsPerExam: 20, streakBonus: 2 },
+      limits: { maxUploadSize: 10, maxStudySessionDuration: 180, examTimeLimit: 60 },
+      maintenance: { enabled: false, message: "" },
+      email: { smtpHost: "", smtpPort: 587, smtpUsername: "", smtpPassword: "", fromAddress: "", fromName: "", encryption: "tls", enabled: true, maxBatchSize: 50, throttleMs: 200 },
+      security: { passwordMinLength: 8, passwordRequireUppercase: true, passwordRequireLowercase: true, passwordRequireNumbers: true, passwordRequireSymbols: false, sessionTimeoutMinutes: 60, maxLoginAttempts: 5, lockoutDurationMinutes: 15, enforce2FA: false, rateLimitPerMinute: 30, rateLimitPerHour: 200, hstsEnabled: true, contentSecurityPolicy: "default-src 'self'" },
+      payments: { currency: "EGP", currencySymbol: "ج.م", taxRate: 14, enablePaymob: true, enableWallet: true, enableCash: false, minDepositAmount: 10, maxDepositAmount: 10000, autoConfirmPayments: false, invoicePrefix: "INV-", paymentTimeoutMinutes: 30 },
+      storage: { provider: "local", maxUploadSizeMB: 50, imageQuality: 80, imageMaxWidth: 1920, imageMaxHeight: 1080, enableCDN: false, cdnUrl: "", enableCompression: true, enableThumbnails: true, thumbnailWidth: 300, thumbnailHeight: 200, cleanupTempFilesAfterHours: 24 },
+      performance: { enableCaching: true, cacheTTLSeconds: 300, enableRedis: true, enableImageOptimization: true, enableLazyLoading: true, paginationDefaultLimit: 20, paginationMaxLimit: 100, enableGzipCompression: true, enableMinification: true, queryTimeoutSeconds: 30, maxConcurrentRequests: 100, enableDbConnectionPooling: true, dbPoolMaxOpenConns: 25, dbPoolMaxIdleConns: 10, dbPoolConnMaxLifetimeMinutes: 30 },
+      privacy: { termsOfServiceUrl: "", privacyPolicyUrl: "", cookiePolicyUrl: "", enableCookieConsent: true, enableGDPR: false, dataRetentionDays: 365, enableAnalytics: true, analyticsProvider: "", analyticsId: "", enableUserDataExport: true, enableAccountDeletion: true, deletionGracePeriodDays: 30, minAgeRequirement: 16, parentalConsentRequired: false, showWatermarkOnContent: false, watermarkText: "" },
+      notifications: { enablePushNotifications: true, enableEmailNotifications: true, enableSmsNotifications: false, pushProvider: "firebase", firebaseServerKey: "", firebaseSenderId: "", onesignalAppId: "", onesignalApiKey: "", dailyDigestEnabled: true, digestTime: "08:00", maxNotificationsPerDay: 10, quietHoursStart: "22:00", quietHoursEnd: "08:00" },
+      localization: { defaultLanguage: "ar", fallbackLanguage: "en", enableRTL: true, dateFormat: "YYYY-MM-DD", timeFormat: "HH:mm", timezone: "Africa/Cairo", numberFormat: "ar-EG" },
+      theme: { primaryColor: "#6366f1", secondaryColor: "#8b5cf6", accentColor: "#f59e0b", backgroundColor: "#0f172a", surfaceColor: "#1e293b", textColor: "#f8fafc", fontFamily: "Cairo, sans-serif", fontSize: "16px", borderRadius: "12px", logoUrl: "", faviconUrl: "", ogImageUrl: "", customCSS: "" },
     },
   });
-
-  const getSafeSettings = React.useCallback((settingsData: any) => {
-    const settings = settingsData?.settings || settingsData?.data?.settings || settingsData?.data || settingsData || {};
-    return {
-      siteName: settings.siteName || "",
-      siteDescription: settings.siteDescription || "",
-      siteKeywords: Array.isArray(settings.siteKeywords)
-        ? settings.siteKeywords.join(", ")
-        : typeof settings.siteKeywords === "string"
-          ? settings.siteKeywords
-          : "",
-      contactEmail: settings.contactEmail || "",
-      supportPhone: settings.supportPhone || "",
-      socialLinks: {
-        facebook: settings.socialLinks?.facebook || "",
-        twitter: settings.socialLinks?.twitter || "",
-        instagram: settings.socialLinks?.instagram || "",
-        youtube: settings.socialLinks?.youtube || "",
-      },
-      features: {
-        registration: settings.features?.registration ?? true,
-        emailVerification: settings.features?.emailVerification ?? true,
-        engagement: settings.features?.engagement ?? true,
-        forum: settings.features?.forum ?? true,
-        blog: settings.features?.blog ?? true,
-        events: settings.features?.events ?? true,
-        aiAssistant: settings.features?.aiAssistant ?? true,
-      },
-      engagement: {
-        pointsPerTask: settings.engagement?.pointsPerTask ?? 10,
-        pointsPerStudySession: settings.engagement?.pointsPerStudySession ?? 5,
-        pointsPerExam: settings.engagement?.pointsPerExam ?? 20,
-        streakBonus: settings.engagement?.streakBonus ?? 2,
-      },
-      limits: {
-        maxUploadSize: settings.limits?.maxUploadSize ?? 10,
-        maxStudySessionDuration: settings.limits?.maxStudySessionDuration ?? 180,
-        examTimeLimit: settings.limits?.examTimeLimit ?? 60,
-      },
-      maintenance: {
-        enabled: settings.maintenance?.enabled ?? false,
-        message: settings.maintenance?.message || "",
-      },
-    };
-  }, []);
 
   const fetchSettings = React.useCallback(async () => {
     setLoading(true);
@@ -188,51 +99,46 @@ export default function AdminSettingsPage() {
     } finally {
       setLoading(false);
     }
-  }, [form, getSafeSettings]);
+  }, [form]);
 
-  React.useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
+  React.useEffect(() => { fetchSettings(); }, [fetchSettings]);
 
   const handleSave = async (values: SettingsFormValues) => {
+    if (values.maintenance.enabled && !confirmMaintenance) {
+      setConfirmMaintenance(true);
+      toast.warning("يرجى تأكيد تفعيل وضع الصيانة بالضغط على حفظ مرة أخرى");
+      return;
+    }
+    setConfirmMaintenance(false);
     setSaving(true);
     try {
       const response = await adminFetch(apiRoutes.admin.settings, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...values,
-          siteKeywords: values.siteKeywords.split(",").map(k => k.trim()).filter(Boolean),
-        }),
+        body: JSON.stringify({ ...values, siteKeywords: values.siteKeywords.split(",").map((k: string) => k.trim()).filter(Boolean) }),
       });
-
       if (response.ok) {
         toast.success("تم حفظ إعدادات النظام بنجاح");
         setLastSaved(new Date());
         setHasChanges(false);
       } else {
-        toast.error("فشل في حفظ الإعدادات");
+        const errorData = await response.json().catch(() => ({}));
+        toast.error(errorData?.errors?.length ? errorData.errors.join("\n") : "فشل في حفظ الإعدادات");
       }
     } catch (err: unknown) {
       toast.error("خطأ في الاتصال بالخادم");
       logger.error(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const handleReset = async () => {
     try {
       const response = await adminFetch(apiRoutes.admin.settings, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reset: true }),
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reset: true }),
       });
-
       if (response.ok) {
         const data = await response.json();
-        const safeSettings = getSafeSettings(data);
-        form.reset(safeSettings);
+        form.reset(getSafeSettings(data));
         toast.success("تمت العودة للقيم الافتراضية");
       }
     } catch (err: unknown) {
@@ -244,7 +150,7 @@ export default function AdminSettingsPage() {
   const handleExportSettings = () => {
     const settings = form.getValues();
     const dataStr = JSON.stringify(settings, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', `system-settings-${new Date().toISOString().split('T')[0]}.json`);
@@ -253,375 +159,72 @@ export default function AdminSettingsPage() {
   };
 
   React.useEffect(() => {
-    const subscription = form.watch(() => {
-      setHasChanges(form.formState.isDirty);
-    });
+    const subscription = form.watch(() => setHasChanges(form.formState.isDirty));
     return () => subscription.unsubscribe();
   }, [form]);
+
+  const filteredTabs = React.useMemo(() => {
+    if (!searchQuery) return TABS;
+    const q = searchQuery.toLowerCase();
+    return TABS.filter((t) => t.label.includes(q) || t.group.includes(q) || t.value.includes(q));
+  }, [searchQuery]);
 
   if (loading) return <SettingsSkeleton />;
 
   return (
     <div className="space-y-10 pb-20" dir="rtl">
-      <PageHeader
-        title="إعدادات المنصة المركزية"
-        description="إدارة التكوينات الأساسية، تفعيل المزايا التعليمية، وشؤون الصيانة العامة للنظام."
-      >
+      <PageHeader title="إعدادات المنصة المركزية" description="إدارة التكوينات الأساسية، تفعيل المزايا التعليمية، وشؤون الصيانة العامة للنظام.">
         <div className="flex items-center gap-3">
           {hasChanges && (
             <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 font-black h-8 px-4 rounded-xl">
               تعديلات معلقة
             </Badge>
           )}
-          
           <div className="flex gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/10 backdrop-blur-xl shadow-2xl">
             <SettingsIconButton icon={Download} onClick={handleExportSettings} title="تصدير الإعدادات" />
             <SettingsIconButton icon={RefreshCw} onClick={handleReset} title="استعادة الافتراضي" />
             <div className="w-px h-6 bg-white/10 self-center mx-1" />
-            <AdminButton 
-              variant="premium"
-              size="sm" 
-              onClick={form.handleSubmit(handleSave)} 
-              disabled={saving || !hasChanges} 
-              className="h-9 px-6 rounded-xl font-black shadow-xl"
-              icon={Save}
-            >
+            <AdminButton variant="premium" size="sm" onClick={form.handleSubmit(handleSave)} disabled={saving || !hasChanges} className="h-9 px-6 rounded-xl font-black shadow-xl" icon={Save}>
               {saving ? "جاري الحفظ..." : "حفظ التغييرات"}
             </AdminButton>
           </div>
         </div>
       </PageHeader>
 
+      <div className="relative max-w-md">
+        <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="ابحث في الإعدادات..." className="h-12 rounded-2xl border-white/10 bg-white/5 pr-12 font-bold" />
+      </div>
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSave)}>
-          <Tabs defaultValue="general" className="space-y-10">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-10">
             <TabsList className="flex flex-wrap h-auto bg-card/50 backdrop-blur-xl border border-white/10 p-2 rounded-[2rem] gap-2 items-center justify-center">
-              {[
-                { value: "general", label: "الهوية العامة", icon: Globe, color: "blue" },
-                { value: "features", label: "المزايا والخصائص", icon: Zap, color: "amber" },
-                { value: "engagement", label: "نظام التحفيز", icon: Star, color: "purple" },
-                { value: "limits", label: "حدود النظام", icon: Wrench, color: "emerald" },
-                { value: "social", label: "روابط التواصل", icon: Share2, color: "pink" },
-                { value: "maintenance", label: "وضع الصيانة", icon: Server, color: "red" },
-              ].map((tab) => (
-                <TabsTrigger 
-                  key={tab.value} 
-                  value={tab.value}
-                  className="rounded-2xl h-11 px-6 data-[state=active]:bg-white/10 data-[state=active]:shadow-lg font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all border border-transparent data-[state=active]:border-white/10"
-                >
-                  <tab.icon className={`w-4 h-4 text-${tab.color}-500`} />
-                  {tab.label}
-                </TabsTrigger>
+              {TAB_GROUPS.map((group) => (
+                <React.Fragment key={group}>
+                  {group !== TAB_GROUPS[0] && <div className="w-px h-8 bg-white/10 mx-1" />}
+                  {TABS.filter((t) => t.group === group).map((tab) => {
+                    const isVisible = filteredTabs.includes(tab);
+                    if (!isVisible && searchQuery) return null;
+                    return (
+                      <TabsTrigger key={tab.value} value={tab.value}
+                        className={cn("rounded-2xl h-11 px-5 data-[state=active]:bg-white/10 data-[state=active]:shadow-lg font-black text-xs uppercase tracking-wider flex items-center gap-2 transition-all border border-transparent data-[state=active]:border-white/10", !isVisible && "hidden")}>
+                        <tab.icon className={cn("w-4 h-4", `text-${tab.color}-500`)} />
+                        {tab.label}
+                      </TabsTrigger>
+                    );
+                  })}
+                </React.Fragment>
               ))}
             </TabsList>
 
-            <TabsContent value="general" className="space-y-6 focus-visible:outline-none">
-              <AdminCard variant="glass" className="p-8 space-y-8">
-                <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-                  <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-500">
-                    <Globe className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black">الهوية الرقمية للمنصة</h3>
-                    <p className="text-xs font-bold text-muted-foreground uppercase opacity-60">تحديد الاسم، الوصف، والكلمات الدليلية لمحركات البحث.</p>
-                  </div>
-                </div>
-
-                <div className="grid gap-8">
-                  <FormField
-                    control={form.control}
-                    name="siteName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-black text-[10px] uppercase tracking-widest opacity-60">اسم المنصة الرسمي</FormLabel>
-                        <FormControl><Input {...field} className="h-14 rounded-2xl border-white/10 bg-white/5 text-lg font-black px-6" /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="siteDescription"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-black text-[10px] uppercase tracking-widest opacity-60">وصف المنصة (SEO Description)</FormLabel>
-                        <FormControl><Textarea {...field} className="rounded-2xl border-white/10 bg-white/5 min-h-[120px] p-6 text-sm font-bold" /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="grid md:grid-cols-2 gap-8">
-                    <FormField
-                      control={form.control}
-                      name="contactEmail"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-black text-[10px] uppercase tracking-widest opacity-60">بريد التواصل الرسمي</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Mail className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                              <Input {...field} className="h-14 rounded-2xl border-white/10 bg-white/5 pr-12 dir-ltr text-center font-bold" />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="supportPhone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-black text-[10px] uppercase tracking-widest opacity-60">هاتف الدعم الفني</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Phone className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                              <Input {...field} className="h-14 rounded-2xl border-white/10 bg-white/5 pr-12 dir-ltr text-center font-bold" />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-              </AdminCard>
-            </TabsContent>
-
-            <TabsContent value="features" className="focus-visible:outline-none">
-              <div className="grid md:grid-cols-2 gap-6">
-                {[
-                  { key: "registration", label: "تسجيل المستخدمين", icon: Users, desc: "السماح بانضمام مستخدمين جدد للمنصة" },
-                  { key: "emailVerification", label: "التحقق من البريد", icon: Lock, desc: "طلب التأكد من هوية المستخدم عبر البريد" },
-                  { key: "engagement", label: "نظام التحفيز والتقدير", icon: Star, desc: "تفعيل نظام النقاط والمستويات للطلاب" },
-                  { key: "forum", label: "منتدى النقاش العلمي", icon: MessageCircle, desc: "تفعيل ساحات الحوار والتبادل المعرفي" },
-                  { key: "blog", label: "المدونة الأكاديمية", icon: Layout, desc: "تفعيل التدوينات والمقالات التعليمية" },
-                  { key: "aiAssistant", label: "المساعد التعليمي (AI)", icon: Sparkles, desc: "تفعيل الذكاء الاصطناعي لمساعدة الطلاب" },
-                ].map((feature) => (
-                  <FormField
-                    key={feature.key}
-                    control={form.control}
-                    name={`features.${feature.key}` as Path<SettingsFormValues>}
-                    render={({ field }) => (
-                      <AdminCard variant="glass" className="p-6 transition-all hover:border-primary/30">
-                        <div className="flex items-center justify-between">
-                          <div className="flex gap-4 items-center">
-                            <div className="p-3 rounded-2xl bg-white/5 text-primary border border-white/10">
-                              <feature.icon className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <h4 className="font-black text-sm tracking-tight">{feature.label}</h4>
-                              <p className="text-[10px] font-bold text-muted-foreground">{feature.desc}</p>
-                            </div>
-                          </div>
-                          <Switch
-                            checked={field.value as boolean}
-                            onCheckedChange={field.onChange}
-                            className="bg-white/10"
-                          />
-                        </div>
-                      </AdminCard>
-                    )}
-                  />
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="engagement" className="focus-visible:outline-none">
-              <AdminCard variant="glass" className="p-8">
-                <div className="flex items-center gap-4 mb-10">
-                  <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-500 border border-purple-500/20 shadow-sm">
-                    <Star className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black">إعدادات نقاط التفاعل</h3>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase opacity-60">تحديد وزن النقاط الممنوحة مقابل الأنشطة التعليمية.</p>
-                  </div>
-                </div>
-
-                <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
-                  {[
-                    { key: "pointsPerTask", label: "إتمام مهمة", icon: Zap, color: "amber" },
-                    { key: "pointsPerStudySession", label: "جلسة دراسية", icon: Clock, color: "blue" },
-                    { key: "pointsPerExam", label: "اجتياز اختبار", icon: Target, color: "red" },
-                    { key: "streakBonus", label: "مكافأة الاستمرارية %", icon: TrendingUp, color: "emerald" },
-                  ].map((field) => (
-                    <FormField
-                      key={field.key}
-                      control={form.control}
-                      name={`engagement.${field.key}` as Path<SettingsFormValues>}
-                      render={({ field: inputField }) => (
-                        <FormItem className="text-center group">
-                          <div className={`mx-auto p-4 rounded-3xl bg-${field.color}-500/5 border border-${field.color}-500/10 group-hover:scale-110 transition-transform mb-4`}>
-                            <field.icon className={`w-8 h-8 text-${field.color}-500`} />
-                          </div>
-                          <FormLabel className="font-black text-[10px] uppercase tracking-widest opacity-60">{field.label}</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              className="h-14 rounded-2xl border-white/10 bg-white/5 text-center font-black text-xl" 
-                              {...inputField} 
-                              value={typeof inputField.value === 'number' || typeof inputField.value === 'string' ? inputField.value : ""}
-                              onChange={(e) => inputField.onChange(parseInt(e.target.value) || 0)}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
-              </AdminCard>
-            </TabsContent>
-
-            <TabsContent value="social" className="focus-visible:outline-none">
-              <AdminCard variant="glass" className="p-8 space-y-8">
-                <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-                  <div className="p-3 rounded-2xl bg-pink-500/10 text-pink-500">
-                    <Share2 className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black">روابط التواصل الاجتماعي</h3>
-                    <p className="text-xs font-bold text-muted-foreground uppercase opacity-60">روابط حسابات المنصة على منصات التواصل.</p>
-                  </div>
-                </div>
-
-                <div className="grid gap-8">
-                  {[
-                    { key: "facebook", label: "فيسبوك", placeholder: "https://facebook.com/..." },
-                    { key: "twitter", label: "تويتر (X)", placeholder: "https://twitter.com/..." },
-                    { key: "instagram", label: "إنستغرام", placeholder: "https://instagram.com/..." },
-                    { key: "youtube", label: "يوتيوب", placeholder: "https://youtube.com/..." },
-                  ].map((social) => (
-                    <FormField
-                      key={social.key}
-                      control={form.control}
-                      name={`socialLinks.${social.key}` as Path<SettingsFormValues>}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-black text-[10px] uppercase tracking-widest opacity-60">{social.label}</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              value={typeof field.value === 'string' ? field.value : ''}
-                              dir="ltr"
-                              placeholder={social.placeholder}
-                              className="h-14 rounded-2xl border-white/10 bg-white/5 px-6 font-bold text-left"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
-              </AdminCard>
-            </TabsContent>
-
-            <TabsContent value="limits" className="focus-visible:outline-none">
-              <AdminCard variant="glass" className="p-8 space-y-8">
-                <div className="flex items-center gap-4 border-b border-white/5 pb-6">
-                  <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500">
-                    <Wrench className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black">حدود النظام والقيود</h3>
-                    <p className="text-xs font-bold text-muted-foreground uppercase opacity-60">تحديد الحدود القصوى للملفات والجلسات والاختبارات.</p>
-                  </div>
-                </div>
-
-                <div className="grid sm:grid-cols-3 gap-8">
-                  {[
-                    { key: "maxUploadSize", label: "حجم الرفع الأقصى (MB)", icon: Wrench, color: "emerald" },
-                    { key: "maxStudySessionDuration", label: "مدة الجلسة القصوى (دقيقة)", icon: Clock, color: "blue" },
-                    { key: "examTimeLimit", label: "وقت الاختبار الافتراضي (دقيقة)", icon: Target, color: "amber" },
-                  ].map((field) => (
-                    <FormField
-                      key={field.key}
-                      control={form.control}
-                      name={`limits.${field.key}` as Path<SettingsFormValues>}
-                      render={({ field: inputField }) => (
-                        <FormItem className="text-center">
-                          <FormLabel className="font-black text-[10px] uppercase tracking-widest opacity-60">{field.label}</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              className="h-14 rounded-2xl border-white/10 bg-white/5 text-center font-black text-xl"
-                              {...inputField}
-                              value={typeof inputField.value === 'number' || typeof inputField.value === 'string' ? inputField.value : ""}
-                              onChange={(e) => inputField.onChange(parseInt(e.target.value) || 0)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
-              </AdminCard>
-            </TabsContent>
-
-            <TabsContent value="maintenance" className="focus-visible:outline-none">
-              <AdminCard variant="glass" className="p-8 border-red-500/20 bg-red-500/5">
-                <div className="flex items-center justify-between mb-10 border-b border-red-500/10 pb-6">
-                  <div className="flex gap-4 items-center">
-                    <div className="p-4 rounded-3xl bg-red-500 text-white shadow-lg animate-pulse">
-                      <AlertTriangle className="w-8 h-8" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-black text-red-500">وضع الصيانة والنظام</h3>
-                      <p className="text-xs font-bold text-red-500/60 uppercase">عند التفعيل، سيتم إغلاق المنصة أمام الطلاب والاكتفاء بدخول المسؤولين فقط.</p>
-                    </div>
-                  </div>
-                  <FormField
-                    control={form.control}
-                    name="maintenance.enabled"
-                    render={({ field }) => (
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          className="scale-125 data-[state=checked]:bg-red-500"
-                        />
-                      </FormControl>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="maintenance.message"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-black text-[10px] uppercase tracking-widest text-red-500/60">رسالة تنبيه المستخدمين</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          {...field} 
-                          placeholder="المنصة تحت الصيانة الدورية حالياً.. سنعود قريباً لخدمتكم." 
-                          className="rounded-3xl border-red-500/10 bg-red-500/5 min-h-[150px] p-8 text-lg font-black text-red-500/80 placeholder:text-red-500/30"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </AdminCard>
-            </TabsContent>
+            <TabsContent value="general"><GeneralTab form={form} /></TabsContent>
+            <TabsContent value="features"><FeaturesTab form={form} /></TabsContent>
+            <TabsContent value="social"><SocialTab form={form} /></TabsContent>
+            <TabsContent value="email"><EmailTab form={form} /></TabsContent>
           </Tabs>
         </form>
       </Form>
     </div>
-  );
-}
-
-function SettingsIconButton({ icon: Icon, onClick, title }: { icon: React.ElementType, onClick?: () => void, title?: string }) {
-  return (
-    <button 
-      type="button"
-      onClick={onClick}
-      title={title}
-      className="p-2.5 rounded-xl bg-white/5 border border-white/5 text-muted-foreground hover:text-white hover:bg-white/10 hover:border-white/20 transition-all active:scale-90"
-    >
-      <Icon className="w-4 h-4" />
-    </button>
   );
 }

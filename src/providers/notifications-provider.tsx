@@ -115,8 +115,8 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
 
       if (reset) {
         setNotifications(nextNotifications);
-        offsetRef.current = limit;
-        setOffset(limit);
+        offsetRef.current = nextNotifications.length;
+        setOffset(nextNotifications.length);
 
         handleNewNotificationToast(nextNotifications, isFirstFetch.current, lastNotifiedId);
         isFirstFetch.current = false;
@@ -169,10 +169,10 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
   }, []);
 
   const { socket, isConnected } = useWebSocket();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   useEffect(() => {
-    if (!socket || !isConnected) return;
+    if (!socket || !isConnected || isAuthLoading || !isAuthenticated) return;
 
     const handleMessage = (event: MessageEvent) => {
       try {
@@ -196,16 +196,16 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
     return () => {
       socket.removeEventListener('message', handleMessage);
     };
-  }, [socket, isConnected, fetchNotifications]);
+  }, [socket, isConnected, isAuthLoading, isAuthenticated, fetchNotifications]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!isAuthLoading && isAuthenticated) {
       fetchNotifications(true);
     }
 
     // Poll for notifications every 60 seconds as a fallback for WebSocket
     const pollInterval = setInterval(() => {
-      if (isAuthenticated && !isConnected) {
+      if (!isAuthLoading && isAuthenticated && !isConnected) {
         fetchNotifications(true);
       }
     }, 60000);
@@ -213,7 +213,7 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
     return () => {
       clearInterval(pollInterval);
     };
-  }, [fetchNotifications, isConnected, isAuthenticated]);
+  }, [fetchNotifications, isConnected, isAuthenticated, isAuthLoading]);
 
   const value = useMemo(() => ({
     notifications,

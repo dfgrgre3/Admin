@@ -229,7 +229,7 @@ export function AdminDataTable<TData, TValue>({
               initial={{ y: 100, opacity: 0, x: "-50%" }}
               animate={{ y: 0, opacity: 1, x: "-50%" }}
               exit={{ y: 100, opacity: 0, x: "-50%" }}
-              className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-6 bg-neutral-900/90 backdrop-blur-2xl border border-white/10 px-8 py-4 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] min-w-[400px]"
+              className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] flex w-[calc(100%_-_1rem)] max-w-4xl flex-wrap items-center justify-center gap-3 bg-neutral-900/90 backdrop-blur-2xl border border-white/10 px-4 py-3 sm:bottom-10 sm:w-auto sm:min-w-[400px] sm:gap-6 sm:px-8 sm:py-4 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
               dir="rtl">
               
                 <div className="flex items-center gap-4 border-l border-white/10 pl-6">
@@ -242,7 +242,7 @@ export function AdminDataTable<TData, TValue>({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
                   {bulkActions.map((action, i) => {
                   const Icon = action.icon;
                   return (
@@ -540,6 +540,8 @@ interface ActionColumnProps<T> {
     label: string;
     onClick: (row: T) => void;
     variant?: "default" | "destructive";
+    disabled?: boolean;
+    disabledReason?: string;
   }>;
 }
 
@@ -566,6 +568,8 @@ export function RowActions<T>({ row, onView, onEdit, onDelete, extraActions }: A
         <DropdownMenuItem
           key={i}
           onClick={() => action.onClick(row)}
+          disabled={action.disabled}
+          title={action.disabledReason}
           className={action.variant === "destructive" ? "text-red-500" : ""}>
           
             <action.icon className="h-4 w-4 ml-2" />

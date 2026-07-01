@@ -13,7 +13,7 @@ import {
   Activity,
   ShieldCheck
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { ar } from "date-fns/locale";
 
 export function ActivityTab({ user }: { user: UserDetails }) {
@@ -28,7 +28,7 @@ export function ActivityTab({ user }: { user: UserDetails }) {
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y">
-            {user.studySessions.length > 0 ? (
+            {user.studySessions?.length > 0 ? (
               user.studySessions.map((session) => (
                 <div key={session.id} className="p-6 flex items-center justify-between hover:bg-muted/30 transition-colors">
                   <div className="flex items-center gap-4">
@@ -38,7 +38,9 @@ export function ActivityTab({ user }: { user: UserDetails }) {
                     <div>
                       <p className="font-bold">{session.subject?.name || "مذاكرة عامة"}</p>
                       <p className="text-sm text-muted-foreground">
-                        {format(new Date(session.startTime), "d MMMM yyyy HH:mm", { locale: ar })}
+                        {session.startTime && isValid(new Date(session.startTime))
+                          ? format(new Date(session.startTime), "d MMMM yyyy HH:mm", { locale: ar })
+                          : "-"}
                       </p>
                     </div>
                   </div>
@@ -109,7 +111,9 @@ export function ActivityTab({ user }: { user: UserDetails }) {
                 <span className="text-sm font-medium">آخر تسجيل دخول</span>
               </div>
               <span className="text-sm font-bold">
-                {user.lastLogin ? format(new Date(user.lastLogin), "d MMM yyyy", { locale: ar }) : "لم يسبق"}
+                {user.lastLogin && isValid(new Date(user.lastLogin))
+                  ? format(new Date(user.lastLogin), "d MMM yyyy", { locale: ar })
+                  : "لم يسبق"}
               </span>
             </div>
           </CardContent>
@@ -122,17 +126,17 @@ export function ActivityTab({ user }: { user: UserDetails }) {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">عدد التنبيهات</span>
-              <span className="font-bold">{user._count.notifications}</span>
+              <span className="font-bold">{user._count?.notifications ?? 0}</span>
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">المهام الجاري تنفيذها</span>
-              <span className="font-bold">{user._count.customGoals}</span>
+              <span className="font-bold">{user._count?.customGoals ?? 0}</span>
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">عدد الجلسات النشطة</span>
-              <span className="font-bold">{user._count.sessions}</span>
+              <span className="font-bold">{user._count?.sessions ?? 0}</span>
             </div>
           </CardContent>
         </Card>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
@@ -130,8 +130,8 @@ export function DistributionChart({
         </div>
       </div>
 
-      <div style={{ height: `${height}px` }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div style={{ height: `${height}px`, width: "100%" }}>
+        <ResponsiveContainer width="100%" height={height} minWidth={1} minHeight={1}>
           <PieChart>
             <Pie
               data={dataWithColors}
@@ -186,7 +186,7 @@ export function DistributionMini({ data, size = 60, className }: DistributionMin
 
   return (
     <div className={cn("relative inline-flex", className)} style={{ width: size, height: size }}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={size} minWidth={1} minHeight={1}>
         <PieChart>
           <Pie
             data={dataWithColors}

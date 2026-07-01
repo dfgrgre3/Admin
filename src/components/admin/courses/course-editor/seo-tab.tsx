@@ -6,6 +6,7 @@ import {
   Rocket,
   Search,
   Trophy,
+  Wand2,
 } from "lucide-react";
 import type { Control, UseFormWatch } from "react-hook-form";
 
@@ -23,9 +24,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { TabsContent } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 import type { CourseFormValues } from "./types";
 import { SubmitIcon } from "./shared-components";
+
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 interface SeoTabProps {
   control: Control<CourseFormValues>;
@@ -56,9 +67,29 @@ export function SeoTab({
             name="slug"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="font-bold">
-                  رابط الصفحة (Slug)
-                </FormLabel>
+                <div className="flex items-center justify-between">
+                  <FormLabel className="font-bold">
+                    رابط الصفحة (Slug)
+                  </FormLabel>
+                  <AdminButton
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-[10px] gap-1.5 text-primary bg-primary/5 hover:bg-primary/10 rounded-lg"
+                    onClick={() => {
+                      const source = watch("name") || watch("nameAr") || "";
+                      const generated = slugify(source);
+                      if (generated) {
+                        field.onChange(generated);
+                      } else {
+                        toast.error("أدخل اسم الدورة أولاً لتوليد الرابط");
+                      }
+                    }}
+                  >
+                    <Wand2 className="h-3 w-3" />
+                    توليد من الاسم
+                  </AdminButton>
+                </div>
                 <FormControl>
                   <div className="relative">
                     <Input
@@ -122,25 +153,38 @@ export function SeoTab({
             />
           </div>
 
-          <div className="p-4 rounded-2xl bg-muted/30 border border-border/50">
-            <h4 className="text-xs font-bold mb-3 text-muted-foreground flex items-center gap-2">
-              <Search className="h-3 w-3" />
-              معاينة نتائج جوجل
-            </h4>
-            <div className="space-y-1">
-              <div className="text-blue-500 text-lg font-medium hover:underline cursor-pointer">
-                {watch("seoTitle") ||
-                  watch("nameAr") ||
-                  "عنوان الدورة يظهر هنا"}
+          <div className="p-6 rounded-[2rem] border border-border/50 bg-card/40 backdrop-blur-md space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-black text-muted-foreground flex items-center gap-2">
+                <Search className="h-4.5 w-4.5 text-primary" />
+                معاينة النتيجة على محرك بحث جوجل (Google Preview)
+              </h4>
+              <div className="flex bg-muted/60 p-1 rounded-xl text-[10px] font-bold">
+                <span className="px-2.5 py-1 bg-background text-foreground rounded-lg shadow-sm">إصدار الجوال</span>
               </div>
-              <div className="text-emerald-700 text-xs">
-                https://thanawy.com/courses/
-                {watch("slug") || "course-url"}
+            </div>
+
+            <div className="p-5 rounded-2xl bg-background border border-border/40 shadow-sm max-w-xl space-y-2">
+              <div className="flex items-center gap-2 text-xs text-foreground/80">
+                <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black text-[10px] border border-primary/20">
+                  T
+                </div>
+                <div className="flex flex-col text-[11px] leading-tight">
+                  <span className="font-bold text-foreground">منصة تولو التعليمية</span>
+                  <span className="text-muted-foreground/80 font-mono text-[9px]">https://thanawy.com/courses/{watch("slug") || "course-url"}</span>
+                </div>
               </div>
-              <div className="text-muted-foreground text-sm line-clamp-2">
-                {watch("seoDescription") ||
-                  watch("description") ||
-                  "وصف الدورة يظهر هنا في نتائج البحث لجذب الطلاب للنقر والدخول..."}
+
+              <div className="text-[#1a0dab] dark:text-[#8ab4f8] text-[19px] font-medium leading-tight hover:underline cursor-pointer">
+                {watch("seoTitle") || watch("nameAr") || "عنوان الدورة التعليمية يظهر هنا - منصة تولو"}
+              </div>
+
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium">
+                <span>سعر الدورة: {watch("price") === 0 ? "مجانية" : `${watch("price")} ج.م`}</span>
+              </div>
+
+              <div className="text-muted-foreground text-xs leading-relaxed line-clamp-2">
+                {watch("seoDescription") || watch("description") || "وصف الدورة التعريفي والـ SEO يظهر هنا بشكل منظم لجذب أنظار الطلاب الباحثين على محرك جوجل..."}
               </div>
             </div>
           </div>

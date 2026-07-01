@@ -6,10 +6,10 @@ import { Flame, Zap, BookOpen, Crown } from "lucide-react";
 
 export function UserStatsGrid({ user }: { user: UserDetails }) {
   const stats = [
-    { label: "إجمالي الخبرة (XP)", value: user.totalXP.toLocaleString(), icon: Flame, color: "text-amber-500", bg: "bg-amber-500/10" },
-    { label: "التتابع الحالي", value: user.currentStreak, icon: Zap, color: "text-orange-500", bg: "bg-orange-500/10" },
-    { label: "ساعات المذاكرة", value: Math.floor(user.totalStudyTime / 60), icon: BookOpen, color: "text-blue-500", bg: "bg-blue-500/10" },
-    { label: "الاختبارات المجتازة", value: user.examsPassed, icon: Crown, color: "text-purple-500", bg: "bg-purple-500/10" }
+    { label: "إجمالي الخبرة (XP)", value: (user.totalXP ?? 0).toLocaleString(), icon: Flame, color: "text-amber-500", bg: "bg-amber-500/10" },
+    { label: "التتابع الحالي", value: user.currentStreak ?? 0, icon: Zap, color: "text-orange-500", bg: "bg-orange-500/10" },
+    { label: "ساعات المذاكرة", value: Math.floor((user.totalStudyTime ?? 0) / 60), icon: BookOpen, color: "text-blue-500", bg: "bg-blue-500/10" },
+    { label: "الاختبارات المجتازة", value: user.examsPassed ?? 0, icon: Crown, color: "text-purple-500", bg: "bg-purple-500/10" }
   ];
 
   return (

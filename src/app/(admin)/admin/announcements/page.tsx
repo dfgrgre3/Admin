@@ -497,10 +497,10 @@ export default function AdminAnnouncementsPage() {
                           onImageUpload={async (file) => {
                             const formData = new FormData();
                             formData.append("file", file);
-                            const response = await fetch("/api/upload", {
+                            // Use adminFetch so X-CSRF-Token is automatically injected
+                            const response = await adminFetch("/api/upload", {
                               method: "POST",
                               body: formData,
-                              credentials: "include",
                             });
                             if (!response.ok) throw new Error("فشل رفع الصورة");
                             const data = await response.json();

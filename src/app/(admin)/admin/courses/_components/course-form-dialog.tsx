@@ -55,7 +55,14 @@ const quickCourseSchema = z.object({
   learningObjectives: z.string().optional().nullable(),
   thumbnailUrl: z.string().optional().nullable(),
   trailerUrl: z.string().optional().nullable(),
-  slug: z.string().optional().nullable(),
+  slug: z
+    .string()
+    .optional()
+    .nullable()
+    .refine(
+      (val) => !val || /^[a-z0-9-]+$/.test(val),
+      { message: "الرابط المختصر يجب أن يحتوي فقط على أحرف إنجليزية صغيرة وأرقام وشرطات (بدون مسافات)" }
+    ),
   seoTitle: z.string().optional().nullable(),
   seoDescription: z.string().optional().nullable(),
   language: z.string().optional().nullable(),

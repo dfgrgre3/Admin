@@ -19,26 +19,41 @@ function getOrigins(primaryOrigin: string): string[] {
   return origins;
 }
 
-async function buildProxyRequestOptions(request: NextRequest, headers: any): Promise<RequestInit> {
-  const options: RequestInit = {
-    method: request.method,
-    headers: { ...headers },
-    credentials: 'include',
-    // @ts-ignore
-    duplex: 'half',
-  };
+/**
+ * Build the proxy RequestInit, forwarding all necessary headers.
+ *
+ * Key CSRF fix: apiClient.fetch() injects an X-CSRF-Token header before the request
+ * reaches this proxy. We MUST forward it explicitly — upstreamAuthHeaders() only copies
+ * Cookie + Authorization. Without this forward the Go CSRFMiddleware sees the _csrf cookie
+ * but no matching header, and returns 403 "CSRF token validation failed".
+ *
+ * Body handling: the request body is buffered once in handleProxy() (not here) so it can be
+ * replayed across origin failover attempts — request.body is a single-consumption stream.
+ */
+function buildProxyRequestOptions(request: NextRequest, authHeaders: Record<string, string>): RequestInit {
+  const mergedHeaders: Record<string, string> = { ...authHeaders };
 
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
+    // Forward Content-Type (critical for multipart/form-data boundary preservation)
     const contentType = request.headers.get('content-type');
-    if (contentType) options.headers = { ...options.headers, 'Content-Type': contentType };
-    
-    const contentLength = request.headers.get('content-length');
-    if (contentLength && parseInt(contentLength) > 0) {
-      options.body = await request.arrayBuffer();
-    }
+    if (contentType) mergedHeaders['Content-Type'] = contentType;
+
+    // Forward the CSRF token header that apiClient.fetch injected.
+    // Without this the backend gets the _csrf cookie but not the X-CSRF-Token header,
+    // causing validateCSRFToken() to fail.
+    const csrfToken = request.headers.get('x-csrf-token');
+    if (csrfToken) mergedHeaders['X-CSRF-Token'] = csrfToken;
+
+    // Forward Idempotency-Key if present (injected by apiClient.buildHeaders)
+    const idempotencyKey = request.headers.get('idempotency-key');
+    if (idempotencyKey) mergedHeaders['Idempotency-Key'] = idempotencyKey;
   }
 
-  return options;
+  return {
+    method: request.method,
+    headers: mergedHeaders,
+    credentials: 'include',
+  };
 }
 
 function handleErrorResponse(response: Response, errorText: string) {
@@ -46,10 +61,10 @@ function handleErrorResponse(response: Response, errorText: string) {
   try {
     errorData = JSON.parse(errorText);
   } catch {
-    errorData = { 
+    errorData = {
       error: response.status === 404 ? 'Resource not found on backend' : 'Backend error',
       status: response.status,
-      details: errorText.substring(0, 500)
+      details: errorText.substring(0, 500),
     };
   }
   return NextResponse.json(errorData, { status: response.status });
@@ -66,12 +81,22 @@ async function handleProxy(
   if (permissionError) return permissionError;
 
   const { search } = new URL(request.url);
-  const headers = upstreamAuthHeaders(request);
-  
+  const authHeaders = upstreamAuthHeaders(request);
+
   const primaryOrigin = trimTrailingSlashes(BACKEND_URL);
   const origins = getOrigins(primaryOrigin);
-  const options = await buildProxyRequestOptions(request, headers);
+  const options = buildProxyRequestOptions(request, authHeaders);
   const timeoutMs = getApiTimeoutMs(`/api/${path}`);
+
+  // Buffer the request body once so it can be replayed across origin failover
+  // attempts. request.body is a single-consumption stream: the first fetch
+  // would consume it, leaving retries (404 fallback or network error) unable to
+  // resend the payload. Buffering also handles FormData/streaming uploads that
+  // omit content-length, which the old content-length guard silently dropped.
+  const isWriteMethod = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method);
+  if (isWriteMethod) {
+    options.body = await request.arrayBuffer();
+  }
 
   let lastError: any = null;
 
@@ -88,12 +113,11 @@ async function handleProxy(
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`[API Proxy] Backend (${response.status}) for ${path}:`, errorText.substring(0, 200));
-        
-        // If we get a 404 from one origin, maybe the other one has it? (Only if multiple origins)
-        if (response.status === 404 && origins.length > 1 && origin === origins[0]) {
-          continue; 
-        }
 
+        // A non-2xx response (e.g. 404 "User not found") is a definitive
+        // application-level answer from a reachable backend — return it as-is
+        // instead of failing over to a secondary origin. Failover only happens
+        // for connection-level failures (handled in the catch below).
         return handleErrorResponse(response, errorText);
       }
 
@@ -106,7 +130,7 @@ async function handleProxy(
         },
       });
 
-      // Forward CSRF token if present
+      // Forward CSRF token if the backend refreshed it
       const csrfToken = response.headers.get('X-CSRF-Token');
       if (csrfToken) {
         nextResponse.headers.set('X-CSRF-Token', csrfToken);

@@ -2,11 +2,20 @@
 
 import { cn } from "@/lib/utils";
 
-function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+const SKELETON_VARIANTS = {
+  default: "bg-gradient-to-r from-muted via-muted/60 to-muted bg-[length:200%_100%]",
+  dark: "bg-gradient-to-r from-white/5 via-white/[0.07] to-white/5 bg-[length:200%_100%]",
+  glow: "bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 bg-[length:200%_100%]",
+} as const;
+
+type SkeletonVariant = keyof typeof SKELETON_VARIANTS;
+
+function Skeleton({ className, variant = "default", ...props }: React.HTMLAttributes<HTMLDivElement> & { variant?: SkeletonVariant }) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-md bg-gradient-to-r from-muted via-muted/60 to-muted bg-[length:200%_100%]",
+        "animate-pulse rounded-md bg-[length:200%_100%]",
+        SKELETON_VARIANTS[variant],
         className
       )}
       {...props}

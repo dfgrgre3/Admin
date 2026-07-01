@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
   Brain,
@@ -16,35 +15,8 @@ import {
   Crown,
   Scroll
 } from "lucide-react";
-import { apiClient } from "@/lib/api/api-client";
 import { AdminButton } from "../ui/admin-button";
-
-type RiskStudent = {
-  id: string;
-  name: string;
-  email: string;
-  gradeLevel: string | null;
-  riskScore: number;
-  reasons: string[];
-  latestAverage: number | null;
-  studyMinutesLast7Days: number;
-  daysSinceLastLogin: number | null;
-};
-
-
-
-type SubjectItem = {
-  id: string;
-  name: string;
-};
-
-type AdminAiPayload = {
-  riskStudents: RiskStudent[];
-  subjects: SubjectItem[];
-  summary: {
-    highRiskCount: number;
-  };
-};
+import { useAISimplifiedData, useAICopilot, useAIGenerateContent } from "@/lib/ai/ai-hooks";
 
 const starterPrompts = [
   "استخرج لي تقريراً بأسماء الطلاب الذين انخفض أداؤهم هذا الأسبوع.",
@@ -53,47 +25,41 @@ const starterPrompts = [
 ];
 
 export function AiCommandCenter() {
-  const queryClient = useQueryClient();
   const [prompt, setPrompt] = React.useState(starterPrompts[0]);
   const [copilotReply, setCopilotReply] = React.useState("");
-  const [generatorForm, setGeneratorForm] = React.useState({
+  const [generatorForm, setGeneratorForm] = React.useState<{
+    title: string;
+    prompt: string;
+    contentType: string;
+    subjectId: string;
+  }>({
     title: "",
     prompt: "",
     contentType: "exam_blueprint",
     subjectId: "",
   });
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin-ai"],
-    queryFn: async () => {
-      return await apiClient.get<AdminAiPayload>("/admin/ai");
-    },
-  });
+  // استخدام الـ hooks الموحدة
+  const { data, isLoading } = useAISimplifiedData();
 
-  const copilotMutation = useMutation({
-    mutationFn: async (value: string) => {
-      return await apiClient.post<{ message: string }>("/admin/ai", { action: "copilot", prompt: value });
-    },
+  const copilotMutation = useAICopilot({
     onSuccess: (payload) => setCopilotReply(payload.message),
+    onError: (error) => {
+      setCopilotReply(`⚠️ حدث خطأ: ${error.message}`);
+    },
   });
 
-  const generateMutation = useMutation({
-    mutationFn: async () => {
-      return await apiClient.post<any>("/admin/ai", {
-        action: "generate_content",
-        ...generatorForm,
-      });
-    },
+  const generateMutation = useAIGenerateContent({
     onSuccess: (payload) => {
       if (payload && payload.message) {
         setCopilotReply(payload.message);
       }
       setGeneratorForm({ title: "", prompt: "", contentType: "exam_blueprint", subjectId: "" });
-      queryClient.invalidateQueries({ queryKey: ["admin-ai"] });
+    },
+    onError: (error) => {
+      setCopilotReply(`⚠️ فشل التوليد: ${error.message}`);
     },
   });
-
-
 
   return (
     <section className="grid gap-8 xl:grid-cols-[1.4fr_0.6fr]" dir="rtl">
@@ -149,7 +115,7 @@ export function AiCommandCenter() {
               </span>
               <AdminButton
                 variant="premium"
-                onClick={() => copilotMutation.mutate(prompt!)}
+                onClick={() => copilotMutation.mutate({ prompt: prompt ?? '' })}
                 loading={copilotMutation.isPending}
                 disabled={!prompt!.trim()}
                 icon={Send}
@@ -244,7 +210,12 @@ export function AiCommandCenter() {
              </span>
              <AdminButton
                 variant="premium"
-                onClick={() => generateMutation.mutate()}
+                onClick={() => generateMutation.mutate({
+                  contentType: generatorForm.contentType as "exam_blueprint" | "curriculum_outline" | "article_draft" | "article" | "update_suggestion" | "lesson_summary" | "learning_path",
+                  title: generatorForm.title,
+                  prompt: generatorForm.prompt,
+                  subjectId: generatorForm.subjectId || null,
+                })}
                 loading={generateMutation.isPending}
                 disabled={!generatorForm.prompt.trim()}
                 icon={Zap}
@@ -272,45 +243,44 @@ export function AiCommandCenter() {
           
           <div className="space-y-4">
             {isLoading && <div className="text-xs text-gray-500 font-bold animate-pulse text-center p-8">جاري التحليل...</div>}
-            {(data?.riskStudents || []).map((student, index) => (
-              <div 
-                key={`risk-student-${student.id || index}`} 
-                className="rpg-card p-4 border-white/5 bg-white/5 hover:border-red-500/30 transition-all group"
-              >
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <div className="font-bold text-sm tracking-tight">{student.name}</div>
-                    <div className="text-[10px] font-black text-gray-500 uppercase tracking-tighter mt-0.5">
-                      {student.gradeLevel || "طالب"}
+            {(data?.riskStudents ?? []).length > 0 ? (
+              (data?.riskStudents ?? []).map((student, index) => (
+                <div 
+                  key={`risk-student-${student.id || index}`} 
+                  className="rpg-card p-4 border-white/5 bg-white/5 hover:border-red-500/30 transition-all group"
+                >
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <div className="font-bold text-sm tracking-tight">{student.name}</div>
+                      <div className="text-[10px] font-black text-gray-500 uppercase tracking-tighter mt-0.5">
+                        {student.gradeLevel || "طالب"}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-xs font-black text-red-500">{student.riskScore}%</span>
+                      <div className="w-12 h-1 bg-white/5 rounded-full mt-1 overflow-hidden">
+                         <div className="h-full bg-red-500" style={{ width: `${student.riskScore}%` }} />
+                      </div>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-xs font-black text-red-500">{student.riskScore}%</span>
-                    <div className="w-12 h-1 bg-white/5 rounded-full mt-1 overflow-hidden">
-                       <div className="h-full bg-red-500" style={{ width: `${student.riskScore}%` }} />
-                    </div>
+                  <div className="pt-3 border-t border-white/5 space-y-2">
+                     {(Array.isArray(student.reasons) ? student.reasons : []).slice(0, 2).map((reason, idx) => (
+                       <div key={`reason-${student.id}-${idx}`} className="flex items-center gap-2 text-[10px] font-bold text-gray-400">
+                          <div className="w-1 h-1 bg-red-500/50 rounded-full" />
+                          {reason}
+                       </div>
+                     ))}
                   </div>
                 </div>
-                <div className="pt-3 border-t border-white/5 space-y-2">
-                   {(Array.isArray(student.reasons) ? student.reasons : []).slice(0, 2).map((reason, idx) => (
-                     <div key={`reason-${student.id}-${idx}`} className="flex items-center gap-2 text-[10px] font-bold text-gray-400">
-                        <div className="w-1 h-1 bg-red-500/50 rounded-full" />
-                        {reason}
-                     </div>
-                   ))}
-                </div>
-              </div>
-            ))}
-            {!isLoading && (data?.riskStudents || []).length === 0 && (
+              ))
+            ) : !isLoading ? (
               <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center bg-white/5">
                 <ShieldCheck className="w-8 h-8 text-emerald-500 mx-auto mb-3 opacity-20" />
                 <p className="text-xs text-gray-500 font-bold leading-relaxed">لا توجد مخاطر مرصودة حالياً.</p>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
-
-
       </div>
     </section>
   );

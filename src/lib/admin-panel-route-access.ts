@@ -58,6 +58,7 @@ const ADMIN_API_RULES: {
   view: Permission;
   manage?: Permission;
 }[] = [
+  { pattern: /^\/api\/admin\/security\/(?:sessions|logs\/users)/, view: PERMISSIONS.USERS_MANAGE, manage: PERMISSIONS.USERS_MANAGE },
   { pattern: /^\/api\/admin\/users\/bulk-send-message/, view: PERMISSIONS.USERS_MANAGE },
   { pattern: /^\/api\/admin\/users/, view: PERMISSIONS.USERS_VIEW, manage: PERMISSIONS.USERS_MANAGE },
   { pattern: /^\/api\/admin\/teachers/, view: PERMISSIONS.TEACHERS_VIEW, manage: PERMISSIONS.TEACHERS_MANAGE },

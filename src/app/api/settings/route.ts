@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
         method: 'GET',
         headers: { cookie },
         cache: 'no-store',
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(2000),
       });
 
       if (!res.ok) continue;

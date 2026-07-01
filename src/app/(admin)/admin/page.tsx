@@ -11,7 +11,6 @@ import {
 import {
   ActivityFeed,
   UpcomingEvents,
-  ProgressOverview,
 } from "@/components/admin/dashboard/widgets";
 import dynamic from "next/dynamic";
 import { DraggableDashboard } from "@/components/admin/dashboard/draggable-dashboard";
@@ -20,29 +19,36 @@ import { useAuth } from "@/contexts/auth-context";
 import { BroadcastModal } from "@/components/admin/broadcast/broadcast-modal";
 import type { UserSegment } from "@/components/admin/broadcast/broadcast-modal";
 import { adminFetch } from "@/lib/api/admin-api";
+import { cn } from "@/lib/utils";
 import { useAdminNotifications } from "@/hooks/use-admin-notifications";
 import { useBroadcastUsers } from "@/hooks/use-broadcast-users";
 import type { UserModel } from "@/components/admin/broadcast/types";
+import { ErrorBoundary } from "@/components/admin/ui/error-boundary";
+
+// ── Consistent loading placeholder for dynamic chart imports ──
+const CHART_SKELETON = (
+  <div className="h-[300px] w-full animate-pulse bg-white/5 rounded-[2rem] border border-white/10" />
+);
 
 const UserGrowthChart = dynamic(() => import("@/components/admin/dashboard/user-growth-chart").then(mod => mod.UserGrowthChart), {
   ssr: false,
-  loading: () => <div className="h-[300px] w-full animate-pulse bg-white/5 rounded-[2rem] border border-white/10" />
+  loading: () => CHART_SKELETON
 });
 const ActivityChart = dynamic(() => import("@/components/admin/dashboard/activity-chart").then(mod => mod.ActivityChart), {
   ssr: false,
-  loading: () => <div className="h-[300px] w-full animate-pulse bg-white/5 rounded-[2rem] border border-white/10" />
+  loading: () => CHART_SKELETON
 });
 const ActivityHeatmap = dynamic(() => import("@/components/admin/dashboard/activity-heatmap").then(mod => mod.ActivityHeatmap), {
   ssr: false,
-  loading: () => <div className="h-[300px] w-full animate-pulse bg-white/5 rounded-[2rem] border border-white/10" />
+  loading: () => CHART_SKELETON
 });
 const DistributionChart = dynamic(() => import("@/components/admin/dashboard/distribution-chart").then(mod => mod.DistributionChart), {
   ssr: false,
-  loading: () => <div className="h-[300px] w-full animate-pulse bg-white/5 rounded-[2rem] border border-white/10" />
+  loading: () => CHART_SKELETON
 });
 const SystemPulse = dynamic(() => import("@/components/admin/dashboard/system-pulse").then(mod => mod.SystemPulse), {
   ssr: false,
-  loading: () => <div className="h-[300px] w-full animate-pulse bg-white/5 rounded-[2rem] border border-white/10" />
+  loading: () => CHART_SKELETON
 });
 
 import { SmartAlerts, generateSmartAlerts } from "@/components/admin/dashboard/smart-alerts";
@@ -51,15 +57,7 @@ import { GlobalSearch } from "@/components/admin/dashboard/global-search";
 import { QuickFilters } from "@/components/admin/dashboard/advanced-filters";
 import { RealtimeNotifications } from "@/components/admin/dashboard/realtime-notifications";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   RefreshCw,
-  Download,
   UserPlus,
   BookOpen,
   FileText,
@@ -71,17 +69,13 @@ import {
   Clock,
   Zap,
   Calendar,
-  Shield,
   TrendingUp,
-  Brain,
   Activity,
   Megaphone,
-  LayoutDashboard,
   ClipboardList
 } from "lucide-react";
 import { AiCommandCenter } from "@/components/admin/dashboard/ai-command-center";
 import { useWebSocket } from "@/contexts/websocket-context";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface DashboardData {
   stats: {
@@ -141,7 +135,16 @@ const quickActionsConfig = [
   { title: "مهمة جديدة", icon: ClipboardList, href: "/admin/challenges?action=new", color: "orange" },
   { title: "الإعدادات", icon: Settings, href: "/admin/settings", color: "gray" },
   { title: "تنبيه عام", icon: Bell, href: "/admin/notifications?action=new", color: "rose" },
-];
+] as const;
+
+const quickActionColorClasses: Record<string, string> = {
+  blue: "bg-blue-500/10 text-blue-500",
+  green: "bg-green-500/10 text-green-500",
+  purple: "bg-purple-500/10 text-purple-500",
+  orange: "bg-orange-500/10 text-orange-500",
+  gray: "bg-gray-500/10 text-gray-500",
+  rose: "bg-rose-500/10 text-rose-500",
+};
 
 export default function AdminDashboardPage() {
   const { playSound } = usePremiumSounds();
@@ -153,8 +156,6 @@ export default function AdminDashboardPage() {
   // Real-time notifications
   const {
     notifications,
-    unreadCount,
-    isLoading: notificationsLoading,
     markAsRead,
     markAllAsRead,
     dismiss,
@@ -193,35 +194,59 @@ export default function AdminDashboardPage() {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  const queryClient = useQueryClient();
-
   const handleRefresh = React.useCallback(() => {
     playSound("click");
     refetch();
   }, [playSound, refetch]);
 
-  // Prefetch common dashboard sections on hover
-  const prefetchSection = React.useCallback((section: string) => {
-    if (section === "users") {
-      queryClient.prefetchQuery({
-        queryKey: ["admin", "users", 1, 10, "", "all"],
-        staleTime: 5 * 60 * 1000,
-      });
-    }
-  }, [queryClient]);
+  // ── Derived data ──────────────────────────────────────────────────────────
+  // All hooks MUST be declared before any early return (Rules of Hooks).
 
-  if (isLoading) return <DashboardSkeleton />;
-  if (!data) return <div>No data found</div>;
-
-  const safeStats = data.stats || { totalUsers: 0, totalSubjects: 0, totalExams: 0, totalResources: 0, activeChallenges: 0, newUsersToday: 0, newUsersThisWeek: 0 };
-  const safeTrends = data.trends || { userGrowth: 0, studyTime: 0 };
-  const safeActivity = data.activity || { tasksCompleted: 0, examsTaken: 0, achievementsEarned: 0, studyMinutes: 0 };
-  const safeRecentActivity = (data.recentActivity || []).map((a: any) => ({ ...a, timestamp: a.createdAt || a.timestamp || new Date().toISOString() }));
-  const safeUpcomingEvents = (data.upcomingEvents || []).map((e: any) => ({ ...e, date: e.date ? new Date(e.date) : new Date() }));
-  const safeCharts = data.charts || {
-    userGrowth: [],
-    activity: []
-  };
+  const safeStats = React.useMemo(
+    () => data?.stats ?? {
+      totalUsers: 0,
+      totalSubjects: 0,
+      totalExams: 0,
+      totalResources: 0,
+      activeChallenges: 0,
+      newUsersToday: 0,
+      newUsersThisWeek: 0,
+    },
+    [data?.stats]
+  );
+  const safeTrends = React.useMemo(
+    () => data?.trends ?? { userGrowth: 0, studyTime: 0 },
+    [data?.trends]
+  );
+  const safeActivity = React.useMemo(
+    () => data?.activity ?? {
+      tasksCompleted: 0,
+      examsTaken: 0,
+      achievementsEarned: 0,
+      studyMinutes: 0,
+    },
+    [data?.activity]
+  );
+  const safeRecentActivity = React.useMemo(
+    () =>
+      (data?.recentActivity ?? []).map((a: any) => ({
+        ...a,
+        timestamp: a.createdAt || a.timestamp || new Date().toISOString(),
+      })),
+    [data?.recentActivity],
+  );
+  const safeUpcomingEvents = React.useMemo(
+    () =>
+      (data?.upcomingEvents ?? []).map((e: any) => ({
+        ...e,
+        date: e.date ? new Date(e.date) : new Date(),
+      })),
+    [data?.upcomingEvents],
+  );
+  const safeCharts = React.useMemo(
+    () => data?.charts ?? { userGrowth: [], activity: [] },
+    [data?.charts]
+  );
 
   const alertData = React.useMemo(() => {
     if (!data) return [];
@@ -258,7 +283,7 @@ export default function AdminDashboardPage() {
   const heatmapData = React.useMemo(() => {
     const today = new Date();
     const result: Array<{ date: string; count: number }> = [];
-    
+
     // Map existing activity sessions to YYYY-MM-DD
     const activityMap = new Map<string, number>();
     if (safeCharts.activity) {
@@ -286,7 +311,7 @@ export default function AdminDashboardPage() {
     return result;
   }, [safeCharts.activity]);
 
-  const sections = [
+  const sections = React.useMemo(() => [
     {
       id: "quick-actions",
       content: (
@@ -299,9 +324,9 @@ export default function AdminDashboardPage() {
                onClick={() => playSound('click')}
                className={STYLES.glass + " p-6 flex flex-col items-center justify-center gap-4 group hover:border-primary/50 transition-all"}
              >
-                <div className={`p-4 rounded-2xl bg-${action.color}-500/10 text-${action.color}-500 border border-white/5 group-hover:scale-110 group-hover:rotate-6 transition-all`}>
-                   <action.icon className="w-7 h-7" />
-                </div>
+                 <div className={cn("p-4 rounded-2xl border border-white/5 group-hover:scale-110 group-hover:rotate-6 transition-all", quickActionColorClasses[action.color] ?? quickActionColorClasses.blue)}>
+                    <action.icon className="w-7 h-7" />
+                 </div>
                 <span className="text-xs font-black text-gray-300 uppercase tracking-widest">{action.title}</span>
              </a>
            ))}
@@ -329,6 +354,10 @@ export default function AdminDashboardPage() {
             description: `${safeStats.newUsersToday} مستخدم جديد اليوم`,
             icon: Users,
             color: "blue",
+            trend: {
+              value: Math.abs(safeTrends.userGrowth),
+              isPositive: safeTrends.userGrowth >= 0,
+            },
           },
           {
             title: "المواد الدراسية",
@@ -403,7 +432,7 @@ export default function AdminDashboardPage() {
                   <Activity className="h-6 w-6 text-primary" />
                   <h3 className="text-xl font-black">نشاط المنصة الأخير</h3>
                 </div>
-                <ActivityFeed activities={safeRecentActivity} />
+                <ActivityFeed activities={safeRecentActivity} onRefresh={handleRefresh} loading={isFetching} />
               </div>
            </div>
 
@@ -447,45 +476,53 @@ export default function AdminDashboardPage() {
             </div>
          </div>
         )
-     },
-     {
-       id: "system-diagnostics",
-       content: (
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-           <SystemPulse />
-           <SmartAlerts 
-             alerts={alertData} 
-             title="التنبيهات والتحليلات الذكية"
-             className="h-full"
-           />
-         </div>
-       )
-     },
-     {
-       id: "activity-and-distribution",
-       content: (
-         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-           <div className="lg:col-span-2">
-             <ActivityHeatmap 
-               data={heatmapData} 
-               title="خريطة دراسة ونشاط الطلاب" 
-               color="purple" 
-               className="h-full"
-             />
-           </div>
-           <div>
-             <DistributionChart 
-               data={distributionData} 
-               title="توزيع المحتوى التعليمي" 
-               description="عرض لنسب تصنيف المحتوى الدراسي"
-               className="h-full"
-               height={260}
-             />
-           </div>
-         </div>
-       )
-     }
-  ];
+    },
+    {
+      id: "system-diagnostics",
+      content: (
+        <ErrorBoundary fallback={<div className="text-gray-400 p-8 text-center font-bold">حدث خطأ في تحميل تشخيصات النظام</div>}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <SystemPulse />
+            <SmartAlerts 
+              alerts={alertData} 
+              title="التنبيهات والتحليلات الذكية"
+              className="h-full"
+            />
+          </div>
+        </ErrorBoundary>
+      )
+    },
+    {
+      id: "activity-and-distribution",
+      content: (
+        <ErrorBoundary fallback={<div className="text-gray-400 p-8 text-center font-bold">حدث خطأ في تحميل الرسوم البيانية</div>}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <ActivityHeatmap 
+                data={heatmapData} 
+                title="خريطة دراسة ونشاط الطلاب" 
+                color="purple" 
+                className="h-full"
+              />
+            </div>
+            <div>
+              <DistributionChart 
+                data={distributionData} 
+                title="توزيع المحتوى التعليمي" 
+                description="عرض لنسب تصنيف المحتوى الدراسي"
+                className="h-full"
+                height={260}
+              />
+            </div>
+          </div>
+        </ErrorBoundary>
+      )
+    }
+  ], [safeStats, safeActivity, safeTrends, safeCharts, safeRecentActivity, safeUpcomingEvents, alertData, heatmapData, distributionData, timeFilter, playSound, handleRefresh, isFetching]);
+
+  // ── Early returns (after all hooks) ─────────────────────────────────────
+  if (isLoading) return <DashboardSkeleton />;
+  if (!data) return <div className="text-center py-20 text-gray-400 font-bold">لا توجد بيانات متاحة حالياً.</div>;
 
   return (
     <div className="space-y-12 pb-20" dir="rtl">

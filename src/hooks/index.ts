@@ -22,4 +22,5 @@ export * from './use-session-management';
 export * from './use-support-tickets';
 export * from './use-teacher-sso';
 export * from './use-unified-notifications';
+export * from './use-unsaved-changes';
 export * from './use-code-splitting';

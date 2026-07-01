@@ -3,7 +3,11 @@
 import * as React from "react";
 import { cn, formatNumber } from "@/lib/utils";
 import { AdminCard } from "../ui/admin-card";
-import { Minus, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import {
+  Minus,
+  ArrowUpRight,
+  ArrowDownRight,
+} from "lucide-react";
 
 interface StatItem {
   title: string;
@@ -75,13 +79,15 @@ const colorConfig = {
     border: "border-pink-500/20",
     gradient: "from-pink-500/20 to-transparent",
   },
-};
+} as const;
 
-function AnimatedNumber({ value, className }: { value: number; className?: string }) {
+export type StatColor = keyof typeof colorConfig;
+
+const AnimatedNumber = React.memo(function AnimatedNumber({ value, className }: { value: number; className?: string }) {
   return <span className={className}>{formatNumber(value)}</span>;
-}
+});
 
-function StatCard({ stat, animated, index }: { stat: StatItem; animated: boolean; index: number }) {
+const StatCard = React.memo(function StatCard({ stat, animated, index }: { stat: StatItem; animated: boolean; index: number }) {
   const config = colorConfig[stat.color || "blue"];
   const Icon = stat.icon;
 
@@ -160,7 +166,7 @@ function StatCard({ stat, animated, index }: { stat: StatItem; animated: boolean
       </div>
     </AdminCard>
   );
-}
+});
 
 export function EnhancedStatsCards({
   stats,

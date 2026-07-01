@@ -1,4 +1,4 @@
-﻿import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity } from "lucide-react";
 import {
   LineChart,
@@ -29,7 +29,7 @@ export function ActivityChart({ data }: ActivityChartProps) {
         </div>
       </CardHeader>
       <CardContent className="pt-2 pb-4">
-        <ResponsiveContainer width="100%" height={280}>
+        <ResponsiveContainer width="100%" height={280} minWidth={1} minHeight={1}>
           <LineChart data={data}>
             <defs>
               <linearGradient id="activityGradient" x1="0" y1="0" x2="0" y2="1">

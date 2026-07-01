@@ -1,14 +1,42 @@
+"use client";
+
+import { UserRole } from "@/types/enums";
+import type { UserStatus } from "@/types/enums";
+export { UserStatus } from "@/types/enums";
+
+export interface AdminNote {
+  id: string;
+  content: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface UserDetails {
   id: string;
   email: string;
   name: string | null;
   username: string | null;
   avatar: string | null;
-  role: string;
+  role: UserRole;
+  status: UserStatus;
   emailVerified: boolean | null;
   phone: string | null;
   phoneVerified: boolean | null;
   twoFactorEnabled: boolean;
+  twoFactorEnforced?: boolean;
+  balance?: number;
+  aiCredits?: number;
+  examCredits?: number;
+  activeSubscriptionId?: string | null;
+  subscriptionExpiresAt?: string | null;
+  googleId?: string | null;
+  githubId?: string | null;
+  authProvider?: string | null;
+  createdBy?: string | null;
+  archivedAt?: string | null;
+  statusReason?: string | null;
+  statusExpiresAt?: string | null;
   createdAt: string;
   updatedAt: string;
   lastLogin: string | null;
@@ -37,6 +65,7 @@ export interface UserDetails {
   country: string | null;
   dateOfBirth: string | null;
   gender: string | null;
+  adminNotes?: AdminNote[];
   _count: {
     tasks: number;
     studySessions: number;
@@ -96,6 +125,22 @@ export const roleLabels: Record<string, string> = {
   USER: "مستخدم"
 };
 
+export const statusColors: Record<UserStatus, string> = {
+  ACTIVE: "bg-success/10 text-success border-success/20",
+  SUSPENDED: "bg-warning/10 text-warning border-warning/20",
+  BANNED: "bg-danger/10 text-danger border-danger/20",
+  INACTIVE: "bg-muted text-muted-foreground border-border/20",
+  DELETED: "bg-muted text-muted-foreground border-border/20"
+};
+
+export const statusLabels: Record<UserStatus, string> = {
+  ACTIVE: "نشط",
+  SUSPENDED: "موقوف",
+  BANNED: "محظور",
+  INACTIVE: "غير نشط",
+  DELETED: "محذوف"
+};
+
 export const gradeLabels: Record<string, string> = {
   "GRADE_1": "الصف الأول",
   "GRADE_2": "الصف الثاني",
@@ -110,3 +155,89 @@ export const gradeLabels: Record<string, string> = {
   "SEC_2": "الثاني الثانوي",
   "SEC_3": "الثالث الثانوي"
 };
+
+export const educationTypeOptions: ReadonlyArray<{ value: string; label: string }> = [
+  { value: "عام", label: "عام" },
+  { value: "أزهري", label: "أزهري" },
+  { value: "دولي", label: "دولي" },
+  { value: "IG", label: "IG" },
+  { value: "American", label: "American" },
+  { value: "أخرى", label: "أخرى" },
+];
+
+export const genderOptions: ReadonlyArray<{ value: string; label: string }> = [
+  { value: "male", label: "ذكر" },
+  { value: "female", label: "أنثى" },
+  { value: "other", label: "آخر" },
+];
+
+export const roleOptions: ReadonlyArray<{ value: string; label: string }> = [
+  { value: UserRole.STUDENT, label: "طالب" },
+  { value: UserRole.TEACHER, label: "معلم" },
+  { value: UserRole.ADMIN, label: "مدير" },
+  { value: UserRole.MODERATOR, label: "مشرف" },
+  { value: "USER", label: "مستخدم" },
+];
+
+export const gradeLevelOptions: ReadonlyArray<{ value: string; label: string }> = Object.entries(gradeLabels).map(
+  ([value, label]) => ({ value, label }),
+);
+
+export function resolveGradeLabel(value: string | null | undefined): string {
+  if (!value) return "غير محدد";
+  return gradeLabels[value] || value;
+}
+
+export function resolveEducationTypeLabel(value: string | null | undefined): string {
+  if (!value) return "عام";
+  return educationTypeOptions.find((option) => option.value === value)?.label || value;
+}
+
+export const EDITABLE_USER_FIELDS = [
+  "name",
+  "username",
+  "email",
+  "phone",
+  "role",
+  "bio",
+  "gradeLevel",
+  "educationType",
+  "section",
+  "school",
+  "country",
+  "dateOfBirth",
+  "gender",
+  "studyGoal",
+] as const;
+
+export type EditableUserField = (typeof EDITABLE_USER_FIELDS)[number];
+
+export function pickEditableUserFields(
+  source: Partial<UserDetails>,
+): Partial<Pick<UserDetails, EditableUserField>> {
+  const result: Record<string, unknown> = {};
+  for (const field of EDITABLE_USER_FIELDS) {
+    if (field in source) {
+      result[field] = source[field];
+    }
+  }
+  return result as Partial<Pick<UserDetails, EditableUserField>>;
+}
+
+const XP_PER_LEVEL = 1000;
+
+export interface LevelProgress {
+  level: number;
+  totalXP: number;
+  levelProgress: number;
+  xpToNextLevel: number;
+}
+
+export function computeLevelProgress(user: Pick<UserDetails, "totalXP">): LevelProgress {
+  const totalXP = Math.max(0, user.totalXP ?? 0);
+  const level = Math.floor(totalXP / XP_PER_LEVEL) + 1;
+  const currentLevelXP = totalXP % XP_PER_LEVEL;
+  const levelProgress = (currentLevelXP / XP_PER_LEVEL) * 100;
+  const xpToNextLevel = Math.max(0, XP_PER_LEVEL - currentLevelXP);
+  return { level, totalXP, levelProgress, xpToNextLevel };
+}

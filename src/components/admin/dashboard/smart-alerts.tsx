@@ -76,7 +76,7 @@ const alertConfig = {
   },
 };
 
-export function SmartAlerts({
+export const SmartAlerts = React.memo(function SmartAlerts({
   alerts,
   title = "تنبيهات ذكية",
   className,
@@ -86,21 +86,28 @@ export function SmartAlerts({
 }: SmartAlertsProps) {
   const [dismissedAlerts, setDismissedAlerts] = React.useState<Set<string>>(new Set());
 
-  const visibleAlerts = alerts
-    .filter((alert) => !dismissedAlerts.has(alert.id))
-    .slice(0, maxAlerts);
+  const visibleAlerts = React.useMemo(
+    () => alerts
+      .filter((alert) => !dismissedAlerts.has(alert.id))
+      .slice(0, maxAlerts),
+    [alerts, dismissedAlerts, maxAlerts]
+  );
 
-  const handleDismiss = (id: string) => {
-    setDismissedAlerts((prev) => new Set([...prev, id]));
+  const handleDismiss = React.useCallback((id: string) => {
+    setDismissedAlerts((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
     onDismiss?.(id);
-  };
+  }, [onDismiss]);
 
-  const handleAction = (alert: Alert) => {
+  const handleAction = React.useCallback((alert: Alert) => {
     if (alert.action?.onClick) {
       alert.action.onClick();
     }
     onAction?.(alert.id);
-  };
+  }, [onAction]);
 
   if (visibleAlerts.length === 0) {
     return (
@@ -221,7 +228,7 @@ export function SmartAlerts({
       </div>
     </AdminCard>
   );
-}
+});
 
 // Helper function to generate smart alerts from data
 export function generateSmartAlerts(data: {

@@ -1,8 +1,10 @@
 ﻿"use client";
+
+import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Search, Command } from "lucide-react";
 
-interface SearchResult {
+export interface SearchResult {
   id: string;
   type: "user" | "subject" | "exam" | "challenge" | "event" | "post";
   title: string;
@@ -11,7 +13,7 @@ interface SearchResult {
   icon?: React.ElementType;
 }
 
-interface GlobalSearchProps {
+export interface GlobalSearchProps {
   className?: string;
   placeholder?: string;
   onSearch?: (query: string) => Promise<SearchResult[]>;
@@ -20,15 +22,20 @@ interface GlobalSearchProps {
   onFocus?: () => void;
 }
 
-export function GlobalSearch({
+export const GlobalSearch = React.memo(function GlobalSearch({
   className,
   placeholder = "بحث في المستخدمين، المواد، الامتحانات...",
   shortcut = "k",
   onFocus,
 }: GlobalSearchProps) {
+  const handleClick = React.useCallback(() => {
+    window.dispatchEvent(new CustomEvent("open-command-palette"));
+  }, []);
+
   return (
     <button
-      onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
+      type="button"
+      onClick={handleClick}
       onFocus={onFocus}
       className={cn(
         "flex items-center gap-3 px-4 py-3 rounded-2xl border bg-card/50 hover:bg-accent hover:border-primary/50 transition-all duration-300 text-sm group w-full shadow-sm hover:shadow-md",
@@ -45,7 +52,7 @@ export function GlobalSearch({
       </div>
     </button>
   );
-}
+});
 
 // Search button for sidebar/header
 function GlobalSearchButton({

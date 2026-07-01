@@ -1,6 +1,7 @@
 "use client";
 
 import { adminFetch } from "@/lib/api/admin-api";
+import { adminUsersApi } from "@/lib/api/admin-users-api";
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { PageHeader } from "@/components/admin/ui/page-header";
@@ -43,6 +44,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { logger } from '@/lib/logger';
+import {
+  gradeLevelOptions,
+  educationTypeOptions,
+  roleOptions,
+} from "../_components/types";
 
 const userEditSchema = z.object({
   name: z.string().min(2, "الاسم يجب أن يكون حرفين على الأقل"),
@@ -84,6 +90,8 @@ interface UserData {
   country: string | null;
   gender: string | null;
   studyGoal: string | null;
+  createdAt: string | null;
+  lastLogin: string | null;
 }
 
 const _roleLabels: Record<string, string> = {
@@ -93,18 +101,6 @@ const _roleLabels: Record<string, string> = {
   MODERATOR: "مشرف",
   USER: "مستخدم",
 };
-
-const gradeLevels = [
-  { value: "FIRST_SECONDARY", label: "الأول الثانوي" },
-  { value: "SECOND_SECONDARY", label: "الثاني الثانوي" },
-  { value: "THIRD_SECONDARY", label: "الثالث الثانوي" },
-];
-
-const educationTypes = [
-  { value: "SCIENCE", label: "علمي" },
-  { value: "ARTS", label: "أدبي" },
-  { value: "MATHEMATICS", label: "رياضيات" },
-];
 
 export default function UserEditPage() {
   const params = useParams();
@@ -140,35 +136,30 @@ export default function UserEditPage() {
   React.useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await adminFetch(`/admin/users/${userId}`);
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data);
-          form.reset({
-            name: data.name || "",
-            username: data.username || "",
-            email: data.email || "",
-            phone: data.phone || "",
-            role: data.role,
-            bio: data.bio || "",
-            gradeLevel: data.gradeLevel || "",
-            educationType: data.educationType || "",
-            section: data.section || "",
-            school: data.school || "",
-            country: data.country || "",
-            gender: data.gender || "",
-            studyGoal: data.studyGoal || "",
-            emailVerified: data.emailVerified || false,
-            phoneVerified: data.phoneVerified || false,
-            twoFactorEnabled: data.twoFactorEnabled || false,
-          });
-        } else {
-          toast.error("المستخدم غير موجود");
-          router.push("/admin/users");
-        }
+        const data = await adminUsersApi.get(userId);
+        setUser(data);
+        form.reset({
+          name: data.name || "",
+          username: data.username || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          role: data.role as UserEditFormValues["role"],
+          bio: data.bio || "",
+          gradeLevel: data.gradeLevel || "",
+          educationType: data.educationType || "",
+          section: data.section || "",
+          school: data.school || "",
+          country: data.country || "",
+          gender: (data.gender || "") as UserEditFormValues["gender"],
+          studyGoal: data.studyGoal || "",
+          emailVerified: data.emailVerified || false,
+          phoneVerified: data.phoneVerified || false,
+          twoFactorEnabled: data.twoFactorEnabled || false,
+        });
       } catch (error) {
         logger.error("Error fetching user:", error);
-        toast.error("حدث خطأ أثناء جلب بيانات المستخدم");
+        toast.error("المستخدم غير موجود");
+        router.push("/admin/users");
       } finally {
         setLoading(false);
       }
@@ -259,11 +250,11 @@ export default function UserEditPage() {
                   </AvatarFallback>
                 </Avatar>
                 <CardTitle>{user.name || "بدون اسم"}</CardTitle>
-                <CardDescription>@{user.username}</CardDescription>
+                <CardDescription>@{user.username || "بدون اسم مستخدم"}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-sm text-muted-foreground text-center">
-                  <p>عضو منذ {new Date().toLocaleDateString("ar-EG")}</p>
+                  <p>عضو منذ {user.createdAt ? new Date(user.createdAt).toLocaleDateString("ar-EG") : "غير معروف"}</p>
                 </div>
                 <Separator />
                 <FormField
@@ -279,11 +270,11 @@ export default function UserEditPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="STUDENT">طالب</SelectItem>
-                          <SelectItem value="TEACHER">معلم</SelectItem>
-                          <SelectItem value="ADMIN">مدير</SelectItem>
-                          <SelectItem value="MODERATOR">مشرف</SelectItem>
-                          <SelectItem value="USER">مستخدم</SelectItem>
+                          {roleOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -405,7 +396,7 @@ export default function UserEditPage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {gradeLevels.map((level) => (
+                              {gradeLevelOptions.map((level) => (
                                 <SelectItem key={level.value} value={level.value}>
                                   {level.label}
                                 </SelectItem>
@@ -421,15 +412,15 @@ export default function UserEditPage() {
                       name="educationType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>الشعبة</FormLabel>
+                          <FormLabel>نوع التعليم</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="اختر الشعبة" />
+                                <SelectValue placeholder="اختر النوع" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {educationTypes.map((type) => (
+                              {educationTypeOptions.map((type) => (
                                 <SelectItem key={type.value} value={type.value}>
                                   {type.label}
                                 </SelectItem>
@@ -445,7 +436,7 @@ export default function UserEditPage() {
                       name="section"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>القسم</FormLabel>
+                          <FormLabel>الشعبة</FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>

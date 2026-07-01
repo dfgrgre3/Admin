@@ -158,14 +158,14 @@ export default function CreateTeacherPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>المادة الدراسية</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={(val) => field.onChange(val === "none" ? "" : val)} value={field.value || "none"}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="اختر المادة" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">بدون مادة</SelectItem>
+                        <SelectItem value="none">بدون مادة</SelectItem>
                         {subjects.map((subject) => (
                           <SelectItem key={subject.id} value={subject.id}>
                             {subject.nameAr || subject.name}

@@ -174,6 +174,7 @@ export const apiRoutes = {
     activityMetrics: '/api/admin/analytics/metrics',
     metricsHistory: '/api/admin/metrics/history',
     infrastructureStats: '/api/admin/infrastructure/stats',
+    health: '/api/admin/health/detailed',
 
     // Announcements
     announcements: '/api/admin/announcements',

@@ -47,10 +47,11 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const body = await request.json();
+    const text = await request.text();
+    const body = text ? JSON.parse(text) : undefined;
     return await forwardToGoApi(request, '/api/admin/users', {
       method: 'DELETE',
-      body: JSON.stringify(body),
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch (error) {
     console.error('Admin users DELETE error:', error);

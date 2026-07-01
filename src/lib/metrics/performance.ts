@@ -70,10 +70,14 @@ class PerformanceMonitor {
    * Record a single metric
    */
   recordMetric(metric: PerformanceMetric) {
-    // Log important metrics to ELK/Console
-    if (metric.value > 500 && metric.unit === 'ms') {
+    // Browser-side timers measure the full round-trip (browser → Next.js proxy → backend → back),
+    // so they are inherently higher than server-side backend durations.
+    // Use a wider threshold on the client to avoid misleading "Slow" warnings for normal requests.
+    const slowThresholdMs = isServer ? 1000 : 3000;
+    if (metric.value > slowThresholdMs && metric.unit === 'ms') {
       logger.warn(`Slow Performance detected: ${metric.name}`, {
         duration: `${metric.value.toFixed(2)}ms`,
+        context: isServer ? 'server' : 'browser',
         ...metric.tags
       });
     }

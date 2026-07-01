@@ -1,11 +1,14 @@
 "use client";
 
+import * as React from "react";
 import {
   ChevronLeft,
   ChevronRight,
   Clock,
   DollarSign,
   GraduationCap,
+  X,
+  Plus,
 } from "lucide-react";
 import type { Control } from "react-hook-form";
 
@@ -50,6 +53,8 @@ export function DetailsTab({
   onNext,
   onPrev,
 }: DetailsTabProps) {
+  const [customReq, setCustomReq] = React.useState("");
+
   return (
     <TabsContent value="details" className="mt-0 space-y-6">
       <AdminCard className="p-6">
@@ -119,7 +124,7 @@ export function DetailsTab({
                 </FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value || ""}
+                  value={field.value || ""}
                 >
                   <FormControl>
                     <SelectTrigger className="h-12 rounded-xl">
@@ -217,52 +222,119 @@ export function DetailsTab({
           <FormField
             control={control}
             name="coursePrerequisites"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="font-bold flex items-center justify-between">
-                  <span>المتطلبات والترابط التعليمي</span>
-                  <Badge variant="outline" className="text-[9px] font-black h-4 px-1">جديد</Badge>
-                </FormLabel>
-                <div className="space-y-4">
-                  <Select
-                    onValueChange={(val) => {
-                      const current = field.value ? field.value.split("\n") : [];
-                      if (!current.includes(val)) {
-                        field.onChange([...current, val].join("\n"));
-                      }
-                    }}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-12 rounded-xl border-primary/20 bg-primary/5">
-                        <SelectValue placeholder="اختر دورة لربتا كمتطلب..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {allCourses
-                        .filter(c => c.id !== courseId)
-                        .map((c) => (
-                        <SelectItem key={c.id} value={c.nameAr || c.name}>
-                          {c.nameAr || c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            render={({ field }) => {
+              const currentTags = field.value
+                ? field.value.split("\n").filter((v) => v.trim() !== "")
+                : [];
 
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      value={field.value || ""}
-                      placeholder="ضع كل متطلب في سطر مستقل ليُحفظ بشكل منظم"
-                      className="min-h-[120px] rounded-2xl bg-muted/20 border-border/40 focus:border-primary/40 transition-all font-medium py-4"
-                    />
-                  </FormControl>
-                </div>
-                <FormDescription className="text-[10px] leading-relaxed">
-                  اربط هذه الدورة بدورات أخرى في الموقع لتحسين تجربة الطالب وتوجيهه للمسار الصحيح.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
+              const handleAddTag = (tagVal: string) => {
+                const trimmed = tagVal.trim();
+                if (trimmed && !currentTags.includes(trimmed)) {
+                  const updated = [...currentTags, trimmed].join("\n");
+                  field.onChange(updated);
+                }
+              };
+
+              const handleRemoveTag = (indexToRemove: number) => {
+                const updatedTags = currentTags.filter((_, idx) => idx !== indexToRemove);
+                field.onChange(updatedTags.join("\n"));
+              };
+
+              return (
+                <FormItem>
+                  <FormLabel className="font-bold flex items-center justify-between">
+                    <span>المتطلبات والترابط التعليمي</span>
+                    <Badge variant="outline" className="text-[9px] font-black h-4 px-1">مطور</Badge>
+                  </FormLabel>
+                  <div className="space-y-4">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {/* Dropdown for system courses */}
+                      <Select
+                        onValueChange={(val) => {
+                          handleAddTag(val);
+                        }}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-12 rounded-xl border-primary/20 bg-primary/5">
+                            <SelectValue placeholder="اختر دورة من النظام كمتطلب..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {allCourses
+                            .filter((c) => c.id !== courseId)
+                            .map((c) => (
+                              <SelectItem key={c.id} value={c.nameAr || c.name}>
+                                {c.nameAr || c.name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+
+                      {/* Custom text requirement */}
+                      <div className="flex gap-2">
+                        <Input
+                          value={customReq}
+                          onChange={(e) => setCustomReq(e.target.value)}
+                          placeholder="أو اكتب متطلب مخصص هنا..."
+                          className="h-12 rounded-xl flex-1"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              if (customReq.trim()) {
+                                handleAddTag(customReq);
+                                setCustomReq("");
+                              }
+                            }
+                          }}
+                        />
+                        <AdminButton
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            if (customReq.trim()) {
+                              handleAddTag(customReq);
+                              setCustomReq("");
+                            }
+                          }}
+                          className="h-12 w-12 rounded-xl p-0 flex items-center justify-center border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary"
+                        >
+                          <Plus className="h-5 w-5" />
+                        </AdminButton>
+                      </div>
+                    </div>
+
+                    {/* Tags Display Container */}
+                    <div className="flex flex-wrap gap-2 p-3 min-h-[50px] rounded-2xl bg-muted/20 border border-border/40">
+                      {currentTags.length === 0 ? (
+                        <span className="text-xs text-muted-foreground/80 self-center">
+                          لم يتم تحديد متطلبات سابقة لهذه الدورة بعد. اختر من القائمة أو اكتب متطلباً مخصصاً.
+                        </span>
+                      ) : (
+                        currentTags.map((tag, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-card border border-border/50 text-xs font-bold text-foreground shadow-sm animate-in fade-in-50 zoom-in-95 duration-150"
+                          >
+                            <span>{tag}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTag(idx)}
+                              className="text-muted-foreground hover:text-destructive transition-colors rounded-full p-0.5 hover:bg-muted"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                  <FormDescription className="text-[10px] leading-relaxed">
+                    اربط هذه الدورة بدورات أخرى في الموقع لتحسين تجربة الطالب وتوجيهه للمسار الصحيح.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
 
           <FormField

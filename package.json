@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
-    "dev:no-turbo": "next dev",
+    "dev": "next dev",
+    "dev:turbo": "next dev --turbo",
     "clear-cache": "node -e \"require('fs').rmSync('.next/cache', {recursive: true, force: true})\"",
     "build": "next build",
     "build:safe": "next build",

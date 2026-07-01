@@ -284,12 +284,12 @@ export default function AdminBookReviewsPage() {
                         <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2 block">
                             التقييم الأدنى
                         </label>
-                        <Select value={minRating} onValueChange={setMinRating}>
+                        <Select value={minRating || "all"} onValueChange={(val) => setMinRating(val === "all" ? "" : val)}>
                             <SelectTrigger className="h-12 rounded-xl border-white/10">
                                 <SelectValue placeholder="الكل" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">الكل</SelectItem>
+                                <SelectItem value="all">الكل</SelectItem>
                                 <SelectItem value="1">1 نجمة فأكثر</SelectItem>
                                 <SelectItem value="2">2 نجمة فأكثر</SelectItem>
                                 <SelectItem value="3">3 نجوم فأكثر</SelectItem>
@@ -302,12 +302,12 @@ export default function AdminBookReviewsPage() {
                         <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2 block">
                             التقييم الأقصى
                         </label>
-                        <Select value={maxRating} onValueChange={setMaxRating}>
+                        <Select value={maxRating || "all"} onValueChange={(val) => setMaxRating(val === "all" ? "" : val)}>
                             <SelectTrigger className="h-12 rounded-xl border-white/10">
                                 <SelectValue placeholder="الكل" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">الكل</SelectItem>
+                                <SelectItem value="all">الكل</SelectItem>
                                 <SelectItem value="1">1 نجمة</SelectItem>
                                 <SelectItem value="2">2 نجوم</SelectItem>
                                 <SelectItem value="3">3 نجوم</SelectItem>

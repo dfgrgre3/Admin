@@ -18,6 +18,7 @@ import {
   Trash2,
   Video,
   X,
+  Sparkles,
 } from "lucide-react";
 import {
   DndContext,
@@ -62,6 +63,7 @@ import { Switch } from "@/components/ui/switch";
 import { AdminUpload } from "@/components/admin/ui/admin-upload";
 import { COURSE_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
 import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
+import { apiRoutes } from "@/lib/api/routes";
 
 type LessonAttachment = {
   id: string;
@@ -83,6 +85,7 @@ type Lesson = {
   isFree?: boolean;
   description?: string | null;
   attachments?: LessonAttachment[];
+  examId?: string | null;
 };
 
 type Chapter = {
@@ -173,6 +176,7 @@ const addLessonToChapters = (chapters: Chapter[], chapterId: string): Chapter[] 
           isFree: false,
           description: "",
           attachments: [],
+          examId: null,
         },
       ],
     };
@@ -320,6 +324,151 @@ export default function CourseCurriculumPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [editingChapter, setEditingChapter] = useState<{ id: string; name: string } | null>(null);
   const [editingLesson, setEditingLesson] = useState<{ lesson: Lesson; chapterId: string } | null>(null);
+  const [exams, setExams] = useState<any[]>([]);
+
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiChaptersCount, setAiChaptersCount] = useState("5");
+  const [aiLevel, setAiLevel] = useState("INTERMEDIATE");
+  const [isAiGenerating, setIsAiGenerating] = useState(false);
+  const [aiPreviewChapters, setAiPreviewChapters] = useState<any[] | null>(null);
+
+  const parseAiResponse = (reply: string): any[] => {
+    let cleanText = reply.trim();
+    if (cleanText.startsWith("```json")) {
+      cleanText = cleanText.substring(7);
+    } else if (cleanText.startsWith("```")) {
+      cleanText = cleanText.substring(3);
+    }
+    if (cleanText.endsWith("```")) {
+      cleanText = cleanText.substring(0, cleanText.length - 3);
+    }
+    cleanText = cleanText.trim();
+    try {
+      const data = JSON.parse(cleanText);
+      if (Array.isArray(data)) {
+        return data;
+      }
+    } catch (e) {
+      console.error("Failed to parse JSON directly", e);
+    }
+    const arrayMatch = cleanText.match(/\[\s*\{[\s\S]*\}\s*\]/);
+    if (arrayMatch) {
+      try {
+        const data = JSON.parse(arrayMatch[0]);
+        if (Array.isArray(data)) {
+          return data;
+        }
+      } catch (e) {
+        console.error("Failed to parse matched JSON array", e);
+      }
+    }
+    throw new Error("لم نتمكن من تحليل رد الذكاء الاصطناعي كـ JSON صالح");
+  };
+
+  const handleAiGenerate = async () => {
+    if (!aiPrompt.trim()) {
+      toast.error("يرجى إدخال موضوع أو هدف الدورة التدريبية");
+      return;
+    }
+    setIsAiGenerating(true);
+    try {
+      const prompt = `أنت خبير تعليمي ومنهجي. قم بإنشاء هيكل منهج دراسي باللغة العربية لدورة تعليمية بعنوان "${course?.nameAr || course?.name || ""}" وموضوعها/أهدافها: "${aiPrompt}".
+المستوى المطلوب: ${aiLevel === "BEGINNER" ? "مبتدئ" : aiLevel === "ADVANCED" ? "متقدم" : "متوسط"}
+عدد الفصول المطلوبة: ${aiChaptersCount}
+
+يجب أن تقوم بإرجاع النتيجة كـ JSON حصرياً وبدون أي كلام جانبي قبله أو بعده، وبدون أي نص آخر، بصيغة مصفوفة من الفصول (Chapters) وكل فصل يحتوي على مصفوفة من الدروس (lessons).
+كل فصل (Chapter) يحتوي على الحقول التالية:
+- name: اسم الفصل باللغة العربية
+- lessons: مصفوفة من الدروس
+
+كل درس (lesson) يحتوي على الحقول التالية:
+- name: اسم الدرس باللغة العربية
+- type: نوع الدرس، ويجب أن يكون أحد القيم التالية حصرياً: "VIDEO" أو "ARTICLE" أو "QUIZ" أو "FILE" أو "ASSIGNMENT"
+- duration: مدة الدرس بالدقائق كقيمة رقمية (مثلاً 15 أو 30)
+- description: وصف مختصر جداً للدرس
+
+صيغة الـ JSON المطلوبة للرد هي:
+[
+  {
+    "name": "اسم الفصل الأول",
+    "lessons": [
+      {
+        "name": "اسم الدرس الأول",
+        "type": "VIDEO",
+        "duration": 20,
+        "description": "وصف الدرس"
+      }
+    ]
+  }
+]`;
+
+      const response = await fetch(apiRoutes.ai.chat, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: prompt }),
+      });
+      const result = await response.json();
+      if (!result.reply) {
+        throw new Error("لم نحصل على إجابة من الذكاء الاصطناعي");
+      }
+      
+      const parsed = parseAiResponse(result.reply);
+      setAiPreviewChapters(parsed);
+      toast.success("تم توليد مقترح المنهج الدراسي بنجاح! يرجى مراجعته واعتماده.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء الاتصال بالذكاء الاصطناعي");
+    } finally {
+      setIsAiGenerating(false);
+    }
+  };
+
+  const handleApplyAiCurriculum = () => {
+    if (!aiPreviewChapters) return;
+    
+    const formattedChapters: Chapter[] = aiPreviewChapters.map((ch, chIdx) => {
+      const chapterId = `new-ch-${Date.now()}-${chIdx}`;
+      const subTopics: Lesson[] = (ch.lessons || ch.subTopics || []).map((l: any, lIdx: number) => ({
+        id: `new-l-${Date.now()}-${chIdx}-${lIdx}`,
+        name: l.name || "درس جديد",
+        order: lIdx,
+        type: (l.type || "VIDEO") as LessonType,
+        videoUrl: "",
+        duration: Number(l.duration) || 10,
+        isFree: false,
+        description: l.description || "",
+        attachments: [],
+        examId: null,
+      }));
+
+      return {
+        id: chapterId,
+        name: ch.name || `الفصل ${chIdx + 1}`,
+        order: chIdx,
+        subTopics,
+      };
+    });
+
+    setChapters(formattedChapters);
+    setAiPreviewChapters(null);
+    setAiDialogOpen(false);
+    toast.success("تم تطبيق المنهج بنجاح! لا تنسى الضغط على 'حفظ التغييرات'.");
+  };
+
+  useEffect(() => {
+    const fetchExams = async () => {
+      try {
+        const response = await adminFetch(`${apiRoutes.admin.exams}?subjectId=${courseId}`);
+        const result = await response.json();
+        if (response.ok) {
+          setExams(result.data?.exams || result.exams || result.items || []);
+        }
+      } catch (error) {
+        console.error("Failed to load exams:", error);
+      }
+    };
+    fetchExams();
+  }, [courseId]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -330,7 +479,7 @@ export default function CourseCurriculumPage() {
   useEffect(() => {
     const fetchCurriculum = async () => {
       try {
-        const response = await adminFetch(`/admin/courses/${courseId}/curriculum`);
+        const response = await adminFetch(apiRoutes.admin.courseCurriculum(courseId));
         const result = await response.json();
 
         if (!response.ok) {
@@ -422,7 +571,7 @@ export default function CourseCurriculumPage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const response = await adminFetch(`/admin/courses/${courseId}/curriculum`, {
+      const response = await adminFetch(apiRoutes.admin.courseCurriculum(courseId), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ curriculum: chapters }),
@@ -486,10 +635,20 @@ export default function CourseCurriculumPage() {
             </div>
             <h2 className="text-xl font-bold">هيكل المنهج</h2>
           </div>
-          <Button onClick={addChapter} variant="outline" className="h-10 rounded-xl px-5 text-[10px] font-bold uppercase">
-            <Plus className="ml-2 h-4 w-4" />
-            إضافة فصل
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => {
+              setAiDialogOpen(true);
+              setAiPreviewChapters(null);
+              setAiPrompt("");
+            }} variant="outline" className="h-10 rounded-xl px-5 text-[10px] font-bold uppercase gap-2 border-primary/20 text-primary hover:bg-primary/5">
+              <Sparkles className="h-4 w-4" />
+              توليد بالذكاء الاصطناعي
+            </Button>
+            <Button onClick={addChapter} variant="outline" className="h-10 rounded-xl px-5 text-[10px] font-bold uppercase">
+              <Plus className="ml-2 h-4 w-4" />
+              إضافة فصل
+            </Button>
+          </div>
         </div>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEndChapter}>
@@ -604,43 +763,77 @@ export default function CourseCurriculumPage() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase">المحتوى الأساسي (رابط أو ملف)</Label>
-              <Input
-                value={editingLesson?.lesson.videoUrl || ""}
-                onChange={(event) =>
-                  setEditingLesson((current) =>
-                    current ? { ...current, lesson: { ...current.lesson, videoUrl: event.target.value } } : null
-                  )
-                }
-                className="h-12 rounded-xl text-sm font-bold"
-                placeholder="https://..."
-              />
-              {(editingLesson?.lesson.type === "VIDEO" || editingLesson?.lesson.type === "FILE") && (
-                <AdminUpload
-                  accept={editingLesson?.lesson.type === "VIDEO" ? "video/*" : "*/*"}
-                  label={editingLesson?.lesson.type === "VIDEO" ? "رفع فيديو الدرس" : "رفع ملف الدرس"}
-                  maxSize={100 * 1024} // 100GB support
-                  onUploadComplete={(url: string, metadata) => {
+            {editingLesson?.lesson.type === "QUIZ" ? (
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase">اختر الاختبار المُرتبط</Label>
+                <Select
+                  value={editingLesson?.lesson.examId || "none"}
+                  onValueChange={(value) =>
                     setEditingLesson((current) =>
                       current
                         ? {
                             ...current,
                             lesson: {
                               ...current.lesson,
-                              videoUrl: url,
-                              duration:
-                                metadata?.durationMinutes && metadata.durationMinutes > 0
-                                  ? metadata.durationMinutes
-                                  : current.lesson.duration,
+                              examId: value === "none" ? null : value,
                             },
                           }
                         : null
-                    );
-                  }}
+                    )
+                  }
+                >
+                  <SelectTrigger className="h-12 rounded-xl text-sm font-bold">
+                    <SelectValue placeholder="اختر اختباراً..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">بدون اختبار</SelectItem>
+                    {exams.map((exam: any) => (
+                      <SelectItem key={exam.id} value={exam.id}>
+                        {exam.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase">المحتوى الأساسي (رابط أو ملف)</Label>
+                <Input
+                  value={editingLesson?.lesson.videoUrl || ""}
+                  onChange={(event) =>
+                    setEditingLesson((current) =>
+                      current ? { ...current, lesson: { ...current.lesson, videoUrl: event.target.value } } : null
+                    )
+                  }
+                  className="h-12 rounded-xl text-sm font-bold"
+                  placeholder="https://..."
                 />
-              )}
-            </div>
+                {(editingLesson?.lesson.type === "VIDEO" || editingLesson?.lesson.type === "FILE") && (
+                  <AdminUpload
+                    accept={editingLesson?.lesson.type === "VIDEO" ? "video/*" : "*/*"}
+                    label={editingLesson?.lesson.type === "VIDEO" ? "رفع فيديو الدرس" : "رفع ملف الدرس"}
+                    maxSize={100 * 1024} // 100GB support
+                    onUploadComplete={(url: string, metadata) => {
+                      setEditingLesson((current) =>
+                        current
+                          ? {
+                              ...current,
+                              lesson: {
+                                ...current.lesson,
+                                videoUrl: url,
+                                duration:
+                                  metadata?.durationMinutes && metadata.durationMinutes > 0
+                                    ? metadata.durationMinutes
+                                    : current.lesson.duration,
+                              },
+                            }
+                          : null
+                      );
+                    }}
+                  />
+                )}
+              </div>
+            )}
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -732,6 +925,111 @@ export default function CourseCurriculumPage() {
               حفظ بيانات الدرس
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={aiDialogOpen} onOpenChange={setAiDialogOpen}>
+        <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto" dir="rtl">
+          <DialogHeader className="text-right">
+            <DialogTitle className="text-xl font-black flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              توليد المنهج بالذكاء الاصطناعي
+            </DialogTitle>
+            <DialogDescription className="text-xs font-bold text-zinc-500">
+              قم بإدخال تفاصيل الدورة التعليمية وسيقوم الذكاء الاصطناعي ببناء الهيكل الأمثل للفصول والدروس تلقائيًا.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!aiPreviewChapters ? (
+            <div className="space-y-4 py-4 text-right">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase">أهداف أو موضوع الدورة بالتفصيل</Label>
+                <Input
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  placeholder="مثال: دورة كاملة لشرح الجبر وحل نماذج الامتحانات للثانوية العامة"
+                  className="h-12 rounded-xl text-sm font-bold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase">عدد الفصول المطلوبة</Label>
+                  <Select value={aiChaptersCount} onValueChange={setAiChaptersCount}>
+                    <SelectTrigger className="h-12 rounded-xl text-sm font-bold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="3">3 فصول</SelectItem>
+                      <SelectItem value="5">5 فصول</SelectItem>
+                      <SelectItem value="8">8 فصول</SelectItem>
+                      <SelectItem value="10">10 فصول</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase">المستوى التعليمي</Label>
+                  <Select value={aiLevel} onValueChange={setAiLevel}>
+                    <SelectTrigger className="h-12 rounded-xl text-sm font-bold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="BEGINNER">مبتدئ</SelectItem>
+                      <SelectItem value="INTERMEDIATE">متوسط</SelectItem>
+                      <SelectItem value="ADVANCED">متقدم</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <Button
+                onClick={handleAiGenerate}
+                disabled={isAiGenerating}
+                className="h-12 w-full rounded-xl text-xs font-black uppercase gap-2 mt-4"
+              >
+                {isAiGenerating ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-white" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+                إنشاء مقترح المنهج
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-6 py-4 text-right">
+              <div className="rounded-xl bg-primary/5 border border-primary/20 p-3">
+                <p className="text-xs font-bold text-primary">
+                  تم توليد هيكل المنهج بنجاح. يرجى مراجعته أدناه قبل تطبيقه على الدورة. سيؤدي التطبيق إلى استبدال المنهج الحالي.
+                </p>
+              </div>
+
+              <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2">
+                {aiPreviewChapters.map((ch, idx) => (
+                  <div key={idx} className="rounded-xl border border-zinc-200 p-3 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
+                    <h4 className="text-sm font-black text-foreground mb-2">الفصل {idx + 1}: {ch.name}</h4>
+                    <div className="space-y-1.5 mr-3 border-r-2 border-zinc-200 pr-3">
+                      {(ch.lessons || []).map((l: any, lIdx: number) => (
+                        <div key={lIdx} className="flex justify-between items-center text-xs">
+                          <span className="font-bold text-muted-foreground">{l.name} ({l.duration} د)</span>
+                          <Badge variant="outline" className="text-[9px] scale-90">{l.type}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-3">
+                <Button onClick={handleApplyAiCurriculum} className="h-12 flex-1 rounded-xl text-xs font-black uppercase">
+                  اعتماد المنهج وتطبيقه
+                </Button>
+                <Button variant="outline" onClick={() => setAiPreviewChapters(null)} className="h-12 px-6 rounded-xl text-xs font-bold">
+                  إعادة المحاولة
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

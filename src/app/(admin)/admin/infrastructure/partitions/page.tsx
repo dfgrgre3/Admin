@@ -16,12 +16,13 @@ import {
   Terminal,
   Shield
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { apiRoutes } from "@/lib/api/routes";
+import { toast } from "sonner";
 
 const STYLES = {
   glass: "relative overflow-hidden rounded-[2.5rem] border border-white/5 bg-card/40 shadow-2xl backdrop-blur-3xl ring-1 ring-white/5",
@@ -34,18 +35,82 @@ interface PartitionHealth {
   partitionCount: number;
   status: 'healthy' | 'warning' | 'not_partitioned' | 'error';
   recommendedActions: string[];
+  rows?: number;
 }
 
 export default function PartitionsHealthPage() {
+  const [logs, setLogs] = React.useState<Array<{ time: string; msg: string; type: string }>>([
+    { time: "00:15:22", msg: "Scanning Pg_Catalog for new partitions...", type: "info" },
+    { time: "00:14:01", msg: "Health Check: StudySession is healthy.", type: "success" },
+    { time: "00:12:45", msg: "Warning: Missing future partition for SecurityLog.", type: "warning" },
+    { time: "00:10:11", msg: "Pruning index tree for optimized access.", type: "info" }
+  ]);
+
+  const [isRunningMaintenance, setIsRunningMaintenance] = React.useState(false);
+
   const { data, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['admin', 'infrastructure', 'partitions'],
     queryFn: async () => {
       const response = await fetch(apiRoutes.admin.databasePartitions + '?action=health');
       if (!response.ok) throw new Error('Failed to fetch partition health');
-      return await response.json();
+      const res = await response.json();
+      return res.data;
     },
     refetchInterval: 60000 // Refresh every minute
   });
+
+  const settings = data?.settings || { autoPartition: true, purgeOld: false, compression: true };
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (newSettings: typeof settings) => {
+      const response = await fetch(apiRoutes.admin.databasePartitions, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newSettings),
+      });
+      if (!response.ok) throw new Error("Failed to update partition settings");
+      const res = await response.json();
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("تم تحديث إعدادات الأتمتة بنجاح");
+      refetch();
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "فشل في تحديث الإعدادات");
+    }
+  });
+
+  const toggleSetting = (key: 'autoPartition' | 'purgeOld' | 'compression') => {
+    const nextSettings = {
+      ...settings,
+      [key]: !settings[key]
+    };
+    updateSettingsMutation.mutate(nextSettings);
+  };
+
+  const handleRunMaintenance = async () => {
+    setIsRunningMaintenance(true);
+    const toastId = toast.loading("جاري تنفيذ أعمال الصيانة وقسمة الجداول...");
+    try {
+      const response = await fetch(apiRoutes.admin.databasePartitions + '?action=maintenance', {
+        method: "POST",
+      });
+      if (!response.ok) throw new Error("Failed to execute maintenance");
+      const res = await response.json();
+      if (res.success && res.data?.logs) {
+        setLogs(prev => [...res.data.logs, ...prev]);
+        toast.success("تم تنفيذ الصيانة الدورية للأقسام بنجاح!", { id: toastId });
+        refetch();
+      } else {
+        throw new Error(res.error || "خطأ غير معروف");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "خطأ أثناء تنفيذ الصيانة", { id: toastId });
+    } finally {
+      setIsRunningMaintenance(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -83,7 +148,7 @@ export default function PartitionsHealthPage() {
                 صحة <span className={STYLES.neonText}>خفايا المملكة</span> ⚔️
              </h1>
              <p className="text-lg text-gray-400 font-medium font-bold max-w-2xl">
-                عندما تزداد الجيوش (المطلوب: 1M محارب)، يجب أن تتسع خزائن البيانات. راقب تقسيم الجداول لضمان خفة الحركة القتالية.
+                عندما تزداد الجيوش (المطلوب: 1M محارب), يجب أن تتسع خزائن البيانات. راقب تقسيم الجداول لضمان خفة الحركة القتالية.
              </p>
           </div>
 
@@ -105,7 +170,7 @@ export default function PartitionsHealthPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
          {[
            { label: "الجداول المراقبة", value: data?.tableHealth?.length || 0, icon: Layers, color: "blue" },
-           { label: "الحالة العامة", value: "مستقر", icon: ShieldCheck, color: "emerald" },
+           { label: "الحالة العامة", value: data?.status === "healthy" ? "مستقر" : "تنبيهات", icon: ShieldCheck, color: "emerald" },
            { label: "المساحة الموفرة", value: "+45%", icon: Zap, color: "amber" },
            { label: "الرتبة التقنية", value: "S-Tier", icon: Server, color: "purple" }
          ].map((stat, i) => (
@@ -164,6 +229,9 @@ export default function PartitionsHealthPage() {
                                     {table.status.replace('_', ' ')}
                                  </Badge>
                                  <span className="text-gray-500 text-xs font-bold font-mono uppercase">{table.partitionCount} Partitions</span>
+                                 {table.rows !== undefined && (
+                                   <span className="text-gray-400 text-xs font-mono">({table.rows} rows)</span>
+                                 )}
                               </div>
                            </div>
                         </div>
@@ -172,9 +240,9 @@ export default function PartitionsHealthPage() {
                            <div className="w-full space-y-2">
                               <div className="flex justify-between text-[10px] font-black uppercase text-gray-500">
                                  <span>كفاءة الاستعلام (Query Efficiency)</span>
-                                 <span>98%</span>
+                                 <span>{table.status === "healthy" ? "98%" : table.status === "warning" ? "85%" : "60%"}</span>
                               </div>
-                              <Progress value={98} className="h-1.5 bg-white/5" />
+                              <Progress value={table.status === "healthy" ? 98 : table.status === "warning" ? 85 : 60} className="h-1.5 bg-white/5" />
                            </div>
                            <Button size="sm" variant="ghost" className="text-primary font-black gap-2 hover:bg-primary/10 rounded-xl px-4">
                               عرض تفاصيل السجلات <ChevronRight className="w-4 h-4 rtl:rotate-180" />
@@ -219,24 +287,31 @@ export default function PartitionsHealthPage() {
               </div>
 
               {[
-                { title: "التقسيم التلقائي", desc: "إنشاء جداول الشهور القادمة تلقائياً", active: true },
-                { title: "حذف السجلات القديمة", desc: "تنظيف البيانات الأقدم من عام", active: false },
-                { title: "ضغط البيانات (Compression)", desc: "تقليل مساحة الخادم للبيانات الأرشفية", active: true }
+                { key: "autoPartition" as const, title: "التقسيم التلقائي", desc: "إنشاء جداول الشهور القادمة تلقائياً", active: settings.autoPartition },
+                { key: "purgeOld" as const, title: "حذف السجلات القديمة", desc: "تنظيف البيانات الأقدم من عام", active: settings.purgeOld },
+                { key: "compression" as const, title: "ضغط البيانات (Compression)", desc: "تقليل مساحة الخادم للبيانات الأرشفية", active: settings.compression }
               ].map((op, i) => (
                 <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 group hover:bg-white/10 transition-all">
                    <div className="space-y-1">
                       <p className="text-sm font-black">{op.title}</p>
                       <p className="text-[10px] text-gray-500 font-bold">{op.desc}</p>
                    </div>
-                   <div className={`h-6 w-12 rounded-full p-1 cursor-pointer transition-all ${op.active ? 'bg-primary' : 'bg-gray-700'}`}>
+                   <div 
+                      onClick={() => toggleSetting(op.key)}
+                      className={`h-6 w-12 rounded-full p-1 cursor-pointer transition-all ${op.active ? 'bg-primary' : 'bg-gray-700'}`}
+                   >
                       <div className={`h-4 w-4 rounded-full bg-white transition-all transform ${op.active ? 'translate-x-6' : 'translate-x-0'}`} />
                    </div>
                 </div>
               ))}
 
-              <Button className="w-full bg-primary hover:bg-primary/90 text-white font-black h-16 rounded-2xl shadow-[0_15px_30px_rgba(var(--primary),0.3)] flex items-center justify-center gap-3 group border-b-4 border-black/20">
-                 <Shield className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                 تنفيذ الصيانة المجدولة
+              <Button 
+                onClick={handleRunMaintenance}
+                disabled={isRunningMaintenance}
+                className="w-full bg-primary hover:bg-primary/90 text-white font-black h-16 rounded-2xl shadow-[0_15px_30px_rgba(var(--primary),0.3)] flex items-center justify-center gap-3 group border-b-4 border-black/20"
+              >
+                 <Shield className={`w-5 h-5 group-hover:scale-110 transition-transform ${isRunningMaintenance ? 'animate-pulse' : ''}`} />
+                 {isRunningMaintenance ? "جاري تنفيذ الصيانة..." : "تنفيذ الصيانة المجدولة"}
               </Button>
            </Card>
 
@@ -247,15 +322,10 @@ export default function PartitionsHealthPage() {
                  سجلات المحرك (Engine Logs)
               </h4>
               <div className="space-y-4 font-mono text-[10px] text-gray-500">
-                 {[
-                   { time: "00:15:22", msg: "Scanning Pg_Catalog for new partitions...", type: "info" },
-                   { time: "00:14:01", msg: "Health Check: StudySession is healthy.", type: "success" },
-                   { time: "00:12:45", msg: "Warning: Missing future partition for SecurityLog.", type: "warning" },
-                   { time: "00:10:11", msg: "Pruning index tree for optimized access.", type: "info" }
-                 ].map((log, i) => (
+                 {logs.map((log, i) => (
                    <div key={i} className="flex gap-3 leading-relaxed">
                       <span className="text-primary opacity-50">[{log.time}]</span>
-                      <span className={log.type === 'warning' ? 'text-amber-500' : 'text-gray-400'}>{log.msg}</span>
+                      <span className={log.type === 'warning' ? 'text-amber-500' : log.type === 'success' ? 'text-emerald-500' : 'text-gray-400'}>{log.msg}</span>
                    </div>
                  ))}
               </div>

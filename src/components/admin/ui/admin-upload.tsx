@@ -4,6 +4,7 @@ import * as React from "react";
 import { Upload, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { apiClient } from "@/lib/api/api-client";
 
 const CHUNK_UPLOAD_THRESHOLD_BYTES = 25 * 1024 * 1024;
 const CHUNK_SIZE_BYTES = 25 * 1024 * 1024;
@@ -85,39 +86,26 @@ export function AdminUpload({
     [],
   );
 
+  // CSRF token is automatically injected by apiClient.fetch() — no manual helper needed.
+
   const uploadSingleRequest = React.useCallback(
-    (file: File, durationSeconds?: number) =>
-      new Promise<void>((resolve, reject) => {
-        const formData = new FormData();
-        formData.append("file", file);
+    async (file: File, durationSeconds?: number) => {
+      const formData = new FormData();
+      formData.append("file", file);
 
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", "/api/upload", true); xhr.withCredentials = true;
+      // Use apiClient.fetch so X-CSRF-Token is automatically injected
+      const response = await apiClient.fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            setProgress(Math.round((event.loaded / event.total) * 100));
-          }
-        };
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result?.details || result?.error || "فشل رفع الملف");
+      }
 
-        xhr.onload = () => {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            if (xhr.status >= 200 && xhr.status < 300) {
-              onUploadComplete(response.fileUrl, buildMetadata(file, durationSeconds));
-              resolve();
-              return;
-            }
-
-            reject(new Error(response.details || response.error || "فشل رفع الملف"));
-          } catch {
-            reject(new Error(`خطأ في الخادم (Status: ${xhr.status})`));
-          }
-        };
-
-        xhr.onerror = () => reject(new Error("خطأ في الاتصال بالخادم"));
-        xhr.send(formData);
-      }),
+      onUploadComplete(result.fileUrl, buildMetadata(file, durationSeconds));
+    },
     [buildMetadata, onUploadComplete],
   );
 
@@ -125,8 +113,9 @@ export function AdminUpload({
     async (file: File, durationSeconds?: number) => {
       setProgress(0);
 
-      const presignResponse = await fetch("/api/upload/presign", {
-        credentials: "include",
+      // Use apiClient.fetch so the X-CSRF-Token header is automatically injected
+      // (plain fetch() bypasses the CSRF injection in ApiClient.buildHeaders)
+      const presignResponse = await apiClient.fetch("/api/upload/presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -174,7 +163,8 @@ export function AdminUpload({
 
   const uploadChunked = React.useCallback(
     async (file: File, durationSeconds?: number) => {
-      const initResponse = await fetch("/api/upload/chunked", { credentials: "include",
+      // Use apiClient.fetch for all requests so X-CSRF-Token is automatically injected
+      const initResponse = await apiClient.fetch("/api/upload/chunked", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -204,7 +194,7 @@ export function AdminUpload({
         chunkFormData.append("chunkIndex", String(chunkIndex));
         chunkFormData.append("totalChunks", String(totalChunks));
 
-        const chunkResponse = await fetch("/api/upload/chunked", { credentials: "include",
+        const chunkResponse = await apiClient.fetch("/api/upload/chunked", {
           method: "PUT",
           body: chunkFormData,
         });
@@ -217,7 +207,7 @@ export function AdminUpload({
         setProgress(Math.round(((chunkIndex + 1) / totalChunks) * 95));
       }
 
-      const completeResponse = await fetch("/api/upload/chunked", { credentials: "include",
+      const completeResponse = await apiClient.fetch("/api/upload/chunked", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uploadId }),

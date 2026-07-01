@@ -8,7 +8,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
+  type DragEndEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -27,7 +27,7 @@ interface SortableItemProps {
   children: React.ReactNode;
 }
 
-function SortableItem({ id, children }: SortableItemProps) {
+const SortableItem = React.memo(function SortableItem({ id, children }: SortableItemProps) {
   const {
     attributes,
     listeners,
@@ -37,11 +37,11 @@ function SortableItem({ id, children }: SortableItemProps) {
     isDragging,
   } = useSortable({ id });
 
-  const style = {
+  const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 50 : "auto",
-    position: "relative" as const,
+    position: "relative",
   };
 
   return (
@@ -64,34 +64,36 @@ function SortableItem({ id, children }: SortableItemProps) {
       </m.div>
     </div>
   );
-}
+});
 
 interface DraggableDashboardProps {
   children: Array<{ id: string; content: React.ReactNode }>;
   onOrderChange?: (newOrder: string[]) => void;
 }
 
-const EMPTY_ARRAY: any[] = [];
+const EMPTY_ARRAY: readonly { id: string; content: React.ReactNode }[] = [];
 const STORAGE_KEY = "admin-dashboard-layout";
 
 export function DraggableDashboard({ children: initialChildren, onOrderChange, ...props }: DraggableDashboardProps & { sections?: any }) {
   const children = initialChildren || (props as any).sections || EMPTY_ARRAY;
   const { playSound } = usePremiumSounds();
 
+  // Memoize default order to prevent unnecessary recalculations
+  const defaultOrder = React.useMemo(
+    () => children.map((c: any) => String(c.id)),
+    [children]
+  );
+
   // Load saved layout from localStorage on mount
   const [items, setItems] = React.useState<string[]>(() => {
-    const defaultOrder = children.map((c: any) => String(c.id));
-
     if (typeof window === "undefined") return defaultOrder;
 
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const savedOrder = JSON.parse(saved) as string[];
-        // Validate saved order matches current children
         const currentIds = new Set(defaultOrder);
         const validSavedOrder = savedOrder.filter((id) => currentIds.has(id));
-        // Add any new children not in saved order
         const newIds = defaultOrder.filter((id) => !savedOrder.includes(id));
         return [...validSavedOrder, ...newIds];
       }
@@ -104,7 +106,6 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange, .
   // Save layout to localStorage whenever it changes
   React.useEffect(() => {
     if (typeof window === "undefined") return;
-
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch {
@@ -112,15 +113,29 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange, .
     }
   }, [items]);
 
+  // Sync items when children change (e.g. new sections added), but avoid infinite loops
+  const childrenIds = React.useMemo(() => children.map((c: any) => c.id), [children]);
+  const childrenIdsKey = childrenIds.join(",");
+  const itemsKey = items.join(",");
+
   React.useEffect(() => {
-    const newIds = children.map((c: any) => c.id);
-    const currentIds = items;
-    
-    // Only update if IDs have actually changed (simple equality check for contents)
-    if (newIds.length !== currentIds.length || newIds.some((id, i) => id !== currentIds[i])) {
-      setItems(newIds);
+    // Only update if IDs have actually changed
+    if (childrenIdsKey !== itemsKey) {
+      setItems((prev) => {
+        const currentIds = childrenIds;
+        const existingIds = new Set(prev);
+        // Keep existing order for known IDs, append new ones at the end
+        const validExisting = prev.filter((id) => currentIds.includes(id));
+        const newOnes = currentIds.filter((id) => !existingIds.has(id));
+        // If nothing changed, return prev to avoid re-render
+        const result = [...validExisting, ...newOnes];
+        if (result.length === prev.length && result.every((id, i) => id === prev[i])) {
+          return prev;
+        }
+        return result;
+      });
     }
-  }, [initialChildren, (props as any).sections]);
+  }, [childrenIdsKey]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

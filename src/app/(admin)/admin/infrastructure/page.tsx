@@ -30,12 +30,15 @@ const STYLES = {
 export default function InfrastructurePage() {
    const { data, isLoading, isError, refetch, isFetching } = useQuery({
       queryKey: ['admin', 'infra', 'stats'],
-      queryFn: async () => {
-         const response = await adminFetch('infrastructure/stats');
-         if (!response.ok) throw new Error("Could not reach telemetry server");
-         const json = await response.json();
-         return json.data;
-      },
+       queryFn: async () => {
+          const response = await adminFetch('infrastructure/stats');
+          if (!response.ok) throw new Error("Could not reach telemetry server");
+          const json = await response.json();
+          if (!json || typeof json !== 'object') {
+             throw new Error("Invalid telemetry payload");
+          }
+          return json;
+       },
       refetchInterval: 10000,
    });
 

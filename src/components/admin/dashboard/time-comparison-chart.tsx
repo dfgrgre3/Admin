@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
@@ -133,8 +133,8 @@ export function TimeComparisonChart({
         )}
       </div>
 
-      <div style={{ height: `${height}px` }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div style={{ height: `${height}px`, width: "100%" }}>
+        <ResponsiveContainer width="100%" height={height} minWidth={1} minHeight={1}>
           <ComposedChart data={dataWithDifference}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" vertical={false} />
             <XAxis

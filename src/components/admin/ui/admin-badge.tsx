@@ -148,6 +148,7 @@ const roleConfig: Record<RoleBadgeProps["role"], { label: string; color: string;
 
 export function RoleBadge({ role, className }: RoleBadgeProps) {
   const config = roleConfig[role];
+  if (!config) return null;
   return (
     <span
       className={cn(

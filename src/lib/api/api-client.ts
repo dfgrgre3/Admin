@@ -68,7 +68,35 @@ function unwrapApiEnvelope<T>(payload: T | ApiEnvelope<T>): T {
 }
 
 class ApiClient {
-    private buildHeaders(customOptions: RequestInit): Headers {
+    /** In-flight CSRF bootstrap request — shared across concurrent callers to avoid duplicate fetches */
+    private csrfBootstrapPromise: Promise<void> | null = null;
+
+    /**
+     * Ensures the _csrf cookie exists by fetching GET /api/auth/csrf when it is absent.
+     * Multiple simultaneous callers share the same in-flight request (single-flight pattern).
+     *
+     * This solves the bootstrap problem: on first load (or after cookie expiry) the browser
+     * has no _csrf cookie, so any POST/PUT/PATCH/DELETE would fail with
+     * "CSRF token validation failed" until a GET request triggered ensureCSRFToken on the backend.
+     */
+    private async ensureCsrfToken(): Promise<void> {
+        if (typeof window === 'undefined') return; // SSR — cannot read/set browser cookies here
+        if (this.getCookie('_csrf')) return;        // Cookie already present, nothing to do
+
+        if (!this.csrfBootstrapPromise) {
+            this.csrfBootstrapPromise = fetch('/api/auth/csrf', {
+                method: 'GET',
+                credentials: 'include',
+            })
+                .then(() => { /* The Set-Cookie header sets _csrf automatically */ })
+                .catch(() => { /* Ignore errors — the next request will retry */ })
+                .finally(() => { this.csrfBootstrapPromise = null; });
+        }
+
+        return this.csrfBootstrapPromise;
+    }
+
+    private async buildHeaders(customOptions: RequestInit): Promise<Headers> {
         const headers = new Headers({
             ...(customOptions.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
             ...customOptions.headers,
@@ -76,8 +104,10 @@ class ApiClient {
 
         const isWriteMethod = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(customOptions.method || 'GET');
 
-        // Add CSRF token for state-changing requests in browser
+        // For state-changing requests in the browser: guarantee the CSRF cookie exists first,
+        // then inject it as the X-CSRF-Token header (Double Submit Cookie pattern).
         if (typeof window !== 'undefined' && isWriteMethod) {
+            await this.ensureCsrfToken();
             const csrfToken = this.getCookie('_csrf');
             if (csrfToken) {
                 headers.set('X-CSRF-Token', csrfToken);
@@ -118,7 +148,7 @@ class ApiClient {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
 
-        const headers = this.buildHeaders(customOptions);
+        const headers = await this.buildHeaders(customOptions);
 
         try {
             const url = normalizeEndpoint(endpoint);
@@ -187,7 +217,7 @@ class ApiClient {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
 
-        const headers = this.buildHeaders(customOptions);
+        const headers = await this.buildHeaders(customOptions);
 
         try {
             const url = normalizeEndpoint(endpoint);
@@ -311,9 +341,15 @@ class ApiClient {
 
     private getCookie(name: string): string | null {
         if (typeof document === 'undefined') return null;
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            const c = ca[i];
+            if (!c) continue;
+            let trimmed = c;
+            while (trimmed.charAt(0) === ' ') trimmed = trimmed.substring(1);
+            if (trimmed.indexOf(nameEQ) === 0) return trimmed.substring(nameEQ.length);
+        }
         return null;
     }
 }

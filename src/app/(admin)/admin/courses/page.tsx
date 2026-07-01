@@ -336,7 +336,7 @@ export default function AdminCoursesPage() {
 
   const handleDuplicate = async (course: Course) => {
     try {
-      const response = await adminFetch("/api/admin/courses/duplicate", {
+      const response = await adminFetch(apiRoutes.admin.courseDuplicate, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ courseId: course.id })
@@ -352,7 +352,7 @@ export default function AdminCoursesPage() {
 
   const _handleToggleActive = async (course: Course) => {
     try {
-      const response = await adminFetch("/api/admin/courses", {
+      const response = await adminFetch(apiRoutes.admin.courses, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: course.id, isActive: !course.isActive })
@@ -374,7 +374,7 @@ export default function AdminCoursesPage() {
     action: "publish" | "unpublish" | "activate" | "deactivate" | "delete") => {
     if (selectedIds.length === 0) return;
     try {
-      const response = await adminFetch("/api/admin/courses/batch", {
+      const response = await adminFetch(apiRoutes.admin.courseBatch, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: selectedIds, action })
@@ -390,7 +390,7 @@ export default function AdminCoursesPage() {
   };
 
   const handleExport = () => {
-    window.open("/api/admin/courses/export", "_blank");
+    window.open(apiRoutes.admin.courseExport, "_blank");
   };
 
   const columns = React.useMemo(
@@ -431,6 +431,7 @@ export default function AdminCoursesPage() {
               className="h-12 rounded-2xl px-8 font-black gap-2 shadow-xl shadow-primary/20"
               onClick={() => {
                 setEditingCourse(null);
+                quickForm.reset(quickCourseDefaults);
                 setQuickCreateOpen(true);
               }}
             >

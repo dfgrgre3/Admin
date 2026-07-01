@@ -4,7 +4,7 @@ import { z } from "zod";
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 export const courseSchema = z.object({
-  name: z.string().min(1, "اسم الدورة بالإتجليزية مطلوب"),
+  name: z.string().min(1, "اسم الدورة بالإنجليزية مطلوب"),
   nameAr: z.string().min(1, "اسم الدورة بالعربية مطلوب"),
   code: z.string().optional().nullable(),
   price: z.coerce.number().min(0, "السعر يجب أن يكون صفراً أو أكثر"),
@@ -25,7 +25,14 @@ export const courseSchema = z.object({
   trailerDurationMinutes: z.coerce.number().min(0).optional().nullable(),
   seoTitle: z.string().optional().nullable(),
   seoDescription: z.string().optional().nullable(),
-  slug: z.string().optional().nullable(),
+  slug: z
+    .string()
+    .optional()
+    .nullable()
+    .refine(
+      (val) => !val || /^[a-z0-9-]+$/.test(val),
+      { message: "الرابط المختصر يجب أن يحتوي فقط على أحرف إنجليزية صغيرة وأرقام وشرطات (بدون مسافات)" }
+    ),
   isFeatured: z.boolean().default(false),
   language: z.string().nullable().default("ar"),
   coursePrerequisites: z.string().optional().nullable(),

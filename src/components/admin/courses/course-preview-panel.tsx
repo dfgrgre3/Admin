@@ -262,6 +262,7 @@ export function CoursePreviewPanel({ quickForm }: CoursePreviewPanelProps) {
         <AnimatePresence>
           {values.isActive && (
             <m.div
+              key="feature-active"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
@@ -274,6 +275,7 @@ export function CoursePreviewPanel({ quickForm }: CoursePreviewPanelProps) {
           )}
           {values.isPublished && (
             <m.div
+              key="feature-published"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
@@ -286,6 +288,7 @@ export function CoursePreviewPanel({ quickForm }: CoursePreviewPanelProps) {
           )}
           {values.isFeatured && (
             <m.div
+              key="feature-featured"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
@@ -298,6 +301,7 @@ export function CoursePreviewPanel({ quickForm }: CoursePreviewPanelProps) {
           )}
           {values.language && (
             <m.div
+              key="feature-language"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}

@@ -1,4 +1,3 @@
-import * as React from "react";
 import { notFound } from "next/navigation";
 import { apiClient } from "@/lib/api/api-client";
 import { CourseEditor } from "@/components/admin/courses/course-editor";
@@ -26,14 +25,14 @@ export default async function EditCoursePage({ params }: EditCoursePageProps) {
   }
 
   // Map Go Subject model to the format CourseEditor expects
-  const initialData = {
+  const initialData = course?.subject ? {
+    ...course.subject,
+  } : {
     ...course,
-    // The Go model uses 'isActive' instead of 'active' maybe? 
-    // And 'thumbnailUrl' instead of 'image'.
   };
 
   return (
-    <div className="container max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
       <CourseEditor
         courseId={id}
         initialData={initialData}

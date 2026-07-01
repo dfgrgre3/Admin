@@ -16,7 +16,10 @@ import {
   ArrowRight,
   PlusCircle,
   Layers,
-  Layout
+  Layout,
+  ClipboardList,
+  File,
+  FileQuestion
 } from "lucide-react";
 import { 
   DndContext, 
@@ -60,6 +63,8 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { AdminUpload } from "@/components/admin/ui/admin-upload";
+import { AdminConfirm } from "@/components/admin/ui/admin-confirm";
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import { SUBJECT_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
 import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
 
@@ -67,13 +72,28 @@ type Lesson = {
   id: string;
   title: string; // Backend uses Title
   order: number;
-  type: "VIDEO" | "QUIZ" | "ARTICLE" | "ASSIGNMENT";
+  type: "VIDEO" | "QUIZ" | "ARTICLE" | "FILE" | "ASSIGNMENT";
   videoUrl?: string | null;
   durationMinutes?: number; // Backend uses durationMinutes
   isFree?: boolean;
   description?: string | null;
   examId?: string | null; // Added
 };
+
+function LessonTypeIcon({ type }: { type: Lesson["type"] }) {
+  switch (type) {
+    case "VIDEO":
+      return <Video className="w-4 h-4 text-blue-500" />;
+    case "QUIZ":
+      return <FileQuestion className="w-4 h-4 text-amber-500" />;
+    case "ASSIGNMENT":
+      return <ClipboardList className="w-4 h-4 text-violet-500" />;
+    case "FILE":
+      return <File className="w-4 h-4 text-rose-500" />;
+    default:
+      return <FileText className="w-4 h-4 text-emerald-500" />;
+  }
+}
 
 type Chapter = {
   id: string;
@@ -88,7 +108,7 @@ type SubjectSummary = {
   nameAr?: string | null;
 };
 
-function SortableLesson({ lesson, onDelete, onEdit }: { lesson: Lesson; onDelete: (id: string) => void; onEdit: (lesson: Lesson) => void }) {
+function SortableLesson({ lesson, onDelete, onEdit }: { lesson: Lesson; onDelete: (lesson: Lesson) => void; onEdit: (lesson: Lesson) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: lesson.id });
   
   const style = {
@@ -105,7 +125,7 @@ function SortableLesson({ lesson, onDelete, onEdit }: { lesson: Lesson; onDelete
       <div {...attributes} {...listeners} className="cursor-grab text-zinc-400 hover:text-primary transition-colors">
         <GripVertical className="w-4 h-4" />
       </div>
-      {lesson.type === 'VIDEO' ? <Video className="w-4 h-4 text-blue-500" /> : <FileText className="w-4 h-4 text-emerald-500" />}
+      <LessonTypeIcon type={lesson.type} />
       <div className="flex-1 flex flex-col gap-0.5">
         <span className="text-sm font-bold">{lesson.title}</span>
         {lesson.videoUrl && (
@@ -124,7 +144,7 @@ function SortableLesson({ lesson, onDelete, onEdit }: { lesson: Lesson; onDelete
         <Button variant="ghost" size="icon" onClick={() => onEdit(lesson)} className="h-8 w-8 text-zinc-400 hover:text-primary">
            <Edit className="w-3.5 h-3.5" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => onDelete(lesson.id)} className="h-8 w-8 text-red-500 hover:bg-red-500/10">
+        <Button variant="ghost" size="icon" onClick={() => onDelete(lesson)} className="h-8 w-8 text-red-500 hover:bg-red-500/10">
            <Trash2 className="w-3.5 h-3.5" />
         </Button>
       </div>
@@ -134,9 +154,9 @@ function SortableLesson({ lesson, onDelete, onEdit }: { lesson: Lesson; onDelete
 
 function SortableChapter({ chapter, onDeleteChapter, onAddLesson, onDeleteLesson, onReorderLessons, onEditChapter, onEditLesson }: { 
   chapter: Chapter; 
-  onDeleteChapter: (id: string) => void;
+  onDeleteChapter: (chapter: Chapter) => void;
   onAddLesson: (chapterId: string) => void;
-  onDeleteLesson: (chapterId: string, lessonId: string) => void;
+  onDeleteLesson: (chapterId: string, lesson: Lesson) => void;
   onReorderLessons: (chapterId: string, event: DragEndEvent) => void;
   onEditChapter: (chapter: Chapter) => void;
   onEditLesson: (lesson: Lesson, chapterId: string) => void;
@@ -181,9 +201,9 @@ function SortableChapter({ chapter, onDeleteChapter, onAddLesson, onDeleteLesson
                    <PlusCircle className="w-3.5 h-3.5" />
                    إضافة درس
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => onDeleteChapter(chapter.id)} className="h-8 w-8 text-red-500 hover:bg-red-500/10">
-                   <Trash2 className="w-4 h-4" />
-                </Button>
+                 <Button variant="ghost" size="icon" onClick={() => onDeleteChapter(chapter)} className="h-8 w-8 text-red-500 hover:bg-red-500/10">
+                    <Trash2 className="w-4 h-4" />
+                 </Button>
              </div>
           </CardContent>
        </Card>
@@ -198,12 +218,12 @@ function SortableChapter({ chapter, onDeleteChapter, onAddLesson, onDeleteLesson
                <SortableContext items={chapter.subTopics.map(l => l.id)} strategy={verticalListSortingStrategy}>
                   <div className="space-y-2">
                      {chapter.subTopics.map(lesson => (
-                       <SortableLesson 
-                        key={lesson.id} 
-                        lesson={lesson} 
-                        onDelete={(lId) => onDeleteLesson(chapter.id, lId)}
-                        onEdit={(l) => onEditLesson(l, chapter.id)}
-                      />
+                        <SortableLesson 
+                         key={lesson.id} 
+                         lesson={lesson} 
+                         onDelete={(l) => onDeleteLesson(chapter.id, l)}
+                         onEdit={(l) => onEditLesson(l, chapter.id)}
+                       />
                      ))}
                      {chapter.subTopics.length === 0 && (
                        <div className="p-8 text-center border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-2xl">
@@ -261,7 +281,7 @@ const addLessonToChapterInList = (chapters: Chapter[], chapterId: string) => {
       id: `new-lesson-${Date.now()}`,
       title: "درس جديد",
       order: lessons.length,
-      type: "VIDEO",
+      type: "VIDEO" as const,
       videoUrl: "",
       durationMinutes: 0,
       isFree: false
@@ -296,10 +316,19 @@ export default function CurriculumEditorPage() {
   const [_subject, setSubject] = useState<SubjectSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ kind: "chapter" | "lesson"; chapterId: string; lessonId?: string; title: string } | null>(null);
   
   // Edit states
   const [editingChapter, setEditingChapter] = useState<{ id: string, title: string } | null>(null);
   const [editingLesson, setEditingLesson] = useState<{ lesson: Lesson, chapterId: string } | null>(null);
+
+  useUnsavedChanges(hasUnsavedChanges);
+
+  const markDirty = <T,>(value: T): T => {
+    setHasUnsavedChanges(true);
+    return value;
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -328,14 +357,14 @@ export default function CurriculumEditorPage() {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     
-    setChapters((prev) => reorderChaptersInList(prev, active.id as string, over.id as string));
+    setChapters((prev) => markDirty(reorderChaptersInList(prev, active.id as string, over.id as string)));
   };
 
   const handleReorderLessons = (chapterId: string, event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    setChapters(prev => reorderLessonsInChapterInList(prev, chapterId, active.id as string, over.id as string));
+    setChapters(prev => markDirty(reorderLessonsInChapterInList(prev, chapterId, active.id as string, over.id as string)));
   };
 
   const addChapter = () => {
@@ -345,19 +374,32 @@ export default function CurriculumEditorPage() {
       order: chapters.length,
       subTopics: []
     };
-    setChapters([...chapters, newChapter]);
+    setChapters(markDirty([...chapters, newChapter]));
   };
 
-  const deleteChapter = (id: string) => {
-    setChapters(chapters.filter(c => c.id !== id));
+  const requestDeleteChapter = (chapter: Chapter) => {
+    setConfirmDelete({ kind: "chapter", chapterId: chapter.id, title: chapter.title });
+  };
+
+  const requestDeleteLesson = (chapterId: string, lesson: Lesson) => {
+    setConfirmDelete({ kind: "lesson", chapterId, lessonId: lesson.id, title: lesson.title });
+  };
+
+  const confirmDeletion = () => {
+    if (!confirmDelete) return;
+    if (confirmDelete.kind === "chapter") {
+      const chapterId = confirmDelete.chapterId;
+      setChapters(prev => markDirty(prev.filter(c => c.id !== chapterId)));
+    } else if (confirmDelete.lessonId) {
+      const chapterId = confirmDelete.chapterId;
+      const lessonId = confirmDelete.lessonId;
+      setChapters(prev => markDirty(removeLessonFromChapterInList(prev, chapterId, lessonId)));
+    }
+    setConfirmDelete(null);
   };
 
   const addLesson = (chapterId: string) => {
-    setChapters(prev => addLessonToChapterInList(prev, chapterId));
-  };
-
-  const deleteLesson = (chapterId: string, lessonId: string) => {
-    setChapters(prev => removeLessonFromChapterInList(prev, chapterId, lessonId));
+    setChapters(prev => markDirty(addLessonToChapterInList(prev, chapterId)));
   };
 
   const handleEditLesson = (lesson: Lesson, chapterId: string) => {
@@ -367,7 +409,7 @@ export default function CurriculumEditorPage() {
   const handleSaveLesson = () => {
     if (!editingLesson) return;
     
-    setChapters(prev => updateLessonInChapterInList(prev, editingLesson.chapterId, editingLesson.lesson));
+    setChapters(prev => markDirty(updateLessonInChapterInList(prev, editingLesson.chapterId, editingLesson.lesson)));
     setEditingLesson(null);
   };
 
@@ -377,11 +419,16 @@ export default function CurriculumEditorPage() {
 
   const handleSaveChapter = () => {
     if (!editingChapter) return;
-    setChapters(prev => updateChapterInList(prev, editingChapter.id, { title: editingChapter.title }));
+    setChapters(prev => markDirty(updateChapterInList(prev, editingChapter.id, { title: editingChapter.title })));
     setEditingChapter(null);
   };
 
   const handleSave = async () => {
+     const invalidLessons = chapters.flatMap(ch => ch.subTopics).filter(l => !l.title?.trim());
+     if (invalidLessons.length > 0) {
+       toast.error(`يوجد ${invalidLessons.length} درس بدون عنوان. يرجى تعبئة العناوين قبل الحفظ.`);
+       return;
+     }
      setIsSaving(true);
      try {
        const res = await adminFetch(`/admin/courses/${subjectId}/curriculum`, {
@@ -392,9 +439,10 @@ export default function CurriculumEditorPage() {
 
        if (res.ok) {
          await requestPublicCacheRevalidation(SUBJECT_PUBLIC_CACHE_PATHS);
+         setHasUnsavedChanges(false);
          toast.success('تم حفظ المنهج بنجاح!');
        } else {
-         const error = await res.json();
+         const error = await res.json().catch(() => ({}));
          toast.error(error.error || 'فشل حفظ المنهج');
        }
      } catch (_err) {
@@ -423,12 +471,17 @@ export default function CurriculumEditorPage() {
              <h1 className="text-4xl font-black tracking-tight dark:text-white">مـنشئ المـنهج التعليمي</h1>
              <p className="text-zinc-500 font-bold text-sm">قم بترتيب الفصول والدروس وإضافة المحتوى التعليمي للمادة</p>
           </div>
-          <div className="flex items-center gap-3">
-             <Button
-               variant="outline"
-               className="border-zinc-200 dark:border-zinc-800 font-black text-[10px] uppercase h-11 px-6 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-all"
-               onClick={() => router.push(`/courses/${subjectId}`)}
-             >
+           <div className="flex items-center gap-3">
+              {hasUnsavedChanges && (
+                <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[9px] uppercase tracking-wider animate-pulse">
+                  تغييرات غير محفوظة
+                </Badge>
+              )}
+              <Button
+                variant="outline"
+                className="border-zinc-200 dark:border-zinc-800 font-black text-[10px] uppercase h-11 px-6 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-all"
+                onClick={() => router.push(`/courses/${subjectId}`)}
+              >
                 <Layout className="w-4 h-4 ml-2" />
                 معاينة المادة
              </Button>
@@ -469,9 +522,9 @@ export default function CurriculumEditorPage() {
                         <SortableChapter 
                            key={chapter.id} 
                            chapter={chapter} 
-                           onDeleteChapter={deleteChapter}
-                           onAddLesson={addLesson}
-                           onDeleteLesson={deleteLesson}
+                            onDeleteChapter={requestDeleteChapter}
+                            onAddLesson={addLesson}
+                            onDeleteLesson={requestDeleteLesson}
                            onReorderLessons={handleReorderLessons}
                            onEditChapter={handleEditChapter}
                            onEditLesson={handleEditLesson}
@@ -534,8 +587,10 @@ export default function CurriculumEditorPage() {
                <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase">نوع الدرس</Label>
+                    {/* value guarded by ?? "VIDEO" to prevent controlled→uncontrolled React warning
+                        when the dialog is closed (editingLesson is null → type would be undefined) */}
                     <Select 
-                      value={editingLesson?.lesson.type} 
+                      value={editingLesson?.lesson.type ?? "VIDEO"} 
                       onValueChange={(val) => setEditingLesson(prev => prev ? { ...prev, lesson: { ...prev.lesson, type: val as Lesson["type"] } } : null)}
                     >
                       <SelectTrigger className="h-12 rounded-xl text-sm font-bold">
@@ -611,23 +666,46 @@ export default function CurriculumEditorPage() {
           </DialogContent>
        </Dialog>
 
-       {/* Floating Quick Stats */}
-       <div className="fixed bottom-10 left-10 p-6 rounded-[2rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl shadow-black/20 hidden xl:flex flex-col gap-6 z-50 min-w-[240px]" dir="rtl">
-          <h4 className="font-black text-[10px] text-zinc-500 uppercase tracking-widest">إحصائيات المنهج</h4>
-          <div className="space-y-4">
-             <div className="flex items-center justify-between text-zinc-400">
-                <span className="text-xs font-bold">إجمالي الفصول</span>
-                <span className="text-sm font-black text-primary">{chapters.length}</span>
-             </div>
-             <div className="flex items-center justify-between text-zinc-400">
-                <span className="text-xs font-bold">إجمالي الدروس</span>
-                <span className="text-sm font-black text-primary">{chapters.reduce((acc, c) => acc + c.subTopics.length, 0)}</span>
-             </div>
-             <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                <Badge className="w-full justify-center bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-none h-8 text-[9px] uppercase tracking-tighter">الحالة: مسودة غير منشورة</Badge>
-             </div>
-          </div>
-       </div>
-    </div>
-  );
+        {/* Floating Quick Stats */}
+        <div className="fixed bottom-10 left-10 p-6 rounded-[2rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl shadow-black/20 hidden xl:flex flex-col gap-6 z-50 min-w-[240px]" dir="rtl">
+           <h4 className="font-black text-[10px] text-zinc-500 uppercase tracking-widest">إحصائيات المنهج</h4>
+           <div className="space-y-4">
+              <div className="flex items-center justify-between text-zinc-400">
+                 <span className="text-xs font-bold">إجمالي الفصول</span>
+                 <span className="text-sm font-black text-primary">{chapters.length}</span>
+              </div>
+              <div className="flex items-center justify-between text-zinc-400">
+                 <span className="text-xs font-bold">إجمالي الدروس</span>
+                 <span className="text-sm font-black text-primary">{chapters.reduce((acc, c) => acc + c.subTopics.length, 0)}</span>
+              </div>
+              <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                 <Badge className={cn(
+                   "w-full justify-center border-none h-8 text-[9px] uppercase tracking-tighter",
+                   hasUnsavedChanges
+                     ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                     : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
+                 )}>
+                   {hasUnsavedChanges ? "الحالة: تغييرات غير محفوظة" : "الحالة: مسودة غير منشورة"}
+                 </Badge>
+              </div>
+           </div>
+        </div>
+
+        {/* Delete Confirmation */}
+        <AdminConfirm
+          open={!!confirmDelete}
+          onOpenChange={(open) => !open && setConfirmDelete(null)}
+          variant="destructive"
+          title={confirmDelete?.kind === "chapter" ? "حذف الفصل الدراسي" : "حذف الدرس"}
+          description={
+            confirmDelete
+              ? `سيتم حذف "${confirmDelete.title || (confirmDelete.kind === "chapter" ? "الفصل" : "الدرس")}" نهائياً.${confirmDelete.kind === "chapter" ? " سيتم حذف جميع الدروس بداخله أيضاً." : ""} لا يمكن التراجع إلا قبل الحفظ.`
+              : ""
+          }
+          confirmText="نعم، احذف"
+          cancelText="إلغاء"
+          onConfirm={confirmDeletion}
+        />
+     </div>
+   );
 }

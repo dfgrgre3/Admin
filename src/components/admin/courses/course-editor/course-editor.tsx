@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { apiClient } from "@/lib/api/api-client";
 import { apiRoutes } from "@/lib/api/routes";
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 import { Form } from "@/components/ui/form";
 import { Tabs } from "@/components/ui/tabs";
 
@@ -136,6 +137,7 @@ export function CourseEditor({
       toast.success(
         isEdit ? "تم تحديث الدورة بنجاح" : "تم إنشاء الدورة بنجاح",
       );
+      form.reset((result?.data?.course ?? values) as CourseFormValues);
       router.refresh();
 
       const createdCourseId = !isEdit && (result?.data?.course?.id || result?.id);
@@ -168,6 +170,7 @@ export function CourseEditor({
   // ─── Trailer video helpers ───────────────────────────────────────────────
   const trailerUrl = form.watch("trailerUrl");
   const trailerDurationMinutes = form.watch("trailerDurationMinutes");
+  useUnsavedChanges(form.formState.isDirty);
   const { isDirectVideo, youtubeEmbedUrl } = React.useMemo(() => {
     const isDirectVideo =
       !!trailerUrl &&
@@ -203,11 +206,41 @@ export function CourseEditor({
       if (result.reply) {
         form.setValue(field, result.reply);
         toast.success("تم توليد المحتوى بنجاح", { id: toastId });
+      } else if (!response.ok) {
+        toast.error(result.error || "فشل في توليد المحتوى", { id: toastId });
+      } else {
+        toast.error("لم يتم استلام رد من الذكاء الاصطناعي", { id: toastId });
       }
     } catch {
       toast.error("فشل الاتصال بمساعد الذكاء الاصطناعي", { id: toastId });
     }
   };
+
+  // Watched fields for tab completion indicators
+  const watchName = form.watch("name");
+  const watchNameAr = form.watch("nameAr");
+  const watchInstructorId = form.watch("instructorId");
+  const watchThumbnailUrl = form.watch("thumbnailUrl");
+  const watchTrailerUrl = form.watch("trailerUrl");
+  const watchSeoTitle = form.watch("seoTitle");
+  const watchSeoDescription = form.watch("seoDescription");
+
+  const completedTabs = React.useMemo(() => {
+    const tabs: string[] = [];
+    if (watchName && watchNameAr) tabs.push("general");
+    if (watchInstructorId) tabs.push("details");
+    if (watchThumbnailUrl && watchTrailerUrl) tabs.push("media");
+    if (watchSeoTitle && watchSeoDescription) tabs.push("seo");
+    return tabs;
+  }, [
+    watchName,
+    watchNameAr,
+    watchInstructorId,
+    watchThumbnailUrl,
+    watchTrailerUrl,
+    watchSeoTitle,
+    watchSeoDescription,
+  ]);
 
   const control = form.control;
 
@@ -237,6 +270,7 @@ export function CourseEditor({
               chaptersCount={curriculumStats?.chaptersCount ?? 0}
               lessonsCount={curriculumStats?.lessonsCount ?? 0}
               onNavigate={(path) => router.push(path)}
+              completedTabs={completedTabs as any}
             />
 
             <div className="flex-1">
