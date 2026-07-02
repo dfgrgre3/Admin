@@ -90,9 +90,12 @@ export async function POST(request: NextRequest) {
       const data = await response.json();
       console.log('[AI Chat] Backend response data:', JSON.stringify(data));
 
+      const reply = data.reply || data.message || '';
+
       return NextResponse.json({
         success: true,
-        message: data.reply || 'عذراً، لم أتمكن من الرد على سؤالك',
+        reply,
+        message: reply || 'عذراً، لم أتمكن من الرد على سؤالك',
         conversationId: data.conversationId,
         messageId: data.messageId,
       });
