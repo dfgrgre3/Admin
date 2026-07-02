@@ -1,9 +1,9 @@
 "use client";
 
 import type { UserDetails } from "./types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
   History,
   BookOpen,
@@ -11,133 +11,358 @@ import {
   CheckCircle,
   XCircle,
   Activity,
-  ShieldCheck
+  ShieldCheck,
+  Zap,
+  Brain,
+  Bell,
+  ListTodo,
+  Layers,
+  Timer,
+  Target,
 } from "lucide-react";
-import { format, isValid } from "date-fns";
+import { format, isValid, formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 
 export function ActivityTab({ user }: { user: UserDetails }) {
+  const totalStudyHours = Math.floor((user.totalStudyTime ?? 0) / 60);
+  const totalStudyMins = (user.totalStudyTime ?? 0) % 60;
+
+  const securityCards = [
+    {
+      label: "البريد الإلكتروني",
+      icon: user.emailVerified ? CheckCircle : XCircle,
+      status: user.emailVerified ? "موثق" : "غير موثق",
+      verified: user.emailVerified,
+    },
+    {
+      label: "التحقق الثنائي",
+      icon: ShieldCheck,
+      status: user.twoFactorEnabled ? "مفعّل" : "معطّل",
+      verified: user.twoFactorEnabled,
+    },
+  ];
+
+  const countersData = [
+    {
+      label: "المهام الكلية",
+      value: user._count?.tasks ?? 0,
+      icon: ListTodo,
+      color: "text-green-500",
+      bg: "bg-green-500/10",
+    },
+    {
+      label: "التنبيهات",
+      value: user._count?.notifications ?? 0,
+      icon: Bell,
+      color: "text-blue-500",
+      bg: "bg-blue-500/10",
+    },
+    {
+      label: "الأهداف المخصصة",
+      value: user._count?.customGoals ?? 0,
+      icon: Target,
+      color: "text-purple-500",
+      bg: "bg-purple-500/10",
+    },
+    {
+      label: "التذكيرات",
+      value: user._count?.reminders ?? 0,
+      icon: Timer,
+      color: "text-orange-500",
+      bg: "bg-orange-500/10",
+    },
+    {
+      label: "الجلسات المفتوحة",
+      value: user._count?.sessions ?? 0,
+      icon: Layers,
+      color: "text-cyan-500",
+      bg: "bg-cyan-500/10",
+    },
+    {
+      label: "جلسات العمل العميق",
+      value: user.deepWorkSessions ?? 0,
+      icon: Brain,
+      color: "text-indigo-500",
+      bg: "bg-indigo-500/10",
+    },
+  ];
+
+  const recentSessions = user.studySessions?.slice(0, 10) || [];
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Summary metrics */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Card className="border-none shadow-md bg-gradient-to-br from-blue-500/5 to-card col-span-full sm:col-span-1">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500">
+                <Clock className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">
+                إجمالي وقت الدراسة
+              </span>
+            </div>
+            <p className="text-3xl font-black">
+              {totalStudyHours}
+              <span className="text-lg font-bold text-muted-foreground mr-1">ساعة</span>
+              {totalStudyMins > 0 && (
+                <>
+                  {" "}
+                  {totalStudyMins}
+                  <span className="text-lg font-bold text-muted-foreground mr-1">د</span>
+                </>
+              )}
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              عبر {user._count?.studySessions ?? 0} جلسة مذاكرة
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-none shadow-md bg-gradient-to-br from-orange-500/5 to-card">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2.5 rounded-xl bg-orange-500/10 text-orange-500">
+                <Zap className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">
+                جلسات بومودورو
+              </span>
+            </div>
+            <p className="text-3xl font-black">{user.pomodoroSessions ?? 0}</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              تقريباً {Math.round((user.pomodoroSessions ?? 0) * 25 / 60)} ساعة مركّزة
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-none shadow-md bg-gradient-to-br from-green-500/5 to-card">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2.5 rounded-xl bg-green-500/10 text-green-500">
+                <CheckCircle className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">
+                المهام المنجزة
+              </span>
+            </div>
+            <p className="text-3xl font-black">{user.tasksCompleted ?? 0}</p>
+            {(user._count?.tasks ?? 0) > 0 && (
+              <>
+                <Progress
+                  value={((user.tasksCompleted ?? 0) / (user._count?.tasks ?? 1)) * 100}
+                  className="h-1.5 mt-3 bg-green-500/10"
+                  indicatorClassName="bg-green-500"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  من أصل {user._count?.tasks ?? 0} مهمة (
+                  {Math.round(((user.tasksCompleted ?? 0) / (user._count?.tasks ?? 1)) * 100)}%)
+                </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Study Sessions */}
       <Card className="border-none shadow-lg">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <History className="h-5 w-5 text-primary" />
             جلسات المذاكرة الأخيرة
           </CardTitle>
+          <CardDescription>
+            آخر {Math.min(10, recentSessions.length)} جلسات من{" "}
+            {user._count?.studySessions ?? 0} جلسة إجمالية
+          </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y">
-            {user.studySessions?.length > 0 ? (
-              user.studySessions.map((session) => (
-                <div key={session.id} className="p-6 flex items-center justify-between hover:bg-muted/30 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                      <BookOpen className="h-6 w-6" />
+            {recentSessions.length > 0 ? (
+              recentSessions.map((session) => {
+                const focusColor =
+                  session.focusScore >= 80
+                    ? "text-success"
+                    : session.focusScore >= 60
+                    ? "text-warning"
+                    : "text-danger";
+                const focusBg =
+                  session.focusScore >= 80
+                    ? "bg-green-500/10"
+                    : session.focusScore >= 60
+                    ? "bg-amber-500/10"
+                    : "bg-red-500/10";
+
+                return (
+                  <div
+                    key={session.id}
+                    className="p-5 flex items-center justify-between gap-4 hover:bg-muted/30 transition-colors group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`h-11 w-11 rounded-2xl ${focusBg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}
+                      >
+                        <BookOpen className={`h-5 w-5 ${focusColor}`} />
+                      </div>
+                      <div>
+                        <p className="font-black text-sm">
+                          {session.subject?.name || "مذاكرة عامة"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {session.startTime && isValid(new Date(session.startTime))
+                            ? format(
+                                new Date(session.startTime),
+                                "d MMMM yyyy · HH:mm",
+                                { locale: ar }
+                              )
+                            : "-"}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-bold">{session.subject?.name || "مذاكرة عامة"}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {session.startTime && isValid(new Date(session.startTime))
-                          ? format(new Date(session.startTime), "d MMMM yyyy HH:mm", { locale: ar })
-                          : "-"}
-                      </p>
+                    <div className="flex items-center gap-4 shrink-0">
+                      <div className="text-left">
+                        <div className="flex items-center gap-1.5 justify-end mb-1">
+                          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="font-black text-sm">{session.durationMin} د</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 justify-end">
+                          <span className="text-xs text-muted-foreground">تركيز:</span>
+                          <span className={`text-xs font-black ${focusColor}`}>
+                            {session.focusScore}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className={`w-1 h-10 rounded-full ${focusBg}`}>
+                        <div
+                          className={`rounded-full w-full transition-all ${focusColor.replace("text-", "bg-")}`}
+                          style={{ height: `${session.focusScore}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
-                  <div className="text-left">
-                    <div className="flex items-center gap-2 mb-1 justify-end">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-bold">{session.durationMin} دقيقة</span>
-                    </div>
-                    <div className="flex items-center gap-2 justify-end">
-                      <span className="text-xs text-muted-foreground">درجة التركيز:</span>
-                      <span className={`text-sm font-bold ${session.focusScore >= 80 ? 'text-success' : 'text-warning'}`}>
-                        {session.focusScore}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
-              <div className="text-center py-10 text-muted-foreground">
-                لا توجد جلسات مذاكرة مسجلة
+              <div className="text-center py-14 text-muted-foreground">
+                <History className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                <p className="font-medium">لا توجد جلسات مذاكرة مسجلة</p>
               </div>
             )}
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid gap-8 md:grid-cols-2">
+      {/* Additional Counters + Security */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Platform Counters */}
         <Card className="border-none shadow-lg">
           <CardHeader>
-            <CardTitle className="text-sm font-bold">حالة الحساب والأمان</CardTitle>
+            <CardTitle className="text-sm font-black flex items-center gap-2">
+              <Activity className="h-4 w-4 text-primary" />
+              إحصائيات المنصة
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-card border">
-              <div className="flex items-center gap-3">
-                {user.emailVerified ? (
-                  <div className="h-8 w-8 rounded-full bg-success/10 text-success flex items-center justify-center">
-                    <CheckCircle className="h-4 w-4" />
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3">
+              {countersData.map((item, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                >
+                  <div className={`p-2 rounded-lg ${item.bg} shrink-0`}>
+                    <item.icon className={`h-4 w-4 ${item.color}`} />
                   </div>
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-danger/10 text-danger flex items-center justify-center">
-                    <XCircle className="h-4 w-4" />
+                  <div className="min-w-0">
+                    <p className="font-black text-base leading-none">{item.value}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                      {item.label}
+                    </p>
                   </div>
-                )}
-                <span className="text-sm font-medium">البريد الإلكتروني</span>
-              </div>
-              <Badge variant={user.emailVerified ? "secondary" : "destructive"}>
-                {user.emailVerified ? "موثق" : "غير موثق"}
-              </Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-xl bg-card border">
-              <div className="flex items-center gap-3">
-                <div className={`h-8 w-8 rounded-full flex items-center justify-center ${user.twoFactorEnabled ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
-                  <ShieldCheck className="h-4 w-4" />
                 </div>
-                <span className="text-sm font-medium">التحقق الثنائي</span>
-              </div>
-              <Badge variant={user.twoFactorEnabled ? "secondary" : "outline"}>
-                {user.twoFactorEnabled ? "مفعّل" : "معطّل"}
-              </Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-xl bg-card border">
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                  <Activity className="h-4 w-4" />
-                </div>
-                <span className="text-sm font-medium">آخر تسجيل دخول</span>
-              </div>
-              <span className="text-sm font-bold">
-                {user.lastLogin && isValid(new Date(user.lastLogin))
-                  ? format(new Date(user.lastLogin), "d MMM yyyy", { locale: ar })
-                  : "لم يسبق"}
-              </span>
+              ))}
             </div>
           </CardContent>
         </Card>
 
+        {/* Security Summary */}
         <Card className="border-none shadow-lg">
           <CardHeader>
-            <CardTitle className="text-sm font-bold">إحصائيات إضافية</CardTitle>
+            <CardTitle className="text-sm font-black flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              حالة الحساب والأمان
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">عدد التنبيهات</span>
-              <span className="font-bold">{user._count?.notifications ?? 0}</span>
+          <CardContent className="space-y-3">
+            {securityCards.map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={i}
+                  className="flex items-center justify-between p-3.5 rounded-xl bg-card border hover:bg-muted/30 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`h-9 w-9 rounded-full flex items-center justify-center ${
+                        item.verified
+                          ? "bg-success/10 text-success"
+                          : "bg-danger/10 text-danger"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </div>
+                  <Badge
+                    variant={item.verified ? "secondary" : "destructive"}
+                    className="rounded-full text-xs"
+                  >
+                    {item.status}
+                  </Badge>
+                </div>
+              );
+            })}
+
+            {/* Last Login */}
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-card border">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                  <Activity className="h-4 w-4" />
+                </div>
+                <div>
+                  <span className="text-sm font-medium">آخر تسجيل دخول</span>
+                  {user.lastLogin && isValid(new Date(user.lastLogin)) && (
+                    <p className="text-[10px] text-muted-foreground">
+                      {format(new Date(user.lastLogin), "d MMM yyyy · HH:mm", {
+                        locale: ar,
+                      })}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <span className="text-xs font-bold text-muted-foreground">
+                {user.lastLogin && isValid(new Date(user.lastLogin))
+                  ? formatDistanceToNow(new Date(user.lastLogin), {
+                      locale: ar,
+                      addSuffix: true,
+                    })
+                  : "لم يسجل دخول"}
+              </span>
             </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">المهام الجاري تنفيذها</span>
-              <span className="font-bold">{user._count?.customGoals ?? 0}</span>
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">عدد الجلسات النشطة</span>
-              <span className="font-bold">{user._count?.sessions ?? 0}</span>
-            </div>
+
+            {/* Status reason */}
+            {user.statusReason && (
+              <div className="p-3.5 rounded-xl bg-warning/5 border border-warning/20">
+                <p className="text-xs font-black text-warning mb-1">سبب الحالة</p>
+                <p className="text-xs text-muted-foreground">{user.statusReason}</p>
+                {user.statusExpiresAt && (
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    ينتهي:{" "}
+                    {new Date(user.statusExpiresAt).toLocaleString("ar-EG")}
+                  </p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

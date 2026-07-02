@@ -313,38 +313,6 @@ export default function AdminDashboardPage() {
 
   const sections = React.useMemo(() => [
     {
-      id: "quick-actions",
-      content: (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-           {quickActionsConfig.map((action, i) => (
-             <a
-               key={i}
-               href={action.href}
-               onMouseEnter={() => playSound('hover')}
-               onClick={() => playSound('click')}
-               className={STYLES.glass + " p-6 flex flex-col items-center justify-center gap-4 group hover:border-primary/50 transition-all"}
-             >
-                 <div className={cn("p-4 rounded-2xl border border-white/5 group-hover:scale-110 group-hover:rotate-6 transition-all", quickActionColorClasses[action.color] ?? quickActionColorClasses.blue)}>
-                    <action.icon className="w-7 h-7" />
-                 </div>
-                <span className="text-xs font-black text-gray-300 uppercase tracking-widest">{action.title}</span>
-             </a>
-           ))}
-        </div>
-      )
-    },
-    {
-      id: "quick-stats",
-      content: (
-        <QuickStatsRow stats={[
-          { label: "ساعة دراسة مجمعة", value: Math.round(safeActivity.studyMinutes / 60), icon: Clock, color: "blue" },
-          { label: "مهمة مكتملة", value: safeActivity.tasksCompleted, icon: Target, color: "green" },
-          { label: "إنجاز تعليمي", value: safeActivity.achievementsEarned, icon: Award, color: "yellow" },
-          { label: "اختبار تم أداؤه", value: safeActivity.examsTaken, icon: FileText, color: "purple" },
-        ]} />
-      )
-    },
-    {
       id: "main-stats",
       content: (
         <EnhancedStatsCards stats={[
@@ -381,6 +349,38 @@ export default function AdminDashboardPage() {
             color: "orange",
           },
         ]} animated={false} />
+      )
+    },
+    {
+      id: "quick-stats",
+      content: (
+        <QuickStatsRow stats={[
+          { label: "ساعة دراسة مجمعة", value: Math.round(safeActivity.studyMinutes / 60), icon: Clock, color: "blue" },
+          { label: "مهمة مكتملة", value: safeActivity.tasksCompleted, icon: Target, color: "green" },
+          { label: "إنجاز تعليمي", value: safeActivity.achievementsEarned, icon: Award, color: "yellow" },
+          { label: "اختبار تم أداؤه", value: safeActivity.examsTaken, icon: FileText, color: "purple" },
+        ]} />
+      )
+    },
+    {
+      id: "quick-actions",
+      content: (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+           {quickActionsConfig.map((action, i) => (
+             <a
+               key={i}
+               href={action.href}
+               onMouseEnter={() => playSound('hover')}
+               onClick={() => playSound('click')}
+               className={STYLES.glass + " p-6 flex flex-col items-center justify-center gap-4 group hover:border-primary/50 transition-all"}
+             >
+                 <div className={cn("p-4 rounded-2xl border border-white/5 group-hover:scale-110 group-hover:rotate-6 transition-all", quickActionColorClasses[action.color] ?? quickActionColorClasses.blue)}>
+                    <action.icon className="w-7 h-7" />
+                 </div>
+                <span className="text-xs font-black text-gray-300 uppercase tracking-widest">{action.title}</span>
+             </a>
+           ))}
+        </div>
       )
     },
     {

@@ -8,7 +8,7 @@ import { AdminButton } from "@/components/admin/ui/admin-button";
 import { RoleBadge, StatusBadge } from "@/components/admin/ui/admin-badge";
 import { AdminStatsCard } from "@/components/admin/ui/admin-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserPlus, Download, Mail, Shield, Users, Zap, Search, Send, LogIn, Upload, AlertTriangle, RefreshCw, FilterX, Filter } from "lucide-react";
+import { UserPlus, Download, Mail, Shield, Users, Zap, Search, Send, LogIn, Upload, AlertTriangle, RefreshCw, FilterX, Filter, ChevronDown, ChevronUp, X, Calendar, MapPin, GraduationCap, Clock, CreditCard } from "lucide-react";
 import { exportToCSV, ExportColumn } from '@/lib/export-utils';
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
@@ -92,14 +92,30 @@ export default function AdminUsersPage() {
   const [sortBy, setSortBy] = React.useState(() => searchParams.get("sortBy") || "createdAt");
   const [sortOrder, setSortOrder] = React.useState(() => searchParams.get("sortOrder") || "desc");
 
-  // Local (draft) advanced filters - only applied when user clicks "تطبيق الفلاتر"
   const [localAdvanced, setLocalAdvanced] = React.useState<AdvancedFiltersState>(
     () => parseAdvancedFromParams(searchParams)
   );
-  // Applied advanced filters - the ones actually used in queries
   const [advanced, setAdvanced] = React.useState<AdvancedFiltersState>(
     () => parseAdvancedFromParams(searchParams)
   );
+  const [showAdvanced, setShowAdvanced] = React.useState(false);
+
+  const activeFiltersCount = React.useMemo(() => {
+    let count = 0;
+    if (advanced.emailVerified !== "all") count++;
+    if (advanced.phoneVerified !== "all") count++;
+    if (advanced.twoFactorEnabled !== "all") count++;
+    if (advanced.country !== "") count++;
+    if (advanced.gradeLevel !== "") count++;
+    if (advanced.subscriptionStatus !== "all") count++;
+    if (advanced.createdFrom !== "") count++;
+    if (advanced.createdTo !== "") count++;
+    if (advanced.lastLoginFrom !== "") count++;
+    if (advanced.lastLoginTo !== "") count++;
+    if (advanced.subscriptionExpiresTo !== "") count++;
+    if (advanced.includeDeleted) count++;
+    return count;
+  }, [advanced]);
 
   const [deleteDialog, setDeleteDialog] = React.useState<{ open: boolean; ids: string[] }>({
     open: false,
@@ -125,12 +141,9 @@ export default function AdminUsersPage() {
     { minDelay: 300, maxDelay: 500, initialDelay: 350 },
   );
 
-  // AbortController ref for export & long-running operations
   const exportAbortControllerRef = React.useRef<AbortController | null>(null);
-  // Generic query abort controller ref – auto-cancels on unmount or filter change
   const queryAbortControllerRef = React.useRef<AbortController | null>(null);
 
-  // Cleanup all pending abort controllers on unmount
   React.useEffect(() => {
     return () => {
       if (exportAbortControllerRef.current) {
@@ -144,8 +157,6 @@ export default function AdminUsersPage() {
     };
   }, []);
 
-  // Sync URL with applied filters (not local draft)
-  // Use a flag to prevent URL updates on initial mount (avoids extra navigation)
   const isMountedRef = React.useRef(false);
   React.useEffect(() => {
     if (!isMountedRef.current) {
@@ -168,10 +179,12 @@ export default function AdminUsersPage() {
     Object.entries(values).forEach(([key, value]) => {
       if (value && value !== "all" && value !== "false") params.set(key, value);
     });
-    router.replace(`/admin/users?${params.toString()}`, { scroll: false });
-  }, [page, limit, querySearch, role, status, sortBy, sortOrder, advanced, router]);
+    const url = `/admin/users?${params.toString()}`;
+    if (typeof window !== "undefined") {
+      window.history.replaceState(window.history.state, "", url);
+    }
+  }, [page, limit, querySearch, role, status, sortBy, sortOrder, advanced]);
 
-  // Apply advanced filters
   const applyAdvancedFilters = React.useCallback(() => {
     setAdvanced({ ...localAdvanced });
     setPage(1);
@@ -245,12 +258,10 @@ export default function AdminUsersPage() {
       const targets = (data?.users || []).filter((item) => deleteDialog.ids.includes(item.id));
       const allowed = targets.filter((target) => !getUserActionBlockReason(currentUser, target, "delete"));
       const blockedCount = targets.length - allowed.length;
-      const results = await Promise.allSettled(allowed.map((target) => adminUsersApi.remove(target.id)));
-      const deletedCount = results.filter((result) => result.status === "fulfilled").length;
-      const failedCount = results.length - deletedCount;
-      if (deletedCount) toast.success(`تم حذف ${deletedCount} مستخدم بنجاح`);
+      const result = await adminUsersApi.bulkRemove(allowed.map((target) => target.id));
+      if (result.deleted) toast.success(`تم حذف ${result.deleted} مستخدم بنجاح`);
       if (blockedCount) toast.warning(`تم استبعاد ${blockedCount} حساب محمي`);
-      if (failedCount) toast.error(`فشل حذف ${failedCount} مستخدم`);
+      if (result.failed) toast.error(`فشل حذف ${result.failed} مستخدم`);
       await refetch();
     } catch (err: unknown) {
       toast.error("خطأ في الاتصال بالخادم");
@@ -292,7 +303,6 @@ export default function AdminUsersPage() {
   };
 
   const handleExportCSV = async () => {
-    // Cancel any previous export
     if (exportAbortControllerRef.current) {
       exportAbortControllerRef.current.abort();
     }
@@ -323,38 +333,35 @@ export default function AdminUsersPage() {
         includeDeleted: advanced.includeDeleted || undefined,
       });
 
-      // Check if aborted
       if (abortController.signal.aborted) return;
 
       const remaining: AdminUsersPageData[] = [];
-      // Keep export responsive without flooding the API on large installations.
       for (let startPage = 2; startPage <= first.pagination.totalPages; startPage += 4) {
-        // Check if aborted before each batch
         if (abortController.signal.aborted) return;
 
         const batch = await Promise.all(
           Array.from({ length: Math.min(4, first.pagination.totalPages - startPage + 1) }, (_, index) =>
-          adminUsersApi.list({
-            page: startPage + index,
-            limit: 200,
-            search: querySearch,
-            role: role === "all" ? undefined : role as UserRole,
-            status: status === "all" ? undefined : status as UserStatus,
-            sortBy: sortBy as "name" | "createdAt" | "lastLogin" | "totalXP" | "status",
-            sortOrder: sortOrder as "asc" | "desc",
-            emailVerified: advanced.emailVerified === "all" ? undefined : advanced.emailVerified === "true",
-            phoneVerified: advanced.phoneVerified === "all" ? undefined : advanced.phoneVerified === "true",
-            twoFactorEnabled: advanced.twoFactorEnabled === "all" ? undefined : advanced.twoFactorEnabled === "true",
-            country: advanced.country || undefined,
-            gradeLevel: advanced.gradeLevel || undefined,
-            subscriptionStatus: advanced.subscriptionStatus === "all" ? undefined : advanced.subscriptionStatus,
-            createdFrom: advanced.createdFrom || undefined,
-            createdTo: advanced.createdTo || undefined,
-            lastLoginTo: advanced.lastLoginTo || undefined,
-            lastLoginFrom: advanced.lastLoginFrom || undefined,
-            subscriptionExpiresTo: advanced.subscriptionExpiresTo || undefined,
-            includeDeleted: advanced.includeDeleted || undefined,
-          })
+            adminUsersApi.list({
+              page: startPage + index,
+              limit: 200,
+              search: querySearch,
+              role: role === "all" ? undefined : role as UserRole,
+              status: status === "all" ? undefined : status as UserStatus,
+              sortBy: sortBy as "name" | "createdAt" | "lastLogin" | "totalXP" | "status",
+              sortOrder: sortOrder as "asc" | "desc",
+              emailVerified: advanced.emailVerified === "all" ? undefined : advanced.emailVerified === "true",
+              phoneVerified: advanced.phoneVerified === "all" ? undefined : advanced.phoneVerified === "true",
+              twoFactorEnabled: advanced.twoFactorEnabled === "all" ? undefined : advanced.twoFactorEnabled === "true",
+              country: advanced.country || undefined,
+              gradeLevel: advanced.gradeLevel || undefined,
+              subscriptionStatus: advanced.subscriptionStatus === "all" ? undefined : advanced.subscriptionStatus,
+              createdFrom: advanced.createdFrom || undefined,
+              createdTo: advanced.createdTo || undefined,
+              lastLoginTo: advanced.lastLoginTo || undefined,
+              lastLoginFrom: advanced.lastLoginFrom || undefined,
+              subscriptionExpiresTo: advanced.subscriptionExpiresTo || undefined,
+              includeDeleted: advanced.includeDeleted || undefined,
+            })
           ),
         );
         remaining.push(...batch);
@@ -364,14 +371,14 @@ export default function AdminUsersPage() {
         toast.error('لا توجد بيانات للتصدير');
         return;
       }
-    const exportColumns: ExportColumn<AdminUserListItem>[] = [
-      { header: 'الاسم', accessor: (u) => u.name || u.username || "بدون اسم" },
-      { header: 'البريد الإلكتروني', accessor: 'email' },
-      { header: 'الدور', accessor: 'role' },
-      { header: 'النقاط', accessor: (u) => u.totalXP || 0 },
-      { header: 'تاريخ الالتحاق', accessor: (u) => new Date(u.createdAt).toLocaleDateString('ar-EG') },
-      { header: 'آخر دخول', accessor: (u) => u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('ar-EG') : 'لم يسجل دخول' },
-    ];
+      const exportColumns: ExportColumn<AdminUserListItem>[] = [
+        { header: 'الاسم', accessor: (u) => u.name || u.username || "بدون اسم" },
+        { header: 'البريد الإلكتروني', accessor: 'email' },
+        { header: 'الدور', accessor: 'role' },
+        { header: 'النقاط', accessor: (u) => u.totalXP || 0 },
+        { header: 'تاريخ الالتحاق', accessor: (u) => new Date(u.createdAt).toLocaleDateString('ar-EG') },
+        { header: 'آخر دخول', accessor: (u) => u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('ar-EG') : 'لم يسجل دخول' },
+      ];
       exportToCSV(users, exportColumns, 'users');
       toast.success(`تم تصدير ${users.length} مستخدم بنجاح`);
     } catch (err) {
@@ -498,21 +505,21 @@ export default function AdminUsersPage() {
           const deleteBlock = getUserActionBlockReason(currentUser, row.original, "delete");
           const impersonateBlock = getUserActionBlockReason(currentUser, row.original, "impersonate");
           return (
-        <RowActions
-          row={row.original}
-          onView={(u) => router.push(`/admin/users/${u.id}`)}
-          onEdit={canManageUsers ? (u) => router.push(`/admin/users/${u.id}/edit`) : undefined}
-          onDelete={canManageUsers && !deleteBlock ? (u) => setDeleteDialog({ open: true, ids: [u.id] }) : undefined}
-          extraActions={[
-            { icon: Mail, label: "إرسال رسالة", onClick: (u) => setMessageDialog({ open: true, users: [u] }) },
-            ...(canManageUsers ? [{ icon: Shield, label: "إدارة الصلاحيات", onClick: (u: AdminUserListItem) => router.push(`/admin/users/${u.id}/permissions`) }] : []),
-            {
-              icon: LogIn, label: "تسجيل الدخول كـ", onClick: (u) => setImpersonateDialog({ open: true, user: u }),
-              disabled: !canManageUsers || !!impersonateBlock,
-              disabledReason: impersonateBlock || undefined,
-            },
-          ]}
-        />
+            <RowActions
+              row={row.original}
+              onView={(u) => router.push(`/admin/users/${u.id}`)}
+              onEdit={canManageUsers ? (u) => router.push(`/admin/users/${u.id}/edit`) : undefined}
+              onDelete={canManageUsers && !deleteBlock ? (u) => setDeleteDialog({ open: true, ids: [u.id] }) : undefined}
+              extraActions={[
+                { icon: Mail, label: "إرسال رسالة", onClick: (u) => setMessageDialog({ open: true, users: [u] }) },
+                ...(canManageUsers ? [{ icon: Shield, label: "إدارة الصلاحيات", onClick: (u: AdminUserListItem) => router.push(`/admin/users/${u.id}/permissions`) }] : []),
+                {
+                  icon: LogIn, label: "تسجيل الدخول كـ", onClick: (u) => setImpersonateDialog({ open: true, user: u }),
+                  disabled: !canManageUsers || !!impersonateBlock,
+                  disabledReason: impersonateBlock || undefined,
+                },
+              ]}
+            />
           );
         })()
       ),
@@ -546,7 +553,6 @@ export default function AdminUsersPage() {
           color="blue"
           description="مستخدم في المنصة"
         />
-
         <AdminStatsCard
           title="حسابات المسؤولين"
           value={data?.summary?.totalAdmins || 0}
@@ -554,7 +560,6 @@ export default function AdminUsersPage() {
           color="yellow"
           description="حساب إداري فعال"
         />
-
         <AdminStatsCard
           title="المستخدمين النشطين"
           value={data?.summary?.powerUsers || 0}
@@ -564,94 +569,98 @@ export default function AdminUsersPage() {
         />
       </div>
 
-      <Tabs
-        value={role}
-        onValueChange={(val) => {
-          setRole(val);
-          setPage(1);
-        }}
-        className="w-full"
-      >
+      <Tabs value={role} onValueChange={(val) => { setRole(val); setPage(1); }} className="w-full">
         <TabsList className="bg-white/5 p-1 rounded-2xl border border-white/10 h-12 flex gap-1 mb-6 w-full max-w-full justify-start overflow-x-auto sm:w-fit">
-          <TabsTrigger value="all" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">
-            كل المستخدمين
-          </TabsTrigger>
-          <TabsTrigger value="STUDENT" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">
-            الطلاب
-          </TabsTrigger>
-          <TabsTrigger value="TEACHER" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">
-            المعلمون
-          </TabsTrigger>
-          <TabsTrigger value="MODERATOR" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">
-            المشرفون
-          </TabsTrigger>
-          <TabsTrigger value="ADMIN" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">
-            المدراء
-          </TabsTrigger>
+          <TabsTrigger value="all" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">كل المستخدمين</TabsTrigger>
+          <TabsTrigger value="STUDENT" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">الطلاب</TabsTrigger>
+          <TabsTrigger value="TEACHER" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">المعلمون</TabsTrigger>
+          <TabsTrigger value="MODERATOR" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">المشرفون</TabsTrigger>
+          <TabsTrigger value="ADMIN" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">المدراء</TabsTrigger>
         </TabsList>
       </Tabs>
 
-      <Tabs
-        value={status}
-        onValueChange={(val) => {
-          setStatus(val);
-          setPage(1);
-        }}
-        className="w-full"
-      >
+      <Tabs value={status} onValueChange={(val) => { setStatus(val); setPage(1); }} className="w-full">
         <TabsList className="bg-white/5 p-1 rounded-2xl border border-white/10 h-12 flex gap-1 mb-6 w-full max-w-full justify-start overflow-x-auto sm:w-fit">
-          <TabsTrigger value="all" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">
-            كل الحالات
-          </TabsTrigger>
-          <TabsTrigger value="ACTIVE" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-lg">
-            نشط
-          </TabsTrigger>
-          <TabsTrigger value="SUSPENDED" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg">
-            موقوف
-          </TabsTrigger>
-          <TabsTrigger value="BANNED" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg">
-            محظور
-          </TabsTrigger>
+          <TabsTrigger value="all" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">كل الحالات</TabsTrigger>
+          <TabsTrigger value="ACTIVE" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-lg">نشط</TabsTrigger>
+          <TabsTrigger value="SUSPENDED" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-yellow-500 data-[state=active]:text-white data-[state=active]:shadow-lg">موقوف</TabsTrigger>
+          <TabsTrigger value="BANNED" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg">محظور</TabsTrigger>
         </TabsList>
       </Tabs>
 
+      {/* Advanced Filters Panel */}
       <div className="admin-glass flex flex-wrap items-end gap-3 rounded-2xl border border-white/10 p-4">
         <label className="min-w-40 flex-1 text-xs font-bold">الفرز
           <select className="mt-1 h-10 w-full rounded-xl border bg-background px-3" value={`${sortBy}:${sortOrder}`} onChange={(e) => { const [field, order] = e.target.value.split(":"); setSortBy(field!); setSortOrder(order!); setPage(1); }}>
             <option value="createdAt:desc">الأحدث تسجيلًا</option><option value="createdAt:asc">الأقدم تسجيلًا</option><option value="name:asc">الاسم تصاعديًا</option><option value="name:desc">الاسم تنازليًا</option><option value="lastLogin:desc">آخر دخول</option><option value="totalXP:desc">الأعلى XP</option><option value="status:asc">الحالة</option>
           </select>
         </label>
-        {(["emailVerified", "phoneVerified", "twoFactorEnabled"] as const).map((key) => <label key={key} className="min-w-36 text-xs font-bold">{key === "emailVerified" ? "توثيق البريد" : key === "phoneVerified" ? "توثيق الهاتف" : "2FA"}<select className="mt-1 h-10 w-full rounded-xl border bg-background px-3" value={localAdvanced[key]} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, [key]: e.target.value })); }}><option value="all">الكل</option><option value="true">مفعّل</option><option value="false">غير مفعّل</option></select></label>)}
+        {(["emailVerified", "phoneVerified", "twoFactorEnabled"] as const).map((key) => (
+          <label key={key} className="min-w-36 text-xs font-bold">
+            {key === "emailVerified" ? "توثيق البريد" : key === "phoneVerified" ? "توثيق الهاتف" : "2FA"}
+            <select className="mt-1 h-10 w-full rounded-xl border bg-background px-3" value={localAdvanced[key]} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, [key]: e.target.value })); }}>
+              <option value="all">الكل</option><option value="true">مفعّل</option><option value="false">غير مفعّل</option>
+            </select>
+          </label>
+        ))}
         <label className="min-w-36 text-xs font-bold">الدولة<Input className="mt-1" value={localAdvanced.country} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, country: e.target.value })); }} /></label>
         <label className="min-w-36 text-xs font-bold">المرحلة<Input className="mt-1" value={localAdvanced.gradeLevel} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, gradeLevel: e.target.value })); }} /></label>
         <label className="min-w-36 text-xs font-bold">التسجيل من<Input type="date" className="mt-1" value={localAdvanced.createdFrom} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, createdFrom: e.target.value })); }} /></label>
         <label className="min-w-36 text-xs font-bold">التسجيل إلى<Input type="date" className="mt-1" value={localAdvanced.createdTo} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, createdTo: e.target.value })); }} /></label>
         <label className="min-w-36 text-xs font-bold">آخر دخول من<Input type="date" className="mt-1" value={localAdvanced.lastLoginFrom} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, lastLoginFrom: e.target.value })); }} /></label>
         <label className="min-w-36 text-xs font-bold">آخر دخول إلى<Input type="date" className="mt-1" value={localAdvanced.lastLoginTo} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, lastLoginTo: e.target.value })); }} /></label>
-        <label className="min-w-36 text-xs font-bold">الاشتراك<select className="mt-1 h-10 w-full rounded-xl border bg-background px-3" value={localAdvanced.subscriptionStatus} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, subscriptionStatus: e.target.value })); }}><option value="all">الكل</option><option value="ACTIVE">نشط</option><option value="EXPIRED">منتهي</option><option value="NONE">بدون اشتراك</option></select></label>
+        <label className="min-w-36 text-xs font-bold">الاشتراك
+          <select className="mt-1 h-10 w-full rounded-xl border bg-background px-3" value={localAdvanced.subscriptionStatus} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, subscriptionStatus: e.target.value })); }}>
+            <option value="all">الكل</option><option value="ACTIVE">نشط</option><option value="EXPIRED">منتهي</option><option value="NONE">بدون اشتراك</option>
+          </select>
+        </label>
         <label className="min-w-36 text-xs font-bold">انتهاء الاشتراك إلى<Input type="date" className="mt-1" value={localAdvanced.subscriptionExpiresTo} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, subscriptionExpiresTo: e.target.value })); }} /></label>
-        <label className="flex h-10 items-center gap-2 rounded-xl border px-3 text-xs font-bold"><Checkbox checked={localAdvanced.includeDeleted} onCheckedChange={(checked) => { setLocalAdvanced((old) => ({ ...old, includeDeleted: !!checked })); }} />المحذوفون والمؤرشفون</label>
+        <label className="flex h-10 items-center gap-2 rounded-xl border px-3 text-xs font-bold">
+          <Checkbox checked={localAdvanced.includeDeleted} onCheckedChange={(checked) => { setLocalAdvanced((old) => ({ ...old, includeDeleted: !!checked })); }} />
+          المحذوفون والمؤرشفون
+        </label>
         <div className="flex w-full flex-wrap gap-2 border-t pt-3">
           <Button size="sm" variant="outline" onClick={() => { setLocalAdvanced((old) => ({ ...old, lastLoginTo: new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10) })); }}>غير نشطين منذ 90 يومًا</Button>
           <Button size="sm" variant="outline" onClick={() => { setLocalAdvanced((old) => ({ ...old, emailVerified: "false" })); }}>بريد غير موثق</Button>
           <Button size="sm" variant="outline" onClick={() => { setLocalAdvanced((old) => ({ ...old, twoFactorEnabled: "false" })); }}>بدون 2FA</Button>
           <Button size="sm" variant="ghost" onClick={clearAllFilters}>مسح الفلاتر</Button>
           <Button size="sm" variant="outline" onClick={saveCurrentView}>حفظ العرض الحالي</Button>
-          {savedViews.length > 0 && <select className="h-9 rounded-lg border bg-background px-3 text-xs" defaultValue="" onChange={(e) => { if (e.target.value) window.location.href = e.target.value; }}><option value="" disabled>العروض المحفوظة</option>{savedViews.map((view) => <option key={view.name} value={view.url}>{view.name}</option>)}</select>}
+          {savedViews.length > 0 && (
+            <select className="h-9 rounded-lg border bg-background px-3 text-xs" defaultValue="" onChange={(e) => { if (e.target.value) window.location.href = e.target.value; }}>
+              <option value="" disabled>العروض المحفوظة</option>
+              {savedViews.map((view) => <option key={view.name} value={view.url}>{view.name}</option>)}
+            </select>
+          )}
         </div>
-        {/* Apply Filters Button - only shown when local differs from applied */}
         <div className="flex w-full justify-end gap-2 pt-2 border-t border-white/5">
-          <Button
-            size="sm"
-            variant="default"
-            onClick={applyAdvancedFilters}
-            className="bg-primary hover:bg-primary/90 gap-2"
-          >
+          <Button size="sm" variant="default" onClick={applyAdvancedFilters} className="bg-primary hover:bg-primary/90 gap-2">
             <Filter className="h-4 w-4" />
             تطبيق الفلاتر
           </Button>
         </div>
       </div>
+
+      {/* Active Filters Chips */}
+      {activeFiltersCount > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          {advanced.emailVerified !== "all" && (
+            <Button size="sm" variant="outline" className="rounded-full h-7 text-xs gap-1" onClick={() => { setLocalAdvanced(prev => ({ ...prev, emailVerified: "all" })); setAdvanced(prev => ({ ...prev, emailVerified: "all" })); setPage(1); }}>
+              البريد: {advanced.emailVerified === "true" ? "موثق" : "غير موثق"} <X className="h-3 w-3" />
+            </Button>
+          )}
+          {advanced.phoneVerified !== "all" && (
+            <Button size="sm" variant="outline" className="rounded-full h-7 text-xs gap-1" onClick={() => { setLocalAdvanced(prev => ({ ...prev, phoneVerified: "all" })); setAdvanced(prev => ({ ...prev, phoneVerified: "all" })); setPage(1); }}>
+              الهاتف: {advanced.phoneVerified === "true" ? "موثق" : "غير موثق"} <X className="h-3 w-3" />
+            </Button>
+          )}
+          {activeFiltersCount > 0 && (
+            <Button size="sm" variant="ghost" className="rounded-full h-7 text-xs" onClick={clearAllFilters}>
+              <FilterX className="h-3 w-3 ml-1" />
+              مسح الكل
+            </Button>
+          )}
+        </div>
+      )}
 
       {isError && (
         <div role="alert" className="flex flex-col gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -669,9 +678,7 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      <div
-        className="admin-glass p-1 rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl"
-      >
+      <div className="admin-glass p-1 rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl">
         <AdminDataTable
           columns={columns}
           data={data?.users || []}
@@ -680,54 +687,12 @@ export default function AdminUsersPage() {
           selectable
           virtualized
           bulkActions={[
-            {
-              label: "إرسال رسالة جماعية",
-              icon: Send,
-              onClick: (rows) => setMessageDialog({ open: true, users: rows })
-            },
-            {
-              label: "تعليق الحسابات",
-              icon: Shield,
-              variant: "outline",
-              disabled: !canManageUsers,
-              onClick: (rows) => void runBulkUpdate(rows, { status: UserStatus.SUSPENDED }),
-            },
-            {
-              label: "تفعيل الحسابات",
-              icon: Zap,
-              variant: "outline",
-              disabled: !canManageUsers,
-              onClick: (rows) => void runBulkUpdate(rows, { status: UserStatus.ACTIVE }),
-            },
-            {
-              label: "تحويل إلى طلاب",
-              icon: Users,
-              variant: "outline",
-              disabled: !canManageUsers,
-              onClick: (rows) => void runBulkUpdate(rows, { role: UserRole.STUDENT }),
-            },
-            {
-              label: "تصدير المحدد",
-              icon: Download,
-              variant: "outline",
-              onClick: (rows) => {
-                const columns: ExportColumn<AdminUserListItem>[] = [
-                  { header: "الاسم", accessor: (item) => item.name || item.username || "بدون اسم" },
-                  { header: "البريد", accessor: "email" },
-                  { header: "الدور", accessor: "role" },
-                  { header: "الحالة", accessor: "status" },
-                  { header: "XP", accessor: "totalXP" },
-                ];
-                exportToCSV(rows, columns, "selected-users");
-              },
-            },
-            {
-              label: "حذف السجلات",
-              icon: UserPlus,
-              variant: "destructive",
-              disabled: !canManageUsers,
-              onClick: (rows) => setDeleteDialog({ open: true, ids: rows.map((item) => item.id) })
-            },
+            { label: "إرسال رسالة جماعية", icon: Send, onClick: (rows) => setMessageDialog({ open: true, users: rows }) },
+            { label: "تعليق الحسابات", icon: Shield, variant: "outline", disabled: !canManageUsers, onClick: (rows) => void runBulkUpdate(rows, { status: UserStatus.SUSPENDED }) },
+            { label: "تفعيل الحسابات", icon: Zap, variant: "outline", disabled: !canManageUsers, onClick: (rows) => void runBulkUpdate(rows, { status: UserStatus.ACTIVE }) },
+            { label: "تحويل إلى طلاب", icon: Users, variant: "outline", disabled: !canManageUsers, onClick: (rows) => void runBulkUpdate(rows, { role: UserRole.STUDENT }) },
+            { label: "تصدير المحدد", icon: Download, variant: "outline", onClick: (rows) => { exportToCSV(rows, [{ header: "الاسم", accessor: (item) => item.name || item.username || "بدون اسم" }, { header: "البريد", accessor: "email" }, { header: "الدور", accessor: "role" }, { header: "الحالة", accessor: "status" }, { header: "XP", accessor: "totalXP" }], "selected-users"); } },
+            { label: "حذف السجلات", icon: UserPlus, variant: "destructive", disabled: !canManageUsers, onClick: (rows) => setDeleteDialog({ open: true, ids: rows.map((item) => item.id) }) },
           ]}
           totalRows={data?.pagination?.total || 0}
           pageCount={data?.pagination?.totalPages || 1}
@@ -735,9 +700,7 @@ export default function AdminUsersPage() {
           onPageChange={setPage}
           onPageSizeChange={setLimit}
           pageSize={limit}
-          actions={{
-            onRefresh: () => refetch(),
-          }}
+          actions={{ onRefresh: () => refetch() }}
           toolbar={
             <div className="flex items-center gap-2">
               <div className="relative group w-full sm:w-auto">
@@ -799,36 +762,24 @@ export default function AdminUsersPage() {
         ]}
         templateFileName="users-template.csv"
         onImport={async (rows) => {
-          let successCount = 0;
-          let errorCount = 0;
-          for (const row of rows) {
-            try {
-              const response = await adminFetch(apiRoutes.admin.users, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  email: row.email,
-                  name: row.name,
-                  username: row.username || undefined,
-                  password: row.password,
-                  role: row.role || "STUDENT",
-                }),
-              });
-              if (response.ok) {
-                successCount++;
-              } else {
-                errorCount++;
-              }
-            } catch {
-              errorCount++;
+          try {
+            const payload = rows.map(row => ({
+              email: String(row.email),
+              name: String(row.name),
+              username: row.username || undefined,
+              password: String(row.password),
+              role: row.role || "STUDENT",
+            }));
+            const result = await adminUsersApi.bulkCreate(payload);
+            if (result.created > 0) {
+              toast.success(`تم استيراد ${result.created} مستخدم بنجاح دفعة واحدة`);
+              refetch();
             }
-          }
-          if (successCount > 0) {
-            toast.success(`تم استيراد ${successCount} مستخدم بنجاح`);
-            refetch();
-          }
-          if (errorCount > 0) {
-            toast.warning(`فشل في استيراد ${errorCount} مستخدم`);
+            if (result.failed > 0) {
+              toast.warning(`فشل في استيراد ${result.failed} مستخدم`);
+            }
+          } catch (err) {
+            toast.error("حدث خطأ في الاتصال أثناء الاستيراد الجماعي");
           }
         }}
       />

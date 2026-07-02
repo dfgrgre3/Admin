@@ -68,8 +68,12 @@ export const adminUsersApi = {
     return unwrapData(result);
   },
 
-  async get(userId: string): Promise<UserDetails> {
-    const result = await adminApi.get<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}`);
+  async get(userId: string, options?: { signal?: AbortSignal }): Promise<UserDetails> {
+    const fetchOptions: RequestInit = {};
+    if (options?.signal) {
+      fetchOptions.signal = options.signal;
+    }
+    const result = await adminApi.get<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}`, undefined, fetchOptions);
     return unwrapData(result);
   },
 
@@ -95,5 +99,22 @@ export const adminUsersApi = {
 
   updateMany(userIds: string[], changes: Partial<Pick<UserDetails, "role" | "status">>) {
     return Promise.allSettled(userIds.map((userId) => adminApi.patch<UserDetails>(`users/${userId}`, changes)));
+  },
+
+  // Bulk create users from CSV import
+  async bulkCreate(users: Array<{ email: string; name: string; username?: string; password: string; role?: string }>): Promise<{ created: number; failed: number }> {
+    const response = await adminApi.post<{ created: number; failed: number } | DataEnvelope<{ created: number; failed: number }>>("users/bulk-create", { users });
+    return unwrapData(response);
+  },
+
+  // Bulk delete users
+  async bulkRemove(userIds: string[]): Promise<{ deleted: number; failed: number }> {
+    const response = await adminApi.post<{ deleted: number; failed: number } | DataEnvelope<{ deleted: number; failed: number }>>("users/bulk-delete", { userIds });
+    return unwrapData(response);
+  },
+
+  // Reset all permissions to default
+  async resetAllPermissions(): Promise<void> {
+    await adminApi.post<void>("users/reset-all-permissions", {});
   },
 };

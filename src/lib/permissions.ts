@@ -137,6 +137,11 @@ export function resolvePermissionInput(
 export function permissionGrantMatches(grant: string, required: Permission | string): boolean {
   const req = String(required);
   if (grant === req || grant === PERMISSIONS.ADMIN_BYPASS) return true;
+  if (grant === "own_subjects:manage" && (req === "subjects:manage" || req === "subjects:view")) return true;
+  if (grant === "own_books:manage" && (req === "books:manage" || req === "books:view")) return true;
+  if (grant === "own_resources:manage" && (req === "resources:manage" || req === "resources:view")) return true;
+  if (grant === "own_exams:manage" && (req === "exams:manage" || req === "exams:view")) return true;
+  if (grant === "own_challenges:manage" && (req === "challenges:manage" || req === "challenges:view")) return true;
   if (grant === "*:manage") return req.endsWith(":manage");
   if (grant.length > 2 && grant.endsWith(":*")) {
     const mod = grant.slice(0, -2);

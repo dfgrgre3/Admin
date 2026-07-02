@@ -28,7 +28,7 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { editableUserSchema, type EditableUserFormData } from "@/lib/validations/user-schemas";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 
 export function SettingsTab({
   user,
@@ -73,8 +73,14 @@ export function SettingsTab({
 
   // Sync watched values back to parent `editedUser` so any parent-side logic can read them
   const watchedValues = watch();
+  const prevWatchedValuesRef = useRef(watchedValues);
+
   useEffect(() => {
-    setEditedUser(watchedValues as Partial<UserDetails>);
+    // Only update parent when values actually change
+    if (JSON.stringify(watchedValues) !== JSON.stringify(prevWatchedValuesRef.current)) {
+      prevWatchedValuesRef.current = watchedValues;
+      setEditedUser(watchedValues as Partial<UserDetails>);
+    }
   }, [watchedValues, setEditedUser]);
 
   // When `user` prop changes externally (e.g. refetch), re-populate the form

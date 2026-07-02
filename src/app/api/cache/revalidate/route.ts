@@ -44,7 +44,13 @@ export async function POST(request: NextRequest) {
   }
 
   const role = payload.user?.role;
-  if (role !== "ADMIN" && role !== "SUPER_ADMIN" && role !== "MODERATOR" && role !== "SUPPORT") {
+  if (
+    role !== "ADMIN" &&
+    role !== "SUPER_ADMIN" &&
+    role !== "MODERATOR" &&
+    role !== "SUPPORT" &&
+    role !== "TEACHER"
+  ) {
     return NextResponse.json({ error: "ممنوع" }, { status: 403 });
   }
 

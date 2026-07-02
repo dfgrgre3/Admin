@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { passwordResetSchema, type PasswordResetFormData } from "@/lib/validations/user-schemas";
@@ -65,19 +65,6 @@ export default function UserDetailPage() {
   const [editedUser, setEditedUser] = React.useState<Partial<UserDetails>>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = React.useState(false);
-  const [resettingPassword, setResettingPassword] = React.useState(false);
-  const [saving, setSaving] = React.useState(false);
-
-  // AbortController ref for long-running operations – auto-cancels on unmount
-  const abortControllerRef = React.useRef<AbortController | null>(null);
-  React.useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        abortControllerRef.current = null;
-      }
-    };
-  }, []);
 
   // React Hook Form + Zod for password reset
   const {
@@ -106,7 +93,7 @@ export default function UserDetailPage() {
     newPasswordValue === confirmPasswordValue &&
     newPasswordValue.length >= 8;
 
-  // Tanstack Query for fetching user data
+  // Tanstack Query for fetching user data with AbortSignal support
   const {
     data: user,
     isLoading,
@@ -115,12 +102,12 @@ export default function UserDetailPage() {
     refetch,
   } = useQuery<UserDetails>({
     queryKey: ["admin", "user", userId],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!userId || RESERVED_ROUTE_SEGMENTS.has(userId)) {
         router.replace("/admin/users");
         throw new Error("Invalid user ID");
       }
-      return adminUsersApi.get(userId);
+      return adminUsersApi.get(userId, { signal });
     },
     retry: 1,
     staleTime: 30_000, // 30 seconds before refetch
@@ -142,6 +129,80 @@ export default function UserDetailPage() {
     }
   }, [isError, error, router]);
 
+  // Update mutation using TanStack Query
+  const updateMutation = useMutation({
+    mutationFn: async (userData: Partial<UserDetails>) => {
+      const response = await adminFetch(`/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pickEditableUserFields(userData)),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "فشل تحديث البيانات");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast.success("تم تحديث بيانات المستخدم بنجاح");
+      queryClient.invalidateQueries({ queryKey: ["admin", "user", userId] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "حدث خطأ أثناء تحديث البيانات");
+    },
+  });
+
+  // Delete mutation using TanStack Query
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("المستخدم غير موجود");
+      const response = await adminFetch(`/admin/users/${userId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "فشل حذف المستخدم");
+      }
+    },
+    onSuccess: () => {
+      toast.success("تم حذف المستخدم بنجاح");
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      router.push("/admin/users");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "حدث خطأ أثناء حذف المستخدم");
+    },
+    onSettled: () => {
+      setDeleteDialogOpen(false);
+    },
+  });
+
+  const handleUpdate = async () => {
+    if (!user || !canManageUsers) {
+      toast.error("غير مصرح بتنفيذ الإجراء");
+      return;
+    }
+    const updateBlock = getUserActionBlockReason(currentUser, user, "role-change");
+    if (updateBlock) {
+      toast.error(updateBlock);
+      return;
+    }
+    updateMutation.mutate(editedUser);
+  };
+
+  const handleDelete = () => {
+    if (!user || !canManageUsers) {
+      toast.error("غير مصرح بتنفيذ الإجراء");
+      return;
+    }
+    const deleteBlock = getUserActionBlockReason(currentUser, user, "delete");
+    if (deleteBlock) {
+      toast.error(deleteBlock);
+      return;
+    }
+    deleteMutation.mutate();
+  };
+
   const handleResetPassword = handleSubmit(async (formData: PasswordResetFormData) => {
     if (!user || !canManageUsers) {
       toast.error("غير مصرح بتنفيذ الإجراء");
@@ -153,7 +214,6 @@ export default function UserDetailPage() {
       return;
     }
 
-    setResettingPassword(true);
     try {
       const response = await adminFetch(`/admin/users/${userId}/password`, {
         method: "POST",
@@ -171,75 +231,8 @@ export default function UserDetailPage() {
     } catch (error) {
       logger.error("Error resetting password:", error);
       toast.error("خطأ في الاتصال بالخادم");
-    } finally {
-      setResettingPassword(false);
     }
   });
-
-  const handleUpdate = async () => {
-    if (!user || !canManageUsers) {
-      toast.error("غير مصرح بتنفيذ الإجراء");
-      return;
-    }
-    const updateBlock = getUserActionBlockReason(currentUser, user, "role-change");
-    if (updateBlock) {
-      toast.error(updateBlock);
-      return;
-    }
-    setSaving(true);
-    try {
-      const response = await adminFetch(`/admin/users/${userId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(pickEditableUserFields(editedUser))
-      });
-
-      if (response.ok) {
-        toast.success("تم تحديث بيانات المستخدم بنجاح");
-        // Invalidate cache to refetch
-        queryClient.invalidateQueries({ queryKey: ["admin", "user", userId] });
-      } else {
-        const data = await response.json();
-        toast.error(data.message || "حدث خطأ أثناء التحديث");
-      }
-    } catch (error) {
-      logger.error("Error updating user:", error);
-      toast.error("حدث خطأ أثناء تحديث بيانات المستخدم");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!user || !canManageUsers) {
-      toast.error("غير مصرح بتنفيذ الإجراء");
-      return;
-    }
-    const deleteBlock = getUserActionBlockReason(currentUser, user, "delete");
-    if (deleteBlock) {
-      toast.error(deleteBlock);
-      return;
-    }
-    try {
-      const response = await adminFetch(`/admin/users/${userId}`, {
-        method: "DELETE"
-      });
-
-      if (response.ok) {
-        toast.success("تم حذف المستخدم بنجاح");
-        // Invalidate users list cache
-        queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-        router.push("/admin/users");
-      } else {
-        toast.error("حدث خطأ أثناء حذف المستخدم");
-      }
-    } catch (error) {
-      logger.error("Error deleting user:", error);
-      toast.error("حدث خطأ في الاتصال بالخادم");
-    } finally {
-      setDeleteDialogOpen(false);
-    }
-  };
 
   if (isLoading) return <UserSkeleton />;
   if (!user) return null;
@@ -328,7 +321,7 @@ export default function UserDetailPage() {
                 setEditedUser={setEditedUser}
                 handleUpdate={handleUpdate}
                 setIsEditing={() => {}}
-                saving={saving}
+                saving={updateMutation.isPending}
               />
             </TabsContent>}
 
@@ -340,7 +333,6 @@ export default function UserDetailPage() {
                   : getUserActionBlockReason(currentUser, user, "suspend")}
                 onUserChange={(updatedUser) => {
                   setEditedUser(updatedUser);
-                  // Invalidate cache to refetch
                   queryClient.invalidateQueries({ queryKey: ["admin", "user", userId] });
                 }}
               />
@@ -356,6 +348,7 @@ export default function UserDetailPage() {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleDelete}
+        loading={deleteMutation.isPending}
         title="حذف المستخدم نهائياً؟"
         description="هل أنت متأكد من حذف هذا المستخدم؟ سيتم مسح جميع بياناته ونشاطه من المنصة ولا يمكن التراجع عن هذا الإجراء."
         confirmText="تأكيد الحذف"
@@ -404,7 +397,6 @@ export default function UserDetailPage() {
                   <p className="text-xs text-destructive font-medium mt-1">{errors.confirmPassword.message}</p>
                 )}
               </div>
-              {/* Password strength indicator */}
               {newPasswordValue && (
                 <div className="space-y-1.5">
                   <div className="flex gap-1">
@@ -439,7 +431,6 @@ export default function UserDetailPage() {
               </AdminButton>
               <AdminButton
                 variant="default"
-                loading={resettingPassword}
                 disabled={!isPasswordFormValid}
                 type="submit"
                 className="rounded-2xl h-12 flex-1"
