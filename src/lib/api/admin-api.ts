@@ -39,8 +39,8 @@ export const adminApi = {
     return apiClient.fetch(normalizeAdminEndpoint(endpoint), options);
   },
 
-  get<T>(endpoint: string, query?: QueryParams) {
-    return apiClient.get<T>(withQuery(normalizeAdminEndpoint(endpoint), query));
+  get<T>(endpoint: string, query?: QueryParams, options?: RequestInit) {
+    return apiClient.get<T>(withQuery(normalizeAdminEndpoint(endpoint), query), options);
   },
 
   post<T>(endpoint: string, body: unknown, options?: RequestInit) {

@@ -59,8 +59,12 @@ function unwrapData<T>(value: T | DataEnvelope<T>): T {
 }
 
 export const adminUsersApi = {
-  async list(query: AdminUsersQuery): Promise<AdminUsersPage> {
-    const result = await adminApi.get<AdminUsersPage | DataEnvelope<AdminUsersPage>>("users", { ...query });
+  async list(query: AdminUsersQuery, options?: { signal?: AbortSignal }): Promise<AdminUsersPage> {
+    const fetchOptions: RequestInit = {};
+    if (options?.signal) {
+      fetchOptions.signal = options.signal;
+    }
+    const result = await adminApi.get<AdminUsersPage | DataEnvelope<AdminUsersPage>>("users", { ...query }, fetchOptions);
     return unwrapData(result);
   },
 

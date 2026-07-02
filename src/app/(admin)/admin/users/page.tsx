@@ -8,7 +8,7 @@ import { AdminButton } from "@/components/admin/ui/admin-button";
 import { RoleBadge, StatusBadge } from "@/components/admin/ui/admin-badge";
 import { AdminStatsCard } from "@/components/admin/ui/admin-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserPlus, Download, Mail, Shield, Users, Zap, Search, Send, LogIn, Upload, AlertTriangle, RefreshCw } from "lucide-react";
+import { UserPlus, Download, Mail, Shield, Users, Zap, Search, Send, LogIn, Upload, AlertTriangle, RefreshCw, FilterX, Filter } from "lucide-react";
 import { exportToCSV, ExportColumn } from '@/lib/export-utils';
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
@@ -28,6 +28,54 @@ import { getUserActionBlockReason } from "@/lib/user-action-guards";
 import { useAdaptiveDebounce } from "@/hooks/use-adaptive-debounce";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { logger } from '@/lib/logger';
+
+interface AdvancedFiltersState {
+  emailVerified: string;
+  phoneVerified: string;
+  twoFactorEnabled: string;
+  country: string;
+  gradeLevel: string;
+  subscriptionStatus: string;
+  createdFrom: string;
+  createdTo: string;
+  lastLoginFrom: string;
+  lastLoginTo: string;
+  subscriptionExpiresTo: string;
+  includeDeleted: boolean;
+}
+
+const DEFAULT_ADVANCED: AdvancedFiltersState = {
+  emailVerified: "all",
+  phoneVerified: "all",
+  twoFactorEnabled: "all",
+  country: "",
+  gradeLevel: "",
+  subscriptionStatus: "all",
+  createdFrom: "",
+  createdTo: "",
+  lastLoginFrom: "",
+  lastLoginTo: "",
+  subscriptionExpiresTo: "",
+  includeDeleted: false,
+};
+
+function parseAdvancedFromParams(searchParams: URLSearchParams): AdvancedFiltersState {
+  return {
+    emailVerified: searchParams.get("emailVerified") || "all",
+    phoneVerified: searchParams.get("phoneVerified") || "all",
+    twoFactorEnabled: searchParams.get("twoFactorEnabled") || "all",
+    country: searchParams.get("country") || "",
+    gradeLevel: searchParams.get("gradeLevel") || "",
+    subscriptionStatus: searchParams.get("subscriptionStatus") || "all",
+    createdFrom: searchParams.get("createdFrom") || "",
+    createdTo: searchParams.get("createdTo") || "",
+    lastLoginFrom: searchParams.get("lastLoginFrom") || "",
+    lastLoginTo: searchParams.get("lastLoginTo") || "",
+    subscriptionExpiresTo: searchParams.get("subscriptionExpiresTo") || "",
+    includeDeleted: searchParams.get("includeDeleted") === "true",
+  };
+}
 
 export default function AdminUsersPage() {
   const router = useRouter();
@@ -43,20 +91,16 @@ export default function AdminUsersPage() {
   const [status, setStatus] = React.useState<string>(() => searchParams.get("status") || "all");
   const [sortBy, setSortBy] = React.useState(() => searchParams.get("sortBy") || "createdAt");
   const [sortOrder, setSortOrder] = React.useState(() => searchParams.get("sortOrder") || "desc");
-  const [advanced, setAdvanced] = React.useState(() => ({
-    emailVerified: searchParams.get("emailVerified") || "all",
-    phoneVerified: searchParams.get("phoneVerified") || "all",
-    twoFactorEnabled: searchParams.get("twoFactorEnabled") || "all",
-    country: searchParams.get("country") || "",
-    gradeLevel: searchParams.get("gradeLevel") || "",
-    subscriptionStatus: searchParams.get("subscriptionStatus") || "all",
-    createdFrom: searchParams.get("createdFrom") || "",
-    createdTo: searchParams.get("createdTo") || "",
-    lastLoginFrom: searchParams.get("lastLoginFrom") || "",
-    lastLoginTo: searchParams.get("lastLoginTo") || "",
-    subscriptionExpiresTo: searchParams.get("subscriptionExpiresTo") || "",
-    includeDeleted: searchParams.get("includeDeleted") === "true",
-  }));
+
+  // Local (draft) advanced filters - only applied when user clicks "تطبيق الفلاتر"
+  const [localAdvanced, setLocalAdvanced] = React.useState<AdvancedFiltersState>(
+    () => parseAdvancedFromParams(searchParams)
+  );
+  // Applied advanced filters - the ones actually used in queries
+  const [advanced, setAdvanced] = React.useState<AdvancedFiltersState>(
+    () => parseAdvancedFromParams(searchParams)
+  );
+
   const [deleteDialog, setDeleteDialog] = React.useState<{ open: boolean; ids: string[] }>({
     open: false,
     ids: [],
@@ -81,14 +125,57 @@ export default function AdminUsersPage() {
     { minDelay: 300, maxDelay: 500, initialDelay: 350 },
   );
 
+  // AbortController ref for export & long-running operations
+  const exportAbortControllerRef = React.useRef<AbortController | null>(null);
+  // Generic query abort controller ref – auto-cancels on unmount or filter change
+  const queryAbortControllerRef = React.useRef<AbortController | null>(null);
+
+  // Cleanup all pending abort controllers on unmount
   React.useEffect(() => {
+    return () => {
+      if (exportAbortControllerRef.current) {
+        exportAbortControllerRef.current.abort();
+        exportAbortControllerRef.current = null;
+      }
+      if (queryAbortControllerRef.current) {
+        queryAbortControllerRef.current.abort();
+        queryAbortControllerRef.current = null;
+      }
+    };
+  }, []);
+
+  // Sync URL with applied filters (not local draft)
+  // Use a flag to prevent URL updates on initial mount (avoids extra navigation)
+  const isMountedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      return;
+    }
     const params = new URLSearchParams();
-    const values: Record<string, string> = { page: String(page), limit: String(limit), search: querySearch, role, status, sortBy, sortOrder, ...Object.fromEntries(Object.entries(advanced).map(([key, value]) => [key, String(value)])) };
+    const values: Record<string, string> = {
+      page: String(page),
+      limit: String(limit),
+      search: querySearch,
+      role,
+      status,
+      sortBy,
+      sortOrder,
+      ...Object.fromEntries(
+        Object.entries(advanced).map(([key, value]) => [key, String(value)])
+      ),
+    };
     Object.entries(values).forEach(([key, value]) => {
       if (value && value !== "all" && value !== "false") params.set(key, value);
     });
     router.replace(`/admin/users?${params.toString()}`, { scroll: false });
   }, [page, limit, querySearch, role, status, sortBy, sortOrder, advanced, router]);
+
+  // Apply advanced filters
+  const applyAdvancedFilters = React.useCallback(() => {
+    setAdvanced({ ...localAdvanced });
+    setPage(1);
+  }, [localAdvanced]);
 
   const saveCurrentView = () => {
     const name = window.prompt("اسم العرض المحفوظ");
@@ -104,20 +191,8 @@ export default function AdminUsersPage() {
     setQuerySearch("");
     setRole("all");
     setStatus("all");
-    setAdvanced({
-      emailVerified: "all",
-      phoneVerified: "all",
-      twoFactorEnabled: "all",
-      country: "",
-      gradeLevel: "",
-      subscriptionStatus: "all",
-      createdFrom: "",
-      createdTo: "",
-      lastLoginFrom: "",
-      lastLoginTo: "",
-      subscriptionExpiresTo: "",
-      includeDeleted: false,
-    });
+    setLocalAdvanced({ ...DEFAULT_ADVANCED });
+    setAdvanced({ ...DEFAULT_ADVANCED });
     setPage(1);
   };
 
@@ -207,7 +282,8 @@ export default function AdminUsersPage() {
         const data = await res.json();
         toast.error(data.error || 'فشل في تبديل الهوية');
       }
-    } catch (_error) {
+    } catch (error) {
+      logger.error("فشل تبديل الهوية", error);
       toast.error('خطأ في الاتصال');
     } finally {
       setImpersonating(false);
@@ -216,6 +292,13 @@ export default function AdminUsersPage() {
   };
 
   const handleExportCSV = async () => {
+    // Cancel any previous export
+    if (exportAbortControllerRef.current) {
+      exportAbortControllerRef.current.abort();
+    }
+    const abortController = new AbortController();
+    exportAbortControllerRef.current = abortController;
+
     setExporting(true);
     try {
       const first = await adminUsersApi.list({
@@ -239,9 +322,16 @@ export default function AdminUsersPage() {
         subscriptionExpiresTo: advanced.subscriptionExpiresTo || undefined,
         includeDeleted: advanced.includeDeleted || undefined,
       });
+
+      // Check if aborted
+      if (abortController.signal.aborted) return;
+
       const remaining: AdminUsersPageData[] = [];
       // Keep export responsive without flooding the API on large installations.
       for (let startPage = 2; startPage <= first.pagination.totalPages; startPage += 4) {
+        // Check if aborted before each batch
+        if (abortController.signal.aborted) return;
+
         const batch = await Promise.all(
           Array.from({ length: Math.min(4, first.pagination.totalPages - startPage + 1) }, (_, index) =>
           adminUsersApi.list({
@@ -284,10 +374,16 @@ export default function AdminUsersPage() {
     ];
       exportToCSV(users, exportColumns, 'users');
       toast.success(`تم تصدير ${users.length} مستخدم بنجاح`);
-    } catch {
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        toast.info("تم إلغاء عملية التصدير");
+        return;
+      }
+      logger.error("فشل تصدير CSV", err);
       toast.error("فشل تصدير بيانات المستخدمين");
     } finally {
       setExporting(false);
+      exportAbortControllerRef.current = null;
     }
   };
 
@@ -525,23 +621,35 @@ export default function AdminUsersPage() {
             <option value="createdAt:desc">الأحدث تسجيلًا</option><option value="createdAt:asc">الأقدم تسجيلًا</option><option value="name:asc">الاسم تصاعديًا</option><option value="name:desc">الاسم تنازليًا</option><option value="lastLogin:desc">آخر دخول</option><option value="totalXP:desc">الأعلى XP</option><option value="status:asc">الحالة</option>
           </select>
         </label>
-        {(["emailVerified", "phoneVerified", "twoFactorEnabled"] as const).map((key) => <label key={key} className="min-w-36 text-xs font-bold">{key === "emailVerified" ? "توثيق البريد" : key === "phoneVerified" ? "توثيق الهاتف" : "2FA"}<select className="mt-1 h-10 w-full rounded-xl border bg-background px-3" value={advanced[key]} onChange={(e) => { setAdvanced((old) => ({ ...old, [key]: e.target.value })); setPage(1); }}><option value="all">الكل</option><option value="true">مفعّل</option><option value="false">غير مفعّل</option></select></label>)}
-        <label className="min-w-36 text-xs font-bold">الدولة<Input className="mt-1" value={advanced.country} onChange={(e) => { setAdvanced((old) => ({ ...old, country: e.target.value })); setPage(1); }} /></label>
-        <label className="min-w-36 text-xs font-bold">المرحلة<Input className="mt-1" value={advanced.gradeLevel} onChange={(e) => { setAdvanced((old) => ({ ...old, gradeLevel: e.target.value })); setPage(1); }} /></label>
-        <label className="min-w-36 text-xs font-bold">التسجيل من<Input type="date" className="mt-1" value={advanced.createdFrom} onChange={(e) => { setAdvanced((old) => ({ ...old, createdFrom: e.target.value })); setPage(1); }} /></label>
-        <label className="min-w-36 text-xs font-bold">التسجيل إلى<Input type="date" className="mt-1" value={advanced.createdTo} onChange={(e) => { setAdvanced((old) => ({ ...old, createdTo: e.target.value })); setPage(1); }} /></label>
-        <label className="min-w-36 text-xs font-bold">آخر دخول من<Input type="date" className="mt-1" value={advanced.lastLoginFrom} onChange={(e) => { setAdvanced((old) => ({ ...old, lastLoginFrom: e.target.value })); setPage(1); }} /></label>
-        <label className="min-w-36 text-xs font-bold">آخر دخول إلى<Input type="date" className="mt-1" value={advanced.lastLoginTo} onChange={(e) => { setAdvanced((old) => ({ ...old, lastLoginTo: e.target.value })); setPage(1); }} /></label>
-        <label className="min-w-36 text-xs font-bold">الاشتراك<select className="mt-1 h-10 w-full rounded-xl border bg-background px-3" value={advanced.subscriptionStatus} onChange={(e) => { setAdvanced((old) => ({ ...old, subscriptionStatus: e.target.value })); setPage(1); }}><option value="all">الكل</option><option value="ACTIVE">نشط</option><option value="EXPIRED">منتهي</option><option value="NONE">بدون اشتراك</option></select></label>
-        <label className="min-w-36 text-xs font-bold">انتهاء الاشتراك إلى<Input type="date" className="mt-1" value={advanced.subscriptionExpiresTo} onChange={(e) => { setAdvanced((old) => ({ ...old, subscriptionExpiresTo: e.target.value })); setPage(1); }} /></label>
-        <label className="flex h-10 items-center gap-2 rounded-xl border px-3 text-xs font-bold"><Checkbox checked={advanced.includeDeleted} onCheckedChange={(checked) => { setAdvanced((old) => ({ ...old, includeDeleted: !!checked })); setPage(1); }} />المحذوفون والمؤرشفون</label>
+        {(["emailVerified", "phoneVerified", "twoFactorEnabled"] as const).map((key) => <label key={key} className="min-w-36 text-xs font-bold">{key === "emailVerified" ? "توثيق البريد" : key === "phoneVerified" ? "توثيق الهاتف" : "2FA"}<select className="mt-1 h-10 w-full rounded-xl border bg-background px-3" value={localAdvanced[key]} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, [key]: e.target.value })); }}><option value="all">الكل</option><option value="true">مفعّل</option><option value="false">غير مفعّل</option></select></label>)}
+        <label className="min-w-36 text-xs font-bold">الدولة<Input className="mt-1" value={localAdvanced.country} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, country: e.target.value })); }} /></label>
+        <label className="min-w-36 text-xs font-bold">المرحلة<Input className="mt-1" value={localAdvanced.gradeLevel} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, gradeLevel: e.target.value })); }} /></label>
+        <label className="min-w-36 text-xs font-bold">التسجيل من<Input type="date" className="mt-1" value={localAdvanced.createdFrom} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, createdFrom: e.target.value })); }} /></label>
+        <label className="min-w-36 text-xs font-bold">التسجيل إلى<Input type="date" className="mt-1" value={localAdvanced.createdTo} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, createdTo: e.target.value })); }} /></label>
+        <label className="min-w-36 text-xs font-bold">آخر دخول من<Input type="date" className="mt-1" value={localAdvanced.lastLoginFrom} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, lastLoginFrom: e.target.value })); }} /></label>
+        <label className="min-w-36 text-xs font-bold">آخر دخول إلى<Input type="date" className="mt-1" value={localAdvanced.lastLoginTo} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, lastLoginTo: e.target.value })); }} /></label>
+        <label className="min-w-36 text-xs font-bold">الاشتراك<select className="mt-1 h-10 w-full rounded-xl border bg-background px-3" value={localAdvanced.subscriptionStatus} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, subscriptionStatus: e.target.value })); }}><option value="all">الكل</option><option value="ACTIVE">نشط</option><option value="EXPIRED">منتهي</option><option value="NONE">بدون اشتراك</option></select></label>
+        <label className="min-w-36 text-xs font-bold">انتهاء الاشتراك إلى<Input type="date" className="mt-1" value={localAdvanced.subscriptionExpiresTo} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, subscriptionExpiresTo: e.target.value })); }} /></label>
+        <label className="flex h-10 items-center gap-2 rounded-xl border px-3 text-xs font-bold"><Checkbox checked={localAdvanced.includeDeleted} onCheckedChange={(checked) => { setLocalAdvanced((old) => ({ ...old, includeDeleted: !!checked })); }} />المحذوفون والمؤرشفون</label>
         <div className="flex w-full flex-wrap gap-2 border-t pt-3">
-          <Button size="sm" variant="outline" onClick={() => { setAdvanced((old) => ({ ...old, lastLoginTo: new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10) })); setPage(1); }}>غير نشطين منذ 90 يومًا</Button>
-          <Button size="sm" variant="outline" onClick={() => { setAdvanced((old) => ({ ...old, emailVerified: "false" })); setPage(1); }}>بريد غير موثق</Button>
-          <Button size="sm" variant="outline" onClick={() => { setAdvanced((old) => ({ ...old, twoFactorEnabled: "false" })); setPage(1); }}>بدون 2FA</Button>
+          <Button size="sm" variant="outline" onClick={() => { setLocalAdvanced((old) => ({ ...old, lastLoginTo: new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10) })); }}>غير نشطين منذ 90 يومًا</Button>
+          <Button size="sm" variant="outline" onClick={() => { setLocalAdvanced((old) => ({ ...old, emailVerified: "false" })); }}>بريد غير موثق</Button>
+          <Button size="sm" variant="outline" onClick={() => { setLocalAdvanced((old) => ({ ...old, twoFactorEnabled: "false" })); }}>بدون 2FA</Button>
           <Button size="sm" variant="ghost" onClick={clearAllFilters}>مسح الفلاتر</Button>
           <Button size="sm" variant="outline" onClick={saveCurrentView}>حفظ العرض الحالي</Button>
           {savedViews.length > 0 && <select className="h-9 rounded-lg border bg-background px-3 text-xs" defaultValue="" onChange={(e) => { if (e.target.value) window.location.href = e.target.value; }}><option value="" disabled>العروض المحفوظة</option>{savedViews.map((view) => <option key={view.name} value={view.url}>{view.name}</option>)}</select>}
+        </div>
+        {/* Apply Filters Button - only shown when local differs from applied */}
+        <div className="flex w-full justify-end gap-2 pt-2 border-t border-white/5">
+          <Button
+            size="sm"
+            variant="default"
+            onClick={applyAdvancedFilters}
+            className="bg-primary hover:bg-primary/90 gap-2"
+          >
+            <Filter className="h-4 w-4" />
+            تطبيق الفلاتر
+          </Button>
         </div>
       </div>
 
@@ -637,6 +745,7 @@ export default function AdminUsersPage() {
                 <input
                   type="text"
                   placeholder="فلترة السجلات..."
+                  aria-label="فلترة سجلات المستخدمين"
                   className="bg-accent/10 border border-border rounded-xl h-10 px-10 text-sm focus:ring-1 ring-primary outline-none w-full sm:w-64 font-bold"
                   value={search}
                   onChange={(e) => {

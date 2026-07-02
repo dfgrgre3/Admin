@@ -1,7 +1,6 @@
 "use client";
 
 import type { UserDetails } from "./types";
-import type { UserRole } from "@/types/enums";
 import { gradeLevelOptions, educationTypeOptions, genderOptions, roleOptions } from "./types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,8 +22,13 @@ import {
   Save,
   MapPin,
   CalendarDays,
-  VenusAndMars
+  VenusAndMars,
+  AlertCircle
 } from "lucide-react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { editableUserSchema, type EditableUserFormData } from "@/lib/validations/user-schemas";
+import { useEffect, useCallback } from "react";
 
 export function SettingsTab({
   user,
@@ -41,6 +45,60 @@ export function SettingsTab({
   setIsEditing: (e: boolean) => void;
   saving?: boolean;
 }) {
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    watch,
+    formState: { errors, isDirty, isValid },
+  } = useForm<EditableUserFormData>({
+    resolver: zodResolver(editableUserSchema),
+    mode: "onChange",
+    defaultValues: {
+      name: user.name || "",
+      username: user.username || "",
+      email: user.email || "",
+      phone: user.phone || "",
+      role: user.role || undefined,
+      gradeLevel: user.gradeLevel || "",
+      educationType: user.educationType || "",
+      school: user.school || "",
+      country: user.country || "",
+      dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split('T')[0] : "",
+      gender: user.gender as "male" | "female" | "other" | undefined,
+      bio: user.bio || "",
+    },
+  });
+
+  // Sync watched values back to parent `editedUser` so any parent-side logic can read them
+  const watchedValues = watch();
+  useEffect(() => {
+    setEditedUser(watchedValues as Partial<UserDetails>);
+  }, [watchedValues, setEditedUser]);
+
+  // When `user` prop changes externally (e.g. refetch), re-populate the form
+  useEffect(() => {
+    reset({
+      name: user.name || "",
+      username: user.username || "",
+      email: user.email || "",
+      phone: user.phone || "",
+      role: user.role || undefined,
+      gradeLevel: user.gradeLevel || "",
+      educationType: user.educationType || "",
+      school: user.school || "",
+      country: user.country || "",
+      dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split('T')[0] : "",
+      gender: user.gender as "male" | "female" | "other" | undefined,
+      bio: user.bio || "",
+    });
+  }, [user, reset]);
+
+  const onSubmit = useCallback(async () => {
+    await handleUpdate();
+  }, [handleUpdate]);
+
   return (
     <Card className="border-none shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500">
       <CardHeader>
@@ -51,179 +109,291 @@ export function SettingsTab({
         <CardDescription>تعديل الدور والصلاحيات الأساسية للمستخدم</CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="space-y-2">
-            <label className="text-sm font-bold">دور المستخدم</label>
-            <Select value={editedUser.role || user.role} onValueChange={(val) => setEditedUser({ ...editedUser, role: val as UserRole })}>
-              <SelectTrigger className="h-12 rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {roleOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-1">تغيير الدور سيؤثر على الصلاحيات التي يمتلكها المستخدم في المنصة.</p>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-bold">المرحلة الدراسية</label>
-            <Select value={editedUser.gradeLevel || ""} onValueChange={(val) => setEditedUser({ ...editedUser, gradeLevel: val })}>
-              <SelectTrigger className="h-12 rounded-xl">
-                <SelectValue placeholder="اختر المرحلة" />
-              </SelectTrigger>
-              <SelectContent>
-                {gradeLevelOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <Separator />
-
-        <div className="space-y-6">
-          <h4 className="font-bold text-sm">بيانات الملف الشخصي</h4>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">الاسم الكامل</label>
-              <div className="relative">
-                <UserIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  className="w-full h-11 pr-10 rounded-xl border bg-muted/50 px-4 text-sm focus:ring-2 ring-primary/20 outline-none transition-all"
-                  value={editedUser.name || ""}
-                  onChange={(e) => setEditedUser({ ...editedUser, name: e.target.value })}
-                  placeholder="الاسم الكامل" />
-              </div>
+              <label className="text-sm font-bold">دور المستخدم</label>
+              <Controller
+                control={control}
+                name="role"
+                render={({ field }) => (
+                  <Select value={field.value || ""} onValueChange={field.onChange}>
+                    <SelectTrigger className={`h-12 rounded-xl ${errors.role ? "border-destructive" : ""}`}>
+                      <SelectValue placeholder="اختر الدور" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roleOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.role && (
+                <p className="text-xs text-destructive font-medium mt-1 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {errors.role.message}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">تغيير الدور سيؤثر على الصلاحيات التي يمتلكها المستخدم في المنصة.</p>
             </div>
+
             <div className="space-y-2">
-              <label className="text-sm font-medium">البريد الإلكتروني</label>
-              <div className="relative">
-                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  className="w-full h-11 pr-10 rounded-xl border bg-muted/50 px-4 text-sm focus:ring-2 ring-primary/20 outline-none transition-all"
-                  value={editedUser.email || ""}
-                  onChange={(e) => setEditedUser({ ...editedUser, email: e.target.value })}
-                  placeholder="البريد الإلكتروني" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">اسم المستخدم</label>
-              <div className="relative">
-                <Hash className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  className="w-full h-11 pr-10 rounded-xl border bg-muted/50 px-4 text-sm focus:ring-2 ring-primary/20 outline-none transition-all"
-                  value={editedUser.username || ""}
-                  onChange={(e) => setEditedUser({ ...editedUser, username: e.target.value })}
-                  placeholder="اسم المستخدم" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">رقم الهاتف</label>
-              <div className="relative">
-                <Phone className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  className="w-full h-11 pr-10 rounded-xl border bg-muted/50 px-4 text-sm focus:ring-2 ring-primary/20 outline-none transition-all"
-                  value={editedUser.phone || ""}
-                  onChange={(e) => setEditedUser({ ...editedUser, phone: e.target.value })}
-                  placeholder="رقم الهاتف" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">المدرسة</label>
-              <div className="relative">
-                <School className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  className="w-full h-11 pr-10 rounded-xl border bg-muted/50 px-4 text-sm focus:ring-2 ring-primary/20 outline-none transition-all"
-                  value={editedUser.school || ""}
-                  onChange={(e) => setEditedUser({ ...editedUser, school: e.target.value })}
-                  placeholder="اسم المدرسة" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">نوع التعليم</label>
-              <Select value={editedUser.educationType || ""} onValueChange={(val) => setEditedUser({ ...editedUser, educationType: val })}>
-                <SelectTrigger className="h-11 rounded-xl">
-                  <SelectValue placeholder="اختر النوع" />
-                </SelectTrigger>
-                <SelectContent>
-                  {educationTypeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">الدولة</label>
-              <div className="relative">
-                <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  className="w-full h-11 pr-10 rounded-xl border bg-muted/50 px-4 text-sm focus:ring-2 ring-primary/20 outline-none transition-all"
-                  value={editedUser.country || ""}
-                  onChange={(e) => setEditedUser({ ...editedUser, country: e.target.value })}
-                  placeholder="الدولة" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">تاريخ الميلاد</label>
-              <div className="relative">
-                <CalendarDays className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="date"
-                  className="w-full h-11 pr-10 rounded-xl border bg-muted/50 px-4 text-sm focus:ring-2 ring-primary/20 outline-none transition-all"
-                  value={editedUser.dateOfBirth ? editedUser.dateOfBirth.split('T')[0] : ""}
-                  onChange={(e) => setEditedUser({ ...editedUser, dateOfBirth: e.target.value })}
-                  placeholder="تاريخ الميلاد" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">النوع</label>
-              <div className="relative">
-                <VenusAndMars className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Select value={editedUser.gender || ""} onValueChange={(val) => setEditedUser({ ...editedUser, gender: val })}>
-                  <SelectTrigger className="h-11 pr-10 rounded-xl">
-                    <SelectValue placeholder="اختر النوع" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {genderOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium">نبذة تعريفية (Bio)</label>
-              <textarea
-                className="w-full h-24 rounded-xl border bg-muted/50 p-4 text-sm focus:ring-2 ring-primary/20 outline-none transition-all resize-none"
-                value={editedUser.bio || ""}
-                onChange={(e) => setEditedUser({ ...editedUser, bio: e.target.value })}
-                placeholder="اكتب نبذة عن المستخدم..." />
+              <label className="text-sm font-bold">المرحلة الدراسية</label>
+              <Controller
+                control={control}
+                name="gradeLevel"
+                render={({ field }) => (
+                  <Select value={field.value || ""} onValueChange={field.onChange}>
+                    <SelectTrigger className={`h-12 rounded-xl ${errors.gradeLevel ? "border-destructive" : ""}`}>
+                      <SelectValue placeholder="اختر المرحلة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {gradeLevelOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.gradeLevel && (
+                <p className="text-xs text-destructive font-medium mt-1 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {errors.gradeLevel.message}
+                </p>
+              )}
             </div>
           </div>
 
-          <div className="flex justify-start gap-3 pt-4">
-            <Button
-              className="rounded-xl px-8 shadow-lg shadow-primary/20"
-              onClick={handleUpdate}
-              disabled={saving}>
-              <Save className="ml-2 h-4 w-4" />
-              {saving ? "جاري الحفظ..." : "حفظ التغييرات"}
-            </Button>
-            <Button
-              variant="ghost"
-              className="rounded-xl"
-              disabled={saving}
-              onClick={() => {
-                setIsEditing(false);
-                setEditedUser(user);
-              }}>
-              إلغاء
-            </Button>
+          <Separator className="my-6" />
+
+          <div className="space-y-6">
+            <h4 className="font-bold text-sm">بيانات الملف الشخصي</h4>
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">الاسم الكامل</label>
+                <div className="relative">
+                  <UserIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    className={`w-full h-11 pr-10 rounded-xl border bg-muted/50 px-4 text-sm focus:ring-2 ring-primary/20 outline-none transition-all ${errors.name ? "border-destructive ring-destructive/30" : ""}`}
+                    placeholder="الاسم الكامل"
+                    {...register("name")}
+                  />
+                </div>
+                {errors.name && (
+                  <p className="text-xs text-destructive font-medium mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">البريد الإلكتروني</label>
+                <div className="relative">
+                  <Mail className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    className={`w-full h-11 pr-10 rounded-xl border bg-muted/50 px-4 text-sm focus:ring-2 ring-primary/20 outline-none transition-all ${errors.email ? "border-destructive ring-destructive/30" : ""}`}
+                    placeholder="البريد الإلكتروني"
+                    {...register("email")}
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-xs text-destructive font-medium mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">اسم المستخدم</label>
+                <div className="relative">
+                  <Hash className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    className={`w-full h-11 pr-10 rounded-xl border bg-muted/50 px-4 text-sm focus:ring-2 ring-primary/20 outline-none transition-all ${errors.username ? "border-destructive ring-destructive/30" : ""}`}
+                    placeholder="اسم المستخدم"
+                    {...register("username")}
+                  />
+                </div>
+                {errors.username && (
+                  <p className="text-xs text-destructive font-medium mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.username.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">رقم الهاتف</label>
+                <div className="relative">
+                  <Phone className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    className={`w-full h-11 pr-10 rounded-xl border bg-muted/50 px-4 text-sm focus:ring-2 ring-primary/20 outline-none transition-all ${errors.phone ? "border-destructive ring-destructive/30" : ""}`}
+                    placeholder="رقم الهاتف"
+                    {...register("phone")}
+                  />
+                </div>
+                {errors.phone && (
+                  <p className="text-xs text-destructive font-medium mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.phone.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">المدرسة</label>
+                <div className="relative">
+                  <School className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    className={`w-full h-11 pr-10 rounded-xl border bg-muted/50 px-4 text-sm focus:ring-2 ring-primary/20 outline-none transition-all ${errors.school ? "border-destructive ring-destructive/30" : ""}`}
+                    placeholder="اسم المدرسة"
+                    {...register("school")}
+                  />
+                </div>
+                {errors.school && (
+                  <p className="text-xs text-destructive font-medium mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.school.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">نوع التعليم</label>
+                <Controller
+                  control={control}
+                  name="educationType"
+                  render={({ field }) => (
+                    <Select value={field.value || ""} onValueChange={field.onChange}>
+                      <SelectTrigger className={`h-11 rounded-xl ${errors.educationType ? "border-destructive" : ""}`}>
+                        <SelectValue placeholder="اختر النوع" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {educationTypeOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.educationType && (
+                  <p className="text-xs text-destructive font-medium mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.educationType.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">الدولة</label>
+                <div className="relative">
+                  <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    className={`w-full h-11 pr-10 rounded-xl border bg-muted/50 px-4 text-sm focus:ring-2 ring-primary/20 outline-none transition-all ${errors.country ? "border-destructive ring-destructive/30" : ""}`}
+                    placeholder="الدولة"
+                    {...register("country")}
+                  />
+                </div>
+                {errors.country && (
+                  <p className="text-xs text-destructive font-medium mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.country.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">تاريخ الميلاد</label>
+                <div className="relative">
+                  <CalendarDays className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="date"
+                    className={`w-full h-11 pr-10 rounded-xl border bg-muted/50 px-4 text-sm focus:ring-2 ring-primary/20 outline-none transition-all ${errors.dateOfBirth ? "border-destructive ring-destructive/30" : ""}`}
+                    placeholder="تاريخ الميلاد"
+                    {...register("dateOfBirth")}
+                  />
+                </div>
+                {errors.dateOfBirth && (
+                  <p className="text-xs text-destructive font-medium mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.dateOfBirth.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">النوع</label>
+                <div className="relative">
+                  <VenusAndMars className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Controller
+                    control={control}
+                    name="gender"
+                    render={({ field }) => (
+                      <Select value={field.value || ""} onValueChange={field.onChange}>
+                        <SelectTrigger className={`h-11 pr-10 rounded-xl ${errors.gender ? "border-destructive" : ""}`}>
+                          <SelectValue placeholder="اختر النوع" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {genderOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+                {errors.gender && (
+                  <p className="text-xs text-destructive font-medium mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.gender.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium">نبذة تعريفية (Bio)</label>
+                <textarea
+                  className={`w-full h-24 rounded-xl border bg-muted/50 p-4 text-sm focus:ring-2 ring-primary/20 outline-none transition-all resize-none ${errors.bio ? "border-destructive ring-destructive/30" : ""}`}
+                  placeholder="اكتب نبذة عن المستخدم..."
+                  {...register("bio")}
+                />
+                {errors.bio && (
+                  <p className="text-xs text-destructive font-medium mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.bio.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-start gap-3 pt-4">
+              <Button
+                type="submit"
+                className="rounded-xl px-8 shadow-lg shadow-primary/20"
+                disabled={saving || (isDirty && !isValid)}>
+                <Save className="ml-2 h-4 w-4" />
+                {saving ? "جاري الحفظ..." : "حفظ التغييرات"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="rounded-xl"
+                disabled={saving}
+                onClick={() => {
+                  setIsEditing(false);
+                  reset({
+                    name: user.name || "",
+                    username: user.username || "",
+                    email: user.email || "",
+                    phone: user.phone || "",
+                    role: user.role || undefined,
+                    gradeLevel: user.gradeLevel || "",
+                    educationType: user.educationType || "",
+                    school: user.school || "",
+                    country: user.country || "",
+                    dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split('T')[0] : "",
+                    gender: user.gender as "male" | "female" | "other" | undefined,
+                    bio: user.bio || "",
+                  });
+                }}>
+                إلغاء
+              </Button>
+            </div>
           </div>
-        </div>
+        </form>
       </CardContent>
     </Card>
   );

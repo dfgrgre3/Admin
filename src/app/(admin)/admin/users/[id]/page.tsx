@@ -30,6 +30,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { passwordResetSchema, type PasswordResetFormData } from "@/lib/validations/user-schemas";
 
 import type { UserDetails } from "./_components/types";
 import { pickEditableUserFields } from "./_components/types";
@@ -52,23 +56,93 @@ const RESERVED_ROUTE_SEGMENTS = new Set(["edit", "new", "create", "permissions"]
 export default function UserDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user: currentUser, hasPermission } = usePermission();
   const canManageUsers = hasPermission(PERMISSIONS.USERS_MANAGE);
   const userId = params.id as string;
 
-  const [user, setUser] = React.useState<UserDetails | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const [, setIsEditing] = React.useState(false);
   const [activeTab, setActiveTab] = useUIState<string>("user-detail-active-tab", "overview");
   const [editedUser, setEditedUser] = React.useState<Partial<UserDetails>>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = React.useState(false);
-  const [newPassword, setNewPassword] = React.useState("");
-  const [confirmPassword, setConfirmPassword] = React.useState("");
   const [resettingPassword, setResettingPassword] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
 
-  const handleResetPassword = async () => {
+  // AbortController ref for long-running operations – auto-cancels on unmount
+  const abortControllerRef = React.useRef<AbortController | null>(null);
+  React.useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
+  }, []);
+
+  // React Hook Form + Zod for password reset
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset: resetPasswordForm,
+    formState: { errors, isValid, dirtyFields },
+  } = useForm<PasswordResetFormData>({
+    resolver: zodResolver(passwordResetSchema),
+    mode: "onChange",
+    defaultValues: {
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  // Watch password fields to determine if button should be enabled
+  const newPasswordValue = watch("newPassword");
+  const confirmPasswordValue = watch("confirmPassword");
+  const isPasswordFormValid =
+    dirtyFields.newPassword &&
+    dirtyFields.confirmPassword &&
+    !errors.newPassword &&
+    !errors.confirmPassword &&
+    newPasswordValue === confirmPasswordValue &&
+    newPasswordValue.length >= 8;
+
+  // Tanstack Query for fetching user data
+  const {
+    data: user,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery<UserDetails>({
+    queryKey: ["admin", "user", userId],
+    queryFn: async () => {
+      if (!userId || RESERVED_ROUTE_SEGMENTS.has(userId)) {
+        router.replace("/admin/users");
+        throw new Error("Invalid user ID");
+      }
+      return adminUsersApi.get(userId);
+    },
+    retry: 1,
+    staleTime: 30_000, // 30 seconds before refetch
+    gcTime: 5 * 60 * 1000, // 5 minutes cache
+    meta: {
+      errorMessage: "المستخدم غير موجود",
+    },
+  });
+
+  // Handle query errors
+  React.useEffect(() => {
+    if (isError) {
+      const errMsg = error instanceof Error ? error.message : "المستخدم غير موجود";
+      logger.error("Error fetching user:", error);
+      toast.error(errMsg);
+      if (errMsg === "المستخدم غير موجود") {
+        router.push("/admin/users");
+      }
+    }
+  }, [isError, error, router]);
+
+  const handleResetPassword = handleSubmit(async (formData: PasswordResetFormData) => {
     if (!user || !canManageUsers) {
       toast.error("غير مصرح بتنفيذ الإجراء");
       return;
@@ -78,26 +152,18 @@ export default function UserDetailPage() {
       toast.error(resetBlock);
       return;
     }
-    if (!newPassword || newPassword.length < 8) {
-      toast.error("كلمة المرور يجب أن تكون 8 أحرف على الأقل");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error("كلمتا المرور غير متطابقتين");
-      return;
-    }
+
     setResettingPassword(true);
     try {
       const response = await adminFetch(`/admin/users/${userId}/password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: newPassword }),
+        body: JSON.stringify({ password: formData.newPassword }),
       });
       if (response.ok) {
         toast.success("تم تغيير كلمة مرور المستخدم بنجاح وجلساته النشطة ألغيت");
         setPasswordDialogOpen(false);
-        setNewPassword("");
-        setConfirmPassword("");
+        resetPasswordForm();
       } else {
         const data = await response.json();
         toast.error(data.error || data.message || "حدث خطأ أثناء تغيير كلمة المرور");
@@ -108,30 +174,7 @@ export default function UserDetailPage() {
     } finally {
       setResettingPassword(false);
     }
-  };
-
-  const fetchUser = React.useCallback(async () => {
-    if (!userId || RESERVED_ROUTE_SEGMENTS.has(userId)) {
-      router.replace("/admin/users");
-      setLoading(false);
-      return;
-    }
-    try {
-      const data = await adminUsersApi.get(userId);
-      setUser(data);
-      setEditedUser(data);
-    } catch (error) {
-      logger.error("Error fetching user:", error);
-      toast.error("المستخدم غير موجود");
-      router.push("/admin/users");
-    } finally {
-      setLoading(false);
-    }
-  }, [userId, router]);
-
-  React.useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+  });
 
   const handleUpdate = async () => {
     if (!user || !canManageUsers) {
@@ -153,8 +196,8 @@ export default function UserDetailPage() {
 
       if (response.ok) {
         toast.success("تم تحديث بيانات المستخدم بنجاح");
-        setIsEditing(false);
-        fetchUser();
+        // Invalidate cache to refetch
+        queryClient.invalidateQueries({ queryKey: ["admin", "user", userId] });
       } else {
         const data = await response.json();
         toast.error(data.message || "حدث خطأ أثناء التحديث");
@@ -184,6 +227,8 @@ export default function UserDetailPage() {
 
       if (response.ok) {
         toast.success("تم حذف المستخدم بنجاح");
+        // Invalidate users list cache
+        queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
         router.push("/admin/users");
       } else {
         toast.error("حدث خطأ أثناء حذف المستخدم");
@@ -196,7 +241,7 @@ export default function UserDetailPage() {
     }
   };
 
-  if (loading) return <UserSkeleton />;
+  if (isLoading) return <UserSkeleton />;
   if (!user) return null;
 
   return (
@@ -282,7 +327,7 @@ export default function UserDetailPage() {
                 editedUser={editedUser}
                 setEditedUser={setEditedUser}
                 handleUpdate={handleUpdate}
-                setIsEditing={setIsEditing}
+                setIsEditing={() => {}}
                 saving={saving}
               />
             </TabsContent>}
@@ -294,8 +339,9 @@ export default function UserDetailPage() {
                   ? "غير مصرح لك بإدارة المستخدمين"
                   : getUserActionBlockReason(currentUser, user, "suspend")}
                 onUserChange={(updatedUser) => {
-                  setUser(updatedUser);
                   setEditedUser(updatedUser);
+                  // Invalidate cache to refetch
+                  queryClient.invalidateQueries({ queryKey: ["admin", "user", userId] });
                 }}
               />
             </TabsContent>
@@ -316,7 +362,10 @@ export default function UserDetailPage() {
         variant="destructive"
       />
 
-      <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+      <Dialog open={passwordDialogOpen} onOpenChange={(open) => {
+        setPasswordDialogOpen(open);
+        if (!open) resetPasswordForm();
+      }}>
         <DialogContent className="rounded-[2rem] border-white/10 bg-card/95 backdrop-blur-xl max-w-md" dir="rtl">
           <DialogHeader className="space-y-4">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20">
@@ -329,41 +378,76 @@ export default function UserDetailPage() {
               أدخل كلمة المرور الجديدة للمسؤول {user.name || user.email}. سيتم فرض تسجيل الخروج من كافة الأجهزة تلقائياً بعد تغييرها.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-bold">كلمة المرور الجديدة</label>
-              <Input
-                type="password"
-                className="h-12 rounded-2xl bg-accent/10 border-white/10 px-4 text-sm focus:ring-1 ring-primary outline-none"
-                placeholder="أدخل 8 أحرف على الأقل..."
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
+          <form onSubmit={handleResetPassword}>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-bold">كلمة المرور الجديدة</label>
+                <Input
+                  type="password"
+                  className={`h-12 rounded-2xl bg-accent/10 border-white/10 px-4 text-sm focus:ring-1 ring-primary outline-none ${errors.newPassword ? "border-destructive" : ""}`}
+                  placeholder="أدخل 8 أحرف على الأقل..."
+                  {...register("newPassword")}
+                />
+                {errors.newPassword && (
+                  <p className="text-xs text-destructive font-medium mt-1">{errors.newPassword.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold">تأكيد كلمة المرور</label>
+                <Input
+                  type="password"
+                  className={`h-12 rounded-2xl bg-accent/10 border-white/10 px-4 text-sm focus:ring-1 ring-primary outline-none ${errors.confirmPassword ? "border-destructive" : ""}`}
+                  placeholder="أعد كتابة كلمة المرور..."
+                  {...register("confirmPassword")}
+                />
+                {errors.confirmPassword && (
+                  <p className="text-xs text-destructive font-medium mt-1">{errors.confirmPassword.message}</p>
+                )}
+              </div>
+              {/* Password strength indicator */}
+              {newPasswordValue && (
+                <div className="space-y-1.5">
+                  <div className="flex gap-1">
+                    {[
+                      newPasswordValue.length >= 8,
+                      /[A-Z]/.test(newPasswordValue),
+                      /[a-z]/.test(newPasswordValue),
+                      /[0-9]/.test(newPasswordValue),
+                      /[!@#$%^&*(),.?":{}|<>]/.test(newPasswordValue),
+                    ].map((pass, i) => (
+                      <div
+                        key={i}
+                        className={`h-1 flex-1 rounded-full transition-colors ${
+                          pass ? "bg-success" : "bg-muted"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <ul className="text-[10px] space-y-0.5 text-muted-foreground">
+                    <li className={newPasswordValue.length >= 8 ? "text-success" : ""}>✓ 8 أحرف على الأقل</li>
+                    <li className={/[A-Z]/.test(newPasswordValue) ? "text-success" : ""}>✓ حرف كبير (A-Z)</li>
+                    <li className={/[a-z]/.test(newPasswordValue) ? "text-success" : ""}>✓ حرف صغير (a-z)</li>
+                    <li className={/[0-9]/.test(newPasswordValue) ? "text-success" : ""}>✓ رقم (0-9)</li>
+                    <li className={/[!@#$%^&*(),.?":{}|<>]/.test(newPasswordValue) ? "text-success" : ""}>✓ رمز خاص</li>
+                  </ul>
+                </div>
+              )}
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold">تأكيد كلمة المرور</label>
-              <Input
-                type="password"
-                className="h-12 rounded-2xl bg-accent/10 border-white/10 px-4 text-sm focus:ring-1 ring-primary outline-none"
-                placeholder="أعد كتابة كلمة المرور..."
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter className="mt-6 flex-col-reverse sm:flex-row gap-3 sm:gap-0">
-            <AdminButton variant="outline" className="rounded-2xl h-12 flex-1" onClick={() => setPasswordDialogOpen(false)}>
-              إلغاء
-            </AdminButton>
-            <AdminButton
-              variant="default"
-              loading={resettingPassword}
-              onClick={handleResetPassword}
-              className="rounded-2xl h-12 flex-1"
-            >
-              حفظ كلمة المرور
-            </AdminButton>
-          </DialogFooter>
+            <DialogFooter className="mt-6 flex-col-reverse sm:flex-row gap-3 sm:gap-0">
+              <AdminButton variant="outline" className="rounded-2xl h-12 flex-1" onClick={() => setPasswordDialogOpen(false)} type="button">
+                إلغاء
+              </AdminButton>
+              <AdminButton
+                variant="default"
+                loading={resettingPassword}
+                disabled={!isPasswordFormValid}
+                type="submit"
+                className="rounded-2xl h-12 flex-1"
+              >
+                حفظ كلمة المرور
+              </AdminButton>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>);
