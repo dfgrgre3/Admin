@@ -2,6 +2,7 @@
 
 import { adminFetch } from "@/lib/api/admin-api";
 import { adminUsersApi } from "@/lib/api/admin-users-api";
+import { apiRoutes } from "@/lib/api/routes";
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { PageHeader } from "@/components/admin/ui/page-header";
@@ -15,7 +16,9 @@ import {
   Trash2,
   Lock,
   Shield,
-  CreditCard
+  CreditCard,
+  LifeBuoy,
+  LogIn
 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminConfirm } from "@/components/admin/ui/admin-confirm";
@@ -46,6 +49,8 @@ import { ActivityTab } from "./_components/activity-tab";
 import { SettingsTab } from "./_components/settings-tab";
 import { SecurityTab } from "./_components/security-tab";
 import { BillingTab } from "./_components/billing-tab";
+import { SupportNotesTab } from "./_components/support-notes-tab";
+import { SecurityActivitySection } from "./_components/security-activity";
 import { usePermission } from "@/components/auth/PermissionGuard";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getUserActionBlockReason } from "@/lib/user-action-guards";
@@ -65,6 +70,8 @@ export default function UserDetailPage() {
   const [editedUser, setEditedUser] = React.useState<Partial<UserDetails>>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = React.useState(false);
+  const [impersonateDialogOpen, setImpersonateDialogOpen] = React.useState(false);
+  const [impersonating, setImpersonating] = React.useState(false);
 
   // React Hook Form + Zod for password reset
   const {
@@ -234,6 +241,37 @@ export default function UserDetailPage() {
     }
   });
 
+  const handleImpersonate = async (targetUserId: string, targetName: string) => {
+    if (!user) return;
+    const blocked = getUserActionBlockReason(currentUser, user, "impersonate");
+    if (!canManageUsers || blocked) {
+      toast.error(blocked || "غير مصرح بتنفيذ الإجراء");
+      return;
+    }
+    setImpersonating(true);
+    try {
+      const res = await adminFetch(apiRoutes.admin.impersonateById(targetUserId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+        credentials: "include",
+      });
+      if (res.ok) {
+        toast.success(`تم تبديل الهوية إلى ${targetName}، جاري التوجيه...`);
+        window.location.href = "/";
+      } else {
+        const data = await res.json().catch(() => null);
+        toast.error(data?.error || "فشل في تبديل الهوية");
+      }
+    } catch (error) {
+      logger.error("فشل تبديل الهوية", error);
+      toast.error("خطأ في الاتصال بالخادم");
+    } finally {
+      setImpersonating(false);
+      setImpersonateDialogOpen(false);
+    }
+  };
+
   if (isLoading) return <UserSkeleton />;
   if (!user) return null;
 
@@ -266,6 +304,7 @@ export default function UserDetailPage() {
           setActiveTab={setActiveTab}
           router={router}
           onChangePassword={() => setPasswordDialogOpen(true)}
+          onImpersonate={() => setImpersonateDialogOpen(true)}
           canManage={canManageUsers}
         />
 
@@ -299,6 +338,10 @@ export default function UserDetailPage() {
                   <CreditCard className="h-4 w-4" />
                   المالية
                 </TabsTrigger>
+                <TabsTrigger value="support" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center gap-2 px-6">
+                  <LifeBuoy className="h-4 w-4" />
+                  الدعم والملاحظات
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -312,6 +355,9 @@ export default function UserDetailPage() {
 
             <TabsContent value="activity">
               <ActivityTab user={user} />
+              <div className="mt-8">
+                <SecurityActivitySection user={user} />
+              </div>
             </TabsContent>
 
             {canManageUsers && <TabsContent value="settings">
@@ -339,6 +385,9 @@ export default function UserDetailPage() {
             </TabsContent>
             <TabsContent value="billing">
               <BillingTab user={user} canManage={canManageUsers} />
+            </TabsContent>
+            <TabsContent value="support">
+              <SupportNotesTab user={user} />
             </TabsContent>
           </Tabs>
         </div>
@@ -441,5 +490,16 @@ export default function UserDetailPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <AdminConfirm
+        open={impersonateDialogOpen}
+        onOpenChange={setImpersonateDialogOpen}
+        title="تبديل الهوية (Impersonate)"
+        description={`أنت على وشك الدخول بهوية المستخدم ${user.name || user.email}. ستتمكن من رؤية المنصة تماماً كما يراها لحل مشاكل الدعم الفني. سيُسجّل هذا الإجراء في سجل التدقيق.`}
+        confirmText="تأكيد الدخول"
+        variant="premium"
+        onConfirm={() => handleImpersonate(user.id, user.name || user.email)}
+        loading={impersonating}
+      />
     </div>);
 }

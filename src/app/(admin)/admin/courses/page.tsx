@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
@@ -109,7 +109,8 @@ export default function AdminCoursesPage() {
       if (filterStatus === "PUBLISHED") params.set("isPublished", "true"); else
         if (filterStatus === "DRAFT") params.set("isPublished", "false"); else
           if (filterStatus === "ACTIVE") params.set("isActive", "true"); else
-            if (filterStatus === "INACTIVE") params.set("isActive", "false");
+            if (filterStatus === "INACTIVE") params.set("isActive", "false"); else
+              if (filterStatus === "ALL") params.set("isActive", "all");
 
       const response = await adminFetch(`${apiRoutes.admin.courses}?${params.toString()}`);
       if (!response.ok) throw new Error("فشل تحميل الدورات");
@@ -350,7 +351,7 @@ export default function AdminCoursesPage() {
     }
   };
 
-  const _handleToggleActive = async (course: Course) => {
+const handleToggleActive = async (course: Course) => {
     try {
       const response = await adminFetch(apiRoutes.admin.courses, {
         method: "PATCH",
@@ -359,14 +360,14 @@ export default function AdminCoursesPage() {
       });
       const result = await response.json();
       if (!response.ok) {
-        toast.error(result?.message || "فشل تحديث الحالة");
-        return;
+        throw new Error(result?.message || "فشل تحديث الحالة");
       }
-      toast.success(course.isActive ? "✅ تم إيقاف الدورة" : "✅ تم تفعيل الدورة بنجاح");
+      toast.success(course.isActive ? "تم إيقاف الدورة" : "تم تفعيل الدورة بنجاح");
       void revalidateCoursePublicCache().catch(() => {});
       await refetch();
-    } catch {
-      toast.error("فشل تحديث الحالة");
+    } catch (error) {
+      const err = error as Error;
+      toast.error(err.message || "فشل تحديث الحالة");
     }
   };
 
@@ -390,7 +391,19 @@ export default function AdminCoursesPage() {
   };
 
   const handleExport = () => {
-    window.open(apiRoutes.admin.courseExport, "_blank");
+    const params = new URLSearchParams();
+    if (deferredSearch) params.set("search", deferredSearch);
+    if (filterLevel !== "ALL") params.set("level", filterLevel);
+    if (filterCategory !== "ALL") params.set("categoryId", filterCategory);
+    if (filterStatus === "PUBLISHED") params.set("isPublished", "true");
+    else if (filterStatus === "DRAFT") params.set("isPublished", "false");
+    else if (filterStatus === "ACTIVE") params.set("isActive", "true");
+    else if (filterStatus === "INACTIVE") params.set("isActive", "false");
+
+    const url = params.toString()
+      ? `${apiRoutes.admin.courseExport}?${params.toString()}`
+      : apiRoutes.admin.courseExport;
+    window.open(url, "_blank");
   };
 
   const columns = React.useMemo(

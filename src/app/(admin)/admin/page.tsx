@@ -16,8 +16,12 @@ import dynamic from "next/dynamic";
 import { DraggableDashboard } from "@/components/admin/dashboard/draggable-dashboard";
 import { usePremiumSounds } from "@/hooks/use-premium-sounds";
 import { useAuth } from "@/contexts/auth-context";
-import { BroadcastModal } from "@/components/admin/broadcast/broadcast-modal";
 import type { UserSegment } from "@/components/admin/broadcast/broadcast-modal";
+
+const BroadcastModal = dynamic(() => import("@/components/admin/broadcast/broadcast-modal").then(mod => ({ default: mod.BroadcastModal })), {
+  ssr: false,
+  loading: () => null,
+});
 import { adminFetch } from "@/lib/api/admin-api";
 import { cn } from "@/lib/utils";
 import { useAdminNotifications } from "@/hooks/use-admin-notifications";
@@ -150,7 +154,7 @@ export default function AdminDashboardPage() {
   const { playSound } = usePremiumSounds();
   const { user } = useAuth();
   const [timeFilter, setTimeFilter] = React.useState("today");
-  const { isConnected: wsConnected } = useWebSocket();
+  const { isConnected: wsConnected, socket } = useWebSocket();
   const [isBroadcastOpen, setIsBroadcastOpen] = React.useState(false);
 
   // Real-time notifications
@@ -194,10 +198,50 @@ export default function AdminDashboardPage() {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
+  React.useEffect(() => {
+    if (!socket) return;
+    const handleWsMessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type && (
+          data.type.startsWith('admin_') || 
+          data.type === 'admin_notification' ||
+          data.type === 'broadcast-completed' ||
+          data.type === 'notification' || 
+          data.type === 'activity'
+        )) {
+          refetch();
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+    socket.addEventListener('message', handleWsMessage);
+    return () => {
+      socket.removeEventListener('message', handleWsMessage);
+    };
+  }, [socket, refetch]);
+
   const handleRefresh = React.useCallback(() => {
     playSound("click");
     refetch();
   }, [playSound, refetch]);
+
+  const pageControls = React.useMemo(() => ({
+    refreshDashboard: handleRefresh,
+    openBroadcast: () => setIsBroadcastOpen(true),
+    setTimeFilter: (filter: "today" | "week") => setTimeFilter(filter),
+    scrollToSection: (sectionId: string) => {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        element.classList.add("ring-4", "ring-primary/50", "scale-[1.01]", "transition-all", "duration-500");
+        setTimeout(() => {
+          element.classList.remove("ring-4", "ring-primary/50", "scale-[1.01]");
+        }, 3000);
+      }
+    }
+  }), [handleRefresh]);
 
   // ── Derived data ──────────────────────────────────────────────────────────
   // All hooks MUST be declared before any early return (Rules of Hooks).
@@ -243,10 +287,33 @@ export default function AdminDashboardPage() {
       })),
     [data?.upcomingEvents],
   );
-  const safeCharts = React.useMemo(
-    () => data?.charts ?? { userGrowth: [], activity: [] },
-    [data?.charts]
+  const ARABIC_MONTHS = React.useMemo(
+    () => [
+      "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+      "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
+    ],
+    []
   );
+
+  const safeCharts = React.useMemo(() => {
+    const rawGrowth = data?.charts?.userGrowth ?? [];
+    const formattedGrowth = rawGrowth.map((item: any) => {
+      const monthNum = typeof item.month === "number" ? item.month : parseInt(item.month, 10);
+      const name = (monthNum >= 1 && monthNum <= 12) ? ARABIC_MONTHS[monthNum - 1] : String(item.month);
+      return { ...item, month: name };
+    });
+    return {
+      userGrowth: formattedGrowth,
+      activity: data?.charts?.activity ?? [],
+    };
+  }, [data?.charts, ARABIC_MONTHS]);
+
+  const safeGoals = React.useMemo(() => {
+    return (data as any)?.goals ?? [
+      { id: "1", title: "مستخدمين جدد", current: safeStats.newUsersThisWeek, target: 1000, unit: "مستخدم", category: "users", priority: "medium" },
+      { id: "2", title: "دراسة مجمعة", current: Math.round(safeActivity.studyMinutes / 60), target: 5000, unit: "ساعة", category: "engagement", priority: "high" },
+    ];
+  }, [data, safeStats.newUsersThisWeek, safeActivity.studyMinutes]);
 
   const alertData = React.useMemo(() => {
     if (!data) return [];
@@ -271,6 +338,17 @@ export default function AdminDashboardPage() {
       }
     });
   }, [data, safeStats, safeActivity, safeTrends]);
+
+  const agentDashboardContext = React.useMemo(() => ({
+    stats: safeStats,
+    trends: safeTrends,
+    activity: safeActivity,
+    alerts: alertData,
+    recentActivity: safeRecentActivity.slice(0, 8),
+    upcomingEvents: safeUpcomingEvents.slice(0, 8),
+    timeFilter,
+    realtime: { connected: wsConnected },
+  }), [safeStats, safeTrends, safeActivity, alertData, safeRecentActivity, safeUpcomingEvents, timeFilter, wsConnected]);
 
   const distributionData = React.useMemo(() => {
     return [
@@ -385,7 +463,7 @@ export default function AdminDashboardPage() {
     },
     {
       id: "command-center",
-      content: <AiCommandCenter />
+      content: <AiCommandCenter dashboardContext={agentDashboardContext} pageControls={pageControls} />
     },
     {
        id: "intelligence",
@@ -407,7 +485,7 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className={STYLES.glass}>
+                <div className={STYLES.glass} id="growth-chart">
                   <div className="flex items-center justify-between mb-8">
                     <h3 className="text-xl font-black flex items-center gap-2">
                        <TrendingUp className="h-5 w-5 text-primary" />
@@ -416,7 +494,7 @@ export default function AdminDashboardPage() {
                   </div>
                   <UserGrowthChart data={safeCharts.userGrowth} />
                 </div>
-                <div className={STYLES.glass}>
+                <div className={STYLES.glass} id="activity-chart">
                    <div className="flex items-center justify-between mb-8">
                     <h3 className="text-xl font-black flex items-center gap-2">
                        <Zap className="h-5 w-5 text-amber-500" />
@@ -451,12 +529,11 @@ export default function AdminDashboardPage() {
                  )}
               </div>
 
-              <GoalsKPIs 
-                goals={[
-                  { id: "1", title: "مستخدمين جدد", current: safeStats.newUsersThisWeek, target: 1000, unit: "مستخدم" },
-                  { id: "2", title: "دراسة مجمعة", current: Math.round(safeActivity.studyMinutes / 60), target: 5000, unit: "ساعة" },
-                ]}
-              />
+              <div id="goals-kpis">
+                <GoalsKPIs 
+                  goals={safeGoals}
+                />
+              </div>
 
               <div className="bg-card/50 p-8 rounded-[2.5rem] border border-primary/10 relative overflow-hidden">
                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
@@ -518,7 +595,7 @@ export default function AdminDashboardPage() {
         </ErrorBoundary>
       )
     }
-  ], [safeStats, safeActivity, safeTrends, safeCharts, safeRecentActivity, safeUpcomingEvents, alertData, heatmapData, distributionData, timeFilter, playSound, handleRefresh, isFetching]);
+  ], [safeStats, safeActivity, safeTrends, safeCharts, safeRecentActivity, safeUpcomingEvents, alertData, agentDashboardContext, pageControls, heatmapData, distributionData, timeFilter, playSound, handleRefresh, isFetching]);
 
   // ── Early returns (after all hooks) ─────────────────────────────────────
   if (isLoading) return <DashboardSkeleton />;

@@ -3,7 +3,7 @@ export async function initializeSettings(): Promise<void> {
     return;
   }
 
-  const theme = window.localStorage.getItem("theme");
+  const theme = window.localStorage.getItem("tolo-theme") || window.localStorage.getItem("theme");
   if (theme) {
     document.documentElement.dataset.theme = theme;
   }

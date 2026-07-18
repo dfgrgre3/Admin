@@ -55,7 +55,6 @@ import {
   RefreshCw } from
 "lucide-react";
 import { ButtonGroup } from "./admin-button";
-import { m, AnimatePresence } from "framer-motion";
 import { CheckSquare, X } from "lucide-react";
 
 interface AdminDataTableProps<TData, TValue> {
@@ -223,13 +222,9 @@ export function AdminDataTable<TData, TValue>({
 
         <div className="flex items-center gap-2 flex-wrap">
           {/* Floating Bulk Actions Bar */}
-          <AnimatePresence>
-            {selectable && selectedCount > 0 && bulkActions && bulkActions.length > 0 &&
-            <m.div
-              initial={{ y: 100, opacity: 0, x: "-50%" }}
-              animate={{ y: 0, opacity: 1, x: "-50%" }}
-              exit={{ y: 100, opacity: 0, x: "-50%" }}
-              className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] flex w-[calc(100%_-_1rem)] max-w-4xl flex-wrap items-center justify-center gap-3 bg-neutral-900/90 backdrop-blur-2xl border border-white/10 px-4 py-3 sm:bottom-10 sm:w-auto sm:min-w-[400px] sm:gap-6 sm:px-8 sm:py-4 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+          {selectable && selectedCount > 0 && bulkActions && bulkActions.length > 0 &&
+            <div
+              className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] flex w-[calc(100%_-_1rem)] max-w-4xl flex-wrap items-center justify-center gap-3 bg-neutral-900/90 backdrop-blur-2xl border border-white/10 px-4 py-3 sm:bottom-10 sm:w-auto sm:min-w-[400px] sm:gap-6 sm:px-8 sm:py-4 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-in fade-in slide-in-from-bottom-4 duration-300"
               dir="rtl">
               
                 <div className="flex items-center gap-4 border-l border-white/10 pl-6">
@@ -271,9 +266,8 @@ export function AdminDataTable<TData, TValue>({
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-              </m.div>
+              </div>
             }
-          </AnimatePresence>
 
           {/* Row count badge */}
           <div className="hidden sm:flex items-center text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">

@@ -68,6 +68,8 @@ const ADMIN_API_RULES: {
   { pattern: /^\/api\/admin\/course-categories/, view: PERMISSIONS.SUBJECTS_VIEW, manage: PERMISSIONS.SUBJECTS_MANAGE },
   { pattern: /^\/api\/admin\/courses/, view: PERMISSIONS.SUBJECTS_VIEW, manage: PERMISSIONS.SUBJECTS_MANAGE },
   { pattern: /^\/api\/admin\/subjects/, view: PERMISSIONS.SUBJECTS_VIEW, manage: PERMISSIONS.SUBJECTS_MANAGE },
+  { pattern: /^\/api\/admin\/certificates/, view: PERMISSIONS.SUBJECTS_VIEW, manage: PERMISSIONS.SUBJECTS_MANAGE },
+  { pattern: /^\/api\/admin\/learning-paths/, view: PERMISSIONS.SUBJECTS_VIEW, manage: PERMISSIONS.SUBJECTS_MANAGE },
   { pattern: /^\/api\/admin\/books/, view: PERMISSIONS.BOOKS_VIEW, manage: PERMISSIONS.BOOKS_MANAGE },
   { pattern: /^\/api\/admin\/exams/, view: PERMISSIONS.EXAMS_VIEW, manage: PERMISSIONS.EXAMS_MANAGE },
   { pattern: /^\/api\/admin\/resources/, view: PERMISSIONS.RESOURCES_VIEW, manage: PERMISSIONS.RESOURCES_MANAGE },

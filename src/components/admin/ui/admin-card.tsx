@@ -6,15 +6,15 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 const cardVariants = cva(
-  "rounded-xl border bg-card transition-all duration-300",
+  "rounded-xl border transition-all duration-300",
   {
     variants: {
       variant: {
-        default: "",
-        gradient: "bg-gradient-to-br from-card to-muted/50",
-        glass: "bg-card/50 backdrop-blur-xl border-white/10",
-        outline: "bg-transparent hover:bg-muted/50",
-        flat: "border-0 bg-muted/30 hover:bg-muted/50",
+        default: "bg-card border-border shadow-lg shadow-black/5 dark:shadow-black/30",
+        gradient: "bg-gradient-to-br from-card to-muted",
+        glass: "bg-card backdrop-blur-xl border-border shadow-xl shadow-black/10 dark:shadow-black/40",
+        outline: "bg-transparent hover:bg-muted/50 border-border",
+        flat: "border-0 bg-muted/50 hover:bg-muted",
       },
       size: {
         sm: "p-4",
@@ -68,26 +68,36 @@ interface StatsCardProps {
     isPositive: boolean;
     label?: string;
   };
-  color?: "default" | "blue" | "green" | "yellow" | "red" | "purple";
+  color?: "default" | "violet" | "fuchsia" | "rose" | "amber" | "purple" | "blue" | "green" | "yellow" | "red";
   className?: string;
 }
 
 const colorClasses = {
   default: "text-primary",
-  blue: "text-blue-500",
-  green: "text-green-500",
-  yellow: "text-yellow-500",
-  red: "text-red-500",
+  violet: "text-violet-500",
+  fuchsia: "text-fuchsia-500",
+  rose: "text-rose-500",
+  amber: "text-amber-500",
   purple: "text-purple-500",
-};
+  blue: "text-blue-500",
+  green: "text-emerald-500",
+  yellow: "text-amber-500",
+  red: "text-red-500",
+} as const;
+
+type ColorKey = keyof typeof colorClasses;
 
 const iconBgClasses = {
   default: "bg-primary/10",
-  blue: "bg-blue-500/10",
-  green: "bg-green-500/10",
-  yellow: "bg-yellow-500/10",
-  red: "bg-red-500/10",
+  violet: "bg-violet-500/10",
+  fuchsia: "bg-fuchsia-500/10",
+  rose: "bg-rose-500/10",
+  amber: "bg-amber-500/10",
   purple: "bg-purple-500/10",
+  blue: "bg-blue-500/10",
+  green: "bg-emerald-500/10",
+  yellow: "bg-amber-500/10",
+  red: "bg-red-500/10",
 };
 
 export function AdminStatsCard({
@@ -111,11 +121,15 @@ export function AdminStatsCard({
       <div 
         className={cn(
           "absolute -right-8 -top-8 h-32 w-32 rounded-full blur-3xl opacity-20",
+          color === "violet" && "bg-violet-500",
+          color === "fuchsia" && "bg-fuchsia-500",
+          color === "rose" && "bg-rose-500",
+          color === "amber" && "bg-amber-500",
+          color === "purple" && "bg-purple-500",
           color === "blue" && "bg-blue-500",
           color === "green" && "bg-emerald-500",
           color === "yellow" && "bg-amber-500",
           color === "red" && "bg-red-500",
-          color === "purple" && "bg-purple-500",
           color === "default" && "bg-primary"
         )} 
       />
@@ -132,7 +146,7 @@ export function AdminStatsCard({
           </div>
           {Icon && (
             <div className={cn(
-              "flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-white/10 shadow-lg", 
+              "flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-border shadow-lg", 
               iconBgClasses[color]
             )}>
               <Icon className={cn("h-7 w-7", colorClasses[color])} />
@@ -182,7 +196,7 @@ interface ActionCardProps {
     label: string;
     onClick: () => void;
   };
-  color?: string;
+  color?: ColorKey;
   className?: string;
   children?: React.ReactNode;
 }
@@ -192,7 +206,7 @@ function AdminActionCard({
   description,
   icon: Icon,
   action,
-  color = "primary",
+  color = "default",
   className,
   children,
 }: ActionCardProps) {
@@ -204,11 +218,10 @@ function AdminActionCard({
             <div
               className={cn(
                 "flex h-10 w-10 items-center justify-center rounded-xl",
-                `bg-${color}/10`
+                colorClasses[color] ? `${colorClasses[color].replace("text-", "bg-")}/10` : "bg-primary/10"
               )}
-              style={{ backgroundColor: `oklch(var(--${color}) / 0.1)` }}
             >
-              <Icon className={cn("h-5 w-5", `text-${color}`)} style={{ color: `oklch(var(--${color}))` }} />
+              <Icon className={cn("h-5 w-5", colorClasses[color] || "text-primary")} />
             </div>
           )}
           <div>
@@ -265,5 +278,3 @@ export function AdminGridCard({
     </AdminCard>
   );
 }
-
-;

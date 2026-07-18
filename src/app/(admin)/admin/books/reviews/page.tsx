@@ -15,6 +15,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Star, BookOpen, User, Search, Trash2, RefreshCw } from 'lucide-react';
 import { LoadingSkeleton } from '@/components/admin/ui/loading-skeleton';
+import Image from 'next/image';
 
 interface Review {
     id: string;
@@ -132,7 +133,7 @@ export default function AdminBookReviewsPage() {
                 return (
                     <div className="flex items-center gap-3">
                         {review.userAvatar ? (
-                            <img src={review.userAvatar} alt={review.userName} className="h-8 w-8 rounded-full" />
+                            <Image src={review.userAvatar} alt={review.userName} width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
                         ) : (
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary font-bold">
                                 {review.userName?.charAt(0)}

@@ -47,9 +47,10 @@ class WebSocketErrorBoundary extends React.Component<
   }
 }
 
-// WebSocket is completely disabled - set as constant outside component
-// Change to true only when deploying to edge runtime (Cloudflare Workers)
-const WEBSOCKET_ENABLED = true;
+// WebSocket is disabled by default to preserve bfcache and reduce initial JS execution.
+// Enable only when deploying to edge runtime (Cloudflare Workers) or when real-time
+// features are explicitly required.
+const WEBSOCKET_ENABLED = false;
 
 export function WebSocketProvider({ children, userId }: {children: React.ReactNode;userId?: string;}) {
   const { user } = useAuth();
@@ -57,11 +58,33 @@ export function WebSocketProvider({ children, userId }: {children: React.ReactNo
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
+  // Track if page was restored from bfcache
+  const [isBfcacheRestored, setIsBfcacheRestored] = useState(false);
+
+  useEffect(() => {
+    // Handle bfcache restoration
+    const handleBfcacheRestore = () => {
+      setIsBfcacheRestored(true);
+      // Reset connection state on restore
+      setSocket(null);
+      setIsConnected(false);
+    };
+
+    window.addEventListener('pageshow', handleBfcacheRestore);
+    return () => window.removeEventListener('pageshow', handleBfcacheRestore);
+  }, []);
+
   useEffect(() => {
     // CRITICAL: WebSocket is disabled - exit immediately before any operations
     if (!WEBSOCKET_ENABLED || !currentUserId) {
       setSocket(null);
       setIsConnected(false);
+      return;
+    }
+
+    // Skip connection if page was just restored from bfcache
+    if (isBfcacheRestored) {
+      setIsBfcacheRestored(false);
       return;
     }
 
@@ -155,8 +178,7 @@ export function WebSocketProvider({ children, userId }: {children: React.ReactNo
       setSocket(null);
       setIsConnected(false);
     };
-  }, [currentUserId]); // Use currentUserId as dependency
-  // Fixed: use consistent dependency array
+  }, [currentUserId, isBfcacheRestored]); // Use currentUserId as dependency
 
   // Always provide safe default values
   const contextValue = {

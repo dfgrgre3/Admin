@@ -171,10 +171,18 @@ export default function AdminTeachersPage() {
       >
         <div className="flex items-center gap-3">
           <AdminButton
+            variant="outline"
+            icon={Users}
+            onClick={() => router.push("/admin/teachers/applications")}
+            className="rounded-2xl border-white/20 text-xs"
+          >
+            طلبات التدريس
+          </AdminButton>
+          <AdminButton
             variant="premium"
             icon={UserPlus}
             onClick={() => router.push("/admin/teachers/create")}
-            className="rounded-2xl shadow-xl"
+            className="rounded-2xl shadow-xl text-xs"
           >
             إضافة معلم
           </AdminButton>

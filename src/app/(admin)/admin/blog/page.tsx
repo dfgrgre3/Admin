@@ -39,8 +39,13 @@ import { adminFetch } from "@/lib/api/admin-api";
 import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
 import { apiRoutes } from "@/lib/api/routes";
 import { usePermission } from "@/components/auth/PermissionGuard";
-import { MarkdownEditor } from "@/components/admin/ui/markdown-editor";
+import dynamic from "next/dynamic";
 import { AdminUpload } from "@/components/admin/ui/admin-upload";
+
+const MarkdownEditor = dynamic(() => import("@/components/admin/ui/markdown-editor").then(mod => ({ default: mod.MarkdownEditor })), {
+  ssr: false,
+  loading: () => <div className="h-40 w-full animate-pulse rounded-xl bg-muted" />
+});
 import { logAdminAction } from "@/lib/admin-audit";
 import { exportToCSV, ExportColumn } from '@/lib/export-utils';
 import { PERMISSIONS } from "@/lib/permissions";

@@ -3,6 +3,10 @@ import type { User } from "@/types/user";
 import type { UserDetails } from "@/app/(admin)/admin/users/[id]/_components/types";
 import { UserRole, UserStatus } from "@/types/enums";
 
+// Payment status values as returned by the backend User model.
+// (Distinct from the Payments-style PaymentStatus in @/types/payment.)
+export type UserPaymentStatus = "PAID" | "OVERDUE" | "TRIAL" | "NONE" | null;
+
 export interface AdminUserListItem extends Pick<User,
   "id" | "email" | "permissions" |
   "emailVerified" | "createdAt" | "lastLogin" | "totalXP" | "level" | "currentStreak"
@@ -17,6 +21,8 @@ export interface AdminUserListItem extends Pick<User,
   gradeLevel?: string | null;
   activeSubscriptionId?: string | null;
   subscriptionExpiresAt?: string | null;
+  paymentStatus?: UserPaymentStatus;
+  trialEndsAt?: string | null;
   role: UserRole;
   status: UserStatus;
   _count: { tasks: number; studySessions: number; achievements: number };
@@ -47,15 +53,88 @@ export interface AdminUsersQuery {
   gradeLevel?: string;
   subscriptionStatus?: string;
   subscriptionExpiresTo?: string;
+  paymentStatus?: string;
   includeDeleted?: boolean;
 }
 
 type DataEnvelope<T> = { data: T };
 
+function isDataEnvelope<T>(value: unknown): value is DataEnvelope<T> {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    "data" in value
+  );
+}
+
+// Safely unwrap a { data } envelope. Tolerates null/undefined and plain
+// (already-unwrapped) payloads without throwing.
 function unwrapData<T>(value: T | DataEnvelope<T>): T {
-  return value && typeof value === "object" && "data" in value
-    ? (value as DataEnvelope<T>).data
-    : value as T;
+  if (isDataEnvelope<T>(value)) {
+    return value.data;
+  }
+  return value as T;
+}
+
+// ── Profile-scoped sub-resource response types ──
+
+export interface UserActivityFeedItem {
+  id: string;
+  type: "security" | "study" | "enrollment" | "exam";
+  title: string;
+  detail?: string;
+  ip?: string;
+  status?: string;
+  timestamp: string;
+}
+
+export interface UserActivityResponse {
+  userId: string;
+  total: number;
+  feed: UserActivityFeedItem[];
+}
+
+export interface EnrollResponse {
+  success: boolean;
+  alreadyEnrolled?: boolean;
+  courseId?: string;
+  courseName?: string;
+  message?: string;
+}
+
+export interface LoginAttempt {
+  id: string;
+  eventType: string;
+  success: boolean;
+  ip: string;
+  userAgent: string;
+  location?: string;
+  createdAt: string;
+}
+
+export interface LoginAttemptsResponse {
+  userId: string;
+  total: number;
+  failedCount: number;
+  attempts: LoginAttempt[];
+}
+
+export interface VideoEngagement {
+  lessonId: string;
+  timeSpentSeconds: number;
+  timeSpentMinutes: number;
+  completed: boolean;
+  status: string;
+  lastWatchedPosition: number;
+}
+
+export interface VideoEngagementResponse {
+  userId: string;
+  totalVideos: number;
+  totalWatchSeconds: number;
+  totalWatchMinutes: number;
+  videos: VideoEngagement[];
 }
 
 export const adminUsersApi = {
@@ -78,15 +157,15 @@ export const adminUsersApi = {
   },
 
   update(userId: string, changes: Partial<UserDetails>): Promise<UserDetails> {
-    return adminApi.patch<UserDetails>(`users/${userId}`, changes);
+    return adminApi.patch<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}`, changes).then(unwrapData);
   },
 
   updateStatus(userId: string, status: UserStatus, details?: { reason?: string; expiresAt?: string | null }): Promise<UserDetails> {
-    return adminApi.patch<UserDetails>(`users/${userId}`, {
+    return adminApi.patch<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}`, {
       status,
       statusReason: details?.reason,
       statusExpiresAt: details?.expiresAt,
-    });
+    }).then(unwrapData);
   },
 
   remove(userId: string): Promise<void> {
@@ -98,7 +177,7 @@ export const adminUsersApi = {
   },
 
   updateMany(userIds: string[], changes: Partial<Pick<UserDetails, "role" | "status">>) {
-    return Promise.allSettled(userIds.map((userId) => adminApi.patch<UserDetails>(`users/${userId}`, changes)));
+    return Promise.allSettled(userIds.map((userId) => adminApi.patch<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}`, changes).then(unwrapData)));
   },
 
   // Bulk create users from CSV import
@@ -113,8 +192,53 @@ export const adminUsersApi = {
     return unwrapData(response);
   },
 
-  // Reset all permissions to default
+  // Reset all permissions to default.
+  // NOTE: the backend does not currently expose this endpoint; the call is
+  // kept for API parity but will 404 until the route is added server-side.
   async resetAllPermissions(): Promise<void> {
     await adminApi.post<void>("users/reset-all-permissions", {});
   },
+
+  // ── Profile-scoped sub-resources (Single View of the Customer) ──
+
+  // GET /api/admin/users/{id}/activity
+  async getActivity(userId: string, options?: { limit?: number }): Promise<UserActivityResponse> {
+    const result = await adminApi.get<UserActivityResponse | DataEnvelope<UserActivityResponse>>("users/" + userId + "/activity", options);
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/{id}/enrollments
+  async enroll(userId: string, courseId: string, isFree = false): Promise<EnrollResponse> {
+    const result = await adminApi.post<EnrollResponse | DataEnvelope<EnrollResponse>>("users/" + userId + "/enrollments", { courseId, isFree });
+    return unwrapData(result);
+  },
+
+  // GET /api/admin/users/{id}/login-attempts
+  async getLoginAttempts(userId: string, options?: { limit?: number }): Promise<LoginAttemptsResponse> {
+    const result = await adminApi.get<LoginAttemptsResponse | DataEnvelope<LoginAttemptsResponse>>("users/" + userId + "/login-attempts", options);
+    return unwrapData(result);
+  },
+
+  // GET /api/admin/users/{id}/video-engagement
+  async getVideoEngagement(userId: string, options?: { limit?: number }): Promise<VideoEngagementResponse> {
+    const result = await adminApi.get<VideoEngagementResponse | DataEnvelope<VideoEngagementResponse>>("users/" + userId + "/video-engagement", options);
+    return unwrapData(result);
+  },
+
+  // GET /api/admin/users/{id}/enrollments
+  async getEnrollments(userId: string): Promise<{ total: number; avgProgress: number; enrollments: UserEnrollment[] }> {
+    const result = await adminApi.get<{ total: number; avgProgress: number; enrollments: UserEnrollment[] } | DataEnvelope<{ total: number; avgProgress: number; enrollments: UserEnrollment[] }>>("users/" + userId + "/enrollments");
+    return unwrapData(result);
+  },
 };
+
+export interface UserEnrollment {
+  id: string;
+  courseId: string;
+  courseName: string;
+  courseSlug: string;
+  price: number;
+  progress: number;
+  status: string;
+  enrolledAt: string;
+}

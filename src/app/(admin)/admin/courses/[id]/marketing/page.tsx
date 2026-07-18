@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import NextImage from "next/image";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -50,6 +51,18 @@ interface CourseMarketingData {
   discountEndDate?: string;
   metaKeywords?: string[];
   canonicalUrl?: string;
+  whyThisCourse?: string;
+  problemSolved?: string;
+  whatMakesDifferent?: string;
+  whyNow?: string;
+  marketingSubtitle?: string;
+  communityLinks?: {
+    forum?: string;
+    discord?: string;
+    telegram?: string;
+    announcements?: string;
+    events?: string;
+  };
   course: {
     id: string;
     name: string;
@@ -89,6 +102,16 @@ export default function CourseMarketingPage() {
 
   const updateField = (field: keyof CourseMarketingData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateCommunityLink = (platform: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      communityLinks: {
+        ...prev.communityLinks,
+        [platform]: value,
+      },
+    }));
   };
 
   const handleSave = async () => {
@@ -261,11 +284,13 @@ export default function CourseMarketingPage() {
                   />
                 </div>
                 {formData.ogImageUrl && (
-                  <div className="mt-2 rounded-xl border border-border/40 overflow-hidden">
-                    <img
+                  <div className="relative mt-2 h-32 w-full rounded-xl border border-border/40 overflow-hidden">
+                    <NextImage
                       src={formData.ogImageUrl}
                       alt="OG Preview"
-                      className="w-full h-32 object-cover"
+                      fill
+                      sizes="100vw"
+                      className="object-cover"
                     />
                   </div>
                 )}
@@ -320,6 +345,149 @@ export default function CourseMarketingPage() {
                   </div>
                 </>
               )}
+            </div>
+          </AdminCard>
+
+          <AdminCard className="p-6 border-border/40">
+            <div className="flex items-center gap-2 mb-5">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <h3 className="text-base font-black">العناوين التسويقية والتفاصيل</h3>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase">
+                  العنوان الفرعي التسويقي (Marketing Subtitle)
+                </Label>
+                <Input
+                  value={formData.marketingSubtitle || ""}
+                  onChange={(e) => updateField("marketingSubtitle", e.target.value)}
+                  placeholder="عنوان تشويقي يظهر أسفل العنوان الرئيسي للدورة"
+                  className="h-12 rounded-xl text-sm font-bold"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase">
+                  لماذا هذه الدورة؟ (Why This Course)
+                </Label>
+                <Textarea
+                  value={formData.whyThisCourse || ""}
+                  onChange={(e) => updateField("whyThisCourse", e.target.value)}
+                  placeholder="وصف أهداف الدورة وأهميتها للطالب..."
+                  className="min-h-[80px] rounded-xl text-sm font-bold resize-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase">
+                  المشكلة التي يحلها الكورس (Problem Solved)
+                </Label>
+                <Textarea
+                  value={formData.problemSolved || ""}
+                  onChange={(e) => updateField("problemSolved", e.target.value)}
+                  placeholder="ما هي الصعوبات التي سيتغلب عليها الطالب بعد هذا الكورس؟..."
+                  className="min-h-[80px] rounded-xl text-sm font-bold resize-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase">
+                  ما الذي يجعله مختلفاً؟ (What Makes It Different)
+                </Label>
+                <Textarea
+                  value={formData.whatMakesDifferent || ""}
+                  onChange={(e) => updateField("whatMakesDifferent", e.target.value)}
+                  placeholder="الأساليب والوسائل الحصرية المتبعة في هذه الدورة..."
+                  className="min-h-[80px] rounded-xl text-sm font-bold resize-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase">
+                  لماذا البدء الآن؟ (Why Now)
+                </Label>
+                <Textarea
+                  value={formData.whyNow || ""}
+                  onChange={(e) => updateField("whyNow", e.target.value)}
+                  placeholder="أهمية البدء الفوري وجدوى تنظيم الوقت حالياً..."
+                  className="min-h-[80px] rounded-xl text-sm font-bold resize-none"
+                />
+              </div>
+            </div>
+          </AdminCard>
+
+          <AdminCard className="p-6 border-border/40">
+            <div className="flex items-center gap-2 mb-5">
+              <Link2 className="h-5 w-5 text-primary" />
+              <h3 className="text-base font-black">روابط مجتمعات الدورة</h3>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase">
+                  رابط مجتمع تليجرام (Telegram)
+                </Label>
+                <Input
+                  value={formData.communityLinks?.telegram || ""}
+                  onChange={(e) => updateCommunityLink("telegram", e.target.value)}
+                  placeholder="https://t.me/your_group"
+                  className="h-12 rounded-xl text-sm font-bold"
+                  dir="ltr"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase">
+                  رابط خادم ديسكورد (Discord)
+                </Label>
+                <Input
+                  value={formData.communityLinks?.discord || ""}
+                  onChange={(e) => updateCommunityLink("discord", e.target.value)}
+                  placeholder="https://discord.gg/your_server"
+                  className="h-12 rounded-xl text-sm font-bold"
+                  dir="ltr"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase">
+                  رابط منتدى المناقشات (Forum)
+                </Label>
+                <Input
+                  value={formData.communityLinks?.forum || ""}
+                  onChange={(e) => updateCommunityLink("forum", e.target.value)}
+                  placeholder="/forum/course-topic"
+                  className="h-12 rounded-xl text-sm font-bold"
+                  dir="ltr"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase">
+                  رابط الإعلانات (Announcements)
+                </Label>
+                <Input
+                  value={formData.communityLinks?.announcements || ""}
+                  onChange={(e) => updateCommunityLink("announcements", e.target.value)}
+                  placeholder="/announcements"
+                  className="h-12 rounded-xl text-sm font-bold"
+                  dir="ltr"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase">
+                  رابط الفعاليات (Events)
+                </Label>
+                <Input
+                  value={formData.communityLinks?.events || ""}
+                  onChange={(e) => updateCommunityLink("events", e.target.value)}
+                  placeholder="/events"
+                  className="h-12 rounded-xl text-sm font-bold"
+                  dir="ltr"
+                />
+              </div>
             </div>
           </AdminCard>
 
@@ -416,11 +584,13 @@ export default function CourseMarketingPage() {
 
             <div className="space-y-3">
               {course?.thumbnailUrl && (
-                <div className="rounded-xl border border-border/40 overflow-hidden">
-                  <img
+                <div className="relative h-32 w-full rounded-xl border border-border/40 overflow-hidden">
+                  <NextImage
                     src={course.thumbnailUrl}
-                    alt={course.nameAr}
-                    className="w-full h-32 object-cover"
+                    alt={course.nameAr ?? "course"}
+                    fill
+                    sizes="100vw"
+                    className="object-cover"
                   />
                 </div>
               )}

@@ -7,7 +7,28 @@ const nextConfig = {
   output: 'standalone',
   // Enable React strict mode for better performance
   reactStrictMode: true,
-  turbopack: {},
+  turbopack: {
+    // Mirrors the webpack `resolve.alias` block below. Turbopack ignores the
+    // `webpack` callback, so server-only / Node-only modules that are still
+    // (even if only dynamically) reachable from Client Components must be
+    // aliased here. ELK logging is registered server-side via
+    // `src/lib/logging/register-server-logging`, but `winston` remains
+    // dynamically imported by `unified-logger` (server-only at runtime) and
+    // must be stubbed for the browser bundle to avoid bundling Node-only code.
+    //
+    // IMPORTANT: the stub must be applied to the `browser` condition ONLY.
+    // A global alias to the empty stub previously also shadowed `winston` on
+    // the server (node runtime), breaking the instrumentation hook with
+    // "Cannot read properties of undefined (reading 'combine')" because
+    // `src/lib/logging/elk-logger` (loaded by `src/instrumentation.ts`)
+    // needs the real `winston.format` / `winston.createLogger`. With the
+    // `browser` condition the node runtime falls back to the real package.
+    resolveAlias: {
+      winston: {
+        browser: './src/lib/logging/empty.ts',
+      },
+    },
+  },
 
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? {
@@ -22,36 +43,23 @@ const nextConfig = {
   // Optimize CSS in production
   experimental: {
     optimizeCss: process.env.NODE_ENV === 'production',
+    // Reduce optimizePackageImports to only essential packages
+    // to prevent JavaScript heap out of memory during compilation
     optimizePackageImports: [
-      'react-hook-form',
+      'lucide-react',
+      'date-fns',
       '@radix-ui/react-dialog',
       '@radix-ui/react-dropdown-menu',
       '@radix-ui/react-tabs',
       '@radix-ui/react-select',
-      '@radix-ui/react-checkbox',
-      '@radix-ui/react-alert-dialog',
-      '@radix-ui/react-avatar',
-      '@radix-ui/react-navigation-menu',
-      '@radix-ui/react-progress',
-      '@radix-ui/react-radio-group',
-      '@radix-ui/react-separator',
-      '@radix-ui/react-switch',
-      '@radix-ui/react-tooltip',
       'recharts',
-      'date-fns',
-      'zod',
-      '@tanstack/react-table',
-      'sonner',
-      'clsx',
-      'tailwind-merge',
-      'uuid',
-      'lodash',
-      'axios',
-      'lucide-react',
-      'framer-motion',
     ],
     proxyClientMaxBodySize: '35mb',
     scrollRestoration: true,
+    // Reduce JavaScript execution time
+    webpackMemoryOptimizations: true,
+    // Enable modern JavaScript output (no transpilation of modern features)
+    esmExternals: true,
   },
 
   // Optimize images
@@ -76,6 +84,26 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.in',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.dicebear.com',
+        pathname: '/**',
       },
     ],
     formats: ['image/webp', 'image/avif'],
@@ -118,7 +146,13 @@ const nextConfig = {
   webpack: (config, { dev, isServer, nextRuntime }) => {
     // Prevent Node.js modules from being bundled for client or Edge
     if (!isServer || nextRuntime === 'edge') {
-      // Add aliases for node: scheme imports and server-side packages
+      // Add aliases for node: scheme imports and server-side packages.
+      // These remain necessary because `unified-logger` (used by Client Components via
+      // `@/lib/logger`) dynamically imports the server-only `elk-logger` module; even though
+      // that import is guarded by `isServer` at runtime, it is still statically included in the
+      // client async chunk, so winston / @elastic/elasticsearch must be stubbed for the client.
+      // Server-only modules are additionally guarded with `import 'server-only'` to fail fast
+      // if they are ever imported into a Client Component graph.
       config.resolve.alias = {
         ...config.resolve.alias,
         'node:assert': false,
@@ -135,6 +169,13 @@ const nextConfig = {
         'node:buffer': false,
         'winston': false,
         '@elastic/elasticsearch': false,
+        // Replace the server-only ELK logger with a no-op stub on the client so its
+        // `import 'server-only'` (and winston / @elastic/elasticsearch) never reaches the
+        // browser bundle. ELK is never used on the client (enableELK is forced off via isServer).
+        [require('path').resolve(__dirname, 'src/lib/logging/elk-logger')]:
+          require('path').resolve(__dirname, 'src/lib/logging/elk-logger.client.ts'),
+        [require('path').resolve(__dirname, 'src/lib/logging/elk-logger.ts')]:
+          require('path').resolve(__dirname, 'src/lib/logging/elk-logger.client.ts'),
       };
     } else {
       // Server-side alias
@@ -160,6 +201,41 @@ const nextConfig = {
 
     if (!dev) {
       config.optimization.minimize = true;
+      // Advanced optimizations for production
+      config.optimization = {
+        ...config.optimization,
+        // Split chunks more aggressively
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            // Separate vendor chunks for better caching
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              priority: 10,
+              reuseExistingChunk: true,
+            },
+            // Separate heavy libraries
+            heavy: {
+              test: /[\\/]node_modules[\\/](recharts|framer-motion|chart\.js)[\\/]/,
+              name: 'heavy-libs',
+              priority: 20,
+              reuseExistingChunk: true,
+            },
+            // Separate UI components
+            ui: {
+              test: /[\\/]node_modules[\\/]@radix-ui[\\/]/,
+              name: 'ui-libs',
+              priority: 15,
+              reuseExistingChunk: true,
+            },
+          },
+        },
+        // Tree shaking
+        usedExports: true,
+        // Side effects optimization
+        sideEffects: false,
+      };
     }
 
     return config;
@@ -171,6 +247,24 @@ const nextConfig = {
     if (process.env.NODE_ENV !== 'production') {
       return [];
     }
+
+    const allowUnsafeCsp =
+      process.env.ALLOW_UNSAFE_CSP === 'true' ||
+      process.env.NEXT_PUBLIC_ALLOW_UNSAFE_CSP === 'true';
+
+    const scriptSrc = [
+      "'self'",
+      ...(allowUnsafeCsp ? ["'unsafe-eval'", "'unsafe-inline'"] : []),
+      'https://www.youtube.com',
+      'https://www.youtube-nocookie.com',
+      'https://s.ytimg.com',
+    ].join(' ');
+
+    const styleSrc = [
+      "'self'",
+      ...(allowUnsafeCsp ? ["'unsafe-inline'"] : []),
+      'https://fonts.googleapis.com',
+    ].join(' ');
 
     return [
       {
@@ -244,12 +338,12 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-               "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.youtube.com https://www.youtube-nocookie.com https://s.ytimg.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-               "img-src 'self' https: data: blob:",
+              `script-src ${scriptSrc}`,
+              `style-src ${styleSrc}`,
+              "img-src 'self' https: data: blob:",
               "font-src 'self' https://fonts.gstatic.com data:",
-               "connect-src 'self' https://*.tolo.app https://*.vercel.app wss: ws: http://127.0.0.1:*",
-               "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
+              "connect-src 'self' https://*.tolo.app https://*.vercel.app wss: ws: http://127.0.0.1:*",
+              "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
               "frame-ancestors 'none'",
               "media-src 'self' https: blob:",
               "object-src 'none'",

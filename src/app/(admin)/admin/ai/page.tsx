@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/admin/ui/page-header";
 import { AdminCard } from "@/components/admin/ui/admin-card";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import { SearchInput } from "@/components/admin/ui/admin-input";
-import { StatusBadge } from "@/components/admin/ui/admin-badge";
+import { StatusBadge, AdminBadge } from "@/components/admin/ui/admin-badge";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -39,6 +39,7 @@ import {
   Zap,
   MessageSquare,
   Send,
+  BrainCircuit,
 } from "lucide-react";
 import { toast } from "sonner";
 // @tanstack/react-query hooks are used inside the unified AI hooks
@@ -53,6 +54,11 @@ import {
   useAIReviewContent,
   useAIExecuteAction,
   useAICopilot,
+  useAIAdminAgent,
+  useAIAdminAgentExecute,
+  useAIDataAnalysis,
+  useAIDataAnalysisRefresh,
+  type AIDataAnalysisResult,
 } from "@/lib/ai/ai-hooks";
 import type {
   ReviewItem,
@@ -60,6 +66,8 @@ import type {
   GradingItem,
   ForecastItem,
   AiSummary,
+  AIKnowledgeSource,
+  AdminAgentCommandResponse,
 } from "@/lib/ai/types";
 
 // ────────────────────────────────────────────────────────────
@@ -385,7 +393,7 @@ function ReviewItemCard({
   onReject: (id: string) => void;
   isReviewing: boolean;
 }) {
-  const Icon = getContentTypeIcon(item.type);
+  const icon = getContentTypeIcon(item.type);
 
   return (
     <div
@@ -394,7 +402,10 @@ function ReviewItemCard({
     >
       <div className="space-y-2 flex-1 min-w-0 pr-2">
         <div className="flex items-center gap-2">
-          <Icon className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+          {React.createElement(icon, {
+            className: "w-4 h-4 text-muted-foreground",
+            "aria-hidden": true,
+          })}
           <h4 className="font-black truncate text-base">{item.title}</h4>
           <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-2 py-0.5 rounded-full bg-accent">
             {getTypeLabel(item.type)}
@@ -830,6 +841,75 @@ interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  sources?: AIKnowledgeSource[];
+  agent?: AdminAgentCommandResponse;
+}
+
+function AgentResultCard({
+  agent,
+  onExecute,
+  isExecuting,
+}: {
+  agent: AdminAgentCommandResponse;
+  onExecute: (commandId: string, confirmed: boolean) => void;
+  isExecuting: boolean;
+}) {
+  const severityClass: Record<string, string> = {
+    critical: "border-red-500/30 bg-red-500/10 text-red-400",
+    warning: "border-amber-500/30 bg-amber-500/10 text-amber-400",
+    info: "border-blue-500/30 bg-blue-500/10 text-blue-400",
+  };
+
+  return (
+    <div className="mt-4 space-y-4 rounded-2xl border border-violet-500/20 bg-background/50 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-black text-violet-400">خطة الوكيل: {agent.action}</p>
+          <p className="text-[11px] text-muted-foreground">{agent.commandId}</p>
+        </div>
+        <Badge variant="outline" className={agent.requiresConfirmation ? "border-amber-500/30 text-amber-400" : "border-emerald-500/30 text-emerald-400"}>
+          {agent.requiresConfirmation ? "يحتاج تأكيد" : "آمن"}
+        </Badge>
+      </div>
+
+      <div className="grid gap-2 md:grid-cols-3">
+        {agent.plan.map((step, index) => (
+          <div key={`${agent.commandId}-step-${index}`} className="rounded-xl border border-border/50 bg-muted/30 p-3">
+            <p className="text-xs font-black">{step.title}</p>
+            <p className="mt-1 text-[11px] leading-5 text-muted-foreground">{step.description}</p>
+          </div>
+        ))}
+      </div>
+
+      {agent.findings.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-black text-muted-foreground">نتائج المراجعة</p>
+          {agent.findings.map((finding, index) => (
+            <div key={`${agent.commandId}-finding-${index}`} className={cn("rounded-xl border p-3 text-xs", severityClass[finding.severity] || severityClass.info)}>
+              <p className="font-black">{finding.area}: {finding.message}</p>
+              <p className="mt-1 opacity-80">{finding.recommendation}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        <AdminButton
+          size="sm"
+          variant={agent.requiresConfirmation ? "premium" : "outline"}
+          onClick={() => onExecute(agent.commandId, agent.requiresConfirmation)}
+          loading={isExecuting}
+          disabled={agent.status === "completed" || isExecuting}
+          icon={Check}
+        >
+          {agent.requiresConfirmation ? "تأكيد وتنفيذ" : "تنفيذ آمن"}
+        </AdminButton>
+        <Badge variant="secondary" className="rounded-xl px-3 py-2 text-[11px]">
+          الحالة: {agent.status}
+        </Badge>
+      </div>
+    </div>
+  );
 }
 
 function AIChatTab() {
@@ -837,12 +917,28 @@ function AIChatTab() {
     {
       id: "welcome",
       role: "assistant",
-      content: "أهلاً بك في المساعد الذكي لإدارة المنصة! كيف يمكنني مساعدتك اليوم؟ يمكنك سؤالي عن تحليلات الطلاب، المناهج، أو طلب المساعدة في إنشاء محتوى جديد.",
+      content: "أهلاً بك في المساعد الذكي الشامل لإدارة المنصة! أنا متصل بكامل بيانات المشروع الحقيقية (المستخدمون، المواد، الامتحانات، المالية، الفعاليات، الدعم). يمكنك سؤالي عن أي شيء: عدد المستخدمين النشطين، نتائج الامتحانات، الإيرادات والاشتراكات، الفعاليات القادمة، تذاكر الدعم، أو طلب تحليل لأداء المنصة بالكامل.",
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = React.useState("");
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const agentMutation = useAIAdminAgent({
+    onError: (err) => {
+      toast.error("فشل تشغيل الوكيل الذكي: " + err.message);
+    },
+  });
+  const executeAgentMutation = useAIAdminAgentExecute({
+    onSuccess: (data) => {
+      toast.success(data.message);
+      setMessages((prev) => prev.map((msg) => (
+        msg.agent?.commandId === data.commandId
+          ? { ...msg, content: data.message, agent: data }
+          : msg
+      )));
+    },
+    onError: (err) => toast.error("فشل تنفيذ أمر الوكيل: " + err.message),
+  });
   const copilotMutation = useAICopilot({
     onError: (err) => {
       toast.error("فشل الاتصال بالمساعد الذكي: " + err.message);
@@ -855,7 +951,16 @@ function AIChatTab() {
 
   React.useEffect(() => {
     scrollToBottom();
-  }, [messages, copilotMutation.isPending]);
+  }, [messages, copilotMutation.isPending, agentMutation.isPending]);
+
+  const shouldUseAgent = (value: string) => {
+    const text = value.toLowerCase();
+    return ["راجع", "مراجعة", "نفذ", "اعمل", "تحكم", "لوحة", "agent", "review", "execute"].some((word) => text.includes(word));
+  };
+
+  const handleExecuteAgent = (commandId: string, confirmed: boolean) => {
+    executeAgentMutation.mutate({ commandId, confirmed });
+  };
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -872,6 +977,25 @@ function AIChatTab() {
     const currentInput = input;
     setInput("");
 
+    if (shouldUseAgent(currentInput)) {
+      agentMutation.mutate(
+        { command: currentInput },
+        {
+          onSuccess: (data) => {
+            const aiMsg: ChatMessage = {
+              id: `agent-${Date.now()}`,
+              role: "assistant",
+              content: data.message,
+              agent: data,
+              timestamp: new Date(),
+            };
+            setMessages((prev) => [...prev, aiMsg]);
+          },
+        }
+      );
+      return;
+    }
+
     copilotMutation.mutate(
       { prompt: currentInput },
       {
@@ -880,6 +1004,7 @@ function AIChatTab() {
             id: `ai-${Date.now()}`,
             role: "assistant",
             content: data.message,
+            sources: data.sources,
             timestamp: new Date(),
           };
           setMessages((prev) => [...prev, aiMsg]);
@@ -893,7 +1018,7 @@ function AIChatTab() {
       {
         id: "welcome",
         role: "assistant",
-        content: "أهلاً بك في المساعد الذكي لإدارة المنصة! كيف يمكنني مساعدتك اليوم؟ يمكنك سؤالي عن تحليلات الطلاب، المناهج، أو طلب المساعدة في إنشاء محتوى جديد.",
+        content: "أهلاً بك في المساعد الذكي الشامل لإدارة المنصة! أنا متصل بكامل بيانات المشروع الحقيقية (المستخدمون، المواد، الامتحانات، المالية، الفعاليات، الدعم). يمكنك سؤالي عن أي شيء: عدد المستخدمين النشطين، نتائج الامتحانات، الإيرادات والاشتراكات، الفعاليات القادمة، تذاكر الدعم، أو طلب تحليل لأداء المنصة بالكامل.",
         timestamp: new Date(),
       },
     ]);
@@ -936,18 +1061,41 @@ function AIChatTab() {
             )}
           >
             <p className="whitespace-pre-wrap">{msg.content}</p>
+            {msg.agent && (
+              <AgentResultCard
+                agent={msg.agent}
+                onExecute={handleExecuteAgent}
+                isExecuting={executeAgentMutation.isPending}
+              />
+            )}
+            {msg.role === "assistant" && msg.sources && msg.sources.length > 0 && (
+              <div className="mt-3 border-t border-border/50 pt-3 space-y-2">
+                <p className="text-[10px] font-black text-muted-foreground">المصادر المستخدمة</p>
+                <div className="flex flex-wrap gap-2">
+                  {msg.sources.slice(0, 6).map((source) => (
+                    <span
+                      key={`${source.type}-${source.id}`}
+                      className="rounded-full border border-border/60 bg-background/60 px-2.5 py-1 text-[10px] font-bold text-muted-foreground"
+                      title={source.snippet}
+                    >
+                      {source.title}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
             <span className="text-[9px] opacity-60 mt-1 self-start">
               {msg.timestamp.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
             </span>
           </div>
         ))}
-        {copilotMutation.isPending && (
+        {copilotMutation.isPending || agentMutation.isPending ? (
           <div className="bg-muted/60 text-foreground self-end rounded-2xl rounded-bl-none border border-border/50 p-4 max-w-[80%] flex items-center gap-1.5">
             <div className="h-2 w-2 bg-foreground/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
             <div className="h-2 w-2 bg-foreground/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
             <div className="h-2 w-2 bg-foreground/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
           </div>
-        )}
+        ) : null}
         <div ref={messagesEndRef} />
       </div>
 
@@ -957,19 +1105,248 @@ function AIChatTab() {
           value={input}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
           placeholder="اكتب استفسارك هنا..."
-          disabled={copilotMutation.isPending}
+          disabled={copilotMutation.isPending || agentMutation.isPending}
           className="h-12 rounded-xl text-sm font-bold bg-background/50 flex-1 text-right"
           dir="rtl"
         />
         <AdminButton
           type="submit"
-          disabled={!input.trim() || copilotMutation.isPending}
-          loading={copilotMutation.isPending}
-          className="h-12 w-12 rounded-xl p-0 flex items-center justify-center bg-violet-500 hover:bg-violet-600 text-white shadow-md shadow-violet-500/20 shrink-0"
+          disabled={!input.trim() || copilotMutation.isPending || agentMutation.isPending}
+          loading={copilotMutation.isPending || agentMutation.isPending}
+          className="h-12 w-12 rounded-xl p-0 flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 shrink-0"
           icon={Send}
         />
       </form>
     </AdminCard>
+  );
+}
+
+// ─── تبويب: تحليل البيانات الذكي الشامل ─────────────────────────
+function DataAnalysisTab() {
+  const analysis = useAIDataAnalysis();
+  const refresh = useAIDataAnalysisRefresh();
+  const [focus, setFocus] = React.useState("");
+
+  const riskColor: Record<string, string> = {
+    low: "bg-emerald-500/10 text-emerald-600",
+    medium: "bg-amber-500/10 text-amber-600",
+    high: "bg-orange-500/10 text-orange-600",
+    critical: "bg-red-500/10 text-red-600",
+  };
+  const riskLabel: Record<string, string> = {
+    low: "منخفض",
+    medium: "متوسط",
+    high: "مرتفع",
+    critical: "حرِج",
+  };
+
+  // يحوّل مستوى الخطورة/الشدة (low/medium/high/critical) إلى status مدعوم
+  // من AdminBadge (success/warning/error/info/neutral) لتجنب تعطّل StatusBadge
+  // الذي لا يعرف هذه القيم.
+  const toBadgeStatus = (level?: string): "success" | "warning" | "error" | "info" | "neutral" => {
+    switch (level) {
+      case "low":
+        return "success";
+      case "medium":
+        return "warning";
+      case "high":
+      case "critical":
+        return "error";
+      default:
+        return "neutral";
+    }
+  };
+
+  const handleRefresh = () => refresh.mutate({ focus: focus.trim() || undefined });
+
+  return (
+    <div className="space-y-6">
+      <AdminCard className="p-5">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h3 className="text-lg font-bold flex items-center gap-2">
+              <BrainCircuit className="w-5 h-5 text-fuchsia-500" aria-hidden="true" />
+              تحليل البيانات الذكي
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              يربط الذكاء الاصطناعي بكامل بيانات المنصة الحقيقية: المستخدمين، الكورسات، الامتحانات،
+              المالية، المجتمع والدعم. ينتج رؤى وتوصيات قابلة للتنفيذ.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 md:flex-row md:items-end">
+            <Input
+              placeholder="ركز على مجال محدد (اختياري)، مثال: الاحتفاظ بالطلاب"
+              value={focus}
+              onChange={(e) => setFocus(e.target.value)}
+              className="md:w-72"
+            />
+            <AdminButton
+              variant="default"
+              onClick={handleRefresh}
+              disabled={refresh.isPending}
+              className="shrink-0"
+            >
+              <RefreshCw className={`w-4 h-4 ml-2 ${refresh.isPending ? "animate-spin" : ""}`} aria-hidden="true" />
+              {refresh.isPending ? "جارٍ التحليل..." : "تحليل الآن"}
+            </AdminButton>
+          </div>
+        </div>
+        {analysis.data?.cached === true && !refresh.isPending ? (
+          <p className="text-xs text-muted-foreground mt-3">
+            نتيجة مخزّنة مؤقتاً (تُحدّث كل دقيقة). اضغط «تحليل الآن» للتحديث الفوري.
+          </p>
+        ) : null}
+      </AdminCard>
+
+      {analysis.isLoading ? (
+        <AdminCard className="p-10 text-center text-muted-foreground">
+          <RefreshCw className="w-6 h-6 mx-auto mb-3 animate-spin text-fuchsia-500" aria-hidden="true" />
+          جارٍ جمع بيانات المنصة وتحليلها...
+        </AdminCard>
+      ) : analysis.isError ? (
+        <AdminCard className="p-10 text-center text-red-600">
+          تعذّر تحليل بيانات المشروع. تأكد من تشغيل الخادم والاتصال بقاعدة البيانات.
+        </AdminCard>
+      ) : (
+        (() => {
+          const d = analysis.data as AIDataAnalysisResult | undefined;
+          if (!d) return null;
+          return (
+            <div className="space-y-6">
+              {d.riskLevel ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-semibold">مستوى المخاطرة:</span>
+                  <AdminBadge
+                    variant="outline"
+                    status={toBadgeStatus(d.riskLevel)}
+                    dot
+                    className={riskColor[d.riskLevel] || "bg-muted"}
+                  >
+                    {riskLabel[d.riskLevel] || d.riskLevel}
+                  </AdminBadge>
+                  {d.modelPowered === false ? (
+                    <span className="text-xs text-amber-600">
+                      (تحليل محلي من البيانات — النموذج الذكي غير متصل)
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {d.summary ? (
+                <AdminCard className="p-5 border-fuchsia-500/20 bg-fuchsia-500/5">
+                  <h4 className="font-bold mb-2 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-fuchsia-500" aria-hidden="true" />
+                    الملخص التنفيذي
+                  </h4>
+                  <p className="text-sm leading-relaxed whitespace-pre-line">{d.summary}</p>
+                </AdminCard>
+              ) : null}
+
+              {d.insights && d.insights.length > 0 ? (
+                <AdminCard className="p-5">
+                  <h4 className="font-bold mb-3">مؤشرات سريعة</h4>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {d.insights.map((ins, idx) => (
+                      <div key={idx} className="rounded-lg border border-border p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-semibold text-muted-foreground">{ins.label}</span>
+                          <AdminBadge
+                            variant="outline"
+                            status={toBadgeStatus(ins.severity)}
+                            dot
+                            className={riskColor[ins.severity] || "bg-muted"}
+                          >
+                            {ins.severity}
+                          </AdminBadge>
+                        </div>
+                        <p className="text-sm">{ins.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </AdminCard>
+              ) : null}
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                {d.strengths && d.strengths.length > 0 ? (
+                  <AdminCard className="p-5 border-emerald-500/20">
+                    <h4 className="font-bold mb-3 flex items-center gap-2 text-emerald-600">
+                      <TrendingDown className="w-4 h-4 rotate-180" aria-hidden="true" /> نقاط القوة
+                    </h4>
+                    <ul className="space-y-2 text-sm list-disc list-inside">
+                      {d.strengths.map((s, i) => <li key={i}>{s}</li>)}
+                    </ul>
+                  </AdminCard>
+                ) : null}
+
+                {d.weaknesses && d.weaknesses.length > 0 ? (
+                  <AdminCard className="p-5 border-orange-500/20">
+                    <h4 className="font-bold mb-3 flex items-center gap-2 text-orange-600">
+                      <AlertTriangle className="w-4 h-4" aria-hidden="true" /> نقاط الضعف والمخاطر
+                    </h4>
+                    <ul className="space-y-2 text-sm list-disc list-inside">
+                      {d.weaknesses.map((s, i) => <li key={i}>{s}</li>)}
+                    </ul>
+                  </AdminCard>
+                ) : null}
+
+                {d.opportunities && d.opportunities.length > 0 ? (
+                  <AdminCard className="p-5 border-blue-500/20">
+                    <h4 className="font-bold mb-3 flex items-center gap-2 text-blue-600">
+                      <Lightbulb className="w-4 h-4" aria-hidden="true" /> الفرص
+                    </h4>
+                    <ul className="space-y-2 text-sm list-disc list-inside">
+                      {d.opportunities.map((s, i) => <li key={i}>{s}</li>)}
+                    </ul>
+                  </AdminCard>
+                ) : null}
+
+                {d.recommendations && d.recommendations.length > 0 ? (
+                  <AdminCard className="p-5 border-fuchsia-500/20">
+                    <h4 className="font-bold mb-3 flex items-center gap-2 text-fuchsia-600">
+                      <Zap className="w-4 h-4" aria-hidden="true" /> التوصيات
+                    </h4>
+                    <ul className="space-y-2 text-sm list-disc list-inside">
+                      {d.recommendations.map((s, i) => <li key={i}>{s}</li>)}
+                    </ul>
+                  </AdminCard>
+                ) : null}
+              </div>
+
+              {d.weakSubjects && d.weakSubjects.length > 0 ? (
+                <AdminCard className="p-5">
+                  <h4 className="font-bold mb-3 flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                    المواد الأضعف أداءً
+                  </h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border text-muted-foreground">
+                          <th className="text-right p-2">المادة</th>
+                          <th className="text-right p-2">معدل الإكمال</th>
+                          <th className="text-right p-2">المسجلون</th>
+                          <th className="text-right p-2">التقييم</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {d.weakSubjects.map((s, i) => (
+                          <tr key={i} className="border-b border-border/50">
+                            <td className="p-2 font-medium">{s.title}</td>
+                            <td className="p-2">{s.completionRate?.toFixed(1)}%</td>
+                            <td className="p-2">{s.enrolledCount}</td>
+                            <td className="p-2">{s.rating?.toFixed(1) || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </AdminCard>
+              ) : null}
+            </div>
+          );
+        })()
+      )}
+    </div>
   );
 }
 
@@ -1160,10 +1537,12 @@ function AdminAIContent() {
   }
 
   // ── Loading State ──────────────────────────────────────
+  // نعرض الهيكل الكامل (الترويسة + التبويبات) فوراً بدلاً من شاشة تحميل كاملة،
+  // حتى تُرسم أكبر عناصر الصفحة (LCP) دون انتظار جلب البيانات. الأقسام
+  // المعتمدة على البيانات تستخدم قيماً فارغة آمنة حتى يصل الرد. هذا يقلّل
+  // "تأخير رسم العنصر" (Element render delay) الذي أبرزه تقرير الأداء.
 
-  if (isLoading) {
-    return <LoadingSkeleton />;
-  }
+  const loadedData = isLoading ? null : data;
 
   // ── Render ─────────────────────────────────────────────
 
@@ -1187,9 +1566,9 @@ function AdminAIContent() {
 
       {/* AI Briefing */}
       <AnimatePresence>
-        {data?.summary?.aiBriefing && (
+        {loadedData?.summary?.aiBriefing && (
           <AiBriefingCard
-            briefing={data.summary.aiBriefing}
+            briefing={loadedData.summary.aiBriefing}
             onNotifyInactive={handleNotifyInactive}
             onRefresh={() => refetch()}
             isNotifying={actionMutation.isPending}
@@ -1220,8 +1599,8 @@ function AdminAIContent() {
           >
             <Target className="w-4 h-4 ml-2" aria-hidden="true" />
             Auto-Grading
-            {data?.summary?.pendingGradingCount
-              ? ` (${data.summary.pendingGradingCount})`
+            {loadedData?.summary?.pendingGradingCount
+              ? ` (${loadedData.summary.pendingGradingCount})`
               : ""}
           </TabsTrigger>
           <TabsTrigger
@@ -1230,8 +1609,8 @@ function AdminAIContent() {
           >
             <AlertTriangle className="w-4 h-4 ml-2" aria-hidden="true" />
             Churn Radar
-            {data?.summary?.highRiskCount
-              ? ` (${data.summary.highRiskCount})`
+            {loadedData?.summary?.highRiskCount
+              ? ` (${loadedData.summary.highRiskCount})`
               : ""}
           </TabsTrigger>
           <TabsTrigger
@@ -1240,6 +1619,13 @@ function AdminAIContent() {
           >
             <BarChart3 className="w-4 h-4 ml-2" aria-hidden="true" />
             Predictions 🚀
+          </TabsTrigger>
+          <TabsTrigger
+            value="analysis"
+            className="w-full h-full text-base font-bold rounded-lg data-[state=active]:bg-fuchsia-500/10 data-[state=active]:text-fuchsia-500 whitespace-nowrap"
+          >
+            <BrainCircuit className="w-4 h-4 ml-2" aria-hidden="true" />
+            تحليل البيانات
           </TabsTrigger>
         </TabsList>
 
@@ -1273,7 +1659,7 @@ function AdminAIContent() {
           <ChurnRadarTab
             riskStudents={riskStudents}
             summary={
-              data?.summary || {
+              loadedData?.summary || {
                 highRiskCount: 0,
                 reviewPendingCount: 0,
                 pendingGradingCount: 0,
@@ -1286,9 +1672,13 @@ function AdminAIContent() {
 
         <TabsContent value="forecast" className="mt-0">
           <ForecastTab
-            forecast={data?.forecast || []}
+            forecast={loadedData?.forecast || []}
             onAssignPlan={handleAssignPlan}
           />
+        </TabsContent>
+
+        <TabsContent value="analysis" className="mt-0">
+          <DataAnalysisTab />
         </TabsContent>
       </Tabs>
     </div>

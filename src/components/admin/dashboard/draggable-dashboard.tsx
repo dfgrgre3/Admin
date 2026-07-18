@@ -45,7 +45,7 @@ const SortableItem = React.memo(function SortableItem({ id, children }: Sortable
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="group relative">
+    <div ref={setNodeRef} style={style} className="group relative" id={id}>
       <div 
         {...attributes} 
         {...listeners}

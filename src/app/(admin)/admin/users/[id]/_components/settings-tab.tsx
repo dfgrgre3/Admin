@@ -141,7 +141,12 @@ export function SettingsTab({
                   {errors.role.message}
                 </p>
               )}
-              <p className="text-xs text-muted-foreground mt-1">تغيير الدور سيؤثر على الصلاحيات التي يمتلكها المستخدم في المنصة.</p>
+              <div className="mt-1 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-2.5">
+                <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                <p className="text-xs text-amber-600 font-medium leading-relaxed">
+                  تحذير: تغيير الدور سيمنح المستخدم صلاحيات جديدة (أو يسحب صلاحيات حالية) فور الحفظ. تأكد قبل المتابعة.
+                </p>
+              </div>
             </div>
 
             <div className="space-y-2">

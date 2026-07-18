@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Search, Menu, LogOut, Moon, Sun, ChevronLeft, Settings, Shield, Users, Trophy, AlertCircle, CheckCircle, Info, X, CheckCheck } from "lucide-react";
+import { Bell, Search, Menu, LogOut, Moon, Sun, ChevronLeft, Settings, Shield, Users, Trophy, AlertCircle, CheckCircle, Info, X, CheckCheck, Bot } from "lucide-react";
 import { IconButton } from "@/components/admin/ui/admin-button";
 import { AdminBadge } from "@/components/admin/ui/admin-badge";
 import { SearchInput } from "@/components/admin/ui/admin-input";
@@ -20,7 +20,6 @@ import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
 import { useNotificationsContext } from "@/providers/notifications-provider";
-import { type Notification } from "@/types/notification";
 import { useAuth } from "@/contexts/auth-context";
 import { logger } from "@/lib/logger";
 import { adminFetch } from "@/lib/api/admin-api";
@@ -107,7 +106,7 @@ function fixDoubleEncoding(str: string | undefined | null): string {
       })
     );
     return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-  } catch (e) {
+  } catch {
     return str;
   }
 }
@@ -119,12 +118,23 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
     notifications,
     unreadCount,
     markAsRead: globalMarkAsRead,
-    isLoading
   } = useNotificationsContext();
 
   const { user, logout } = useAuth();
   const [notificationsOpen, setNotificationsOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+
+  // Pre-process notification strings (fix double-encoding) once per notifications change
+  // instead of calling fixDoubleEncoding on every render for every notification.
+  const processedNotifications = React.useMemo(
+    () =>
+      notifications.map((n) => ({
+        ...n,
+        title: fixDoubleEncoding(n.title),
+        message: fixDoubleEncoding(n.message),
+      })),
+    [notifications]
+  );
 
   const handleLogout = async () => {
     try {
@@ -260,6 +270,15 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         />
 
+        <Link
+          href="/admin/ai"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary transition-colors hover:bg-primary/15"
+          aria-label="AI Hub"
+          title="AI Hub"
+        >
+          <Bot className="h-4.5 w-4.5" />
+        </Link>
+
         {/* Notifications */}
         <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
           <DropdownMenuTrigger asChild>
@@ -299,16 +318,25 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
                   <p className="text-sm">لا توجد إشعارات</p>
                 </div>
               ) : (
-                notifications.map((notification) => {
+                processedNotifications.map((notification) => {
                     const isRead = notification.isRead;
                     const Icon = notificationIcons[notification.type] || Bell;
                     const colorClass = notificationColors[notification.type] || "text-gray-500 bg-gray-500/10";
                     return (
                       <div
                         key={notification.id}
-                        className={`flex items-start gap-3 p-4 border-b last:border-0 hover:bg-muted/50 transition-colors cursor-pointer ${!isRead ? "bg-primary/5" : ""}`}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`إشعار: ${notification.title}${!isRead ? "، غير مقروء" : ""}`}
+                        className={`flex items-start gap-3 p-4 border-b last:border-0 hover:bg-muted/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${!isRead ? "bg-primary/5" : ""}`}
                         onClick={() => {
                           markAsRead(notification.id);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            markAsRead(notification.id);
+                          }
                         }}
                       >
                         <div className={`flex-shrink-0 p-2 rounded-lg ${colorClass}`}>
@@ -317,14 +345,14 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className={`font-medium text-sm ${!isRead ? "" : "text-muted-foreground"}`}>
-                              {fixDoubleEncoding(notification.title)}
+                              {notification.title}
                             </span>
                             {!isRead && (
                               <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                            {fixDoubleEncoding(notification.message)}
+                            {notification.message}
                           </p>
                           <p className="text-[10px] text-muted-foreground/60 mt-1">
                             {formatNotificationTime(new Date(notification.createdAt))}
@@ -335,9 +363,10 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
                           e.stopPropagation();
                           clearNotification(notification.id);
                         }}
-                        className="flex-shrink-0 p-1 rounded hover:bg-muted transition-colors"
+                        aria-label={`حذف الإشعار: ${notification.title}`}
+                        className="flex-shrink-0 p-1.5 rounded hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                       >
-                        <X className="h-3.5 w-3.5 text-muted-foreground" />
+                        <X className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                       </button>
                     </div>
                   );

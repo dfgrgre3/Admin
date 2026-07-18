@@ -1,10 +1,141 @@
 @import "tailwindcss";
-@config "../../tailwind.config.js";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens migrated from the legacy tailwind.config.js to Tailwind CSS v4.
+   NOTE: `@theme` makes the generated utilities reference the CSS
+   variables (e.g. `hsl(var(--card))`) while supporting the
+   opacity modifier. */
+@theme {
+  --font-sans: var(--font-alexandria), var(--font-sans), system-ui, sans-serif;
+  --font-alexandria: var(--font-alexandria), sans-serif;
+  --font-jakarta: var(--font-sans), sans-serif;
+
+  /* Brand-aligned decorative palette — overrides the default Tailwind scales
+     so scattered violet/indigo/purple/cyan/sky usages stay on-theme (orange + deep violet). */
+  --color-violet-50: hsl(265 100% 97%);
+  --color-violet-100: hsl(265 100% 93%);
+  --color-violet-200: hsl(265 95% 86%);
+  --color-violet-300: hsl(265 90% 78%);
+  --color-violet-400: hsl(265 85% 68%);
+  --color-violet-500: hsl(262 83% 58%);
+  --color-violet-600: hsl(262 70% 50%);
+  --color-violet-700: hsl(262 65% 42%);
+  --color-violet-800: hsl(262 60% 34%);
+  --color-violet-900: hsl(262 55% 26%);
+
+  --color-indigo-50: hsl(255 100% 97%);
+  --color-indigo-100: hsl(255 95% 93%);
+  --color-indigo-200: hsl(255 90% 85%);
+  --color-indigo-300: hsl(255 85% 75%);
+  --color-indigo-400: hsl(255 80% 66%);
+  --color-indigo-500: hsl(252 75% 58%);
+  --color-indigo-600: hsl(252 68% 50%);
+  --color-indigo-700: hsl(252 62% 42%);
+  --color-indigo-800: hsl(252 58% 34%);
+  --color-indigo-900: hsl(252 54% 26%);
+
+  --color-purple-50: hsl(280 100% 97%);
+  --color-purple-100: hsl(280 95% 93%);
+  --color-purple-200: hsl(280 90% 86%);
+  --color-purple-300: hsl(280 85% 77%);
+  --color-purple-400: hsl(280 80% 67%);
+  --color-purple-500: hsl(278 75% 58%);
+  --color-purple-600: hsl(278 68% 50%);
+  --color-purple-700: hsl(278 62% 42%);
+  --color-purple-800: hsl(278 58% 34%);
+  --color-purple-900: hsl(278 54% 26%);
+
+  --color-fuchsia-50: hsl(300 100% 97%);
+  --color-fuchsia-500: hsl(298 70% 58%);
+  --color-fuchsia-600: hsl(298 64% 50%);
+
+  --color-sky-50: hsl(205 100% 97%);
+  --color-sky-400: hsl(205 90% 60%);
+  --color-sky-500: hsl(205 88% 52%);
+  --color-sky-600: hsl(205 82% 44%);
+
+  --color-cyan-50: hsl(190 100% 97%);
+  --color-cyan-400: hsl(190 90% 50%);
+  --color-cyan-500: hsl(190 88% 44%);
+  --color-cyan-600: hsl(190 82% 38%);
+
+  --color-pink-50: hsl(330 100% 97%);
+  --color-pink-400: hsl(330 85% 65%);
+  --color-pink-500: hsl(330 80% 58%);
+  --color-pink-600: hsl(330 72% 50%);
+
+  --color-rose-50: hsl(350 100% 97%);
+  --color-rose-400: hsl(350 88% 64%);
+  --color-rose-500: hsl(350 82% 58%);
+  --color-rose-600: hsl(350 75% 50%);
+
+  --color-teal-50: hsl(172 100% 97%);
+  --color-teal-400: hsl(172 80% 45%);
+  --color-teal-500: hsl(172 75% 40%);
+  --color-teal-600: hsl(172 70% 34%);
+
+  --color-lime-50: hsl(82 100% 96%);
+  --color-lime-400: hsl(82 80% 50%);
+  --color-lime-500: hsl(82 75% 44%);
+  --color-lime-600: hsl(82 70% 38%);
+
+  --color-slate-50: hsl(220 30% 97%);
+  --color-slate-100: hsl(220 25% 93%);
+  --color-slate-200: hsl(220 22% 86%);
+  --color-slate-300: hsl(220 20% 76%);
+  --color-slate-400: hsl(220 18% 60%);
+  --color-slate-500: hsl(220 16% 48%);
+  --color-slate-600: hsl(220 16% 40%);
+  --color-slate-700: hsl(220 18% 32%);
+  --color-slate-800: hsl(220 20% 24%);
+  --color-slate-900: hsl(220 24% 16%);
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
 
 @layer base {
   :root {
     /* Studio Light - Clean, High Contrast, Minimalist */
-    --background: 210 20% 98.4%;
+    --background: 30 25% 97%;
     --foreground: 224 71.4% 4.1%;
 
     --card: 0 0% 100%;
@@ -16,11 +147,11 @@
     --primary: 26 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 234 66% 96%;
-    --secondary-foreground: 234 66% 15%;
+    --secondary: 30 30% 94%;
+    --secondary-foreground: 224 71.4% 4.1%;
 
-    --muted: 234 10% 95%;
-    --muted-foreground: 234 10% 40%;
+    --muted: 30 20% 94%;
+    --muted-foreground: 224 20% 40%;
 
     --accent: 26 100% 50%;
     --accent-foreground: 0 0% 100%;
@@ -28,71 +159,88 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 234 20% 90%;
-    --input: 234 20% 90%;
+    --border: 30 20% 88%;
+    --input: 30 20% 88%;
     --ring: 26 100% 50%;
 
     --radius: 1rem;
 
-    /* Charts */
-    --chart-1: 262 83% 58%;
-    --chart-2: 199 89% 48%;
-    --chart-3: 160 84% 39%;
-    --chart-4: 47 93% 58%;
-    --chart-5: 0 72% 51%;
+    /* Charts — tuned to the orange + deep-violet brand palette */
+    --chart-1: 26 100% 50%;
+    --chart-2: 262 83% 58%;
+    --chart-3: 199 89% 48%;
+    --chart-4: 38 95% 55%;
+    --chart-5: 280 70% 58%;
 
-    /* Sidebar */
-    --sidebar: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 262.1 83.3% 57.8%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar — matches the brand (warm light surface, orange primary accent) */
+    --sidebar: 30 30% 98%;
+    --sidebar-foreground: 224 71.4% 4.1%;
+    --sidebar-primary: 26 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 30 40% 94%;
+    --sidebar-accent-foreground: 224 71.4% 4.1%;
+    --sidebar-border: 30 20% 90%;
+    --sidebar-ring: 26 100% 50%;
+
+    --glass-bg: 0 0% 100%;
+    --glass-border: 30 20% 90%;
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
 
     color-scheme: light;
   }
 
   .dark {
-    /* Cosmic Dark - Deep, Immersive, Glassy */
-    --background: 234 66% 8%;
-    --foreground: 210 20% 98%;
+    /* Cosmic Dark V2 - True black + glassmorphism for maximum premium feel.
+       Note: CSS variables hold HSL channels WITHOUT alpha; the alpha is applied
+       via `<alpha-value>` in @theme inline (e.g. `bg-card`, `bg-card/50`). */
+    --background: 220 18% 8%;
+    --foreground: 210 40% 98%;
 
-    --card: 234 66% 10%;
-    --card-foreground: 210 20% 98%;
+    --card: 220 18% 12%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 234 66% 12%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 220 18% 11%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 26 100% 50%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 28 100% 55%;
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 234 40% 15%;
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 220 15% 18%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 234 40% 12%;
-    --muted-foreground: 234 10% 70%;
+    --muted: 220 15% 16%;
+    --muted-foreground: 215 20% 70%;
 
-    --accent: 26 100% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 28 100% 55%;
+    --accent-foreground: 0 0% 0%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 234 40% 20%;
-    --input: 234 40% 20%;
-    --ring: 26 100% 50%;
+    --border: 220 15% 22%;
+    --input: 220 15% 20%;
+    --ring: 28 100% 55%;
 
-    /* Sidebar Dark */
-    --sidebar: 240 5.9% 4%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 263.4 70% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 12%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 14%;
-    --sidebar-ring: 263.4 70% 60%;
+    /* Charts Dark - keep same hues for consistency */
+    --chart-1: 28 100% 58%;
+    --chart-2: 262 83% 68%;
+    --chart-3: 199 89% 60%;
+    --chart-4: 38 95% 62%;
+    --chart-5: 280 70% 68%;
+
+    /* Sidebar Dark - cohesive dark surface */
+    --sidebar: 220 18% 10%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 28 100% 58%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 220 15% 18%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 15% 22%;
+    --sidebar-ring: 28 100% 58%;
+
+    --glass-bg: 220 18% 12%;
+    --glass-border: 220 15% 22%;
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 
     color-scheme: dark;
   }
@@ -184,6 +332,16 @@
     -webkit-background-clip: unset !important;
     color: hsl(var(--primary)) !important;
   }
+
+  .efficiency-mode .glass-panel,
+  .efficiency-mode .dark .glass-panel,
+  .efficiency-mode [data-glass="true"] {
+    background: hsl(var(--card)) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-color: hsl(var(--border)) !important;
+    box-shadow: none !important;
+  }
 }
 
 /* Respect user motion preferences - DISABLE ALL ANIMATIONS */
@@ -243,29 +401,96 @@
   background-clip: padding-box;
 }
 
-/* Premium RPG & Utility Enhancements */
+/* ── Glass Panel System ─────────────────────────────────────────────────
+   A unified glass-morphism layer for cards, sidebars, and panels.
+   Uses CSS custom properties for easy theme overrides. */
+
+.glass-panel {
+  background: hsl(var(--glass-bg, var(--card)));
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid hsl(var(--glass-border, var(--border)));
+  box-shadow: var(--glass-shadow, 0 8px 32px rgba(0, 0, 0, 0.08));
+}
+
+.glass-panel-strong {
+  background: hsl(var(--card));
+  backdrop-filter: blur(32px) saturate(1.6);
+  -webkit-backdrop-filter: blur(32px) saturate(1.6);
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.glass-panel-subtle {
+  background: hsl(var(--card));
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border: 1px solid hsl(var(--border));
+}
+
+/* ── Dark: Default card glass effect ── */
+.dark .card,
+.dark [data-slot="card"],
+.dark [role="article"] {
+  background: hsl(var(--card));
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.dark .card:hover,
+.dark [data-slot="card"]:hover {
+  border-color: hsl(var(--primary) / 0.4);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px hsl(var(--primary) / 0.2);
+}
+
+/* ── Premium RPG & Utility Enhancements ── */
+
+
+/* Ambient background - dynamic mesh gradient for dark mode */
+.dark .ambient-bg {
+  background: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--primary) / 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 50% at 80% 20%, hsl(var(--chart-2) / 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 50% at 20% 40%, hsl(var(--chart-4) / 0.04) 0%, transparent 50%);
+  background-color: hsl(var(--background));
+}
+
 .mesh-gradient {
-  background-color: hsla(234, 66%, 8%, 1);
+  background-color: hsl(var(--background));
   background-image:
-    radial-gradient(closest-side at 0 0, hsla(26, 100%, 50%, 0.1) 0px, transparent 50%),
-    radial-gradient(closest-side at 50% 0, hsla(234, 100%, 40%, 0.15) 0px, transparent 50%),
-    radial-gradient(closest-side at 100% 0, hsla(26, 100%, 50%, 0.1) 0px, transparent 50%);
+    radial-gradient(closest-side at 0 0, hsla(28, 100%, 50%, 0.12) 0px, transparent 50%),
+    radial-gradient(closest-side at 50% 0, hsla(262, 83%, 45%, 0.18) 0px, transparent 50%),
+    radial-gradient(closest-side at 100% 0, hsla(28, 100%, 50%, 0.12) 0px, transparent 50%);
 }
 
 .dark .rpg-glass {
-  @apply relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-black/60 ring-1 ring-white/10;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  /* backdrop-blur removed for performance - added via JS only when needed */
+  @apply relative overflow-hidden rounded-[2.5rem];
+  background: hsl(var(--card));
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
 }
 
 .rpg-glass-light {
-  @apply relative overflow-hidden rounded-[2.5rem] border border-black/[0.03] bg-white/80 ring-1 ring-black/[0.05];
+  @apply relative overflow-hidden rounded-[2.5rem];
+  background: hsl(0 0% 100%);
+  backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  border: 1px solid hsl(0 0% 90%);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
 }
 
 .dark .rpg-glass-premium {
-  @apply relative overflow-hidden bg-black/60 ring-1 ring-white/10;
-  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
+  @apply relative overflow-hidden;
+  background: hsl(var(--card));
+  backdrop-filter: blur(32px) saturate(1.6);
+  -webkit-backdrop-filter: blur(32px) saturate(1.6);
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
 }
 
 .efficiency-mode .rpg-glass,
@@ -289,7 +514,12 @@
 }
 
 .custom-scrollbar-premium::-webkit-scrollbar-thumb {
-  @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
+  background: hsl(var(--muted-foreground) / 0.25);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar-premium::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.5);
 }
 
 .shadow-inner-premium {
@@ -297,7 +527,8 @@
 }
 
 .rpg-card {
-  @apply relative overflow-hidden rounded-2xl border border-border bg-card/40 p-6 transition-none;
+  @apply relative overflow-hidden rounded-2xl border border-border p-6 transition-none;
+  background: hsl(var(--card));
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
@@ -307,12 +538,17 @@
 }
 
 .dark .rpg-card {
-  @apply border-white/5 bg-white/[0.05];
+  background: hsl(var(--card));
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border: 1px solid hsl(var(--border));
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .dark .rpg-card:hover {
-  @apply bg-white/[0.05] border-primary/50;
+  border-color: hsl(var(--primary) / 0.4);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px hsl(var(--primary) / 0.2);
 }
 
 .rpg-glow-primary {
@@ -343,22 +579,24 @@
 
 .rpg-royal-border::after {
   content: '';
-  @apply absolute inset-0 border border-amber-500/10 pointer-events-none rounded-[inherit] scale-[1.02];
+  @apply absolute inset-0 border border-amber-500/10 rounded-[inherit] scale-[1.02];
 }
 
 /* Animations Removed */
 
 .glass-morphism {
-  @apply bg-white/20 border border-white/20;
+  background: hsl(0 0% 100%);
+  border: 1px solid hsl(0 0% 90%);
 }
 
 .dark .glass-morphism {
-  @apply bg-black/30 border border-white/5;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
 }
 
 .gradient-border {
   position: relative;
-  background: linear-gradient(var(--background), var(--background)) padding-box,
+  background: linear-gradient(hsl(var(--background)), hsl(var(--background))) padding-box,
     linear-gradient(to right, hsl(var(--primary)), transparent) border-box;
   border: 1px solid transparent;
 }
@@ -394,4 +632,239 @@
   left: auto;
   right: 50%;
   transform: translate(50%, -50%);
+}
+
+/* ── Visual Polish Layer ────────────────────────────────────────────────
+   Subtle brand-cohesive refinements applied on top of the design tokens.
+   Kept minimal & performant (no new heavy effects). */
+
+/* Softer, layered card shadow for a more premium, less flat feel */
+.card,
+[data-slot="card"] {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.dark .card,
+.dark [data-slot="card"] {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+/* Brand-tinted focus ring - warmer than the default high-contrast ring */
+*:focus-visible {
+  --tw-ring-color: hsl(var(--primary) / 0.55);
+  --tw-ring-offset-color: hsl(var(--background));
+}
+
+/* Smooth, brand-aligned selection colour */
+::selection {
+  background: hsl(var(--primary) / 0.18);
+  color: hsl(var(--foreground));
+}
+
+/* Subtle gradient divider that reads as "premium" without being noisy */
+.rpg-divider {
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    hsl(var(--primary) / 0.25),
+    transparent
+  );
+}
+
+/* Consistent hover lift for interactive cards */
+.rpg-card,
+[data-slot="card"] {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease;
+}
+
+/* Tabular numerals for stats/metrics alignment */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Warm-tinted scrollbar thumb for a more cohesive dark look */
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+  background-clip: padding-box;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.45);
+  background-clip: padding-box;
+}
+
+/* ── Light/Dark color compatibility overrides ────────────────────────
+   Many components use `border-white/*` and `bg-white/*` Tailwind utilities
+   (designed for dark mode). Without these overrides, they render as near-
+   invisible in light mode. We remap them to the theme tokens so the colors
+   stay on-brand and visible regardless of the active mode. */
+@layer utilities {
+  /* Light: white-* utilities map to solid border */
+  .border-white\/5,
+  .border-white\/10,
+  .border-white\/20,
+  .border-white\/\[0\.04\],
+  .border-white\/\[0\.06\],
+  .border-white\/\[0\.08\],
+  .border-white\/\[0\.12\],
+  .border-white\/\[0\.15\] {
+    border-color: hsl(var(--border));
+  }
+
+  .bg-white\/5,
+  .bg-white\/10,
+  .bg-white\/20,
+  .bg-white\/\[0\.04\],
+  .bg-white\/\[0\.06\],
+  .bg-white\/\[0\.08\],
+  .bg-white\/\[0\.12\],
+  .bg-white\/\[0\.15\] {
+    background-color: hsl(var(--muted));
+  }
+
+  /* Dark mode: keep a soft luminous tint for white-* utilities */
+  .dark .border-white\/5,
+  .dark .border-white\/10,
+  .dark .border-white\/20,
+  .dark .border-white\/\[0\.04\],
+  .dark .border-white\/\[0\.06\],
+  .dark .border-white\/\[0\.08\],
+  .dark .border-white\/\[0\.12\],
+  .dark .border-white\/\[0\.15\] {
+    border-color: hsl(var(--border));
+  }
+
+  .dark .bg-white\/5,
+  .dark .bg-white\/10,
+  .dark .bg-white\/20,
+  .dark .bg-white\/\[0\.04\],
+  .dark .bg-white\/\[0\.06\],
+  .dark .bg-white\/\[0\.08\],
+  .dark .bg-white\/\[0\.12\],
+  .dark .bg-white\/\[0\.15\] {
+    background-color: hsl(var(--muted));
+  }
+}
+
+/* ── Enhanced table styles for dark glass theme ── */
+.dark .table-header-fixed thead {
+  background: hsl(var(--card));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.dark tr {
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  transition: background 0.15s ease;
+}
+
+.dark tr:hover {
+  background: hsl(var(--muted) / 0.5);
+}
+
+.dark tr[data-state="selected"] {
+  background: hsl(var(--primary) / 0.12);
+}
+
+/* ── Dialog / Popover glass polish ── */
+.dark [role="dialog"] {
+  background: hsl(var(--popover));
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  color: hsl(var(--popover-foreground));
+}
+
+.dark [data-radix-popper-content-wrapper] {
+  background: transparent !important;
+}
+
+.dark [role="menu"],
+.dark [role="listbox"],
+.dark [data-radix-dropdown-menu-content] {
+  background: hsl(var(--popover)) !important;
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+  color: hsl(var(--popover-foreground));
+}
+
+/* ── Input / Select glass polish for dark ── */
+.dark input,
+.dark select,
+.dark textarea,
+.dark [role="combobox"] {
+  background: hsl(var(--card)) !important;
+  backdrop-filter: blur(8px) saturate(1.2);
+  -webkit-backdrop-filter: blur(8px) saturate(1.2);
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus,
+.dark [role="combobox"]:focus {
+  border-color: hsl(var(--primary) / 0.5);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15);
+}
+
+/* ── Button glass styling for dark ── */
+.dark button:not([disabled]):not(.no-glass):hover {
+  backdrop-filter: blur(8px) saturate(1.2);
+}
+
+/* ── Nav links / sidebar items ── */
+.dark .sidebar-link {
+  background: transparent;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.dark .sidebar-link:hover {
+  background: hsl(var(--sidebar-accent));
+}
+
+.dark .sidebar-link-active {
+  background: hsl(var(--primary) / 0.18) !important;
+  color: hsl(var(--primary));
+}
+
+/* ── Stats cards with enhanced glass ── */
+.dark .stats-card {
+  background: hsl(var(--card));
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border: 1px solid hsl(var(--border));
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+}
+
+.dark .stats-card:hover {
+  border-color: hsl(var(--primary) / 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Badge glass polish ── */
+.dark .badge {
+  backdrop-filter: blur(8px) saturate(1.2);
+  -webkit-backdrop-filter: blur(8px) saturate(1.2);
+}
+
+/* ── Skeleton glass polish ── */
+.dark .animate-pulse {
+  background: hsl(var(--muted));
+}
+
+/* ── Tabs glass polish ── */
+.dark [role="tablist"] {
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+}
+
+.dark [role="tab"][data-state="active"] {
+  background: hsl(var(--primary) / 0.18);
+  color: hsl(var(--primary));
 }

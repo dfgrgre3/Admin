@@ -1,0 +1,12 @@
+src/app/(admin)/admin/ai/page.tsx(1184,15): error TS2322: Type '"primary"' is not assignable to type '"default" | "link" | "warning" | "success" | "outline" | "gradient" | "destructive" | "secondary" | "ghost" | "premium" | "neon" | null | undefined'.
+src/components/admin/ui/admin-card.tsx(219,17): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ default: string; violet: string; fuchsia: string; rose: string; amber: string; purple: string; blue: string; green: string; yellow: string; red: string; }'.
+  No index signature with a parameter of type 'string' was found on type '{ default: string; violet: string; fuchsia: string; rose: string; amber: string; purple: string; blue: string; green: string; yellow: string; red: string; }'.
+src/components/admin/ui/admin-card.tsx(219,42): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ default: string; violet: string; fuchsia: string; rose: string; amber: string; purple: string; blue: string; green: string; yellow: string; red: string; }'.
+  No index signature with a parameter of type 'string' was found on type '{ default: string; violet: string; fuchsia: string; rose: string; amber: string; purple: string; blue: string; green: string; yellow: string; red: string; }'.
+src/components/admin/ui/admin-card.tsx(222,46): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ default: string; violet: string; fuchsia: string; rose: string; amber: string; purple: string; blue: string; green: string; yellow: string; red: string; }'.
+  No index signature with a parameter of type 'string' was found on type '{ default: string; violet: string; fuchsia: string; rose: string; amber: string; purple: string; blue: string; green: string; yellow: string; red: string; }'.
+src/hooks/use-push-subscription.ts(99,11): error TS2322: Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'string | BufferSource | null | undefined'.
+  Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'ArrayBufferView<ArrayBuffer>'.
+    Types of property 'buffer' are incompatible.
+      Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+        Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength

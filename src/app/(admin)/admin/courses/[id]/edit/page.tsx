@@ -10,26 +10,25 @@ interface EditCoursePageProps {
 
 export const dynamic = "force-dynamic";
 
+function extractCourse(payload: any) {
+  return payload?.subject || payload?.course || payload?.data?.subject || payload?.data?.course || payload;
+}
+
 export default async function EditCoursePage({ params }: EditCoursePageProps) {
   const { id } = await params;
 
-  // Fetch data from Go Backend API
-  const [course, categories, teachers] = await Promise.all([
+  const [coursePayload, categories, teachers, allCourses] = await Promise.all([
     apiClient.get<any>(`/courses/${id}`).catch(() => null),
     apiClient.get<any[]>("/categories?type=COURSE").catch(() => []),
     apiClient.get<any[]>("/teachers").catch(() => []),
+    apiClient.get<any[]>("/subjects").catch(() => []),
   ]);
 
-  if (!course) {
+  const initialData = extractCourse(coursePayload);
+
+  if (!initialData?.id) {
     notFound();
   }
-
-  // Map Go Subject model to the format CourseEditor expects
-  const initialData = course?.subject ? {
-    ...course.subject,
-  } : {
-    ...course,
-  };
 
   return (
     <div className="container mx-auto max-w-7xl py-8 px-4 sm:px-6 lg:px-8">
@@ -38,6 +37,7 @@ export default async function EditCoursePage({ params }: EditCoursePageProps) {
         initialData={initialData}
         categories={categories}
         teachers={teachers}
+        allCourses={allCourses}
       />
     </div>
   );

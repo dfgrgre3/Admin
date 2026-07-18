@@ -8,7 +8,9 @@ export async function register() {
     // 1. Core Service Initialization
     const { ensureValidEnvironment } = await import('./lib/env-validation');
     const { logger } = await import('./lib/logger');
-    
+    const { registerServerLogging } = await import('./lib/logging/register-server-logging');
+    registerServerLogging();
+
     try {
       ensureValidEnvironment({ fatal: false });
 

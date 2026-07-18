@@ -6,6 +6,7 @@
 
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions, type UseMutationOptions } from '@tanstack/react-query';
 import { aiClient } from './ai-client';
+import { adminFetch } from '@/lib/api/admin-api';
 import type {
   AICopilotResponse,
   AIGenerateContentResponse,
@@ -13,6 +14,9 @@ import type {
   AiDashboardData,
   AdminAiPayload,
   AIContentType,
+  AdminAgentCommandContext,
+  AdminAgentCommandResponse,
+  AdminAgentExecuteResponse,
 } from './types';
 
 // ─── مفاتيح Cache موحدة ──────────────────────────────────
@@ -25,6 +29,7 @@ export const aiKeys = {
   tips: ['ai', 'tips'] as const,
   recommendations: ['ai', 'recommendations'] as const,
   chat: (conversationId?: string) => ['ai', 'chat', conversationId] as const,
+  agent: ['ai', 'agent'] as const,
 } as const;
 
 // ─── Hook: بيانات لوحة التحكم AI ─────────────────────────
@@ -132,6 +137,90 @@ export function useAIExecuteAction(options?: UseMutationOptions<AIResponse, Erro
   });
 }
 
+export function useAIAdminAgent(options?: UseMutationOptions<AdminAgentCommandResponse, Error, { command: string; context?: AdminAgentCommandContext }>) {
+  return useMutation<AdminAgentCommandResponse, Error, { command: string; context?: AdminAgentCommandContext }>({
+    mutationFn: ({ command, context }) => aiClient.runAgentCommand(command, context),
+    ...options,
+  });
+}
+
+export function useAIAdminAgentExecute(options?: UseMutationOptions<AdminAgentExecuteResponse, Error, { commandId: string; confirmed: boolean }>) {
+  const queryClient = useQueryClient();
+
+  return useMutation<AdminAgentExecuteResponse, Error, { commandId: string; confirmed: boolean }>({
+    mutationFn: ({ commandId, confirmed }) => aiClient.executeAgentCommand(commandId, confirmed),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: aiKeys.dashboard });
+      queryClient.invalidateQueries({ queryKey: aiKeys.simplified });
+    },
+    ...options,
+  });
+}
+
+// ─── Hook: التحليل الذكي الشامل لبيانات المشروع ──────────
+
+export interface AIDataAnalysisResult {
+  summary?: string;
+  strengths?: string[];
+  weaknesses?: string[];
+  opportunities?: string[];
+  recommendations?: string[];
+  riskLevel?: string;
+  insights?: Array<{ area: string; label: string; value: string; severity: string }>;
+  weakSubjects?: Array<{ id: string; title: string; completionRate: number; enrolledCount: number; rating: number }>;
+  focus?: string;
+  cached?: boolean;
+  modelPowered?: boolean;
+  snapshot?: Record<string, unknown>;
+}
+
+/**
+ * تحليل ذكي شامل لبيانات المشروع (تنبؤ التسرب، نقاط الضعف، التوصيات).
+ * يربط الذكاء الاصطناعي بكامل بيانات المنصة الحقيقية.
+ */
+export function useAIDataAnalysis(options?: UseQueryOptions<AIDataAnalysisResult>) {
+  return useQuery<AIDataAnalysisResult>({
+    queryKey: ['ai', 'data-analysis'],
+    queryFn: async () => {
+      const response = await adminFetch('/admin/ai/analyze');
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'فشل تحليل بيانات المشروع');
+      }
+      return (json.data || json) as AIDataAnalysisResult;
+    },
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+    ...options,
+  });
+}
+
+/**
+ * إعادة توليد التحليل الذكي (تجاوز الكاش)
+ */
+export function useAIDataAnalysisRefresh(options?: UseMutationOptions<AIDataAnalysisResult, Error, { focus?: string }>) {
+  const queryClient = useQueryClient();
+  return useMutation<AIDataAnalysisResult, Error, { focus?: string }>({
+    mutationFn: async ({ focus }) => {
+      const response = await adminFetch('/admin/ai/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ focus: focus || '', refresh: true }),
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'فشل توليد التحليل');
+      }
+      return (json.data || json) as AIDataAnalysisResult;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai', 'data-analysis'] });
+    },
+    ...options,
+  });
+}
+
 // ─── التصدير الموحد ──────────────────────────────────────
 
 export const aiHooks = {
@@ -141,4 +230,6 @@ export const aiHooks = {
   useGenerateContent: useAIGenerateContent,
   useReviewContent: useAIReviewContent,
   useExecuteAction: useAIExecuteAction,
+  useAdminAgent: useAIAdminAgent,
+  useAdminAgentExecute: useAIAdminAgentExecute,
 } as const;

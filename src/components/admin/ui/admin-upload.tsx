@@ -8,6 +8,7 @@ import { apiClient } from "@/lib/api/api-client";
 
 const CHUNK_UPLOAD_THRESHOLD_BYTES = 25 * 1024 * 1024;
 const CHUNK_SIZE_BYTES = 25 * 1024 * 1024;
+const SVG_FILE_PATTERN = /\.svg(?:z)?$/i;
 
 interface UploadMetadata {
   durationSeconds?: number;
@@ -176,11 +177,11 @@ export function AdminUpload({
       });
 
       const initResult = await initResponse.json();
-      if (!initResponse.ok || !initResult?.uploadId) {
+      if (!initResponse.ok || !initResult?.data?.uploadId) {
         throw new Error(initResult?.error || initResult?.details || "فشل بدء الرفع المجزأ");
       }
 
-      const uploadId = initResult.uploadId as string;
+      const uploadId = initResult.data.uploadId as string;
       const totalChunks = Math.ceil(file.size / CHUNK_SIZE_BYTES);
 
       for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex += 1) {
@@ -219,7 +220,7 @@ export function AdminUpload({
       }
 
       setProgress(100);
-      onUploadComplete(completeResult.fileUrl, buildMetadata(file, durationSeconds));
+      onUploadComplete(completeResult?.data?.fileUrl, buildMetadata(file, durationSeconds));
     },
     [buildMetadata, onUploadComplete],
   );
@@ -227,6 +228,12 @@ export function AdminUpload({
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    if (file.type === "image/svg+xml" || SVG_FILE_PATTERN.test(file.name)) {
+      toast.error("SVG uploads are disabled for security. Use PNG, JPG, or WebP instead.");
+      event.target.value = "";
+      return;
+    }
 
     if (file.size > maxSize * 1024 * 1024) {
       toast.error(`الملف كبير جداً. الحد الأقصى هو ${maxSize / 1024}GB.`);

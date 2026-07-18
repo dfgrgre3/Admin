@@ -35,8 +35,10 @@ import {
 import { format, isValid, formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import * as React from "react";
-import { ActivityChart } from "./activity-chart";
+import dynamic from "next/dynamic";
 import { AdminNotes } from "./admin-notes";
+
+const ActivityChart = dynamic(() => import("./activity-chart").then(mod => mod.ActivityChart), { ssr: false, loading: () => <div className="h-[200px] w-full animate-pulse bg-muted/30 rounded-3xl" /> });
 
 export function OverviewTab({ user }: { user: UserDetails }) {
   const [showAllAchievements, setShowAllAchievements] = React.useState(false);

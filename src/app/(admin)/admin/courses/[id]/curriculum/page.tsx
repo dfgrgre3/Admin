@@ -19,6 +19,8 @@ import {
   Video,
   X,
   Sparkles,
+  Image as ImageIcon,
+  Link as LinkIcon,
 } from "lucide-react";
 import {
   DndContext,
@@ -75,6 +77,22 @@ type LessonAttachment = {
 
 type LessonType = "VIDEO" | "ARTICLE" | "QUIZ" | "FILE" | "ASSIGNMENT";
 
+type InteractiveQuestion = {
+  id: string;
+  lessonId: string;
+  timePosition: number;
+  question: string;
+  options: string[];
+  correctOptionIndex: number;
+  explanation?: string | null;
+  mediaUrl?: string | null;
+  mediaType?: 'image' | 'video' | 'link' | null;
+  linkUrl?: string | null;
+  groupId?: string | null;
+  groupOrder?: number;
+  isActive: boolean;
+};
+
 type Lesson = {
   id: string;
   name: string;
@@ -82,10 +100,12 @@ type Lesson = {
   type: LessonType;
   videoUrl?: string | null;
   duration?: number;
+  durationMinutes?: number;
   isFree?: boolean;
   description?: string | null;
   attachments?: LessonAttachment[];
   examId?: string | null;
+  interactiveQuestions?: InteractiveQuestion[];
 };
 
 type Chapter = {
@@ -101,10 +121,65 @@ type CourseSummary = {
   nameAr?: string | null;
 };
 
+function normalizeLesson(lesson: any, index: number): Lesson {
+  const duration = Number(lesson.duration ?? lesson.durationMinutes) || 0;
+
+  return {
+    id: lesson.id,
+    name: lesson.name || lesson.title || "درس جديد",
+    order: Number(lesson.order ?? index),
+    type: (lesson.type || "VIDEO") as LessonType,
+    videoUrl: lesson.videoUrl || "",
+    duration,
+    durationMinutes: duration,
+    isFree: Boolean(lesson.isFree),
+    description: lesson.description || "",
+    attachments: lesson.attachments || [],
+    examId: lesson.examId || null,
+    interactiveQuestions: lesson.interactiveQuestions || [],
+  };
+}
+
+function normalizeChapter(chapter: any, index: number): Chapter {
+  return {
+    id: chapter.id,
+    name: chapter.name || chapter.title || `الفصل ${index + 1}`,
+    order: Number(chapter.order ?? index),
+    subTopics: (chapter.subTopics || chapter.lessons || []).map(normalizeLesson),
+  };
+}
+
+function serializeCurriculum(chapters: Chapter[]) {
+  return chapters.map((chapter, chapterIndex) => ({
+    id: chapter.id,
+    name: chapter.name,
+    title: chapter.name,
+    order: chapterIndex,
+    subTopics: chapter.subTopics.map((lesson, lessonIndex) => {
+      const durationMinutes = Number(lesson.duration ?? lesson.durationMinutes) || 0;
+
+      return {
+        id: lesson.id,
+        name: lesson.name,
+        title: lesson.name,
+        order: lessonIndex,
+        type: lesson.type,
+        videoUrl: lesson.videoUrl || "",
+        duration: durationMinutes,
+        durationMinutes,
+        isFree: Boolean(lesson.isFree),
+        description: lesson.description || "",
+        attachments: lesson.attachments || [],
+        examId: lesson.examId || null,
+      };
+    }),
+  }));
+}
+
 function calculateCurriculumStats(chapters: Chapter[]) {
   const lessonsCount = chapters.reduce((sum, chapter) => sum + chapter.subTopics.length, 0);
   const totalDurationMinutes = chapters.reduce(
-    (sum, chapter) => sum + chapter.subTopics.reduce((lessonSum, lesson) => lessonSum + (lesson.duration || 0), 0),
+    (sum, chapter) => sum + chapter.subTopics.reduce((lessonSum, lesson) => lessonSum + (lesson.duration || lesson.durationMinutes || 0), 0),
     0
   );
 
@@ -173,6 +248,7 @@ const addLessonToChapters = (chapters: Chapter[], chapterId: string): Chapter[] 
           type: "VIDEO",
           videoUrl: "",
           duration: 0,
+          durationMinutes: 0,
           isFree: false,
           description: "",
           attachments: [],
@@ -183,14 +259,508 @@ const addLessonToChapters = (chapters: Chapter[], chapterId: string): Chapter[] 
   });
 };
 
+function InteractiveQuestionCard({
+  question,
+  index,
+  onUpdate,
+  onDelete,
+}: {
+  question: InteractiveQuestion;
+  index: number;
+  onUpdate: (updates: Partial<InteractiveQuestion>) => void;
+  onDelete: () => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedQuestion, setEditedQuestion] = useState(question);
+
+  const handleSave = () => {
+    onUpdate(editedQuestion);
+    setIsEditing(false);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+      {isEditing ? (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-[10px] font-black uppercase">وقت الظهور (ثانية)</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  value={editedQuestion.timePosition}
+                  onChange={(e) => setEditedQuestion({ ...editedQuestion, timePosition: Number(e.target.value) })}
+                  className="h-10 rounded-lg text-sm flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-10 px-3 rounded-lg text-xs font-bold"
+                  onClick={() => {
+                    // Try to find video in multiple ways
+                    let video = document.querySelector('video') as HTMLVideoElement;
+                    if (!video) {
+                      // Try to find video in iframes or other containers
+                      const videos = document.getElementsByTagName('video');
+                      if (videos.length > 0) {
+                        video = videos[0] as HTMLVideoElement;
+                      }
+                    }
+
+                    // Debug logging
+                    console.log('Video detection:', {
+                      found: !!video,
+                      readyState: video?.readyState,
+                      currentTime: video?.currentTime,
+                      src: video?.src,
+                      videoElements: document.getElementsByTagName('video').length
+                    });
+
+                    if (video) {
+                      // Check if video is loaded or just get current time anyway
+                      if (video.readyState >= 2) {
+                        setEditedQuestion({ ...editedQuestion, timePosition: Math.floor(video.currentTime) });
+                        toast.success(`تم تعيين الوقت: ${Math.floor(video.currentTime)} ثانية`);
+                      } else {
+                        // Video exists but not loaded yet, try to get time anyway
+                        const time = video.currentTime;
+                        if (time > 0 || video.src) {
+                          setEditedQuestion({ ...editedQuestion, timePosition: Math.floor(time) });
+                          toast.success(`تم تعيين الوقت: ${Math.floor(time)} ثانية`);
+                        } else {
+                          toast.error("الفيديو موجود لكن لم يتم تحميله بعد. يرجى تشغيل الفيديو أولاً أو إدخال الوقت يدوياً.");
+                        }
+                      }
+                    } else {
+                      // Check if there's an iframe with video (YouTube, Vimeo, etc.)
+                      const iframes = document.getElementsByTagName('iframe');
+                      if (iframes.length > 0) {
+                        toast.error(`تم العثور على ${iframes.length} iframe. هذه الميزة تعمل مع فيديوهات HTML5 فقط. يرجى إدخال الوقت يدوياً.`);
+                      } else {
+                        toast.error("لم يتم العثور على فيديو في الصفحة. يرجى إدخال الوقت يدوياً.");
+                      }
+                    }
+                  }}
+                >
+                  <Video className="h-4 w-4 ml-1" />
+                  من الفيديو
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px] font-black uppercase">الإجابة الصحيحة</Label>
+              <Select
+                value={editedQuestion.correctOptionIndex.toString()}
+                onValueChange={(value) => setEditedQuestion({ ...editedQuestion, correctOptionIndex: Number(value) })}
+              >
+                <SelectTrigger className="h-10 rounded-lg text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {editedQuestion.options.map((_, idx) => (
+                    <SelectItem key={idx} value={idx.toString()}>
+                      الخيار {idx + 1}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] font-black uppercase">السؤال</Label>
+            <Input
+              value={editedQuestion.question}
+              onChange={(e) => setEditedQuestion({ ...editedQuestion, question: e.target.value })}
+              className="h-10 rounded-lg text-sm"
+            />
+          </div>
+          <div className="space-y-2">
+            {editedQuestion.options.map((option, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <Badge variant="outline" className="text-[10px] font-black">{idx + 1}</Badge>
+                <Input
+                  value={option}
+                  onChange={(e) => {
+                    const newOptions = [...editedQuestion.options];
+                    newOptions[idx] = e.target.value;
+                    setEditedQuestion({ ...editedQuestion, options: newOptions });
+                  }}
+                  className="h-10 rounded-lg text-sm flex-1"
+                  placeholder={`الخيار ${idx + 1}`}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="space-y-1">
+            <Label className="text-[10px] font-black uppercase">الشرح (اختياري)</Label>
+            <Input
+              value={editedQuestion.explanation || ""}
+              onChange={(e) => setEditedQuestion({ ...editedQuestion, explanation: e.target.value })}
+              className="h-10 rounded-lg text-sm"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-black uppercase">نوع الوسائط (اختياري)</Label>
+            <Select
+              value={editedQuestion.mediaType || "none"}
+              onValueChange={(value) => setEditedQuestion({ ...editedQuestion, mediaType: value === "none" ? null : value as any })}
+            >
+              <SelectTrigger className="h-10 rounded-lg text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">بدون وسائط</SelectItem>
+                <SelectItem value="image">صورة</SelectItem>
+                <SelectItem value="video">فيديو</SelectItem>
+                <SelectItem value="link">رابط خارجي</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {editedQuestion.mediaType === "image" && (
+            <div className="space-y-3">
+              <Label className="text-[10px] font-black uppercase">صورة السؤال</Label>
+              <Input
+                value={editedQuestion.mediaUrl || ""}
+                onChange={(e) => setEditedQuestion({ ...editedQuestion, mediaUrl: e.target.value })}
+                className="h-10 rounded-lg text-sm"
+                placeholder="https://..."
+              />
+              <AdminUpload
+                accept="image/*"
+                label="رفع صورة من الجهاز"
+                onUploadComplete={(url) => setEditedQuestion({ ...editedQuestion, mediaUrl: url })}
+              />
+            </div>
+          )}
+
+          {editedQuestion.mediaType === "video" && (
+            <div className="space-y-3">
+              <Label className="text-[10px] font-black uppercase">فيديو السؤال</Label>
+              <Input
+                value={editedQuestion.mediaUrl || ""}
+                onChange={(e) => setEditedQuestion({ ...editedQuestion, mediaUrl: e.target.value })}
+                className="h-10 rounded-lg text-sm"
+                placeholder="https://..."
+              />
+              <AdminUpload
+                accept="video/*"
+                label="رفع فيديو من الجهاز"
+                onUploadComplete={(url) => setEditedQuestion({ ...editedQuestion, mediaUrl: url })}
+              />
+            </div>
+          )}
+
+          {editedQuestion.mediaType === "link" && (
+            <div className="space-y-1">
+              <Label className="text-[10px] font-black uppercase">رابط خارجي</Label>
+              <Input
+                value={editedQuestion.linkUrl || ""}
+                onChange={(e) => setEditedQuestion({ ...editedQuestion, linkUrl: e.target.value })}
+                className="h-10 rounded-lg text-sm"
+                placeholder="https://..."
+              />
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button onClick={handleSave} size="sm" className="flex-1 rounded-lg text-xs font-bold">
+              حفظ
+            </Button>
+            <Button onClick={() => setIsEditing(false)} variant="outline" size="sm" className="rounded-lg text-xs font-bold">
+              إلغاء
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Badge className="bg-primary/10 text-primary text-[10px] font-black">
+                  {formatTime(question.timePosition)}
+                </Badge>
+                <Badge variant={question.isActive ? "default" : "secondary"} className="text-[10px] font-black">
+                  {question.isActive ? "نشط" : "معطل"}
+                </Badge>
+              </div>
+              <p className="text-sm font-bold">{question.question}</p>
+              {question.mediaType && (
+                <Badge variant="outline" className="text-[9px] font-black mt-1 flex items-center gap-1">
+                  {question.mediaType === 'image' && <ImageIcon className="h-3 w-3" />}
+                  {question.mediaType === 'video' && <Video className="h-3 w-3" />}
+                  {question.mediaType === 'link' && <LinkIcon className="h-3 w-3" />}
+                  {question.mediaType === 'image' ? 'صورة' : question.mediaType === 'video' ? 'فيديو' : 'رابط'}
+                </Badge>
+              )}
+            </div>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsEditing(true)}>
+                <Edit className="h-3.5 w-3.5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={onDelete}>
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+          <div className="space-y-1 mr-2 border-r-2 border-zinc-100 pr-3 dark:border-zinc-800">
+            {question.options.map((option, idx) => (
+              <div key={idx} className="flex items-center gap-2 text-xs">
+                <Badge variant={idx === question.correctOptionIndex ? "default" : "outline"} className="text-[9px] font-black">
+                  {idx === question.correctOptionIndex ? "✓" : idx + 1}
+                </Badge>
+                <span className={cn("font-medium", idx === question.correctOptionIndex ? "text-primary" : "text-zinc-600")}>
+                  {option}
+                </span>
+              </div>
+            ))}
+          </div>
+          {question.explanation && (
+            <p className="text-[11px] text-zinc-500 italic mt-2">{question.explanation}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NewQuestionForm({ onSubmit }: { onSubmit: (question: Omit<InteractiveQuestion, "id" | "lessonId">) => void }) {
+  const [timePosition, setTimePosition] = useState(0);
+  const [question, setQuestion] = useState("");
+  const [options, setOptions] = useState(["", "", "", ""]);
+  const [correctOptionIndex, setCorrectOptionIndex] = useState(0);
+  const [explanation, setExplanation] = useState("");
+  const [mediaType, setMediaType] = useState<'image' | 'video' | 'link' | null>(null);
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+
+  const handleSubmit = () => {
+    if (!question.trim() || options.filter(o => o.trim()).length < 2) {
+      toast.error("يرجى إدخال السؤال وخيارين على الأقل");
+      return;
+    }
+
+    onSubmit({
+      timePosition,
+      question,
+      options: options.filter(o => o.trim()),
+      correctOptionIndex,
+      explanation: explanation || null,
+      mediaType,
+      mediaUrl: mediaUrl || null,
+      linkUrl: linkUrl || null,
+      isActive: true,
+    });
+
+    setTimePosition(0);
+    setQuestion("");
+    setOptions(["", "", "", ""]);
+    setCorrectOptionIndex(0);
+    setExplanation("");
+    setMediaType(null);
+    setMediaUrl("");
+    setLinkUrl("");
+  };
+
+  return (
+    <div className="space-y-3 rounded-xl border border-zinc-100 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <Label className="text-[10px] font-black uppercase">وقت الظهور (ثانية)</Label>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              value={timePosition}
+              onChange={(e) => setTimePosition(Number(e.target.value))}
+              className="h-10 rounded-lg text-sm flex-1"
+              placeholder="مثال: 30"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-10 px-3 rounded-lg text-xs font-bold"
+              onClick={() => {
+                // Try to find video in multiple ways
+                let video = document.querySelector('video') as HTMLVideoElement;
+                if (!video) {
+                  // Try to find video in iframes or other containers
+                  const videos = document.getElementsByTagName('video');
+                  if (videos.length > 0) {
+                    video = videos[0] as HTMLVideoElement;
+                  }
+                }
+                if (video) {
+                  // Check if video is loaded or just get current time anyway
+                  if (video.readyState >= 2) {
+                    setTimePosition(Math.floor(video.currentTime));
+                    toast.success(`تم تعيين الوقت: ${Math.floor(video.currentTime)} ثانية`);
+                  } else {
+                    // Video exists but not loaded yet, try to get time anyway
+                    const time = video.currentTime;
+                    if (time > 0 || video.src) {
+                      setTimePosition(Math.floor(time));
+                      toast.success(`تم تعيين الوقت: ${Math.floor(time)} ثانية`);
+                    } else {
+                      toast.error("الفيديو موجود لكن لم يتم تحميله بعد. يرجى تشغيل الفيديو أولاً أو إدخال الوقت يدوياً.");
+                    }
+                  }
+                } else {
+                  toast.error("لم يتم العثور على فيديو في الصفحة. يرجى إدخال الوقت يدوياً.");
+                }
+              }}
+            >
+              <Video className="h-4 w-4 ml-1" />
+              من الفيديو
+            </Button>
+          </div>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-[10px] font-black uppercase">الإجابة الصحيحة</Label>
+          <Select
+            value={correctOptionIndex.toString()}
+            onValueChange={(value) => setCorrectOptionIndex(Number(value))}
+          >
+            <SelectTrigger className="h-10 rounded-lg text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((_, idx) => (
+                <SelectItem key={idx} value={idx.toString()} disabled={!options[idx]?.trim()}>
+                  الخيار {idx + 1}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-[10px] font-black uppercase">السؤال</Label>
+        <Input
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          className="h-10 rounded-lg text-sm"
+          placeholder="اكتب السؤال هنا..."
+        />
+      </div>
+      <div className="space-y-2">
+        {options.map((option, idx) => (
+          <div key={idx} className="flex items-center gap-2">
+            <Badge variant={idx === correctOptionIndex ? "default" : "outline"} className="text-[10px] font-black">
+              {idx + 1}
+            </Badge>
+            <Input
+              value={option}
+              onChange={(e) => {
+                const newOptions = [...options];
+                newOptions[idx] = e.target.value;
+                setOptions(newOptions);
+              }}
+              className="h-10 rounded-lg text-sm flex-1"
+              placeholder={`الخيار ${idx + 1}`}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="space-y-1">
+        <Label className="text-[10px] font-black uppercase">الشرح (اختياري)</Label>
+        <Input
+          value={explanation}
+          onChange={(e) => setExplanation(e.target.value)}
+          className="h-10 rounded-lg text-sm"
+          placeholder="شرح الإجابة الصحيحة..."
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-[10px] font-black uppercase">نوع الوسائط (اختياري)</Label>
+        <Select
+          value={mediaType || "none"}
+          onValueChange={(value) => setMediaType(value === "none" ? null : value as any)}
+        >
+          <SelectTrigger className="h-10 rounded-lg text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">بدون وسائط</SelectItem>
+            <SelectItem value="image">صورة</SelectItem>
+            <SelectItem value="video">فيديو</SelectItem>
+            <SelectItem value="link">رابط خارجي</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {mediaType === "image" && (
+        <div className="space-y-3">
+          <Label className="text-[10px] font-black uppercase">صورة السؤال</Label>
+          <Input
+            value={mediaUrl}
+            onChange={(e) => setMediaUrl(e.target.value)}
+            className="h-10 rounded-lg text-sm"
+            placeholder="https://..."
+          />
+          <AdminUpload
+            accept="image/*"
+            label="رفع صورة من الجهاز"
+            onUploadComplete={(url) => setMediaUrl(url)}
+          />
+        </div>
+      )}
+
+      {mediaType === "video" && (
+        <div className="space-y-3">
+          <Label className="text-[10px] font-black uppercase">فيديو السؤال</Label>
+          <Input
+            value={mediaUrl}
+            onChange={(e) => setMediaUrl(e.target.value)}
+            className="h-10 rounded-lg text-sm"
+            placeholder="https://..."
+          />
+          <AdminUpload
+            accept="video/*"
+            label="رفع فيديو من الجهاز"
+            onUploadComplete={(url) => setMediaUrl(url)}
+          />
+        </div>
+      )}
+
+      {mediaType === "link" && (
+        <div className="space-y-1">
+          <Label className="text-[10px] font-black uppercase">رابط خارجي</Label>
+          <Input
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            className="h-10 rounded-lg text-sm"
+            placeholder="https://..."
+          />
+        </div>
+      )}
+
+      <Button onClick={handleSubmit} className="w-full h-10 rounded-lg text-xs font-bold uppercase">
+        <Plus className="ml-2 h-4 w-4" />
+        إضافة السؤال
+      </Button>
+    </div>
+  );
+}
+
 function SortableLesson({
   lesson,
   onDelete,
   onEdit,
+  onManageQuestions,
 }: {
   lesson: Lesson;
   onDelete: (id: string) => void;
   onEdit: (lesson: Lesson) => void;
+  onManageQuestions?: (lesson: Lesson) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: lesson.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
@@ -212,16 +782,28 @@ function SortableLesson({
       <div className="flex-1">
         <div className="text-sm font-bold">{lesson.name}</div>
         <div className="text-[10px] font-medium text-zinc-500">
-          {lesson.duration || 0} دقيقة
+          {lesson.duration || lesson.durationMinutes || 0} دقيقة
         </div>
       </div>
       {lesson.isFree && (
         <Badge className="border-emerald-500/20 bg-emerald-500/10 text-[9px] text-emerald-500">مجاني</Badge>
       )}
+      {lesson.type === "VIDEO" && lesson.interactiveQuestions && lesson.interactiveQuestions.length > 0 && (
+        <Badge className="border-blue-500/20 bg-blue-500/10 text-[9px] text-blue-500">
+          {lesson.interactiveQuestions.length} أسئلة
+        </Badge>
+      )}
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(lesson)}>
-          <Edit className="h-3.5 w-3.5" />
-        </Button>
+        {lesson.type === "VIDEO" && onManageQuestions && (
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-500" onClick={() => onManageQuestions(lesson)} title="إدارة الأسئلة التفاعلية">
+            <FileText className="h-3.5 w-3.5" />
+          </Button>
+        )}
+        {lesson.type === "VIDEO" && (
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={() => onEdit(lesson)}>
+            <Edit className="h-3.5 w-3.5" />
+          </Button>
+        )}
         <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => onDelete(lesson.id)}>
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
@@ -238,6 +820,7 @@ function SortableChapter({
   onReorderLessons,
   onEditChapter,
   onEditLesson,
+  onManageQuestions,
 }: {
   chapter: Chapter;
   onDeleteChapter: (id: string) => void;
@@ -246,6 +829,7 @@ function SortableChapter({
   onReorderLessons: (chapterId: string, event: DragEndEvent) => void;
   onEditChapter: (chapter: Chapter) => void;
   onEditLesson: (lesson: Lesson, chapterId: string) => void;
+  onManageQuestions?: (lesson: Lesson) => void;
 }) {
   const [expanded, setExpanded] = useState(true);
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: chapter.id });
@@ -297,6 +881,7 @@ function SortableChapter({
                     lesson={lesson}
                     onDelete={(lessonId) => onDeleteLesson(chapter.id, lessonId)}
                     onEdit={(currentLesson) => onEditLesson(currentLesson, chapter.id)}
+                    onManageQuestions={onManageQuestions}
                   />
                 ))}
                 {chapter.subTopics.length === 0 && (
@@ -325,6 +910,16 @@ export default function CourseCurriculumPage() {
   const [editingChapter, setEditingChapter] = useState<{ id: string; name: string } | null>(null);
   const [editingLesson, setEditingLesson] = useState<{ lesson: Lesson; chapterId: string } | null>(null);
   const [exams, setExams] = useState<any[]>([]);
+  const [interactiveQuestionsDialog, setInteractiveQuestionsDialog] = useState<{ lessonId: string; lessonName: string } | null>(null);
+  const [interactiveQuestions, setInteractiveQuestions] = useState<InteractiveQuestion[]>([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const [aiDialogOpen, setAiDialogOpen] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
@@ -434,7 +1029,8 @@ export default function CourseCurriculumPage() {
         order: lIdx,
         type: (l.type || "VIDEO") as LessonType,
         videoUrl: "",
-        duration: Number(l.duration) || 10,
+        duration: Number(l.duration ?? l.durationMinutes) || 10,
+        durationMinutes: Number(l.duration ?? l.durationMinutes) || 10,
         isFree: false,
         description: l.description || "",
         attachments: [],
@@ -487,7 +1083,7 @@ export default function CourseCurriculumPage() {
         }
 
         setCourse(result.data?.course || null);
-        setChapters(result.data?.curriculum || []);
+        setChapters((result.data?.curriculum || result.data?.topics || []).map(normalizeChapter));
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "فشل تحميل المنهج");
       } finally {
@@ -568,13 +1164,98 @@ export default function CourseCurriculumPage() {
     );
   };
 
+  const fetchInteractiveQuestions = async (lessonId: string) => {
+    setLoadingQuestions(true);
+    try {
+      const response = await adminFetch(`/admin/courses/lessons/${lessonId}/interactive-questions`);
+      const result = await response.json();
+      if (response.ok) {
+        setInteractiveQuestions(result.data || result || []);
+      } else {
+        setInteractiveQuestions([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch interactive questions:", error);
+      setInteractiveQuestions([]);
+    } finally {
+      setLoadingQuestions(false);
+    }
+  };
+
+  const handleOpenInteractiveQuestions = (lesson: Lesson) => {
+    setInteractiveQuestionsDialog({ lessonId: lesson.id, lessonName: lesson.name });
+    fetchInteractiveQuestions(lesson.id);
+  };
+
+  const handleCreateInteractiveQuestion = async (question: Omit<InteractiveQuestion, "id" | "lessonId">) => {
+    try {
+      const response = await adminFetch(`/admin/courses/lessons/${interactiveQuestionsDialog?.lessonId}/interactive-questions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lessonId: interactiveQuestionsDialog?.lessonId,
+          groupId: selectedGroupId,
+          groupOrder: selectedGroupId ? (interactiveQuestions.filter(q => q.groupId === selectedGroupId).length) : 0,
+          ...question,
+        }),
+      });
+      const result = await response.json();
+      if (response.ok) {
+        toast.success("تم إضافة السؤال بنجاح");
+        fetchInteractiveQuestions(interactiveQuestionsDialog?.lessonId!);
+        setSelectedGroupId(null);
+      } else {
+        toast.error(result.error || "فشل إضافة السؤال");
+      }
+    } catch (error) {
+      toast.error("فشل إضافة السؤال");
+    }
+  };
+
+  const handleUpdateInteractiveQuestion = async (id: string, updates: Partial<InteractiveQuestion>) => {
+    try {
+      const response = await adminFetch("/admin/interactive-questions", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...updates }),
+      });
+      if (response.ok) {
+        toast.success("تم تحديث السؤال بنجاح");
+        fetchInteractiveQuestions(interactiveQuestionsDialog?.lessonId!);
+      } else {
+        const result = await response.json();
+        toast.error(result.error || "فشل تحديث السؤال");
+      }
+    } catch (error) {
+      toast.error("فشل تحديث السؤال");
+    }
+  };
+
+  const handleDeleteInteractiveQuestion = async (id: string) => {
+    try {
+      const response = await adminFetch(`/admin/interactive-questions/${id}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        toast.success("تم حذف السؤال بنجاح");
+        fetchInteractiveQuestions(interactiveQuestionsDialog?.lessonId!);
+      } else {
+        const result = await response.json();
+        toast.error(result.error || "فشل حذف السؤال");
+      }
+    } catch (error) {
+      toast.error("فشل حذف السؤال");
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const curriculum = serializeCurriculum(chapters);
       const response = await adminFetch(apiRoutes.admin.courseCurriculum(courseId), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ curriculum: chapters }),
+        body: JSON.stringify({ curriculum }),
       });
 
       const result = await response.json();
@@ -582,7 +1263,7 @@ export default function CourseCurriculumPage() {
         throw new Error(result.error || result.message || "فشل حفظ المنهج");
       }
 
-      setChapters(result.data?.curriculum || chapters);
+      setChapters((result.data?.curriculum || result.data?.topics || curriculum).map(normalizeChapter));
       await requestPublicCacheRevalidation(COURSE_PUBLIC_CACHE_PATHS);
       toast.success("تم حفظ منهج الدورة بنجاح");
     } catch (error) {
@@ -664,6 +1345,7 @@ export default function CourseCurriculumPage() {
                   onReorderLessons={handleReorderLessons}
                   onEditChapter={(currentChapter) => setEditingChapter({ id: currentChapter.id, name: currentChapter.name })}
                   onEditLesson={(lesson, chapterId) => setEditingLesson({ lesson: { ...lesson }, chapterId })}
+                  onManageQuestions={handleOpenInteractiveQuestions}
                 />
               ))}
               {chapters.length === 0 && (
@@ -750,13 +1432,20 @@ export default function CourseCurriculumPage() {
                 <Label className="text-[10px] font-black uppercase">المدة بالدقائق</Label>
                 <Input
                   type="number"
-                  value={editingLesson?.lesson.duration || 0}
+                  value={editingLesson?.lesson.duration ?? editingLesson?.lesson.durationMinutes ?? 0}
                   onChange={(event) =>
-                    setEditingLesson((current) =>
-                      current
-                        ? { ...current, lesson: { ...current.lesson, duration: Number(event.target.value) || 0 } }
-                        : null
-                    )
+                    setEditingLesson((current) => {
+                      if (!current) return null;
+                      const duration = Number(event.target.value) || 0;
+                      return {
+                        ...current,
+                        lesson: {
+                          ...current.lesson,
+                          duration,
+                          durationMinutes: duration,
+                        },
+                      };
+                    })
                   }
                   className="h-12 rounded-xl text-sm font-bold"
                 />
@@ -1030,6 +1719,109 @@ export default function CourseCurriculumPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!interactiveQuestionsDialog} onOpenChange={(open) => !open && setInteractiveQuestionsDialog(null)}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              الأسئلة التفاعلية للفيديو
+            </DialogTitle>
+            <DialogDescription className="text-xs font-bold text-zinc-500">
+              {interactiveQuestionsDialog?.lessonName} - أضف أسئلة تظهر أثناء تشغيل الفيديو ويجب على الطالب الإجابة عليها للمتابعة
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {loadingQuestions ? (
+              <div className="flex h-32 items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-primary" />
+              </div>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  {interactiveQuestions.length === 0 ? (
+                    <div className="rounded-xl border-2 border-dashed border-zinc-100 bg-zinc-50/30 py-8 text-center dark:border-zinc-800 dark:bg-zinc-900/10">
+                      <FileText className="mx-auto mb-4 h-12 w-12 text-zinc-300 opacity-20 dark:text-zinc-800" />
+                      <p className="text-sm font-bold text-zinc-400">لا توجد أسئلة تفاعلية بعد</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mt-2">أضف سؤالاً جديداً لبدء الاستخدام</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Group questions by time position */}
+                      {(() => {
+                        const grouped = interactiveQuestions.reduce((acc, q) => {
+                          const key = q.timePosition;
+                          if (!acc[key]) acc[key] = [];
+                          acc[key].push(q);
+                          return acc;
+                        }, {} as Record<number, InteractiveQuestion[]>);
+
+                        return Object.entries(grouped)
+                          .sort(([a], [b]) => Number(a) - Number(b))
+                          .map(([time, questions]) => (
+                            <div key={time} className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Badge className="bg-primary/10 text-primary text-[10px] font-black">
+                                  {formatTime(Number(time))}
+                                </Badge>
+                                {questions.length > 1 && (
+                                  <Badge variant="outline" className="text-[9px] font-black">
+                                    {questions.length} أسئلة
+                                  </Badge>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-[10px] font-bold"
+                                  onClick={() => setSelectedGroupId(questions[0]?.groupId || `group-${time}`)}
+                                >
+                                  <Plus className="h-3 w-3 ml-1" />
+                                  إضافة سؤال
+                                </Button>
+                              </div>
+                              <div className="space-y-2 mr-4">
+                                {questions
+                                  .sort((a, b) => (a.groupOrder || 0) - (b.groupOrder || 0))
+                                  .map((question) => (
+                                    <InteractiveQuestionCard
+                                      key={question.id}
+                                      question={question}
+                                      index={interactiveQuestions.indexOf(question)}
+                                      onUpdate={(updates) => handleUpdateInteractiveQuestion(question.id, updates)}
+                                      onDelete={() => handleDeleteInteractiveQuestion(question.id)}
+                                    />
+                                  ))}
+                              </div>
+                            </div>
+                          ));
+                      })()}
+                    </>
+                  )}
+                </div>
+
+                <div className="border-t border-zinc-200 pt-4 dark:border-zinc-800">
+                  <h4 className="text-sm font-bold mb-3">
+                    {selectedGroupId ? "إضافة سؤال للمجموعة" : "إضافة سؤال جديد"}
+                  </h4>
+                  {selectedGroupId && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mb-3 text-xs"
+                      onClick={() => setSelectedGroupId(null)}
+                    >
+                      <X className="h-3 w-3 ml-1" />
+                      إلغاء المجموعة
+                    </Button>
+                  )}
+                  <NewQuestionForm onSubmit={handleCreateInteractiveQuestion} />
+                </div>
+              </>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

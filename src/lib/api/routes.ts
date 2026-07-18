@@ -219,7 +219,14 @@ export const apiRoutes = {
     courseStudents: (courseId: string) => `/api/admin/courses/${courseId}/students`,
     courseAnalytics: (courseId: string) => `/api/admin/courses/${courseId}/analytics`,
     courseCurriculum: (courseId: string) => `/api/admin/courses/${courseId}/curriculum`,
+    courseCurriculumStats: (courseId: string) => `/api/admin/courses/${courseId}/curriculum-stats`,
     courseEnrollments: (courseId: string) => `/api/admin/courses/${courseId}/enrollments`,
+    courseMarketing: (courseId: string) => `/api/admin/courses/${courseId}/marketing`,
+    courseFaq: (courseId: string) => `/api/admin/courses/${courseId}/faq`,
+    courseGuarantee: (courseId: string) => `/api/admin/courses/${courseId}/guarantee`,
+    courseChangelog: (courseId: string) => `/api/admin/courses/${courseId}/changelog`,
+    courseProjects: (courseId: string) => `/api/admin/courses/${courseId}/projects`,
+    courseReviews: (courseId: string) => `/api/admin/courses/${courseId}/reviews`,
     subjectCurriculum: (subjectId: string) => `/api/admin/subjects/${subjectId}/curriculum`,
 
     // Enrollments
@@ -234,12 +241,27 @@ export const apiRoutes = {
     // Categories
     courseCategories: '/api/admin/course-categories',
 
+    // Course Certificates
+    certificates: '/api/admin/certificates',
+    certificateById: (id: string) => `/api/admin/certificates/${id}`,
+    certificateAwards: '/api/admin/certificates/awards',
+    certificateAwardById: (id: string) => `/api/admin/certificates/awards/${id}`,
+
+    // Learning Paths
+    learningPaths: '/api/admin/learning-paths',
+    learningPathById: (id: string) => `/api/admin/learning-paths/${id}`,
+    learningPathEnrollments: (id: string) => `/api/admin/learning-paths/${id}/enrollments`,
+
     // Payments
     payments: '/api/admin/payments',
 
     // Coupons
     coupons: '/api/admin/coupons',
     couponById: (id: string) => `/api/admin/coupons/${id}`,
+
+    // Subscription Plans
+    plans: '/api/admin/plans',
+    planById: (id: string) => `/api/admin/plans/${id}`,
 
     // Settings
     settings: '/api/admin/settings',
@@ -284,6 +306,7 @@ export const apiRoutes = {
 
     // Impersonation
     impersonate: '/api/admin/impersonate',
+    impersonateById: (id: string) => `/api/admin/users/${id}/impersonate`,
     deleteImpersonation: '/api/admin/impersonate',
 
     // Marketing

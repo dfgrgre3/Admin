@@ -31,6 +31,7 @@ interface GeneralTabProps {
   categories: CourseCategory[];
   onNext: () => void;
   onGenerateWithAI: (field: "description" | "seoDescription") => void;
+  onExpandSimpleDescription: () => void;
 }
 
 export function GeneralTab({
@@ -38,6 +39,7 @@ export function GeneralTab({
   categories,
   onNext,
   onGenerateWithAI,
+  onExpandSimpleDescription,
 }: GeneralTabProps) {
   return (
     <TabsContent value="general" className="mt-0 space-y-6">
@@ -199,12 +201,48 @@ export function GeneralTab({
 
           <FormField
             control={control}
+            name="simpleDescription"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between mb-2">
+                  <FormLabel className="font-bold">
+                    وصف بسيط للدورة
+                  </FormLabel>
+                  <AdminButton
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-[10px] gap-1.5 text-primary bg-primary/5 hover:bg-primary/10 rounded-lg"
+                    onClick={onExpandSimpleDescription}
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    تحليل ذكي وتوليد وصف تفصيلي
+                  </AdminButton>
+                </div>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    value={field.value || ""}
+                    placeholder="أدخل وصفاً بسيطاً ومختصراً للدورة، وسيقوم الذكاء الاصطناعي بتحليل جميع بيانات الدورة (الاسم، المستوى، المدة، المدرب، المتطلبات، الأهداف) ثم توليد وصف تفصيلي احترافي..."
+                    className="min-h-[80px] rounded-2xl resize-none"
+                  />
+                </FormControl>
+                <FormDescription className="text-[10px]">
+                  اكتب بضع جمل عن الدورة، ثم اضغط على "تحليل ذكي وتوليد وصف تفصيلي" ليقوم الذكاء الاصطناعي بتحليل جميع بيانات الدورة وتوليد وصف شامل.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
             name="description"
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center justify-between mb-2">
                   <FormLabel className="font-bold">
-                    وصف الدورة
+                    الوصف التفصيلي
                   </FormLabel>
                   <AdminButton
                     type="button"
@@ -214,14 +252,14 @@ export function GeneralTab({
                     onClick={() => onGenerateWithAI("description")}
                   >
                     <Sparkles className="h-3 w-3" />
-                    توليد بالذكاء الاصطناعي
+                    تحليل شامل وتوليد بالذكاء الاصطناعي
                   </AdminButton>
                 </div>
                 <FormControl>
                   <Textarea
                     {...field}
                     value={field.value || ""}
-                    placeholder="أدخل وصفاً كبيراً ومفصلاً للدورة يوضح أهميتها وما سيتم تعلمه..."
+                    placeholder="سيظهر هنا الوصف التفصيلي للدورة بعد التوليد بالذكاء الاصطناعي أو يمكنك كتابته يدوياً..."
                     className="min-h-[150px] rounded-2xl resize-none"
                   />
                 </FormControl>

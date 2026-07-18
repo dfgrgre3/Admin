@@ -27,7 +27,7 @@ export function useGlobalSettings() {
 
   const applyTheme = useCallback((theme: string) => {
     setTheme(theme);
-    localStorage.setItem('theme', theme);
+    localStorage.setItem('tolo-theme', theme);
   }, [setTheme]);
 
   const applyFontSize = useCallback((fontSize: string) => {
@@ -87,7 +87,7 @@ export function useGlobalSettings() {
   // تطبيق الإعدادات المحفوظة من localStorage على الفور (بدون انتظار API)
   const applyFromLocalStorage = useCallback(() => {
     try {
-      const theme = localStorage.getItem('theme') || 'light';
+      const theme = localStorage.getItem('tolo-theme') || localStorage.getItem('theme') || 'light';
       const fontSize = localStorage.getItem('fontSize') || 'medium';
       const language = localStorage.getItem('language') || 'ar';
       const direction = localStorage.getItem('direction') || 'rtl';

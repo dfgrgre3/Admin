@@ -17,8 +17,13 @@ import {
    Terminal,
 } from "lucide-react";
 import { RealTimePerformanceChart } from "@/components/admin/monitoring/RealTimePerformanceChart";
-import { PremiumLogViewer } from "@/components/admin/monitoring/PremiumLogViewer";
+import dynamic from "next/dynamic";
 import { adminFetch } from "@/lib/api/admin-api";
+
+const PremiumLogViewer = dynamic(() => import("@/components/admin/monitoring/PremiumLogViewer").then(mod => ({ default: mod.PremiumLogViewer })), {
+  ssr: false,
+  loading: () => <div className="h-64 w-full animate-pulse rounded-2xl bg-muted" />
+});
 
 const STYLES = {
    glass: "admin-glass p-8 rounded-[2rem] border border-white/5 backdrop-blur-xl relative overflow-hidden",

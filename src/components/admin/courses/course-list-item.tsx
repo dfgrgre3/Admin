@@ -3,6 +3,7 @@
 import * as React from "react";
 import type { Variants } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { m } from "framer-motion";
 import {
   Users,
@@ -58,7 +59,7 @@ const listItemVariants: Variants = {
   }),
 };
 
-export function CourseListItem({
+export const CourseListItem = React.memo(function CourseListItem({
   course,
   onEdit,
   onDuplicate,
@@ -110,11 +111,12 @@ export function CourseListItem({
       {/* Thumbnail */}
       <div className="relative h-16 w-28 shrink-0 overflow-hidden rounded-xl border border-border/40">
         {course.thumbnailUrl ? (
-          <img
+          <Image
             src={course.thumbnailUrl}
             alt={course.nameAr || course.name}
-            className="h-full w-full object-cover"
-            loading="lazy"
+            fill
+            sizes="112px"
+            className="object-cover"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5">
@@ -281,13 +283,13 @@ export function CourseListItem({
               {onDelete && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => onDelete(course)}
-                    className="cursor-pointer gap-2.5 rounded-lg font-black text-red-500 focus:bg-red-500/10 focus:text-red-500"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    حذف نهائي
-                  </DropdownMenuItem>
+      <DropdownMenuItem
+        onClick={() => onDelete?.(course)}
+        className="cursor-pointer gap-2.5 rounded-lg font-black text-red-500 focus:bg-red-500/10 focus:text-red-500"
+      >
+        <Trash2 className="h-4 w-4" />
+        حذف نهائي
+      </DropdownMenuItem>
                 </>
               )}
             </DropdownMenuContent>
@@ -296,4 +298,4 @@ export function CourseListItem({
       </div>
     </m.div>
   );
-}
+});

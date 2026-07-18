@@ -139,11 +139,11 @@ interface RoleBadgeProps {
 }
 
 const roleConfig: Record<RoleBadgeProps["role"], { label: string; color: string; bg: string }> = {
-  ADMIN: { label: "مدير", color: "text-red-600", bg: "bg-red-500/10 border-red-500/20" },
-  TEACHER: { label: "معلم", color: "text-blue-600", bg: "bg-blue-500/10 border-blue-500/20" },
-  STUDENT: { label: "طالب", color: "text-green-600", bg: "bg-green-500/10 border-green-500/20" },
-  MODERATOR: { label: "مشرف", color: "text-yellow-600", bg: "bg-yellow-500/10 border-yellow-500/20" },
-  USER: { label: "مستخدم", color: "text-gray-600", bg: "bg-gray-500/10 border-gray-500/20" },
+  ADMIN: { label: "مدير", color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-500/10 border-orange-500/20" },
+  TEACHER: { label: "معلم", color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-500/10 border-violet-500/20" },
+  STUDENT: { label: "طالب", color: "text-fuchsia-600 dark:text-fuchsia-400", bg: "bg-fuchsia-500/10 border-fuchsia-500/20" },
+  MODERATOR: { label: "مشرف", color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
+  USER: { label: "مستخدم", color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500/10 border-purple-500/20" },
 };
 
 export function RoleBadge({ role, className }: RoleBadgeProps) {

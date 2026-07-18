@@ -1,3 +1,5 @@
+import 'server-only';
+
 import { Queue, Worker, Job } from 'bullmq';
 import { logger } from '../logger';
 import Redis from 'ioredis';

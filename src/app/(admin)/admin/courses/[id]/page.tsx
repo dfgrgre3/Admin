@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import {
   Users,
@@ -31,17 +32,9 @@ import { AdminCard } from "@/components/admin/ui/admin-card";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatPrice } from "@/lib/utils";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  RadialBarChart,
-  RadialBar,
-} from "recharts";
+
+const EnrollmentAreaChart = dynamic(() => import("./_components/overview-charts").then(mod => mod.EnrollmentAreaChart), { ssr: false, loading: () => <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" /> });
+const ReadinessGauge = dynamic(() => import("./_components/overview-charts").then(mod => mod.ReadinessGauge), { ssr: false, loading: () => <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" /> });
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -156,34 +149,6 @@ function StatCard({
       <p className="text-3xl font-black mt-1 tracking-tight">{value}</p>
       {subLabel && <p className="text-[10px] font-bold text-muted-foreground mt-1">{subLabel}</p>}
     </AdminCard>
-  );
-}
-
-function ReadinessGauge({ score }: { score: number }) {
-  const color = score >= 85 ? "#10b981" : score >= 55 ? "#f59e0b" : "#ef4444";
-  const data = [{ value: score, fill: color }];
-
-  return (
-    <div className="relative flex items-center justify-center" style={{ height: 120 }}>
-      <ResponsiveContainer width="100%" height={120} minWidth={1} minHeight={1}>
-        <RadialBarChart
-          cx="50%"
-          cy="100%"
-          innerRadius="80%"
-          outerRadius="100%"
-          barSize={12}
-          data={data}
-          startAngle={180}
-          endAngle={0}
-        >
-          <RadialBar background={{ fill: "#88888815" }} dataKey="value" cornerRadius={6} />
-        </RadialBarChart>
-      </ResponsiveContainer>
-      <div className="absolute bottom-0 flex flex-col items-center">
-        <span className="text-3xl font-black" style={{ color }}>{score}%</span>
-        <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">جاهزية</span>
-      </div>
-    </div>
   );
 }
 
@@ -353,43 +318,7 @@ export default function CourseOverviewPage() {
             </div>
           </div>
           <div className="h-[280px] w-full" style={{ minWidth: 0 }}>
-            {mounted && (
-              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="gradEnroll" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="gradRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888815" />
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 10, fontWeight: 700, fill: "#88888888" }}
-                    dy={10}
-                  />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: "#88888888" }} />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "16px",
-                      border: "1px solid #88888820",
-                      backgroundColor: "hsl(var(--card))",
-                      fontWeight: 900,
-                      direction: "rtl",
-                      fontSize: 12,
-                    }}
-                  />
-                  <Area type="monotone" dataKey="enrollments" name="تسجيلات" stroke="#3b82f6" strokeWidth={2.5} fillOpacity={1} fill="url(#gradEnroll)" />
-                  <Area type="monotone" dataKey="revenue" name="إيرادات" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#gradRev)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
+            {mounted && <EnrollmentAreaChart data={chartData} />}
           </div>
         </AdminCard>
 

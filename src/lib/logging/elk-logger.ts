@@ -8,6 +8,8 @@
  * It should only be imported dynamically on the server side
  */
 
+import 'server-only';
+
 import winston from 'winston';
 import { ElasticsearchTransport } from 'winston-elasticsearch';
 import { Client } from '@elastic/elasticsearch';

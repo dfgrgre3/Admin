@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Download, RefreshCw, Filter } from "lucide-react";
@@ -13,8 +14,9 @@ import { cn } from "@/lib/utils";
 // Components
 import { OverallStatusBanner } from "./_components/overall-status-banner";
 import { HealthStatsCards } from "./_components/health-stats-cards";
-import { PerformanceCharts } from "./_components/performance-charts";
 import { HealthTabs } from "./_components/health-tabs";
+
+const PerformanceCharts = dynamic(() => import("./_components/performance-charts").then(mod => mod.PerformanceCharts), { ssr: false, loading: () => <div className="h-[400px] w-full animate-pulse bg-muted/30 rounded-3xl" /> });
 
 // Hooks
 import { useHealthData, useExportHealthReport } from "./_hooks/useHealthData";

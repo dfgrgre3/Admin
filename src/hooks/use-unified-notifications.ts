@@ -203,16 +203,23 @@ export function useUnifiedNotifications(options: UseUnifiedNotificationsOptions 
       try {
         const message = JSON.parse(event.data);
 
-        if (message.type === "notification-delivered" || message.type === "notification-status") {
+        if (
+          message.type === "notification" ||
+          message.type === "notification-delivered" ||
+          message.type === "notification-status"
+        ) {
           const notification: UnifiedNotification = {
             id: message.id || crypto.randomUUID(),
             userId: message.userId,
-            type: message.notificationType || "system",
+            type: message.ntype || message.notificationType || "system",
             title: message.title || "إشعار جديد",
             message: message.message || message.description,
             channels: message.channels || ["in-app"],
-            status: message.status || "sent",
-            metadata: message.metadata,
+            status: message.status || "delivered",
+            metadata: {
+              ...message.metadata,
+              actionUrl: message.link || message.metadata?.actionUrl,
+            },
             createdAt: message.createdAt || new Date().toISOString(),
             updatedAt: message.updatedAt || new Date().toISOString(),
           };
