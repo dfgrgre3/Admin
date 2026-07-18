@@ -11,6 +11,9 @@ import type {
   AdminAiPayload,
   AIContentType,
   AIProvider,
+  AdminAgentCommandResponse,
+  AdminAgentExecuteResponse,
+  AdminAgentCommandContext,
 } from './types';
 import { adminFetch } from '@/lib/api/admin-api';
 import { apiClient } from '@/lib/api/api-client';
@@ -119,24 +122,31 @@ class UnifiedAIClient {
       return this.directCopilot(prompt);
     }
 
-    // الاتصال عبر الـ Backend Proxy
-    const response = await adminFetch(apiRoutes.admin.ai, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'copilot',
-        prompt,
-        context,
-        provider: this.config.defaultProvider,
-      }),
+    // الاتصال عبر مسار الشات الموحد حتى يتم حفظ المحادثات وتطبيق صلاحيات المستخدم والـ rate limit.
+    const response = await apiClient.post<{
+      success?: boolean;
+      reply?: string;
+      message?: string;
+      error?: string;
+      conversationId?: string;
+      messageId?: string;
+      sources?: AICopilotResponse['sources'];
+    }>(apiRoutes.ai.chat, {
+      message: prompt,
+      context,
+      stream: false,
+      useKnowledgeBase: true,
+    }, {
+      timeout: this.config.timeout,
+      retries: this.config.retries,
     });
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({ error: 'فشل الاتصال بالمساعد الذكي' }));
-      throw new Error(err.error || `HTTP ${response.status}`);
+    const message = response.reply || response.message;
+    if (!message) {
+      throw new Error(response.error || 'فشل الاتصال بالمساعد الذكي');
     }
 
-    return response.json();
+    return { message, sources: response.sources };
   }
 
   /**
@@ -304,6 +314,44 @@ class UnifiedAIClient {
     return result;
   }
 
+  async runAgentCommand(command: string, context?: AdminAgentCommandContext): Promise<AdminAgentCommandResponse> {
+    const response = await adminFetch(apiRoutes.admin.ai, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'agent_command',
+        command,
+        context,
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || result.message || 'فشل تشغيل الوكيل الذكي');
+    }
+
+    return result.data || result;
+  }
+
+  async executeAgentCommand(commandId: string, confirmed: boolean): Promise<AdminAgentExecuteResponse> {
+    const response = await adminFetch(apiRoutes.admin.ai, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'agent_execute',
+        commandId,
+        confirmed,
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || result.message || 'فشل تنفيذ أمر الوكيل');
+    }
+
+    return result.data || result;
+  }
+
   // ── جلب البيانات العامة للوحة التحكم ────────────────
 
   /**
@@ -315,7 +363,10 @@ class UnifiedAIClient {
       const errBody = await response.json().catch(() => ({}));
       throw new Error((errBody as any).error || `HTTP ${response.status}`);
     }
-    return response.json();
+    const json = await response.json();
+    // الباك اند يغلّف البيانات الحقيقية في { data: {...}, success: true }
+    // نفك التغليف لنعيد AiDashboardData مباشرة ليتطابق مع الأنواع والتوقعات.
+    return (json.data || json) as AiDashboardData;
   }
 
   /**

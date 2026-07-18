@@ -1,8 +1,7 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, lazy } from 'react';
 import { AuthProvider } from '@/contexts/auth-context';
-import { WebSocketProvider } from '@/contexts/websocket-context';
 import { SettingsProvider } from '@/contexts/settings-context';
 import ClientLayoutProvider from '@/providers/client-layout-provider';
 import { NotificationsProvider } from '@/providers/notifications-provider';
@@ -14,6 +13,12 @@ import { HydrationFix } from '@/components/hydration-fix';
 import { LazyMotion, domAnimation } from 'framer-motion';
 import { PerformanceProvider } from '@/components/providers/PerformanceProvider';
 import { ReactQueryPersistence } from '@/providers/react-query-persistence';
+
+// Lazy load WebSocket provider to reduce initial JS bundle size
+// WebSocket is disabled by default, so we defer loading it completely
+const WebSocketProvider = lazy(() => 
+  import('@/contexts/websocket-context').then(mod => ({ default: mod.WebSocketProvider }))
+);
 
 function makeQueryClient() {
   return new QueryClient({

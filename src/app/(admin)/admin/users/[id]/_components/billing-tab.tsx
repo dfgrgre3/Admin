@@ -85,6 +85,12 @@ export function BillingTab({
   const [refundPayment, setRefundPayment] = React.useState<AdminPayment | null>(null);
   const [refundAmount, setRefundAmount] = React.useState("");
   const [refundReason, setRefundReason] = React.useState("");
+  const [couponOpen, setCouponOpen] = React.useState(false);
+  const [couponCode, setCouponCode] = React.useState("");
+  const [couponType, setCouponType] = React.useState("PERCENTAGE");
+  const [couponValue, setCouponValue] = React.useState("");
+  const [couponDesc, setCouponDesc] = React.useState("");
+  const [couponSaving, setCouponSaving] = React.useState(false);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -178,6 +184,40 @@ export function BillingTab({
     }
   };
 
+  const createCoupon = async () => {
+    const value = Number(couponValue);
+    if (!Number.isFinite(value) || value <= 0)
+      return toast.error("أدخل قيمة خصم صحيحة أكبر من صفر");
+    setCouponSaving(true);
+    try {
+      const response = await adminFetch(`/admin/users/${user.id}/coupon`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: couponCode.trim(),
+          description: couponDesc.trim() || `كوبون خاص بـ ${user.name || user.email}`,
+          discountType: couponType,
+          discountValue: value,
+        }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || data?.message || "فشل إنشاء الكوبون");
+      }
+      const data = await response.json();
+      const code = data?.data?.code || data?.code || couponCode;
+      toast.success(`تم تفعيل كوبون خصم خاص بالمستخدم: ${code}`);
+      setCouponOpen(false);
+      setCouponCode("");
+      setCouponValue("");
+      setCouponDesc("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "فشل إنشاء الكوبون");
+    } finally {
+      setCouponSaving(false);
+    }
+  };
+
   if (loading)
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4">
@@ -209,15 +249,26 @@ export function BillingTab({
               <span className="text-sm font-bold text-muted-foreground mr-1">ج.م</span>
             </p>
             {canManage && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-3 h-8 rounded-xl text-xs font-bold gap-1.5 w-full border-primary/20 hover:bg-primary/5"
-                onClick={() => setAdjustOpen(true)}
-              >
-                <PlusCircle className="h-3.5 w-3.5" />
-                تعديل الرصيد
-              </Button>
+              <div className="flex gap-2 mt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 h-8 rounded-xl text-xs font-bold gap-1.5 border-primary/20 hover:bg-primary/5"
+                  onClick={() => setAdjustOpen(true)}
+                >
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  تعديل الرصيد
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 h-8 rounded-xl text-xs font-bold gap-1.5 border-amber-500/20 hover:bg-amber-500/5 text-amber-600"
+                  onClick={() => setCouponOpen(true)}
+                >
+                  <ShoppingCart className="h-3.5 w-3.5" />
+                  كوبون خاص
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -598,6 +649,91 @@ export function BillingTab({
             >
               {saving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
               تأكيد الاسترداد
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Personal Coupon Dialog */}
+      <Dialog open={couponOpen} onOpenChange={(open) => {
+        setCouponOpen(open);
+        if (!open) { setCouponCode(""); setCouponValue(""); setCouponDesc(""); setCouponType("PERCENTAGE"); }
+      }}>
+        <DialogContent
+          dir="rtl"
+          className="rounded-[2rem] border-white/10 bg-card/95 backdrop-blur-xl max-w-md"
+        >
+          <DialogHeader className="space-y-3">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">
+              <ShoppingCart className="h-7 w-7" />
+            </div>
+            <DialogTitle className="text-center text-xl font-black">
+              تفعيل كوبون خصم خاص
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              سيُنشأ كوبون خصم مخصص لـ {user.name || user.email} فقط ولا يمكن استخدامه من غيره
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-sm font-bold">كود الكوبون (اختياري)</label>
+              <Input
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                placeholder="يُولَّد تلقائيًا إن تُرك فارغًا"
+                className="h-12 rounded-xl"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className="text-sm font-bold">نوع الخصم</label>
+                <select
+                  value={couponType}
+                  onChange={(e) => setCouponType(e.target.value)}
+                  className="h-12 w-full rounded-xl border bg-background px-3 text-sm"
+                >
+                  <option value="PERCENTAGE">نسبة مئوية %</option>
+                  <option value="FIXED">مبلغ ثابت ج.م</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold">
+                  {couponType === "PERCENTAGE" ? "النسبة %" : "المبلغ ج.م"}
+                </label>
+                <Input
+                  type="number"
+                  value={couponValue}
+                  onChange={(e) => setCouponValue(e.target.value)}
+                  placeholder={couponType === "PERCENTAGE" ? "10" : "50"}
+                  className="h-12 rounded-xl"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold">وصف (اختياري)</label>
+              <Input
+                value={couponDesc}
+                onChange={(e) => setCouponDesc(e.target.value)}
+                placeholder="مثال: مكافأة ولاء"
+                className="h-12 rounded-xl"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-3">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-xl h-11"
+              onClick={() => { setCouponOpen(false); setCouponCode(""); setCouponValue(""); setCouponDesc(""); }}
+            >
+              إلغاء
+            </Button>
+            <Button
+              className="flex-1 rounded-xl h-11"
+              onClick={createCoupon}
+              disabled={couponSaving || !couponValue}
+            >
+              {couponSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+              تفعيل الكوبون
             </Button>
           </DialogFooter>
         </DialogContent>

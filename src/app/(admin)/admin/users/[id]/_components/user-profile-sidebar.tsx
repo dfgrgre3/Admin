@@ -32,6 +32,7 @@ import {
   Globe,
   Copy,
   ExternalLink,
+  LogIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AdminBadge } from "@/components/admin/ui/admin-badge";
@@ -45,12 +46,14 @@ export function UserProfileSidebar({
   setActiveTab,
   router,
   onChangePassword,
+  onImpersonate,
   canManage = false,
 }: {
   user: UserDetails;
   setActiveTab: (tab: string) => void;
   router: ReturnType<typeof import("next/navigation").useRouter>;
   onChangePassword?: () => void;
+  onImpersonate?: () => void;
   canManage?: boolean;
 }) {
   const { level, levelProgress, xpToNextLevel } = computeLevelProgress(user);
@@ -331,6 +334,18 @@ export function UserProfileSidebar({
               </div>
               الأمان والحظر
             </Button>
+            {canManage && (
+            <Button
+              variant="destructive"
+              className="w-full justify-start rounded-xl gap-3 h-11 text-sm font-bold bg-danger/10 text-danger border border-danger/30 hover:bg-danger hover:text-white transition-all"
+              onClick={() => onImpersonate?.()}
+            >
+              <div className="p-1.5 rounded-lg bg-danger/10 text-danger">
+                <LogIn className="h-3.5 w-3.5" />
+              </div>
+              تسجيل الدخول كـ (Impersonate)
+            </Button>
+            )}
             <Button
               variant="outline"
               className="w-full justify-start rounded-xl gap-3 h-11 text-sm font-medium hover:bg-muted/60 transition-all"

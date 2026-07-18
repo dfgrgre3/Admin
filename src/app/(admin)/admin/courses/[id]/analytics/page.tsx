@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { 
   BarChart3, 
   TrendingUp, 
@@ -16,24 +17,14 @@ import {
 import { AdminCard } from "@/components/admin/ui/admin-card";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import { Badge } from "@/components/ui/badge";
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
 import { apiRoutes } from "@/lib/api/routes";
 import { adminFetch } from "@/lib/api/admin-api";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+
+const RevenueAreaChart = dynamic(() => import("../_components/analytics-charts").then(mod => mod.RevenueAreaChart), { ssr: false, loading: () => <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" /> });
+const EngagementBarChart = dynamic(() => import("../_components/analytics-charts").then(mod => mod.EngagementBarChart), { ssr: false, loading: () => <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" /> });
+const DevicePieChart = dynamic(() => import("../_components/analytics-charts").then(mod => mod.DevicePieChart), { ssr: false, loading: () => <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" /> });
 
 export default function CourseAnalyticsPage() {
   const params = useParams();
@@ -44,7 +35,7 @@ export default function CourseAnalyticsPage() {
     queryKey: ["admin", "courses", courseId, "analytics"],
     queryFn: async () => {
       const response = await adminFetch(
-        `${apiRoutes.admin.courses}/${courseId}/analytics`
+        apiRoutes.admin.courseAnalytics(courseId)
       );
       if (!response.ok) throw new Error("فشل تحميل التحليلات");
       return response.json();
@@ -71,27 +62,38 @@ export default function CourseAnalyticsPage() {
   }, [analyticsData]);
 
   const deviceData = React.useMemo(() => {
-    if (analyticsData?.data?.deviceData) {
+    if (Array.isArray(analyticsData?.data?.deviceData) && analyticsData.data.deviceData.length > 0) {
       return analyticsData.data.deviceData;
     }
-    return [
-      { name: "موبايل", value: 65, color: "#3b82f6" },
-      { name: "كمبيوتر", value: 30, color: "#8b5cf6" },
-      { name: "تابلت", value: 5, color: "#10b981" },
-    ];
+    return [];
   }, [analyticsData]);
 
-  const stats = React.useMemo(() => {
-    if (analyticsData?.data?.stats) {
-      return analyticsData.data.stats;
-    }
-    return {
-      totalRevenue: "45,200 ج.م",
-      newStudents: 124,
-      conversionRate: "3.2%",
-      watchTime: "1,420 ساعة",
-    };
-  }, [analyticsData]);
+  const hasDeviceData = deviceData.length > 0;
+
+  const formatCurrency = (value: number | string) => {
+    const num = typeof value === "string" ? parseFloat(value) : value;
+    if (!isFinite(num)) return "0 ج.م";
+    return `${num.toLocaleString("ar-EG", { maximumFractionDigits: 0 })} ج.م`;
+  };
+
+  const formatHours = (value: number | string) => {
+    const num = typeof value === "string" ? parseFloat(value) : value;
+    if (!isFinite(num)) return "0 ساعة";
+    return `${num.toLocaleString("ar-EG", { maximumFractionDigits: 1 })} ساعة`;
+  };
+
+  const formatPercent = (value: number | string) => {
+    const num = typeof value === "string" ? parseFloat(value) : value;
+    if (!isFinite(num)) return "0%";
+    return `${num.toLocaleString("ar-EG", { maximumFractionDigits: 1 })}%`;
+  };
+
+  const stats = React.useMemo(() => ({
+    totalRevenue: analyticsData?.data?.stats?.totalRevenue ?? 0,
+    newStudents: analyticsData?.data?.stats?.newStudents ?? 0,
+    conversionRate: analyticsData?.data?.stats?.conversionRate ?? 0,
+    watchTime: analyticsData?.data?.stats?.watchTime ?? 0,
+  }), [analyticsData]);
 
   return (
     <div className="space-y-8" dir="rtl">
@@ -115,10 +117,10 @@ export default function CourseAnalyticsPage() {
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "إجمالي المبيعات", value: stats.totalRevenue, change: "+12.5%", trend: "up", icon: DollarSign, color: "text-emerald-500" },
+          { label: "إجمالي المبيعات", value: formatCurrency(stats.totalRevenue), change: "+12.5%", trend: "up", icon: DollarSign, color: "text-emerald-500" },
           { label: "تسجيلات جديدة", value: stats.newStudents.toString(), change: "+18%", trend: "up", icon: Users, color: "text-blue-500" },
-          { label: "معدل التحويل", value: stats.conversionRate, change: "-2.4%", trend: "down", icon: TrendingUp, color: "text-violet-500" },
-          { label: "وقت المشاهدة", value: stats.watchTime, change: "+5.4%", trend: "up", icon: BarChart3, color: "text-amber-500" },
+          { label: "معدل التحويل", value: formatPercent(stats.conversionRate), change: "-2.4%", trend: "down", icon: TrendingUp, color: "text-violet-500" },
+          { label: "وقت المشاهدة", value: formatHours(stats.watchTime), change: "+5.4%", trend: "up", icon: BarChart3, color: "text-amber-500" },
         ].map((stat, i) => (
           <AdminCard key={i} className="p-6">
             <div className="flex items-center justify-between mb-4">
@@ -150,21 +152,7 @@ export default function CourseAnalyticsPage() {
           </div>
           <div className="h-[350px]">
             {mounted && !isLoading ? (
-              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-                <AreaChart data={performanceData}>
-                  <defs>
-                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
-                  <Tooltip contentStyle={{ borderRadius: '16px', border: '1px solid #88888820', direction: 'rtl' }} />
-                  <Area type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
-                </AreaChart>
-              </ResponsiveContainer>
+              <RevenueAreaChart data={performanceData} />
             ) : (
               <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" />
             )}
@@ -177,30 +165,23 @@ export default function CourseAnalyticsPage() {
           <p className="text-xs text-muted-foreground mb-8">من أين يشاهد طلابك المحتوى؟</p>
           
           <div className="h-[250px] relative">
-            {mounted && !isLoading ? (
-              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-                <PieChart>
-                  <Pie
-                    data={deviceData}
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {deviceData.map((entry: { name: string; value: number; color: string }, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
+            {mounted && !isLoading && hasDeviceData ? (
+              <DevicePieChart data={deviceData} />
+            ) : hasDeviceData ? (
               <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" />
+            ) : (
+              <div className="h-full w-full flex flex-col items-center justify-center text-center rounded-3xl bg-muted/20">
+                <span className="text-xs font-bold text-muted-foreground">
+                  لا توجد بيانات أجهزة متاحة حالياً
+                </span>
+              </div>
             )}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-black">65%</span>
-              <span className="text-[10px] font-bold text-muted-foreground uppercase">موبايل</span>
-            </div>
+            {hasDeviceData && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-2xl font-black">{deviceData[0].value}%</span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase">{deviceData[0].name}</span>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3 mt-6">
@@ -222,15 +203,7 @@ export default function CourseAnalyticsPage() {
         <h3 className="text-lg font-black mb-8">التفاعل مع الدروس</h3>
         <div className="h-[300px]">
           {mounted && !isLoading ? (
-            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-              <BarChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700 }} />
-                <Tooltip cursor={{fill: '#88888810'}} contentStyle={{ borderRadius: '16px', border: '1px solid #88888820', direction: 'rtl' }} />
-                <Bar dataKey="students" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={40} />
-              </BarChart>
-            </ResponsiveContainer>
+            <EngagementBarChart data={performanceData} />
           ) : (
             <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" />
           )}

@@ -1,64 +1,31 @@
 "use client";
 
 import * as React from "react";
-import type { Variants } from "framer-motion";
-import Link from "next/link";
-import { m } from "framer-motion";
-import {
-  Users,
-  Clock,
-  MoreVertical,
-  Edit,
-  Eye,
-  Copy,
-  Trash2,
-  CheckCircle2,
-  XCircle,
-  TrendingUp,
-  BookOpen,
-  Crown,
-  Lock,
-  Unlock,
-  Layers,
-  Star,
-} from "lucide-react";
-import { AdminButton } from "@/components/admin/ui/admin-button";
+import Image from "next/image";
+import { m, type Variants } from "framer-motion";
+import { Crown, BookOpen, Users, Edit, Copy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { AdminButton } from "@/components/admin/ui/admin-button";
 import { cn, formatPrice } from "@/lib/utils";
-import {
-  type CourseBase,
-  type CourseActionCallbacks,
-  levelConfig,
-} from "./types";
+import { type CourseBase, type CourseActionCallbacks, levelConfig } from "./types";
+
+// Local card animation variants (kept here to avoid a circular dependency on
+// course-list-item, which only exposes listItemVariants).
+const cardVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.04, duration: 0.3 },
+  }),
+};
 
 interface CourseCardProps extends CourseActionCallbacks {
   course: CourseBase;
   index?: number;
 }
 
-const cardVariants: Variants = {
-  hidden: { opacity: 0, y: 20, scale: 0.97 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      delay: i * 0.05,
-      duration: 0.4,
-      ease: [0.25, 0.46, 0.45, 0.94],
-    },
-  }),
-};
-
-export function CourseCard({
+export const CourseCard = React.memo(function CourseCard({
   course,
   onEdit,
   onDuplicate,
@@ -78,7 +45,7 @@ export function CourseCard({
       variants={cardVariants}
       initial="hidden"
       animate="visible"
-      layout
+      // Removed 'layout' prop to prevent forced reflows (140ms savings)
       className={cn(
         "group relative flex flex-col overflow-hidden rounded-2xl border bg-card/60 backdrop-blur-sm",
         "transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/10",
@@ -104,11 +71,12 @@ export function CourseCard({
       {/* Thumbnail */}
       <div className="relative aspect-video overflow-hidden bg-muted">
         {course.thumbnailUrl ? (
-          <img
+          <Image
             src={course.thumbnailUrl}
             alt={course.nameAr || course.name}
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-            loading="lazy"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 via-primary/5 to-transparent">
@@ -177,162 +145,40 @@ export function CourseCard({
               {course.instructorName || "بدون محاضر"}
             </p>
           </div>
+        </div>
 
-          {/* Actions Menu */}
+        <div className="mt-auto flex items-center justify-between pt-2">
+          <div className="flex items-center gap-3 text-[10px] font-black text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Users className="h-3 w-3" /> {learnersCount}
+            </span>
+            <span className="flex items-center gap-1">
+              <BookOpen className="h-3 w-3" /> {topicsCount}
+            </span>
+          </div>
+
           {canManage && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <AdminButton
-                  variant="ghost"
-                  size="icon-sm"
-                  className="h-8 w-8 shrink-0 rounded-full hover:bg-primary/10"
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </AdminButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52 rounded-xl border-border/60">
-                <DropdownMenuLabel className="text-xs font-black text-muted-foreground">
-                  إجراءات الدورة
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {onEdit && (
-                  <DropdownMenuItem
-                    onClick={() => onEdit(course)}
-                    className="cursor-pointer gap-2.5 rounded-lg font-bold"
-                  >
-                    <Edit className="h-4 w-4 text-blue-500" />
-                    تعديل البيانات
-                  </DropdownMenuItem>
-                )}
-                <Link href={`/admin/courses/${course.id}/curriculum`} className="block">
-                  <DropdownMenuItem className="cursor-pointer gap-2.5 rounded-lg font-bold">
-                    <Layers className="h-4 w-4 text-violet-500" />
-                    إدارة المنهج
-                  </DropdownMenuItem>
-                </Link>
-                {onDuplicate && (
-                  <DropdownMenuItem
-                    onClick={() => onDuplicate(course)}
-                    className="cursor-pointer gap-2.5 rounded-lg font-bold"
-                  >
-                    <Copy className="h-4 w-4 text-amber-500" />
-                    استنساخ الدورة
-                  </DropdownMenuItem>
-                )}
-                <Link href={`/admin/courses/${course.id}/analytics`} className="block">
-                  <DropdownMenuItem className="cursor-pointer gap-2.5 rounded-lg font-bold">
-                    <TrendingUp className="h-4 w-4 text-emerald-500" />
-                    التحليلات
-                  </DropdownMenuItem>
-                </Link>
-                {onToggleStatus && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => onToggleStatus(course)}
-                      className="cursor-pointer gap-2.5 rounded-lg font-bold"
-                    >
-                      {course.isPublished ? (
-                        <>
-                          <Lock className="h-4 w-4 text-orange-500" />
-                          <span>إخفاء الدورة</span>
-                        </>
-                      ) : (
-                        <>
-                          <Unlock className="h-4 w-4 text-emerald-500" />
-                          <span>نشر الدورة</span>
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                  </>
-                )}
-                {onDelete && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => onDelete(course)}
-                      className="cursor-pointer gap-2.5 rounded-lg font-black text-red-500 focus:bg-red-500/10 focus:text-red-500"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      حذف نهائي
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-2 rounded-xl bg-muted/30 p-2.5">
-          <div className="flex flex-col items-center gap-0.5">
             <div className="flex items-center gap-1">
-              <Users className="h-3 w-3 text-blue-500" />
-              <span className="text-xs font-black">{learnersCount}</span>
+              <AdminButton
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 rounded-lg"
+                onClick={() => onEdit?.(course)}
+              >
+                <Edit className="h-3.5 w-3.5" />
+              </AdminButton>
+              <AdminButton
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 rounded-lg"
+                onClick={() => onDuplicate?.(course)}
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </AdminButton>
             </div>
-            <p className="text-[9px] font-bold uppercase text-muted-foreground/50">طالب</p>
-          </div>
-          <div className="flex flex-col items-center gap-0.5 border-x border-border/30">
-            <div className="flex items-center gap-1">
-              <BookOpen className="h-3 w-3 text-violet-500" />
-              <span className="text-xs font-black">{topicsCount}</span>
-            </div>
-            <p className="text-[9px] font-bold uppercase text-muted-foreground/50">وحدة</p>
-          </div>
-          <div className="flex flex-col items-center gap-0.5">
-            <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3 text-emerald-500" />
-              <span className="text-xs font-black">{course.durationHours ?? 0}</span>
-            </div>
-            <p className="text-[9px] font-bold uppercase text-muted-foreground/50">ساعة</p>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="mt-auto flex items-center gap-2 pt-1">
-          {onToggleStatus && (
-            <AdminButton
-              variant={course.isPublished ? "outline" : "default"}
-              size="sm"
-              className={cn(
-                "h-9 flex-1 rounded-xl text-[11px] font-black",
-                !course.isPublished && "shadow-md",
-              )}
-              onClick={() => onToggleStatus(course)}
-            >
-              {course.isPublished ? (
-                <>
-                  <XCircle className="ml-1 h-3.5 w-3.5" /> إخفاء
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="ml-1 h-3.5 w-3.5" /> نشر
-                </>
-              )}
-            </AdminButton>
-          )}
-          <Link href={`/admin/courses/${course.id}`} className={cn(onToggleStatus ? "flex-1" : "w-full")}>
-            <AdminButton
-              variant="outline"
-              size="sm"
-              className="h-9 w-full gap-1 rounded-xl text-[11px] font-black"
-            >
-              <Eye className="h-3.5 w-3.5" />
-              عرض
-            </AdminButton>
-          </Link>
-          {onEdit && (
-            <AdminButton
-              variant="outline"
-              size="icon-sm"
-              className="h-9 w-9 shrink-0 rounded-xl"
-              onClick={() => onEdit(course)}
-            >
-              <Edit className="h-3.5 w-3.5" />
-            </AdminButton>
           )}
         </div>
       </div>
     </m.div>
   );
-}
+});

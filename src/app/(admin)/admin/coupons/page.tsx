@@ -47,6 +47,7 @@ import {
   Sparkles,
   QrCode,
   Printer,
+  Trash2,
 } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useForm } from "react-hook-form";
@@ -58,7 +59,6 @@ import { apiRoutes } from "@/lib/api/routes";
 import { adminFetch } from "@/lib/api/admin-api";
 import { COMMERCE_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
 import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
-import { m } from "framer-motion";
 
 interface Coupon {
   id: string;
@@ -202,6 +202,53 @@ export default function AdminCouponsPage() {
     },
     onError: () => {
       toast.error("فشل في حذف الكود");
+    },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const res = await adminFetch(`${apiRoutes.admin.coupons}/bulk-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "فشل حذف الأكواد");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast.success(data?.message || "تم حذف الأكواد المحددة");
+      queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
+      void requestPublicCacheRevalidation(COMMERCE_PUBLIC_CACHE_PATHS).catch(() => {});
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
+  });
+
+  const deleteAllMutation = useMutation({
+    mutationFn: async () => {
+      const allIds = couponsList.map((c) => c.id);
+      const res = await adminFetch(`${apiRoutes.admin.coupons}/bulk-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: allIds }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "فشل حذف جميع الأكواد");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast.success(data?.message || "تم حذف جميع الأكواد");
+      queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] });
+      void requestPublicCacheRevalidation(COMMERCE_PUBLIC_CACHE_PATHS).catch(() => {});
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
     },
   });
 
@@ -366,7 +413,19 @@ export default function AdminCouponsPage() {
 
   const handleDelete = () => {
     if (!deleteDialog.id) return;
-    deleteMutation.mutate(deleteDialog.id);
+    
+    if (deleteDialog.id === "all") {
+      deleteAllMutation.mutate();
+    } else if (deleteDialog.id === "bulk") {
+      const bulkIds = (window as any).__bulkDeleteIds || [];
+      if (bulkIds.length > 0) {
+        bulkDeleteMutation.mutate(bulkIds);
+        delete (window as any).__bulkDeleteIds;
+      }
+    } else {
+      deleteMutation.mutate(deleteDialog.id);
+    }
+    
     setDeleteDialog({ open: false, id: null });
   };
 
@@ -608,11 +667,7 @@ export default function AdminCouponsPage() {
       </div>
 
       {/* Table */}
-      <m.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rpg-glass-light dark:rpg-glass p-1 rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl"
-      >
+      <div className="rpg-glass-light dark:rpg-glass p-1 rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
         <AdminDataTable
           columns={columns}
           data={filteredCoupons}
@@ -620,6 +675,27 @@ export default function AdminCouponsPage() {
           searchKey="code"
           searchPlaceholder="ابحث بالكود..."
           actions={{ onRefresh: () => queryClient.invalidateQueries({ queryKey: ["admin", "coupons"] }) }}
+          selectable
+          onSelectionChange={(selectedRows) => {
+            // Selection change handler - bulk actions bar will appear automatically
+          }}
+          bulkActions={[
+            {
+              label: "حذف المحدد",
+              icon: Trash2,
+              onClick: (selectedRows) => {
+                const ids = selectedRows.map((row: Coupon) => row.id);
+                if (ids.length === 0) return;
+                setDeleteDialog({
+                  open: true,
+                  id: "bulk",
+                });
+                // Store bulk IDs temporarily
+                (window as any).__bulkDeleteIds = ids;
+              },
+              variant: "destructive",
+            },
+          ]}
           toolbar={
             <div className="flex items-center gap-3">
               <div className="relative group">
@@ -647,10 +723,24 @@ export default function AdminCouponsPage() {
                   </button>
                 ))}
               </div>
+              {couponsList.length > 0 && (
+                <AdminButton
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    setDeleteDialog({
+                      open: true,
+                      id: "all",
+                    });
+                  }}
+                >
+                  حذف جميع الأكواد
+                </AdminButton>
+              )}
             </div>
           }
         />
-      </m.div>
+      </div>
 
       <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
         <DialogContent className="max-w-xl bg-card/90 backdrop-blur-xl border-white/10 rounded-[2rem]">
@@ -1035,9 +1125,27 @@ export default function AdminCouponsPage() {
       <ConfirmDialog
         open={deleteDialog.open}
         onOpenChange={(open) => setDeleteDialog({ open, id: null })}
-        title="حذف كود الخصم نهائياً؟"
-        description="أنت على وشك حذف هذا الكود من النظام. لا يمكن التراجع عن هذا الإجراء."
-        confirmText="نعم، احذف الكود"
+        title={
+          deleteDialog.id === "all"
+            ? "حذف جميع الأكواد نهائياً؟"
+            : deleteDialog.id === "bulk"
+            ? "حذف الأكواد المحددة نهائياً؟"
+            : "حذف كود الخصم نهائياً؟"
+        }
+        description={
+          deleteDialog.id === "all"
+            ? "أنت على وشك حذف جميع أكواد الخصم من النظام. لا يمكن التراجع عن هذا الإجراء."
+            : deleteDialog.id === "bulk"
+            ? "أنت على وشك حذف الأكواد المحددة من النظام. لا يمكن التراجع عن هذا الإجراء."
+            : "أنت على وشك حذف هذا الكود من النظام. لا يمكن التراجع عن هذا الإجراء."
+        }
+        confirmText={
+          deleteDialog.id === "all"
+            ? "نعم، احذف جميع الأكواد"
+            : deleteDialog.id === "bulk"
+            ? "نعم، احذف الأكواد المحددة"
+            : "نعم، احذف الكود"
+        }
         variant="destructive"
         onConfirm={handleDelete}
       />

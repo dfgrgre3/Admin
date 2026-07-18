@@ -11,7 +11,7 @@ const alexandria = Alexandria({
   variable: '--font-alexandria',
   display: 'swap',
   preload: true,
-  weight: ['400', '600', '700'],
+  weight: ['400', '700'],
   adjustFontFallback: true,
   fallback: ['system-ui', 'sans-serif'],
 });
@@ -19,7 +19,6 @@ const alexandria = Alexandria({
 export const metadata: Metadata = {
   title: { default: 'لوحة التحكم | Tolo', template: '%s | Tolo' },
   description: 'لوحة التحكم وإدارة نظام Tolo التعليمي',
-  robots: { index: false, follow: false },
 };
 
 export const viewport = {
@@ -43,6 +42,17 @@ export default async function RootLayout({
         <meta name="theme-color" content="#f97316" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+        {/* Inline critical CSS to reduce render-blocking */}
+        <style dangerouslySetInnerHTML={{__html: `
+          /* Critical above-the-fold styles */
+          html{font-family:var(--font-alexandria),var(--font-sans),system-ui,sans-serif;background:hsl(var(--background));color:hsl(var(--foreground))}
+          body{min-height:100vh;margin:0}
+          /* Prevent FOIT for critical elements */
+          h1,h2,h3,h4,h5,h6{font-weight:700;color:hsl(var(--foreground))}
+        `}} />
+        {/* Preload critical CSS to reduce render-blocking time */}
+        <link rel="preload" href="/_next/static/css/app/layout.css" as="style" />
+        {/* Defer non-critical CSS - handled by Next.js optimizeCss */}
       </head>
       <body className={`${alexandria.variable} font-sans`} suppressHydrationWarning>
         <SWRegistration />

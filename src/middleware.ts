@@ -54,7 +54,7 @@ async function verifyAccessToken(
   }
 }
 
-const ALLOWED_ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN", "MODERATOR", "SUPPORT"];
+const ALLOWED_ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN", "MODERATOR", "SUPPORT", "TEACHER"];
 
 const isProtectedRoute = (req: NextRequest): boolean => {
   const { pathname } = req.nextUrl;

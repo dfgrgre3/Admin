@@ -226,3 +226,88 @@ export function hasPermission(
   }
   return false;
 }
+
+// ─────────────────────────────────────────────
+//  Field-Level Permissions (FLP)
+//  Mirrors Go's models/field_permissions.go. Used by the UI to show a
+//  clear indicator when sensitive fields are hidden by the backend.
+// ─────────────────────────────────────────────
+
+export type FieldGroup = "financial" | "grades" | "contact" | "auth_secrets" | "behavioral";
+
+export const FIELD_GROUPS: Record<FieldGroup, string[]> = {
+  financial: [
+    "balance", "aiCredits", "examCredits", "activeSubscriptionId",
+    "subscriptionExpiresAt", "payments", "walletTransactions", "paymobOrderId",
+    "externalTxnId", "reference", "method", "amount", "currency", "pdfUrl", "invoiceNumber",
+  ],
+  grades: [
+    "examResults", "totalXP", "level", "currentStreak", "longestStreak",
+    "examsPassed", "studyXP", "taskXP", "examXP", "challengeXP", "questXP",
+    "seasonXP", "tasksCompleted", "score", "grade", "percentage",
+  ],
+  contact: [
+    "email", "phone", "alternativePhone", "city", "country", "dateOfBirth",
+    "gender", "school", "address",
+  ],
+  auth_secrets: [
+    "passwordHash", "twoFactorSecret", "backupCodes", "resetPasswordToken",
+    "resetPasswordExpires", "magicLinkToken", "magicLinkExpires",
+    "verificationToken", "verificationExpires", "phoneVerificationOtp",
+  ],
+  behavioral: [],
+};
+
+/** Human-readable Arabic labels for field groups (shown in UI badges). */
+export const FIELD_GROUP_LABELS: Record<FieldGroup, string> = {
+  financial: "البيانات المالية",
+  grades: "الدرجات والتقييمات",
+  contact: "بيانات التواصل",
+  auth_secrets: "أسرار المصادقة",
+  behavioral: "النشاط السلوكي",
+};
+
+const FIELD_TO_GROUP: Record<string, FieldGroup> = (() => {
+  const map: Record<string, FieldGroup> = {};
+  (Object.keys(FIELD_GROUPS) as FieldGroup[]).forEach((g) => {
+    FIELD_GROUPS[g].forEach((f) => (map[f] = g));
+  });
+  return map;
+})();
+
+/** Default visible field groups per role (mirrors Go DefaultFieldGroupsPerRole). */
+const DEFAULT_FIELD_GROUPS: Record<string, FieldGroup[]> = {
+  ADMIN: ["financial", "grades", "contact", "auth_secrets", "behavioral"],
+  SUPER_ADMIN: ["financial", "grades", "contact", "auth_secrets", "behavioral"],
+  MODERATOR: ["grades", "contact", "behavioral"],
+  SUPPORT: ["contact", "behavioral"],
+  TEACHER: ["grades", "contact", "behavioral"],
+  PARENT: ["grades", "contact", "behavioral"],
+  STUDENT: [],
+};
+
+/**
+ * Reports whether the current viewer may see a specific JSON field.
+ * Non-sensitive fields are always visible. ADMIN/SUPER_ADMIN see everything.
+ * `fieldOverrides` is the per-user JSONB override from the backend, if any.
+ */
+export function canViewField(
+  field: string,
+  role: string | undefined,
+  fieldOverrides?: Partial<Record<FieldGroup, boolean>> | null,
+): boolean {
+  const group = FIELD_TO_GROUP[field];
+  if (!group) return true; // non-sensitive field
+
+  const r = (role ?? "").toUpperCase();
+  if (r === "ADMIN" || r === "SUPER_ADMIN") return true;
+
+  let visibleGroups = DEFAULT_FIELD_GROUPS[r] ?? [];
+  if (fieldOverrides) {
+    visibleGroups = visibleGroups.filter((g) => fieldOverrides[g] !== false);
+    (Object.keys(fieldOverrides) as FieldGroup[]).forEach((g) => {
+      if (fieldOverrides[g] && !visibleGroups.includes(g)) visibleGroups.push(g);
+    });
+  }
+  return visibleGroups.includes(group);
+}

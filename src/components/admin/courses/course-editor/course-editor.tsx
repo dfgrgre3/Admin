@@ -50,6 +50,13 @@ export function CourseEditor({
     return value || "";
   }, []);
 
+  const toList = React.useCallback((value?: string | null) => {
+    return (value || "")
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }, []);
+
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema) as any,
     defaultValues: {
@@ -64,6 +71,7 @@ export function CourseEditor({
       instructorId: initialData?.instructorId || "",
       categoryId: initialData?.categoryId || "",
       description: initialData?.description || "",
+      simpleDescription: initialData?.simpleDescription || "",
       isActive: initialData?.isActive ?? true,
       isPublished: initialData?.isPublished ?? false,
       durationHours: initialData?.durationHours || 0,
@@ -122,13 +130,21 @@ export function CourseEditor({
     try {
       const isEdit = !!courseId;
       const payload = {
-            ...(isEdit && initialData?.id ? { id: initialData.id } : {}),
-            ...values,
-            coursePrerequisites: values.coursePrerequisites || values.requirements || "",
-            targetAudience: values.targetAudience || "",
-            whatYouLearn: values.whatYouLearn || values.learningObjectives || "",
-          };
-      const result = await (isEdit ? apiClient.patch<any>(`/admin/courses`, payload) : apiClient.post<any>(`/admin/courses`, payload));
+        ...(isEdit ? { id: initialData?.id || courseId } : {}),
+        ...values,
+        requirements: values.requirements || "",
+        learningObjectives: values.learningObjectives || "",
+        coursePrerequisites: toList(
+          values.coursePrerequisites || values.requirements,
+        ),
+        targetAudience: toList(values.targetAudience),
+        whatYouLearn: toList(
+          values.whatYouLearn || values.learningObjectives,
+        ),
+      };
+      const result = await (isEdit
+        ? apiClient.patch<any>(`/admin/courses`, payload)
+        : apiClient.post<any>(`/admin/courses`, payload));
 
       if (!result) {
         throw new Error("فشل حفظ الدورة");
@@ -137,7 +153,14 @@ export function CourseEditor({
       toast.success(
         isEdit ? "تم تحديث الدورة بنجاح" : "تم إنشاء الدورة بنجاح",
       );
-      form.reset((result?.data?.course ?? values) as CourseFormValues);
+      const savedCourse = result?.data?.course || result?.course || values;
+      form.reset({
+        ...(savedCourse as CourseFormValues),
+        coursePrerequisites: toMultiline(savedCourse.coursePrerequisites),
+        targetAudience: toMultiline(savedCourse.targetAudience),
+        whatYouLearn: toMultiline(savedCourse.whatYouLearn),
+        simpleDescription: toMultiline(savedCourse.simpleDescription),
+      });
       router.refresh();
 
       const createdCourseId = !isEdit && (result?.data?.course?.id || result?.id);
@@ -187,20 +210,128 @@ export function CourseEditor({
 
   // ─── AI generation ───────────────────────────────────────────────────────
   const generateWithAI = async (field: "description" | "seoDescription") => {
-    const name = form.getValues("nameAr") || form.getValues("name");
-    if (!name) {
+    // Gather ALL course data for comprehensive AI analysis
+    const courseData = {
+      nameAr: form.getValues("nameAr"),
+      name: form.getValues("name"),
+      code: form.getValues("code"),
+      level: form.getValues("level"),
+      categoryId: form.getValues("categoryId"),
+      instructorName: form.getValues("instructorName"),
+      durationHours: form.getValues("durationHours"),
+      price: form.getValues("price"),
+      simpleDescription: form.getValues("simpleDescription"),
+      requirements: form.getValues("requirements"),
+      learningObjectives: form.getValues("learningObjectives"),
+      coursePrerequisites: form.getValues("coursePrerequisites"),
+      targetAudience: form.getValues("targetAudience"),
+      whatYouLearn: form.getValues("whatYouLearn"),
+      language: form.getValues("language"),
+    };
+
+    if (!courseData.nameAr && !courseData.name) {
       toast.error("يرجى إدخال اسم الدورة أولاً");
       return;
     }
 
-    const toastId = toast.loading("جاري توليد المحتوى بالذكاء الاصطناعي...");
+    const toastId = toast.loading("جاري تحليل بيانات الدورة وتوليد الوصف...");
     try {
+      let prompt = "";
+
+      if (field === "description") {
+        // Build comprehensive context from ALL available course data
+        const contextParts = [
+          `عنوان الدورة: ${courseData.nameAr || courseData.name}`,
+          courseData.name && courseData.nameAr ? `الاسم بالإنجليزية: ${courseData.name}` : null,
+          courseData.code ? `كود الدورة: ${courseData.code}` : null,
+          courseData.level ? `المستوى: ${courseData.level === "BEGINNER" ? "مبتدئ" : courseData.level === "INTERMEDIATE" ? "متوسط" : "متقدم"}` : null,
+          courseData.durationHours ? `مدة الدورة: ${courseData.durationHours} ساعة` : null,
+          courseData.price !== undefined && courseData.price !== null ? `السعر: ${courseData.price}` : null,
+          courseData.instructorName ? `المدرب: ${courseData.instructorName}` : null,
+          courseData.language ? `اللغة: ${courseData.language === "ar" ? "العربية" : "English"}` : null,
+        ].filter(Boolean);
+
+        const contextText = contextParts.join("\n");
+
+        if (courseData.simpleDescription) {
+          // Enhanced prompt with full course context
+          prompt = `أنت خبير في كتابة أوصاف الدورات التعليمية الاحترافية. قم بتحليل جميع بيانات الدورة التالية ثم اكتب وصفاً تفصيلياً شاملاً وجذاباً:
+
+${contextText}
+
+الوصف المختصر المقدم: ${courseData.simpleDescription}
+
+${courseData.requirements ? `المتطلبات: ${courseData.requirements}` : ""}
+${courseData.learningObjectives ? `أهداف التعلم: ${courseData.learningObjectives}` : ""}
+${courseData.targetAudience ? `الجمهور المستهدف: ${courseData.targetAudience}` : ""}
+${courseData.whatYouLearn ? `ماذا ستتعلم: ${courseData.whatYouLearn}` : ""}
+
+اكتب وصفاً تفصيلياً احترافياً يتضمن:
+1. مقدمة جذابة ومشجعة للتسجيل
+2. نظرة عامة شاملة عن محتوى الدورة
+3. الفوائد الرئيسية وما سيحققه المتعلم
+4. الجمهور المستهدف المناسب لهذه الدورة
+5. لماذا تختار هذه الدورة تحديداً
+
+اجعل الوصف:
+- احترافياً ومقنعاً
+- منظم بشكل واضح مع عناوين فرعية
+- مشجعاً للطلاب على التسجيل
+- شاملاً لجميع الجوانب المهمة
+- مناسباً للغة ${courseData.language === "en" ? "الإنجليزية" : "العربية"}`;
+        } else {
+          // Generate from comprehensive course data
+          prompt = `أنت خبير في كتابة أوصاف الدورات التعليمية الاحترافية. قم بتحليل بيانات الدورة التالية ثم اكتب وصفاً تفصيلياً شاملاً وجذاباً:
+
+${contextText}
+
+${courseData.requirements ? `المتطلبات: ${courseData.requirements}` : ""}
+${courseData.learningObjectives ? `أهداف التعلم: ${courseData.learningObjectives}` : ""}
+${courseData.targetAudience ? `الجمهور المستهدف: ${courseData.targetAudience}` : ""}
+${courseData.whatYouLearn ? `ماذا ستتعلم: ${courseData.whatYouLearn}` : ""}
+
+اكتب وصفاً تفصيلياً احترافياً يتضمن:
+1. مقدمة جذابة ومشجعة للتسجيل
+2. نظرة عامة شاملة عن محتوى الدورة
+3. الفوائد الرئيسية وما سيحققه المتعلم
+4. الجمهور المستهدف المناسب لهذه الدورة
+5. لماذا تختار هذه الدورة تحديداً
+
+اجعل الوصف:
+- احترافياً ومقنعاً
+- منظم بشكل واضح مع عناوين فرعية
+- مشجعاً للطلاب على التسجيل
+- شاملاً لجميع الجوانب المهمة
+- مناسباً للغة ${courseData.language === "en" ? "الإنجليزية" : "العربية"}`;
+        }
+      } else {
+        // SEO description - concise and optimized
+        const seoContext = [
+          courseData.nameAr || courseData.name,
+          courseData.level ? `مستوى ${courseData.level === "BEGINNER" ? "مبتدئ" : courseData.level === "INTERMEDIATE" ? "متوسط" : "متقدم"}` : null,
+          courseData.durationHours ? `${courseData.durationHours} ساعة` : null,
+        ].filter(Boolean).join(" - ");
+
+        prompt = `اكتب وصف SEO احترافي ومختصر (150-160 حرف بالضبط) لدورة تعليمية.
+
+العنوان: ${courseData.nameAr || courseData.name}
+${courseData.simpleDescription ? `الوصف المختصر: ${courseData.simpleDescription}` : ""}
+
+المعلومات الأساسية:
+${seoContext}
+
+الوصف يجب أن:
+- يكون بين 150-160 حرف بالضبط
+- يحتوي على كلمات مفتاحية مهمة
+- يكون جذاباً ومشجعاً للنقر
+- يلخص قيمة الدورة بشكل واضح
+- يكون باللغة ${courseData.language === "en" ? "الإنجليزية" : "العربية"}`;
+      }
+
       const response = await fetch(apiRoutes.ai.chat, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          message: `قم بكتابة ${field === 'description' ? 'وصف تفصيلي وجذاب' : 'وصف SEO مختصر'} لدورة تعليمية بعنوان "${name}".` 
-        }),
+        body: JSON.stringify({ message: prompt }),
       });
       const result = await response.json();
       if (result.reply) {
@@ -208,6 +339,74 @@ export function CourseEditor({
         toast.success("تم توليد المحتوى بنجاح", { id: toastId });
       } else if (!response.ok) {
         toast.error(result.error || "فشل في توليد المحتوى", { id: toastId });
+      } else {
+        toast.error("لم يتم استلام رد من الذكاء الاصطناعي", { id: toastId });
+      }
+    } catch {
+      toast.error("فشل الاتصال بمساعد الذكاء الاصطناعي", { id: toastId });
+    }
+  };
+
+  const handleExpandSimpleDescription = async () => {
+    await generateWithAI("description");
+  };
+
+  // ─── AI analysis for course data ─────────────────────────────────────────
+  const analyzeCourseWithAI = async () => {
+    const courseData = {
+      nameAr: form.getValues("nameAr"),
+      name: form.getValues("name"),
+      code: form.getValues("code"),
+      level: form.getValues("level"),
+      categoryId: form.getValues("categoryId"),
+      instructorName: form.getValues("instructorName"),
+      durationHours: form.getValues("durationHours"),
+      price: form.getValues("price"),
+      simpleDescription: form.getValues("simpleDescription"),
+      requirements: form.getValues("requirements"),
+      learningObjectives: form.getValues("learningObjectives"),
+      coursePrerequisites: form.getValues("coursePrerequisites"),
+      targetAudience: form.getValues("targetAudience"),
+      whatYouLearn: form.getValues("whatYouLearn"),
+      language: form.getValues("language"),
+    };
+
+    if (!courseData.nameAr && !courseData.name) {
+      toast.error("يرجى إدخال اسم الدورة أولاً");
+      return;
+    }
+
+    const toastId = toast.loading("جاري تحليل بيانات الدورة بالذكاء الاصطناعي...");
+    try {
+      const prompt = `أنت مستشار تعليمي خبير. قم بتحليل بيانات الدورة التالية وقدم تقييماً شاملاً مع اقتراحات للتحسين:
+
+${Object.entries(courseData)
+  .filter(([_, v]) => v && String(v).trim())
+  .map(([k, v]) => `- ${k}: ${v}`)
+  .join("\n")}
+
+قدم تحليلاً يتضمن:
+1. تقييم شامل لجودة بيانات الدورة
+2. نقاط القوة والضعف
+3. اقتراحات لتحسين الوصف والمحتوى
+4. توصيات لجذب المزيد من الطلاب
+5. أي معلومات ناقصة يجب إضافتها
+
+اجعل التحليل احترافياً وعملياً.`;
+
+      const response = await fetch(apiRoutes.ai.chat, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: prompt }),
+      });
+      const result = await response.json();
+      if (result.reply) {
+        toast.success("تم التحليل بنجاح", { id: toastId });
+        // Show analysis in a modal or console for now
+        console.log("Course Analysis:", result.reply);
+        alert(result.reply); // You can replace this with a proper modal
+      } else if (!response.ok) {
+        toast.error(result.error || "فشل في التحليل", { id: toastId });
       } else {
         toast.error("لم يتم استلام رد من الذكاء الاصطناعي", { id: toastId });
       }
@@ -269,6 +468,8 @@ export function CourseEditor({
               isCurriculumLoading={isCurriculumLoading}
               chaptersCount={curriculumStats?.chaptersCount ?? 0}
               lessonsCount={curriculumStats?.lessonsCount ?? 0}
+              rating={(initialData as any)?.rating}
+              reviewsCount={(initialData as any)?._count?.reviews}
               onNavigate={(path) => router.push(path)}
               completedTabs={completedTabs as any}
             />
@@ -279,6 +480,7 @@ export function CourseEditor({
                 categories={categories}
                 onNext={() => nextTab("general")}
                 onGenerateWithAI={generateWithAI}
+                onExpandSimpleDescription={handleExpandSimpleDescription}
               />
 
               <DetailsTab

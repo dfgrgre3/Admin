@@ -63,7 +63,7 @@ export function AdminConfirm({
   variant = "default",
   loading = false,
 }: AdminConfirmProps) {
-  const Icon = getIconForVariant(variant);
+  const icon = getIconForVariant(variant);
   const colorClass = getColorClassForVariant(variant);
   const buttonVariant = getButtonVariant(variant);
 
@@ -72,7 +72,7 @@ export function AdminConfirm({
       <AlertDialogContent className="rounded-[2rem] border-white/10 bg-card/95 backdrop-blur-xl max-w-md">
         <AlertDialogHeader className="space-y-4">
           <div className={cn("mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/5 border border-white/5", colorClass)}>
-            <Icon className="h-8 w-8" />
+            {React.createElement(icon, { className: "h-8 w-8" })}
           </div>
           <AlertDialogTitle className="text-center text-2xl font-black tracking-tight">
             {title}

@@ -13,6 +13,7 @@ export const courseSchema = z.object({
   instructorId: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
+  simpleDescription: z.string().optional().nullable(),
   isActive: z.boolean(),
   isPublished: z.boolean(),
   durationHours: z.coerce
@@ -64,6 +65,7 @@ export interface CourseInitialData {
   instructorId?: string | null;
   categoryId?: string | null;
   description?: string | null;
+  simpleDescription?: string | null;
   isActive?: boolean;
   isPublished?: boolean;
   durationHours?: number | null;

@@ -1,32 +1,46 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   Brain,
   CheckCircle2,
   ClipboardList,
-  Loader2,
+  Route,
   Send,
   Sparkles,
-  XCircle,
   ShieldCheck,
   Zap,
-  Crown,
-  Scroll
 } from "lucide-react";
 import { AdminButton } from "../ui/admin-button";
-import { useAISimplifiedData, useAICopilot, useAIGenerateContent } from "@/lib/ai/ai-hooks";
+import { useAISimplifiedData, useAIAdminAgent, useAIAdminAgentExecute, useAIGenerateContent } from "@/lib/ai/ai-hooks";
+import type { AdminAgentCommandContext, AdminAgentCommandResponse } from "@/lib/ai/types";
+
+interface AiCommandCenterProps {
+  dashboardContext?: AdminAgentCommandContext["dashboard"];
+  pageControls?: {
+    refreshDashboard: () => void;
+    openBroadcast: () => void;
+    setTimeFilter: (filter: "today" | "week") => void;
+    scrollToSection?: (sectionId: string) => void;
+  };
+}
 
 const starterPrompts = [
+  "راجع الصفحة الرئيسية بالكامل واكتب تقرير مخاطر وأولويات",
+  "غير الفلترة إلى اليوم الحالي",
+  "انتقل إلى رسم بياني لنمو المنصة",
+  "اذهب إلى أهداف المنصة والمؤشرات الرئيسية (KPIs)",
   "استخرج لي تقريراً بأسماء الطلاب الذين انخفض أداؤهم هذا الأسبوع.",
-  "أنشئ اختباراً مفاجئاً من 10 أسئلة لطلاب الصف الأول في الفيزياء.",
-  "لخص لي أولويات التدخل الإداري خلال هذا الأسبوع.",
 ];
 
-export function AiCommandCenter() {
+export function AiCommandCenter({ dashboardContext, pageControls }: AiCommandCenterProps) {
+  const router = useRouter();
   const [prompt, setPrompt] = React.useState(starterPrompts[0]);
   const [copilotReply, setCopilotReply] = React.useState("");
+  const [lastCommandId, setLastCommandId] = React.useState<string | null>(null);
+  const [agentPlan, setAgentPlan] = React.useState<AdminAgentCommandResponse | null>(null);
   const [generatorForm, setGeneratorForm] = React.useState<{
     title: string;
     prompt: string;
@@ -42,10 +56,88 @@ export function AiCommandCenter() {
   // استخدام الـ hooks الموحدة
   const { data, isLoading } = useAISimplifiedData();
 
-  const copilotMutation = useAICopilot({
-    onSuccess: (payload) => setCopilotReply(payload.message),
+  const runPageAction = React.useCallback((action: string) => {
+    if (!pageControls) return false;
+    if (action === "review_dashboard") {
+      pageControls.refreshDashboard();
+      return true;
+    }
+    if (action === "create_notification") {
+      pageControls.openBroadcast();
+      return true;
+    }
+    if (action === "set_filter_today") {
+      pageControls.setTimeFilter("today");
+      return true;
+    }
+    if (action === "set_filter_week") {
+      pageControls.setTimeFilter("week");
+      return true;
+    }
+    if (action === "scroll_to_growth") {
+      pageControls.scrollToSection?.("growth-chart");
+      return true;
+    }
+    if (action === "scroll_to_activity") {
+      pageControls.scrollToSection?.("activity-chart");
+      return true;
+    }
+    if (action === "scroll_to_diagnostics") {
+      pageControls.scrollToSection?.("system-diagnostics");
+      return true;
+    }
+    if (action === "scroll_to_risks") {
+      pageControls.scrollToSection?.("risk-assessment");
+      return true;
+    }
+    if (action === "scroll_to_kpis") {
+      pageControls.scrollToSection?.("goals-kpis");
+      return true;
+    }
+    if (action === "review_users") {
+      router.push("/admin/users");
+      return true;
+    }
+    if (action === "review_courses") {
+      router.push("/admin/courses");
+      return true;
+    }
+    if (action === "review_exams") {
+      router.push("/admin/exams");
+      return true;
+    }
+    return false;
+  }, [pageControls, router]);
+
+  const formatAgentReply = React.useCallback((payload: AdminAgentCommandResponse) => {
+    const findings = payload.findings.map((finding) => `- ${finding.area}: ${finding.message}\n  التوصية: ${finding.recommendation}`).join("\n");
+    const plan = payload.plan.map((step, index) => `${index + 1}. ${step.title}: ${step.description}`).join("\n");
+    const aiReview = payload.result?.aiReview as { priorities?: unknown; nextActions?: unknown } | undefined;
+    const priorities = Array.isArray(aiReview?.priorities) ? `\n\nأولويات AI:\n${aiReview.priorities.map((item) => `- ${String(item)}`).join("\n")}` : "";
+    const nextActions = Array.isArray(aiReview?.nextActions) ? `\n\nأوامر مقترحة:\n${aiReview.nextActions.map((item) => `- ${String(item)}`).join("\n")}` : "";
+
+    return `${payload.message}\n\nالإجراء: ${payload.action}\nالحالة: ${payload.status}\n${payload.requiresConfirmation ? "يحتاج تأكيد قبل التنفيذ" : "إجراء آمن"}\n\nخطة الوكيل:\n${plan}\n\nنتائج المراجعة:\n${findings}${priorities}${nextActions}`;
+  }, []);
+
+  const agentMutation = useAIAdminAgent({
+    onSuccess: (payload) => {
+      setAgentPlan(payload);
+      setLastCommandId(payload.commandId);
+      setCopilotReply(formatAgentReply(payload));
+    },
     onError: (error) => {
-      setCopilotReply(`⚠️ حدث خطأ: ${error.message}`);
+      setCopilotReply(`حدث خطأ: ${error.message}`);
+    },
+  });
+
+  const executeAgentMutation = useAIAdminAgentExecute({
+    onSuccess: (payload) => {
+      setAgentPlan(payload);
+      const controlled = runPageAction(payload.action);
+      setCopilotReply(`${formatAgentReply(payload)}${controlled ? "\n\nتم تنفيذ التحكم داخل الصفحة تلقائياً." : ""}`);
+    },
+    onError: (error) => {
+      setCopilotReply(`فشل التنفيذ: ${error.message}`);
     },
   });
 
@@ -57,7 +149,7 @@ export function AiCommandCenter() {
       setGeneratorForm({ title: "", prompt: "", contentType: "exam_blueprint", subjectId: "" });
     },
     onError: (error) => {
-      setCopilotReply(`⚠️ فشل التوليد: ${error.message}`);
+      setCopilotReply(`فشل التوليد: ${error.message}`);
     },
   });
 
@@ -75,7 +167,7 @@ export function AiCommandCenter() {
             </div>
             <h2 className="text-3xl font-black">مساعد إدارة المنصة</h2>
             <p className="text-gray-400 font-medium max-w-xl">
-              تحدث مع المساعد الذكي لتوليد التقارير، إنشاء الاختبارات، أو مراجعة أداء الطلاب.
+              وكيل ذكي مربوط بكل بيانات الصفحة: يراجع المؤشرات، يحدد المخاطر، ويستطيع تنفيذ أوامر آمنة مثل التحديث، فتح البث، أو الانتقال لصفحات الإدارة.
             </p>
           </div>
           
@@ -101,6 +193,37 @@ export function AiCommandCenter() {
             ))}
           </div>
 
+          <div className="grid gap-3 md:grid-cols-3">
+            <AdminButton
+              variant="outline"
+              onClick={() => agentMutation.mutate({
+                command: "راجع الصفحة الرئيسية بالكامل واكتب تقرير مخاطر وأولويات",
+                context: { page: "admin-dashboard-home", locale: "ar", dashboard: dashboardContext },
+              })}
+              loading={agentMutation.isPending}
+              icon={ShieldCheck}
+              className="h-12 rounded-2xl"
+            >
+              مراجعة كاملة
+            </AdminButton>
+            <AdminButton
+              variant="outline"
+              onClick={() => pageControls?.refreshDashboard()}
+              icon={Zap}
+              className="h-12 rounded-2xl"
+            >
+              تحكم: تحديث
+            </AdminButton>
+            <AdminButton
+              variant="outline"
+              onClick={() => pageControls?.openBroadcast()}
+              icon={Send}
+              className="h-12 rounded-2xl"
+            >
+              تحكم: بث تنبيه
+            </AdminButton>
+          </div>
+
           <div className="relative group">
             <textarea
               value={prompt}
@@ -115,8 +238,15 @@ export function AiCommandCenter() {
               </span>
               <AdminButton
                 variant="premium"
-                onClick={() => copilotMutation.mutate({ prompt: prompt ?? '' })}
-                loading={copilotMutation.isPending}
+                onClick={() => agentMutation.mutate({
+                  command: prompt ?? '',
+                  context: {
+                    page: 'admin-dashboard-home',
+                    locale: 'ar',
+                    dashboard: dashboardContext,
+                  },
+                })}
+                loading={agentMutation.isPending}
                 disabled={!prompt!.trim()}
                 icon={Send}
                 className="h-12 px-8 rounded-2xl"
@@ -126,6 +256,20 @@ export function AiCommandCenter() {
             </div>
           </div>
         </div>
+
+        {agentPlan && (
+          <div className="grid gap-3 md:grid-cols-3">
+            {agentPlan.plan.map((step, index) => (
+              <div key={`${agentPlan.commandId}-${index}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="mb-2 flex items-center gap-2 text-xs font-black text-primary">
+                  <Route className="h-4 w-4" />
+                  {step.title}
+                </div>
+                <p className="text-xs leading-6 text-gray-400">{step.description}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {copilotReply && (
           <div 
@@ -142,6 +286,17 @@ export function AiCommandCenter() {
               <p className="whitespace-pre-wrap text-sm leading-8 text-gray-300 font-medium border-r-2 border-amber-500/30 pr-6">
                 {copilotReply}
               </p>
+              {lastCommandId && (
+                <AdminButton
+                  variant="outline"
+                  onClick={() => executeAgentMutation.mutate({ commandId: lastCommandId, confirmed: true })}
+                  loading={executeAgentMutation.isPending}
+                  className="h-10 rounded-xl"
+                  icon={CheckCircle2}
+                >
+                  تنفيذ الخطة
+                </AdminButton>
+              )}
             </div>
           </div>
         )}

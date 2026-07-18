@@ -12,8 +12,10 @@ import {
   Settings, 
   Users,
   Globe,
-  Sparkles
+  Sparkles,
+  MessageSquare
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +65,12 @@ export default function CourseDetailLayout({ children }: CourseLayoutProps) {
       active: pathname === `/admin/courses/${courseId}/students`,
     },
     {
+      label: "التقييمات والتعليقات",
+      icon: MessageSquare,
+      href: `/admin/courses/${courseId}/reviews`,
+      active: pathname === `/admin/courses/${courseId}/reviews`,
+    },
+    {
       label: "التحليلات والأداء",
       icon: BarChart3,
       href: `/admin/courses/${courseId}/analytics`,
@@ -79,6 +87,12 @@ export default function CourseDetailLayout({ children }: CourseLayoutProps) {
       icon: Globe,
       href: `/admin/courses/${courseId}/marketing`,
       active: pathname === `/admin/courses/${courseId}/marketing`,
+    },
+    {
+      label: "المحتوى الإضافي",
+      icon: Sparkles,
+      href: `/admin/courses/${courseId}/content`,
+      active: pathname === `/admin/courses/${courseId}/content`,
     },
   ];
 
@@ -101,7 +115,7 @@ export default function CourseDetailLayout({ children }: CourseLayoutProps) {
           {/* Thumbnail */}
           <div className="relative h-40 w-64 shrink-0 overflow-hidden rounded-3xl border-4 border-white/10 shadow-2xl shadow-primary/20">
             {course?.thumbnailUrl ? (
-              <img src={course.thumbnailUrl} alt={course?.nameAr} className="h-full w-full object-cover" />
+              <Image src={course.thumbnailUrl} alt={course?.nameAr ?? "course"} fill sizes="256px" className="object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-violet-500/20">
                 <BookOpen className="h-12 w-12 text-primary/40" />
@@ -154,6 +168,17 @@ export default function CourseDetailLayout({ children }: CourseLayoutProps) {
               <AdminButton variant="outline" className="gap-2 rounded-2xl px-6 font-black h-11" onClick={() => window.open(`/courses/${courseId}`, '_blank')}>
                 <ExternalLink className="h-4 w-4" />
                 عرض في الموقع
+              </AdminButton>
+              <AdminButton
+                variant="outline"
+                className="gap-2 rounded-2xl px-6 font-black h-11 border-orange-500/30 text-orange-600 hover:bg-orange-500/10 dark:text-orange-400"
+                onClick={() => window.open(
+                  `${process.env.NEXT_PUBLIC_FRONTEND_URL ?? ""}/learning/${courseId}`,
+                  '_blank'
+                )}
+              >
+                <BookOpen className="h-4 w-4" />
+                معاينة بيئة التعلم
               </AdminButton>
             </div>
           </div>

@@ -150,18 +150,18 @@ export default function ContestsPage() {
   return (
     <div className="space-y-8 pb-10" dir="rtl">
       <PageHeader
-        title="ط¥ط¯ط§ط±ط© ط§ظ„ظ…ط³ط§ط¨ظ‚ط§طھ ط§ظ„طھظپط§ط¹ظ„ظٹط©"
-        description="ظ†ط¸ط§ظ… ط¥ط¯ط§ط±ط© ظ‚ط§ط¹ط§طھ ط§ظ„ظ…ط³ط§ط¨ظ‚ط§طھ ط§ظ„طھظپط§ط¹ظ„ظٹط© ظ„ط¨ظ†ط§ط، ط¨ظٹط¦ط© طھط¹ظ„ظٹظ…ظٹط© ظ…ط­ظپط²ط© ظ…ط¹ ظ†ط¸ط§ظ… ظ†ظ‚ط§ط· ظپظˆط±ظٹ ظˆطھظپط§ط¹ظ„ ظ…ط¨ط§ط´ط±."
+        title="إدارة المسابقات التفاعلية"
+        description="نظام إدارة قاعات المسابقات التفاعلية لبناء بيئة تعليمية محفزة مع نظام نقاط فوري وتفاعل مباشر."
       >
         {!activeLobby || activeLobby.status === "FINISHED" ? (
           <AdminButton onClick={() => setShowConfig(!showConfig)} icon={Plus}>
-             ط¥ط·ظ„ط§ظ‚ ظ…ط³ط§ط¨ظ‚ط© ط¬ط¯ظٹط¯ط©
+             إطلاق مسابقة جديدة
           </AdminButton>
         ) : (
           <div className="flex bg-accent rounded-xl p-1 border">
              <div className="px-4 py-2 bg-background shadow-sm rounded-lg text-sm font-bold flex items-center gap-2 text-primary">
                 <Trophy className="w-4 h-4" />
-                طھظˆط¬ط¯ ظ…ط³ط§ط¨ظ‚ط© ظ†ط´ط·ط© ط­ط§ظ„ظٹط§ظ‹
+                توجد مسابقة نشطة حالياً
              </div>
           </div>
         )}
@@ -184,14 +184,14 @@ export default function ContestsPage() {
                       <Settings2 className="w-6 h-6" />
                    </div>
                    <div>
-                      <h3 className="font-black text-lg">ط§ط®طھظٹط§ط± ط§ظ„ظ…ط³ط§ط¨ظ‚ط©</h3>
-                      <p className="text-[11px] text-muted-foreground font-bold">ط§ط®طھط± ظ…ط³ط§ط¨ظ‚ط© ظ…ظ† ط§ظ„ط£ط±ط´ظٹظپ ظ„ط¥ط·ظ„ط§ظ‚ظ‡ط§ ط­ظٹط§ظ‹</p>
+                      <h3 className="font-black text-lg">اختيار المسابقة</h3>
+                      <p className="text-[11px] text-muted-foreground font-bold">اختر مسابقة من الأرشيف لإطلاقها حالياً</p>
                    </div>
                 </div>
 
                 <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                    {loading ? (
-                      <div className="text-center py-10 opacity-50">ط¬ط§ط±ظٹ طھط­ظ…ظٹظ„ ط§ظ„ظ…ط³ط§ط¨ظ‚ط§طھ...</div>
+                      <div className="text-center py-10 opacity-50">جاري تحميل المسابقات...</div>
                    ) : contests.length > 0 ? (
                       contests.map((contest) => (
                          <div 
@@ -206,22 +206,22 @@ export default function ContestsPage() {
                             <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-bold">
                                <div className="flex items-center gap-1">
                                   <Timer className="w-3 h-3" />
-                                  <span>{contest.questionsCount} ط³ط¤ط§ظ„</span>
+                                  <span>{contest.questionsCount} سؤال</span>
                                 </div>
                                <div className="flex items-center gap-1">
                                   <Users className="w-3 h-3" />
-                                  <span>{contest.participantsCount || 0} ظ…ط´ط§ط±ظƒ</span>
+                                  <span>{contest.participantsCount || 0} مشارك</span>
                                 </div>
                             </div>
                          </div>
                       ))
                    ) : (
-                      <div className="text-center py-10 opacity-50 font-bold border-2 border-dashed rounded-2xl">ظ„ط§ طھظˆط¬ط¯ ظ…ط³ط§ط¨ظ‚ط§طھ ط­ط§ظ„ظٹط§ظ‹</div>
+                      <div className="text-center py-10 opacity-50 font-bold border-2 border-dashed rounded-2xl">لا توجد مسابقات حالياً</div>
                    )}
 
                    <Link href="/contests/new" className="block w-full">
                       <AdminButton variant="outline" className="w-full h-12 uppercase tracking-widest font-black mt-4 gap-2" icon={Plus}>
-                         ط¥ط¶ط§ظپط© ظ…ط³ط§ط¨ظ‚ط© ط¬ط¯ظٹط¯ط©
+                         إضافة مسابقة جديدة
                       </AdminButton>
                    </Link>
                 </div>
@@ -247,7 +247,7 @@ export default function ContestsPage() {
                           {activeLobby.pinCode}
                        </div>
                        <div className="flex flex-col">
-                         <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">ط؛ط±ظپط© ط§ظ„ظ…ط³ط§ط¨ظ‚ط© ط§ظ„ظ†ط´ط·ط©</span>
+                         <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">غرفة المسابقة النشطة</span>
                          <h2 className="font-bold text-lg leading-none mt-1">{activeLobby.title}</h2>
                        </div>
                     </div>
@@ -282,7 +282,7 @@ export default function ContestsPage() {
                              <h1 className="text-5xl font-black tabular-nums tracking-widest text-foreground drop-shadow-md">
                                 {activeLobby.pinCode}
                              </h1>
-                             <p className="text-muted-foreground font-bold mt-2 uppercase tracking-wider text-xs">ط£ط¯ط®ظ„ ط§ظ„ظƒظˆط¯ ظپظٹ ط§ظ„ظ…ظ†طµط© ظ„ظ„ط¥ظ†ط¶ظ…ط§ظ…</p>
+                             <p className="text-muted-foreground font-bold mt-2 uppercase tracking-wider text-xs">أدخل الكود في المنصة للإنضمام...</p>
                           </m.div>
 
                           <div className="flex flex-wrap items-center justify-center gap-3">
@@ -301,14 +301,14 @@ export default function ContestsPage() {
                                 </m.div>
                              ))}
                              {activeLobby.players.length === 0 && (
-                                <p className="text-muted-foreground font-bold animate-pulse text-sm">ط¨ط§ظ†طھط¸ط§ط± ط§ظ†ط¶ظ…ط§ظ… ط§ظ„ظ…ط´ط§ط±ظƒظٹظ†...</p>
+                                <p className="text-muted-foreground font-bold animate-pulse text-sm">بانتظار انضمام المشاركين...</p>
                              )}
                           </div>
                           
                           {activeLobby.players.length > 0 && (
                              <div className="mt-12 flex justify-center">
                                <AdminButton size="lg" icon={Play} onClick={startGame} className="h-16 px-12 rounded-full text-xl font-black bg-emerald-500 hover:bg-emerald-600 text-white shadow-[0_0_30px_rgba(16,185,129,0.4)]">
-                                 ط§ط¨ط¯ط£ ط§ظ„ظ…ط³ط§ط¨ظ‚ط© ط§ظ„ط¢ظ†!
+                                 ابدأ المسابقة الآن!
                                </AdminButton>
                              </div>
                           )}
@@ -321,10 +321,10 @@ export default function ContestsPage() {
                                 14s
                              </div>
                              <div className="bg-background px-4 py-2 rounded-2xl border font-black text-sm text-muted-foreground shadow-sm">
-                             ط³ط¤ط§ظ„ {activeLobby.currentQuestion} ظ…ظ† {activeLobby.totalQuestions}
+                                سؤال {activeLobby.currentQuestion} من {activeLobby.totalQuestions}
                              <div className="flex items-center gap-2 mr-2">
                                  <AdminButton size="sm" variant="ghost" icon={ChevronRight} onClick={() => setActiveLobby(prev => prev ? {...prev, currentQuestion: Math.min(prev.currentQuestion + 1, prev.totalQuestions)} : null)}>
-                                  ط§ظ„ط³ط¤ط§ظ„ ط§ظ„طھط§ظ„ظٹ
+                                  السؤال التالي
                                 </AdminButton>
                              </div>
                              </div>
@@ -332,7 +332,7 @@ export default function ContestsPage() {
                           
                           <div className="flex-1 flex flex-col items-center justify-center text-center px-4 max-w-3xl mx-auto w-full">
                              <h2 className="text-2xl md:text-4xl font-black mb-12 bg-card/80 backdrop-blur-md p-6 sm:p-10 rounded-3xl border-2 border-border/50 shadow-xl leading-relaxed">
-                               {currentQuestion?.question || "ظ„ط§ ظٹظˆط¬ط¯ ظ†طµ ظ„ظ„ط³ط¤ط§ظ„"}
+                               {currentQuestion?.question || "لا يوجد نص للسؤال"}
                              </h2>
                              
                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
@@ -349,7 +349,7 @@ export default function ContestsPage() {
 
                           <div className="mt-8 flex justify-end w-full">
                              <AdminButton variant="destructive" onClick={endGame} icon={StopCircle} className="rounded-xl font-bold">
-                                ط¥ظ†ظ‡ط§ط، ط§ظ„ظ…ط³ط§ط¨ظ‚ط© ظˆط¥ط¹ظ„ط§ظ† ط§ظ„ظ†طھط§ط¦ط¬
+                                إنهاء المسابقة وإعلان النتائج
                              </AdminButton>
                           </div>
                        </div>

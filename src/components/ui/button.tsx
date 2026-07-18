@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -41,7 +41,7 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        premium: "bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white shadow-lg hover:shadow-violet-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300",
+        premium: "bg-gradient-to-r from-primary via-amber-500 to-amber-400 text-white shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300",
         gradient: "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md hover:shadow-lg",
         success: "bg-green-500 text-white hover:bg-green-600 shadow-sm",
         warning: "bg-yellow-500 text-white hover:bg-yellow-600 shadow-sm",

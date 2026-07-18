@@ -52,12 +52,12 @@ export function StatsCard({
     <Card
       ref={cardRef}
       className={cn(
-        "group relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5",
+        "stats-card group relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5",
         className
       )}
     >
       {/* Subtle gradient background on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
       <CardContent className="p-6 relative">
         <div className="flex items-start justify-between">

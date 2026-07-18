@@ -10,6 +10,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 
+import NextImage from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -132,7 +133,7 @@ export const TrailerPreview = ({
 /** Thumbnail preview */
 export const ThumbnailPreview = ({ url }: { url?: string | null }) => {
   if (url) {
-    return <img src={url} alt="Thumbnail Preview" className="w-full h-full object-cover" />;
+    return <NextImage src={url} alt="Thumbnail Preview" fill sizes="256px" className="object-cover" />;
   }
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">

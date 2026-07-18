@@ -9,6 +9,7 @@ const cairo = Cairo({ subsets: ['arabic'], display: 'swap' });
 export const metadata: Metadata = {
   title: 'Authentication | Tolo',
   description: 'نظام الدخول إلى عالم Tolo',
+  robots: { index: true, follow: true },
 };
 
 export default function AuthLayout({

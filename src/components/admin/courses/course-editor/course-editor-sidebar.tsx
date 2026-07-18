@@ -12,6 +12,8 @@ import {
   Video,
   CheckCircle2,
   Circle,
+  Star,
+  MessageSquare,
 } from "lucide-react";
 
 import { AdminButton } from "@/components/admin/ui/admin-button";
@@ -163,6 +165,66 @@ const CurriculumLinkCard = ({
   </AdminCard>
 );
 
+// ─── ReviewsStatsCard ─────────────────────────────────────────────────────────
+/** Reviews stats + link card */
+const ReviewsStatsCard = ({
+  courseId,
+  rating,
+  reviewsCount,
+  onNavigate,
+}: {
+  courseId: string;
+  rating?: number | null;
+  reviewsCount?: number;
+  onNavigate: (path: string) => void;
+}) => (
+  <AdminCard className="p-4 bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20">
+    <div className="mb-3 flex items-center gap-2">
+      <MessageSquare className="h-4 w-4 text-amber-500" />
+      <h4 className="text-sm font-bold">التقييمات والتعليقات</h4>
+    </div>
+    <div className="mb-4 grid grid-cols-2 gap-3">
+      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3">
+        <p className="text-[10px] text-amber-600 dark:text-amber-400">التقييم</p>
+        <div className="mt-1 flex items-center gap-1">
+          <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+          <m.p
+            key={rating}
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            className="text-xl font-black text-amber-700 dark:text-amber-300"
+          >
+            {rating ? rating.toFixed(1) : "—"}
+          </m.p>
+        </div>
+      </div>
+      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3">
+        <p className="text-[10px] text-amber-600 dark:text-amber-400">التقييمات</p>
+        <m.p
+          key={reviewsCount}
+          initial={{ scale: 0.8 }}
+          animate={{ scale: 1 }}
+          className="mt-1 text-xl font-black text-amber-700 dark:text-amber-300"
+        >
+          {reviewsCount || 0}
+        </m.p>
+      </div>
+    </div>
+    <p className="text-xs leading-6 text-amber-700/70 dark:text-amber-300/70">
+      إدارة تقييمات وردود الطلاب على الدورة. يمكنك إظهار أو إخفاء التقييمات والردود وحذف المحتوى غير المناسب.
+    </p>
+    <AdminButton
+      type="button"
+      variant="outline"
+      className="w-full mt-4 justify-between border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10"
+      onClick={() => onNavigate(`/admin/courses/${courseId}/reviews`)}
+    >
+      إدارة التقييمات
+      <MessageSquare className="h-4 w-4" />
+    </AdminButton>
+  </AdminCard>
+);
+
 // ─── CourseEditorSidebar ─────────────────────────────────────────────────────
 interface CourseEditorSidebarProps {
   courseId?: string;
@@ -172,6 +234,8 @@ interface CourseEditorSidebarProps {
   isCurriculumLoading: boolean;
   chaptersCount: number;
   lessonsCount: number;
+  rating?: number | null;
+  reviewsCount?: number;
   onNavigate: (path: string) => void;
   /** Used to show completion indicators per tab */
   completedTabs?: TabValue[];
@@ -185,6 +249,8 @@ export function CourseEditorSidebar({
   isCurriculumLoading,
   chaptersCount,
   lessonsCount,
+  rating,
+  reviewsCount,
   onNavigate,
   completedTabs = [],
 }: CourseEditorSidebarProps) {
@@ -224,13 +290,21 @@ export function CourseEditorSidebar({
       />
 
       {courseId ? (
-        <CurriculumLinkCard
-          courseId={courseId}
-          isCurriculumLoading={isCurriculumLoading}
-          chaptersCount={chaptersCount}
-          lessonsCount={lessonsCount}
-          onNavigate={onNavigate}
-        />
+        <>
+          <CurriculumLinkCard
+            courseId={courseId}
+            isCurriculumLoading={isCurriculumLoading}
+            chaptersCount={chaptersCount}
+            lessonsCount={lessonsCount}
+            onNavigate={onNavigate}
+          />
+          <ReviewsStatsCard
+            courseId={courseId}
+            rating={rating}
+            reviewsCount={reviewsCount}
+            onNavigate={onNavigate}
+          />
+        </>
       ) : null}
     </aside>
   );

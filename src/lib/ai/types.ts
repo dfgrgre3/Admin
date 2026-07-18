@@ -46,6 +46,8 @@ export type AIActionType =
   | 'generate_content'
   | 'review_content'
   | 'execute_action'
+  | 'agent_command'
+  | 'agent_execute'
   | 'chat'
   | 'suggest'
   | 'grade'
@@ -116,9 +118,17 @@ export interface AIResponse<T = unknown> {
   code?: string;
 }
 
+export interface AIKnowledgeSource {
+  id: string;
+  type: 'subject' | 'topic' | 'lesson' | 'book' | 'blog_post' | string;
+  title: string;
+  snippet: string;
+}
+
 export interface AICopilotResponse {
   message: string;
   tokensUsed?: number;
+  sources?: AIKnowledgeSource[];
 }
 
 export interface AIGenerateContentResponse {
@@ -181,6 +191,8 @@ export interface AiSummary {
   reviewPendingCount: number;
   pendingGradingCount: number;
   aiBriefing?: string;
+  totalUsers?: number;
+  activeUsers?: number;
 }
 
 export interface AiDashboardData {
@@ -212,4 +224,51 @@ export interface AdminAiPayload {
   summary: {
     highRiskCount: number;
   };
+}
+
+export type AdminAgentActionType =
+  | 'review_dashboard'
+  | 'review_users'
+  | 'review_courses'
+  | 'review_exams'
+  | 'create_notification'
+  | 'generate_content'
+  | 'suggest_fixes'
+  | 'execute_safe_action'
+  | 'prepare_dangerous_action';
+
+export interface AdminAgentPlanStep {
+  title: string;
+  description: string;
+  action: AdminAgentActionType;
+  requiresConfirmation: boolean;
+  params?: Record<string, unknown>;
+}
+
+export interface AdminAgentFinding {
+  area: string;
+  severity: 'info' | 'warning' | 'critical';
+  message: string;
+  recommendation: string;
+}
+
+export interface AdminAgentCommandContext {
+  dashboard?: Record<string, unknown>;
+  page?: string;
+  locale?: string;
+}
+
+export interface AdminAgentCommandResponse {
+  commandId: string;
+  action: AdminAgentActionType;
+  status: 'planned' | 'completed' | 'blocked';
+  requiresConfirmation: boolean;
+  message: string;
+  plan: AdminAgentPlanStep[];
+  findings: AdminAgentFinding[];
+  result?: Record<string, unknown>;
+}
+
+export interface AdminAgentExecuteResponse extends AdminAgentCommandResponse {
+  status: 'completed' | 'blocked';
 }

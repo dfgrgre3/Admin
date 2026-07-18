@@ -14,6 +14,9 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   BookOpen,
   GraduationCap,
@@ -26,12 +29,98 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  Plus,
+  Trash2,
+  RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { ar } from "date-fns/locale";
 import * as React from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { adminUsersApi, type UserEnrollment } from "@/lib/api/admin-users-api";
+import { adminFetch } from "@/lib/api/admin-api";
+import { usePermission } from "@/components/auth/PermissionGuard";
+import { PERMISSIONS } from "@/lib/permissions";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export function AcademicTab({ user }: { user: UserDetails }) {
+  const queryClient = useQueryClient();
+  const { hasPermission } = usePermission();
+  const canManageUsers = hasPermission(PERMISSIONS.USERS_MANAGE);
+
+  const {
+    data: enrollmentsData,
+    isLoading: loadingEnrollments,
+    refetch: refetchEnrollments,
+  } = useQuery<{ total: number; avgProgress: number; enrollments: UserEnrollment[] }>({
+    queryKey: ["admin", "user", user.id, "enrollments"],
+    queryFn: () => adminUsersApi.getEnrollments(user.id),
+    staleTime: 30_000,
+  });
+
+  const [enrollDialogOpen, setEnrollDialogOpen] = React.useState(false);
+  const [enrollCourseId, setEnrollCourseId] = React.useState("");
+  const [enrollIsFree, setEnrollIsFree] = React.useState(false);
+
+  const [unenrollTarget, setUnenrollTarget] = React.useState<UserEnrollment | null>(null);
+  const [refundOnUnenroll, setRefundOnUnenroll] = React.useState(false);
+
+  const enrollMutation = useMutation({
+    mutationFn: async () => {
+      const res = await adminFetch(`/admin/users/${user.id}/enrollments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId: enrollCourseId, isFree: enrollIsFree }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || data?.message || "فشل التسجيل في الكورس");
+      }
+    },
+    onSuccess: () => {
+      toast.success("تم تسجيل المستخدم في الكورس بنجاح");
+      setEnrollDialogOpen(false);
+      setEnrollCourseId("");
+      setEnrollIsFree(false);
+      queryClient.invalidateQueries({ queryKey: ["admin", "user", user.id, "enrollments"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const unenrollMutation = useMutation({
+    mutationFn: async () => {
+      if (!unenrollTarget) return;
+      const res = await adminFetch(`/admin/courses/unenroll`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id,
+          courseId: unenrollTarget.courseId,
+          refund: refundOnUnenroll,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || data?.message || "فشل حذف التسجيل");
+      }
+    },
+    onSuccess: () => {
+      toast.success(refundOnUnenroll ? "تم حذف التسجيل واسترداد المبلغ للرصيد" : "تم حذف التسجيل من الكورس");
+      setUnenrollTarget(null);
+      setRefundOnUnenroll(false);
+      queryClient.invalidateQueries({ queryKey: ["admin", "user", user.id, "enrollments"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
   const sortedExams = React.useMemo(
     () =>
       [...(user.examResults || [])].sort(
@@ -140,6 +229,97 @@ export function AcademicTab({ user }: { user: UserDetails }) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Enrolled Courses with progress bars */}
+      <Card className="border-none shadow-lg">
+        <CardHeader className="flex-row items-center justify-between gap-4">
+          <div>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-primary" />
+              الكورسات المسجلة
+            </CardTitle>
+            <CardDescription>
+              {enrollmentsData?.total ?? 0} كورس · متوسط التقدم{" "}
+              {enrollmentsData ? Math.round(enrollmentsData.avgProgress) : 0}%
+            </CardDescription>
+          </div>
+          {canManageUsers && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl"
+              onClick={() => setEnrollDialogOpen(true)}
+            >
+              <Plus className="h-3.5 w-3.5 ml-1" />
+              تسجيل في كورس
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {loadingEnrollments ? (
+            <div className="flex items-center justify-center py-10">
+              <RefreshCw className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : !enrollmentsData || enrollmentsData.enrollments.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <GraduationCap className="h-10 w-10 mx-auto mb-3 opacity-20" />
+              <p className="font-medium">لا توجد تسجيلات كورسات لهذا المستخدم</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {enrollmentsData.enrollments.map((item) => {
+                const pct = Math.round(item.progress);
+                return (
+                  <div
+                    key={item.id}
+                    className="group rounded-2xl border bg-muted/20 p-4 hover:border-primary/20 hover:bg-muted/40 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <BookOpen className="h-4 w-4 text-primary shrink-0" />
+                        <span className="font-bold text-sm truncate">{item.courseName}</span>
+                        <Badge
+                          variant="outline"
+                          className="rounded-full text-[10px] font-bold border-primary/20 bg-primary/5 text-primary"
+                        >
+                          {item.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-primary">{pct}%</span>
+                        {canManageUsers && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-danger hover:text-danger"
+                            onClick={() => {
+                              setUnenrollTarget(item);
+                              setRefundOnUnenroll(false);
+                            }}
+                            title="حذف التسجيل"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    <Progress value={pct} className="h-2" indicatorClassName="bg-primary" />
+                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                      سُجّل في{" "}
+                      {isValid(new Date(item.enrolledAt))
+                        ? format(new Date(item.enrolledAt), "d MMM yyyy", { locale: ar })
+                        : "-"}
+                      {item.price > 0 && (
+                        <span className="mr-2">· السعر: {item.price} ج.م</span>
+                      )}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Exam Results Table */}
       <Card className="border-none shadow-lg">
@@ -353,6 +533,94 @@ export function AcademicTab({ user }: { user: UserDetails }) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Enroll in a new course dialog */}
+      <Dialog open={enrollDialogOpen} onOpenChange={(open) => {
+        setEnrollDialogOpen(open);
+        if (!open) { setEnrollCourseId(""); setEnrollIsFree(false); }
+      }}>
+        <DialogContent className="rounded-[2rem] border-white/10 bg-card/95 backdrop-blur-xl max-w-md" dir="rtl">
+          <DialogHeader className="space-y-4">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20">
+              <Plus className="h-8 w-8" />
+            </div>
+            <DialogTitle className="text-center text-2xl font-black tracking-tight">
+              تسجيل في كورس جديد
+            </DialogTitle>
+            <DialogDescription className="text-center text-muted-foreground font-medium px-4">
+              أدخل معرّف الكورس (ID) لتسجيل {user.name || user.email} فيه يدويًا.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-bold">معرّف الكورس (Course ID)</label>
+              <Input
+                className="h-12 rounded-2xl bg-accent/10 border-white/10 px-4 text-sm focus:ring-1 ring-primary outline-none"
+                placeholder="مثال: 3f2a1b9c-..."
+                value={enrollCourseId}
+                onChange={(e) => setEnrollCourseId(e.target.value)}
+              />
+            </div>
+            <label className="flex h-10 items-center gap-2 rounded-xl border px-3 text-xs font-bold cursor-pointer">
+              <Checkbox checked={enrollIsFree} onCheckedChange={(checked) => setEnrollIsFree(!!checked)} />
+              تسجيل مجاني (تجاوز الدفع)
+            </label>
+          </div>
+          <DialogFooter className="mt-6 flex-col-reverse sm:flex-row gap-3 sm:gap-0">
+            <Button variant="outline" className="rounded-2xl h-12 flex-1" onClick={() => { setEnrollDialogOpen(false); setEnrollCourseId(""); setEnrollIsFree(false); }} type="button">
+              إلغاء
+            </Button>
+            <Button
+              variant="default"
+              disabled={!enrollCourseId.trim() || enrollMutation.isPending}
+              type="button"
+              className="rounded-2xl h-12 flex-1"
+              onClick={() => enrollMutation.mutate()}
+            >
+              {enrollMutation.isPending && <Loader2 className="h-4 w-4 animate-spin ml-1" />}
+              تسجيل الكورس
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Unenroll confirmation with refund option */}
+      <Dialog open={!!unenrollTarget} onOpenChange={(open) => { if (!open) { setUnenrollTarget(null); setRefundOnUnenroll(false); } }}>
+        <DialogContent className="rounded-[2rem] border-white/10 bg-card/95 backdrop-blur-xl max-w-md" dir="rtl">
+          <DialogHeader className="space-y-4">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-danger/10 text-danger border border-danger/20">
+              <Trash2 className="h-8 w-8" />
+            </div>
+            <DialogTitle className="text-center text-2xl font-black tracking-tight">
+              حذف التسجيل من الكورس
+            </DialogTitle>
+            <DialogDescription className="text-center text-muted-foreground font-medium px-4">
+              هل أنت متأكد من حذف تسجيل {user.name || user.email} من كورس «{unenrollTarget?.courseName}»؟ سيتم حذف تقدمه في الدروس.
+            </DialogDescription>
+          </DialogHeader>
+          {unenrollTarget && unenrollTarget.price > 0 && (
+            <label className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-3 text-xs font-bold cursor-pointer">
+              <Checkbox checked={refundOnUnenroll} onCheckedChange={(checked) => setRefundOnUnenroll(!!checked)} />
+              استرداد المبلغ ({unenrollTarget.price} ج.م) إلى رصيد المحفظة
+            </label>
+          )}
+          <DialogFooter className="mt-6 flex-col-reverse sm:flex-row gap-3 sm:gap-0">
+            <Button variant="outline" className="rounded-2xl h-12 flex-1" onClick={() => { setUnenrollTarget(null); setRefundOnUnenroll(false); }} type="button">
+              إلغاء
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={unenrollMutation.isPending}
+              type="button"
+              className="rounded-2xl h-12 flex-1"
+              onClick={() => unenrollMutation.mutate()}
+            >
+              {unenrollMutation.isPending && <Loader2 className="h-4 w-4 animate-spin ml-1" />}
+              تأكيد الحذف
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

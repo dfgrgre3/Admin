@@ -27,6 +27,7 @@ interface AdminAuthUser {
 // same session while keeping permissions reasonably fresh.
 // ---------------------------------------------------------------------------
 const USER_CACHE_TTL_MS = 30_000; // 30 seconds
+const USER_CACHE_MAX_ENTRIES = 250;
 
 interface CacheEntry {
   user: AdminAuthUser | null;
@@ -51,12 +52,23 @@ function evictExpired(): void {
   });
 }
 
+/** Keep the small auth cache bounded even under many distinct sessions. */
+function enforceCacheLimit(): void {
+  while (userCache.size > USER_CACHE_MAX_ENTRIES) {
+    const oldestKey = userCache.keys().next().value;
+    if (!oldestKey) break;
+    userCache.delete(oldestKey);
+  }
+}
+
 async function getCurrentUser(request: NextRequest): Promise<AdminAuthUser | null> {
   const cacheKey = getCacheKey(request);
 
   if (cacheKey) {
     const cached = userCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) {
+      userCache.delete(cacheKey);
+      userCache.set(cacheKey, cached);
       return cached.user;
     }
   }
@@ -78,6 +90,7 @@ async function getCurrentUser(request: NextRequest): Promise<AdminAuthUser | nul
   if (cacheKey) {
     evictExpired();
     userCache.set(cacheKey, { user, expiresAt: Date.now() + USER_CACHE_TTL_MS });
+    enforceCacheLimit();
   }
 
   return user;

@@ -1,13 +1,21 @@
 import js from "@eslint/js";
+import globals from "globals";
+import { fileURLToPath } from "node:url";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import typescriptParser from "@typescript-eslint/parser";
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
+import { FlatCompat } from "@eslint/eslintrc";
+
+const flatCompat = new FlatCompat({
+  baseDirectory: fileURLToPath(new URL(".", import.meta.url)),
+});
 
 export default [
   {
     ignores: [
       "node_modules/**",
+      ".kilo/**",
       ".next/**",
       "out/**",
       "build/**",
@@ -25,6 +33,9 @@ export default [
     ],
   },
   js.configs.recommended,
+  // Load the legacy eslintrc-based plugin configs through the modern
+  // FlatCompat bridge instead of spreading their `.rules` by hand.
+  ...flatCompat.extends("plugin:react/recommended", "plugin:react-hooks/recommended"),
   {
     files: ["**/*.{js,jsx,mjs,cjs,ts,tsx}"],
     languageOptions: {
@@ -37,127 +48,10 @@ export default [
         },
       },
       globals: {
-        // Console
-        console: "readonly",
-        // Node.js globals
-        process: "readonly",
-        Buffer: "readonly",
-        __dirname: "readonly",
-        __filename: "readonly",
-        module: "readonly",
-        require: "readonly",
-        exports: "readonly",
-        global: "readonly",
+        ...globals.browser,
+        ...globals.node,
+        // Type-only global references used in type positions
         NodeJS: "readonly",
-        // Browser globals
-        window: "readonly",
-        document: "readonly",
-        navigator: "readonly",
-        // Web APIs
-        fetch: "readonly",
-        Request: "readonly",
-        Response: "readonly",
-        RequestInit: "readonly",
-        RequestInfo: "readonly",
-        Headers: "readonly",
-        URL: "readonly",
-        URLSearchParams: "readonly",
-        // Timers
-        setTimeout: "readonly",
-        clearTimeout: "readonly",
-        setInterval: "readonly",
-        clearInterval: "readonly",
-        // Abort
-        AbortController: "readonly",
-        AbortSignal: "readonly",
-        // Notifications
-        Notification: "readonly",
-        NotificationPermission: "readonly",
-        // WebSocket
-        WebSocket: "readonly",
-        // EventSource
-        EventSource: "readonly",
-        // Broadcast Channel
-        BroadcastChannel: "readonly",
-        StorageEvent: "readonly",
-        // Storage
-        Storage: "readonly",
-        localStorage: "readonly",
-        sessionStorage: "readonly",
-        // Blob and File
-        Blob: "readonly",
-        File: "readonly",
-        FileReader: "readonly",
-        // Media
-        HTMLAudioElement: "readonly",
-        Audio: "readonly",
-        // Base64
-        btoa: "readonly",
-        atob: "readonly",
-        // Crypto
-        crypto: "readonly",
-        TextEncoder: "readonly",
-        TextDecoder: "readonly",
-        // React
-        React: "readonly",
-        // DOM types
-        HTMLElement: "readonly",
-        HTMLDivElement: "readonly",
-        HTMLInputElement: "readonly",
-        HTMLButtonElement: "readonly",
-        HTMLFormElement: "readonly",
-        HTMLTextAreaElement: "readonly",
-        HTMLTableElement: "readonly",
-        HTMLTableSectionElement: "readonly",
-        HTMLTableRowElement: "readonly",
-        HTMLTableCellElement: "readonly",
-        HTMLTableCaptionElement: "readonly",
-        HTMLParagraphElement: "readonly",
-        HTMLHeadingElement: "readonly",
-        HTMLSpanElement: "readonly",
-        HTMLSelectElement: "readonly",
-        HTMLOptionElement: "readonly",
-        HTMLAnchorElement: "readonly",
-        HTMLImageElement: "readonly",
-        HTMLCanvasElement: "readonly",
-        HTMLVideoElement: "readonly",
-        HTMLIFrameElement: "readonly",
-        Element: "readonly",
-        Document: "readonly",
-        Window: "readonly",
-        Event: "readonly",
-        // Intersection Observer
-        IntersectionObserver: "readonly",
-        IntersectionObserverEntry: "readonly",
-        // Performance
-        performance: "readonly",
-        Performance: "readonly",
-        // Media Queries
-        MediaQueryList: "readonly",
-        MediaQueryListEvent: "readonly",
-        WindowEventMap: "readonly",
-        // WebAuthn
-        PublicKeyCredential: "readonly",
-        AuthenticatorAttestationResponse: "readonly",
-        AuthenticatorTransport: "readonly",
-        PublicKeyCredentialCreationOptions: "readonly",
-        PublicKeyCredentialRequestOptions: "readonly",
-        PublicKeyCredentialRpEntity: "readonly",
-        PublicKeyCredentialUserEntity: "readonly",
-        PublicKeyCredentialParameters: "readonly",
-        AttestationConveyancePreference: "readonly",
-        PublicKeyCredentialDescriptor: "readonly",
-        AuthenticatorSelectionCriteria: "readonly",
-        AuthenticationExtensionsClientInputs: "readonly",
-        Credential: "readonly",
-        BufferSource: "readonly",
-        // WebGL
-        WebGLRenderingContext: "readonly",
-        // Service Worker
-        ServiceWorkerRegistration: "readonly",
-        MessageChannel: "readonly",
-        // Image
-        Image: "readonly",
       },
     },
     plugins: {
@@ -171,8 +65,6 @@ export default [
       },
     },
     rules: {
-      ...react.configs.recommended.rules,
-      ...reactHooks.configs.recommended.rules,
       // Keep these as warnings while we incrementally refactor hydration patterns.
       "react-hooks/set-state-in-effect": "warn",
       "react-hooks/exhaustive-deps": "warn",
@@ -214,11 +106,13 @@ export default [
       ],
     },
   },
-  // Jest globals for test files
+  // Jest / Vitest globals for test files
   {
     files: ["**/*.test.{js,jsx,ts,tsx}", "**/*.spec.{js,jsx,ts,tsx}", "**/tests/**/*.{js,jsx,ts,tsx}"],
     languageOptions: {
       globals: {
+        ...globals.browser,
+        ...globals.node,
         jest: "readonly",
         describe: "readonly",
         it: "readonly",
@@ -230,30 +124,6 @@ export default [
         afterAll: "readonly",
         vi: "readonly",
         vitest: "readonly",
-        // Browser globals for jsdom environment
-        WebSocket: "readonly",
-        URL: "readonly",
-        URLSearchParams: "readonly",
-        Headers: "readonly",
-        AbortController: "readonly",
-        AbortSignal: "readonly",
-        fetch: "readonly",
-        Request: "readonly",
-        Response: "readonly",
-        setTimeout: "readonly",
-        clearTimeout: "readonly",
-        setInterval: "readonly",
-        clearInterval: "readonly",
-        DOMException: "readonly",
-        // DOM types
-        HTMLElement: "readonly",
-        HTMLInputElement: "readonly",
-        HTMLButtonElement: "readonly",
-        HTMLFormElement: "readonly",
-        HTMLDivElement: "readonly",
-        Element: "readonly",
-        Document: "readonly",
-        Window: "readonly",
       },
     },
     rules: {

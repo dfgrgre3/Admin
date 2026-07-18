@@ -80,9 +80,25 @@ const CacheService = {
     async invalidatePattern(pattern: string): Promise<void> {
         try {
             const client = getRedisClient();
-            const keys = await client.keys(pattern);
-            if (keys.length > 0) {
-                await client.del(...keys);
+            // Stream keys with SCAN instead of KEYS to avoid blocking Redis
+            // (KEYS blocks the single-threaded event loop on large datasets).
+            const keysToDelete: string[] = [];
+            let cursor = '0';
+            do {
+                const [nextCursor, matched] = await client.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+                cursor = nextCursor;
+                if (matched.length > 0) {
+                    keysToDelete.push(...matched);
+                }
+            } while (cursor !== '0');
+
+            if (keysToDelete.length > 0) {
+                // Delete in chunks to keep each DEL command bounded.
+                const chunkSize = 200;
+                for (let i = 0; i < keysToDelete.length; i += chunkSize) {
+                    const chunk = keysToDelete.slice(i, i + chunkSize);
+                    await client.del(...chunk);
+                }
             }
         } catch (error) {
             logger.error(`[CacheService] Invalidate pattern error for ${pattern}:`, error);

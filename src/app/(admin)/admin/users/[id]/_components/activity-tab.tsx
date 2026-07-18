@@ -19,9 +19,16 @@ import {
   Layers,
   Timer,
   Target,
+  LogIn,
+  LogOut,
+  AlertTriangle,
+  Video,
+  MapPin,
 } from "lucide-react";
 import { format, isValid, formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
+import { useQuery } from "@tanstack/react-query";
+import { adminUsersApi, type LoginAttempt, type VideoEngagementResponse } from "@/lib/api/admin-users-api";
 
 export function ActivityTab({ user }: { user: UserDetails }) {
   const totalStudyHours = Math.floor((user.totalStudyTime ?? 0) / 60);
@@ -88,6 +95,31 @@ export function ActivityTab({ user }: { user: UserDetails }) {
   ];
 
   const recentSessions = user.studySessions?.slice(0, 10) || [];
+
+  const { data: loginData } = useQuery({
+    queryKey: ["admin", "user", user.id, "login-attempts"],
+    queryFn: (): Promise<{
+      total: number;
+      failedCount: number;
+      attempts: LoginAttempt[];
+    }> => adminUsersApi.getLoginAttempts(user.id),
+    staleTime: 30_000,
+  });
+
+  const { data: videoData } = useQuery({
+    queryKey: ["admin", "user", user.id, "video-engagement"],
+    queryFn: (): Promise<VideoEngagementResponse> =>
+      adminUsersApi.getVideoEngagement(user.id, { limit: 20 }),
+    staleTime: 30_000,
+  });
+
+  // Login/logout timeline (successful logins + last login from profile).
+  const loginTimeline = (loginData?.attempts ?? [])
+    .filter((a) => a.success)
+    .slice(0, 12);
+
+  // Failed login attempts only (brute-force detection).
+  const failedAttempts = (loginData?.attempts ?? []).filter((a) => !a.success);
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -164,6 +196,169 @@ export function ActivityTab({ user }: { user: UserDetails }) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Login / Logout Timeline */}
+      <Card className="border-none shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <LogIn className="h-5 w-5 text-primary" />
+            خريطة زمنية للدخول والخروج
+          </CardTitle>
+          <CardDescription>
+            آخر {loginTimeline.length} عملية دخول ناجحة من أصل {loginData?.total ?? 0} حدث تسجيل
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loginTimeline.length > 0 ? (
+            <div className="relative pr-4">
+              <div className="absolute right-4 top-1 bottom-1 w-px bg-border" />
+              <div className="space-y-4">
+                {loginTimeline.map((a) => (
+                  <div key={a.id} className="relative flex items-start gap-4">
+                    <div className="z-10 mt-1 h-7 w-7 shrink-0 rounded-full bg-success/10 text-success flex items-center justify-center ring-4 ring-card">
+                      <LogIn className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="flex-1 rounded-xl border bg-muted/20 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold">دخول ناجح</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {a.createdAt && isValid(new Date(a.createdAt))
+                            ? formatDistanceToNow(new Date(a.createdAt), { locale: ar, addSuffix: true })
+                            : ""}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {a.createdAt && isValid(new Date(a.createdAt))
+                            ? format(new Date(a.createdAt), "d MMM yyyy · HH:mm", { locale: ar })
+                            : "-"}
+                        </span>
+                        {a.ip && (
+                          <span className="font-mono">{a.ip}</span>
+                        )}
+                        {a.location && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {a.location}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <LogIn className="h-10 w-10 mx-auto mb-3 opacity-20" />
+              <p className="font-medium">لا توجد عمليات دخول مسجلة</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Failed Login Attempts */}
+      <Card className="border-none shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <AlertTriangle
+              className={`h-5 w-5 ${failedAttempts.length > 0 ? "text-danger" : "text-primary"}`}
+            />
+            محاولات تسجيل الدخول الفاشلة
+          </CardTitle>
+          <CardDescription>
+            {loginData?.failedCount ?? failedAttempts.length} محاولة فاشلة — مؤشر محتمل على محاولة اختراق
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          {failedAttempts.length > 0 ? (
+            <div className="divide-y">
+              {failedAttempts.slice(0, 15).map((a) => (
+                <div
+                  key={a.id}
+                  className="p-4 flex items-center justify-between gap-3 hover:bg-danger/5 transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-9 w-9 shrink-0 rounded-full bg-danger/10 text-danger flex items-center justify-center">
+                      <XCircle className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold">
+                        {a.eventType === "2FA_FAILED" ? "فشل في التحقق الثنائي" : "فشل في تسجيل الدخول"}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-x-3 text-[10px] text-muted-foreground mt-0.5">
+                        {a.ip && <span className="font-mono">{a.ip}</span>}
+                        <span>
+                          {a.createdAt && isValid(new Date(a.createdAt))
+                            ? format(new Date(a.createdAt), "d MMM yyyy · HH:mm", { locale: ar })
+                            : "-"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <Badge variant="destructive" className="rounded-full text-[10px] shrink-0">
+                    فشل
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <CheckCircle className="h-10 w-10 mx-auto mb-3 opacity-20 text-success" />
+              <p className="font-medium">لا توجد محاولات فاشلة — الحساب آمن</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Video Engagement */}
+      <Card className="border-none shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Video className="h-5 w-5 text-primary" />
+            تفاعل الفيديوهات
+          </CardTitle>
+          <CardDescription>
+            {videoData?.totalVideos ?? 0} فيديو · إجمالي المشاهدة{" "}
+            {Math.round((videoData?.totalWatchSeconds ?? 0) / 60)} دقيقة
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          {videoData && videoData.videos.length > 0 ? (
+            <div className="divide-y">
+              {videoData.videos.map((v) => {
+                const mins = v.timeSpentMinutes ?? Math.round((v.timeSpentSeconds ?? 0) / 60);
+                const pct = v.completed ? 100 : Math.min(100, Math.round((v.lastWatchedPosition ?? 0) * 100));
+                return (
+                  <div key={v.lessonId} className="p-4 flex items-center justify-between gap-3 hover:bg-muted/30 transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-9 w-9 shrink-0 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                        <Video className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold truncate">{v.status || "فيديو"}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {mins} دقيقة مشاهدة · {pct}% مكتمل
+                          {v.completed && " · مكتمل"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="w-28 shrink-0">
+                      <Progress value={pct} className="h-1.5" indicatorClassName="bg-primary" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <Video className="h-10 w-10 mx-auto mb-3 opacity-20" />
+              <p className="font-medium">لا توجد فيديوهات شوهدت بعد</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Recent Study Sessions */}
       <Card className="border-none shadow-lg">

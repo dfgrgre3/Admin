@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { m, AnimatePresence } from "framer-motion";
 import { X, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -97,8 +98,9 @@ export function MobileSidebar({
               size="icon"
               className="absolute top-4 left-4"
               onClick={onClose}
+              aria-label="إغلاق القائمة"
             >
-              <X className="h-5 w-5" />
+              <X className="h-5 w-5" aria-hidden="true" />
             </Button>
 
             {/* Content */}
@@ -197,9 +199,14 @@ export function MobileNavItem({
 
   if (href) {
     return (
-      <a href={href} className={className} data-sidebar-item>
+      <Link
+        href={href}
+        className={className}
+        aria-current={isActive ? "page" : undefined}
+        data-sidebar-item
+      >
         {content}
-      </a>
+      </Link>
     );
   }
 
@@ -223,12 +230,13 @@ interface BottomNavProps {
 
 export function MobileBottomNav({ items }: BottomNavProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-background border-t lg:hidden z-50">
+    <nav aria-label="تنقل سفلي للجوال" className="fixed bottom-0 left-0 right-0 bg-background border-t lg:hidden z-50">
       <div className="flex items-center justify-around h-16">
         {items.map((item, index) => (
-          <a
+          <Link
             key={index}
-            href={item.href}
+            href={item.href ?? "#"}
+            aria-current={item.isActive ? "page" : undefined}
             onClick={(e) => {
               if (item.onClick) {
                 e.preventDefault();
@@ -236,7 +244,7 @@ export function MobileBottomNav({ items }: BottomNavProps) {
               }
             }}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 flex-1 h-full",
+              "flex flex-col items-center justify-center gap-1 flex-1 h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
               item.isActive
                 ? "text-primary"
                 : "text-muted-foreground"
@@ -244,7 +252,7 @@ export function MobileBottomNav({ items }: BottomNavProps) {
           >
             {item.icon}
             <span className="text-xs">{item.label}</span>
-          </a>
+          </Link>
         ))}
       </div>
     </nav>

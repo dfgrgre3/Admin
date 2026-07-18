@@ -124,16 +124,12 @@ class UnifiedLogger {
     this.initializing = true;
 
     try {
-      // Initialize ELK logger (server-side only, exclude Edge)
-      if (this.config.enableELK && isServer && process.env.NEXT_RUNTIME !== 'edge') {
-        try {
-          const { elkLogger } = await import('./elk-logger');
-          this.elkLogger = elkLogger;
-        } catch (_error) {
-          // ELK logger initialization failed, continue without it
-          this.config.enableELK = false;
-        }
-      }
+      // ELK logger is registered on the server via the server-only bootstrap
+      // (src/lib/logging/register-server-logging). It is intentionally NOT
+      // dynamically imported here because unified-logger is reachable from
+      // Client Components, and importing the server-only `elk-logger` module
+      // would pull `server-only` (and winston / @elastic/elasticsearch) into
+      // the client graph, breaking the Turbopack/Edge builds.
 
       // Initialize Error Service (client-side)
       if (this.config.enableErrorLogger && !isServer) {
@@ -523,6 +519,19 @@ class UnifiedLogger {
    */
   updateConfig(config: Partial<LoggerConfig>): void {
     this.config = { ...this.config, ...config };
+  }
+
+  /**
+   * Register a server-side ELK logger.
+   *
+   * This must only be called from server-only code (e.g. the
+   * `register-server-logging` bootstrap invoked by instrumentation). It keeps
+   * the server-only `elk-logger` module out of the client graph while still
+   * allowing server-side logging to forward entries to ELK.
+   */
+  registerELKLogger(elkLogger: any): void {
+    this.elkLogger = elkLogger;
+    this.config.enableELK = true;
   }
 
   /**

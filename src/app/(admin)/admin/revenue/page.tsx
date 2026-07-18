@@ -1,7 +1,9 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { adminApi } from "@/lib/api/admin-api";
+import { billingApi } from "@/lib/api/billing-api";
 import { PageHeader } from "@/components/admin/ui/page-header";
 import { AdminStatsCard } from "@/components/admin/ui/admin-card";
 import { AdminButton } from "@/components/admin/ui/admin-button";
@@ -31,15 +33,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { LazySection } from "@/components/lazy/LazySection";
+
+const RevenueAreaChart = dynamic(() => import("./_components/revenue-charts").then(mod => mod.RevenueAreaChart), { ssr: false, loading: () => <div className="h-[350px] w-full animate-pulse bg-white/5 rounded-[2rem] border border-white/10" /> });
+const MrrAreaChart = dynamic(() => import("./_components/revenue-charts").then(mod => mod.MrrAreaChart), { ssr: false, loading: () => <div className="h-[300px] w-full animate-pulse bg-white/5 rounded-[2rem] border border-white/10" /> });
 
 interface RevenueStats {
   summary: {
@@ -172,8 +169,8 @@ export default function AdminRevenuePage() {
         </div>
       </PageHeader>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Stats Cards - Lazy load with stagger */}
+      <LazySection skeleton="card" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
           <AdminStatsCard
             title="إيرادات اليوم"
@@ -225,17 +222,12 @@ export default function AdminRevenuePage() {
             <p className="text-[10px] font-bold text-muted-foreground mt-1">نسبة تحول الزوار لمشتركين</p>
           </div>
         </m.div>
-      </div>
+      </LazySection>
 
-      {/* Charts Section */}
+      {/* Charts Section - Lazy load charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Revenue Chart */}
-        <m.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="lg:col-span-2 admin-glass p-8 rounded-[2rem] border border-white/10"
-        >
+        <div className="lg:col-span-2 admin-glass p-8 rounded-[2rem] border border-white/10">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-xl font-black flex items-center gap-3">
               <BarChart3 className="w-5 h-5 text-primary" />
@@ -244,51 +236,7 @@ export default function AdminRevenuePage() {
           </div>
           <div className="h-[350px] w-full">
             {mounted && safeStats.chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={350} minWidth={1}>
-                <AreaChart data={safeStats.chartData}>
-                  <defs>
-                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="hsl(var(--border))"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="name"
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(v: number) => `${v / 1000}k`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      borderColor: "hsl(var(--border))",
-                      borderRadius: "12px",
-                      color: "hsl(var(--foreground))",
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#colorRevenue)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <RevenueAreaChart data={safeStats.chartData} />
             ) : safeStats.chartData.length > 0 ? (
               <div className="h-[350px] w-full animate-pulse bg-white/5 rounded-[2rem] border border-white/10" />
             ) : (
@@ -298,15 +246,10 @@ export default function AdminRevenuePage() {
               </div>
             )}
           </div>
-        </m.div>
+        </div>
 
         {/* Top Plans */}
-        <m.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="admin-glass p-8 rounded-[2rem] border border-white/10"
-        >
+        <LazySection skeleton="card" className="admin-glass p-8 rounded-[2rem] border border-white/10">
           <h3 className="text-xl font-black mb-8 flex items-center gap-3">
             <Package className="w-5 h-5 text-purple-500" />
             <span>الباقات الأكثر مبيعاً</span>
@@ -342,11 +285,11 @@ export default function AdminRevenuePage() {
               </div>
             )}
           </div>
-        </m.div>
+        </LazySection>
       </div>
 
       {/* Secondary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <LazySection skeleton="card" className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -379,7 +322,55 @@ export default function AdminRevenuePage() {
             {safeStats.summary.totalTransactions}
           </div>
         </m.div>
-      </div>
+      </LazySection>
+
+      {/* MRR Section - Lazy load */}
+      <LazySection skeleton="content">
+        <MrrSection />
+      </LazySection>
     </div>
+  );
+}
+
+function MrrSection() {
+  const { data: mrr } = useQuery({
+    queryKey: ["admin", "mrr"],
+    queryFn: () => billingApi.getMRR(),
+  });
+
+  if (!mrr) return null;
+
+  const mrrChart = mrr.series.map((s) => ({ name: s.month, mrr: Math.round(mrr.currentMRR), revenue: s.revenue }));
+
+  return (
+    <m.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.4 }}
+      className="admin-glass p-8 rounded-[2rem] border border-white/10 space-y-6"
+    >
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl font-black flex items-center gap-3">
+          <DollarSign className="w-5 h-5 text-emerald-500" />
+          <span>الإيراد الشهري المتكرر (MRR)</span>
+        </h3>
+        <div className="text-left">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">MRR الحالي</p>
+          <p className="text-2xl font-black text-emerald-500">{mrr.currentMRR.toFixed(2)} ج.م</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <AdminStatsCard title="اشتراكات مفعلة" value={mrr.activeSubscriptions} icon={Users} color="blue" />
+        <AdminStatsCard title="تسرب آخر 30 يوم" value={mrr.churnLast30Days} icon={ArrowDownRight} color="red" />
+        <AdminStatsCard title="العملة" value={mrr.currency} icon={Banknote} color="purple" />
+      </div>
+
+      <div className="h-[300px] w-full">
+        {mrr.series.length > 0 && (
+          <MrrAreaChart data={mrrChart} />
+        )}
+      </div>
+    </m.div>
   );
 }

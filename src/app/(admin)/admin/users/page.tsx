@@ -13,8 +13,13 @@ import { exportToCSV, ExportColumn } from '@/lib/export-utils';
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { AdminConfirm } from "@/components/admin/ui/admin-confirm";
-import { BroadcastModal as MessageModal } from "@/components/admin/broadcast/broadcast-modal";
+import dynamic from "next/dynamic";
 import { CsvImportDialog } from "@/components/admin/ui/csv-import-dialog";
+
+const MessageModal = dynamic(() => import("@/components/admin/broadcast/broadcast-modal").then(mod => ({ default: mod.BroadcastModal })), {
+  ssr: false,
+  loading: () => null,
+});
 import { Checkbox } from "@/components/ui/checkbox";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRoutes } from "@/lib/api/routes";
@@ -37,6 +42,7 @@ interface AdvancedFiltersState {
   country: string;
   gradeLevel: string;
   subscriptionStatus: string;
+  paymentStatus: string;
   createdFrom: string;
   createdTo: string;
   lastLoginFrom: string;
@@ -52,6 +58,7 @@ const DEFAULT_ADVANCED: AdvancedFiltersState = {
   country: "",
   gradeLevel: "",
   subscriptionStatus: "all",
+  paymentStatus: "all",
   createdFrom: "",
   createdTo: "",
   lastLoginFrom: "",
@@ -68,6 +75,7 @@ function parseAdvancedFromParams(searchParams: URLSearchParams): AdvancedFilters
     country: searchParams.get("country") || "",
     gradeLevel: searchParams.get("gradeLevel") || "",
     subscriptionStatus: searchParams.get("subscriptionStatus") || "all",
+    paymentStatus: searchParams.get("paymentStatus") || "all",
     createdFrom: searchParams.get("createdFrom") || "",
     createdTo: searchParams.get("createdTo") || "",
     lastLoginFrom: searchParams.get("lastLoginFrom") || "",
@@ -108,6 +116,7 @@ export default function AdminUsersPage() {
     if (advanced.country !== "") count++;
     if (advanced.gradeLevel !== "") count++;
     if (advanced.subscriptionStatus !== "all") count++;
+    if (advanced.paymentStatus !== "all") count++;
     if (advanced.createdFrom !== "") count++;
     if (advanced.createdTo !== "") count++;
     if (advanced.lastLoginFrom !== "") count++;
@@ -179,6 +188,7 @@ export default function AdminUsersPage() {
     Object.entries(values).forEach(([key, value]) => {
       if (value && value !== "all" && value !== "false") params.set(key, value);
     });
+    if (advanced.paymentStatus !== "all") params.set("paymentStatus", advanced.paymentStatus);
     const url = `/admin/users?${params.toString()}`;
     if (typeof window !== "undefined") {
       window.history.replaceState(window.history.state, "", url);
@@ -280,10 +290,10 @@ export default function AdminUsersPage() {
     }
     setImpersonating(true);
     try {
-      const res = await adminFetch(apiRoutes.admin.impersonate, {
+      const res = await adminFetch(apiRoutes.admin.impersonateById(impersonateDialog.user.id), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetUserId: impersonateDialog.user.id }),
+        body: JSON.stringify({}),
         credentials: 'include'
       });
       if (res.ok) {
@@ -612,6 +622,11 @@ export default function AdminUsersPage() {
         <label className="min-w-36 text-xs font-bold">الاشتراك
           <select className="mt-1 h-10 w-full rounded-xl border bg-background px-3" value={localAdvanced.subscriptionStatus} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, subscriptionStatus: e.target.value })); }}>
             <option value="all">الكل</option><option value="ACTIVE">نشط</option><option value="EXPIRED">منتهي</option><option value="NONE">بدون اشتراك</option>
+          </select>
+        </label>
+        <label className="min-w-36 text-xs font-bold">حالة الدفع
+          <select className="mt-1 h-10 w-full rounded-xl border bg-background px-3" value={localAdvanced.paymentStatus} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, paymentStatus: e.target.value })); }}>
+            <option value="all">الكل</option><option value="PAID">مدفوع</option><option value="OVERDUE">متأخر</option><option value="TRIAL">تجريبي</option><option value="NONE">بدون</option>
           </select>
         </label>
         <label className="min-w-36 text-xs font-bold">انتهاء الاشتراك إلى<Input type="date" className="mt-1" value={localAdvanced.subscriptionExpiresTo} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, subscriptionExpiresTo: e.target.value })); }} /></label>

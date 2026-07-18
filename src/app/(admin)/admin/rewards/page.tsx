@@ -32,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import { 
   Plus, Gift, Users, Download, Upload, 
   Sparkles, Gem, Shield, Crown, Wand2, Hammer, Box, Send, Trash2, Edit
@@ -308,10 +309,17 @@ export default function AdminRewardsPage() {
         const rarity = row.getValue("rarity") as string;
         const config = rarityColors[rarity] || rarityColors.common!;
         return (
-          <Badge 
-            variant="outline" 
-            className="font-black text-[10px] uppercase tracking-widest rounded-lg border-2 px-3 py-1 bg-white/5"
-            style={{ color: `oklch(var(--${config.color}))`, borderColor: `oklch(var(--${config.color}) / 0.3)` }}
+          <Badge
+            variant="outline"
+            className={cn(
+              "font-black text-[10px] uppercase tracking-widest rounded-lg border-2 px-3 py-1 bg-white/5",
+              config.color === "green" && "text-emerald-600 border-emerald-500/30",
+              config.color === "blue" && "text-blue-600 border-blue-500/30",
+              config.color === "yellow" && "text-amber-600 border-amber-500/30",
+              config.color === "red" && "text-red-600 border-red-500/30",
+              config.color === "purple" && "text-purple-600 border-purple-500/30",
+              config.color === "default" && "text-primary border-primary/30"
+            )}
           >
             {config.label}
           </Badge>

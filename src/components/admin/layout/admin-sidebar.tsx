@@ -55,6 +55,13 @@ import {
   ClipboardList,
   Database,
   Activity,
+  Library,
+  Video,
+  Image as ImageIcon,
+  LayoutTemplate,
+  AlertTriangle,
+  Flame,
+  Package,
 } from "lucide-react";
 import { IconButton } from "@/components/admin/ui/admin-button";
 import {
@@ -118,7 +125,7 @@ const mainNavItems: SidebarNavItem[] = [
     title: "لوحة المعلومات",
     href: "/admin",
     icon: LayoutDashboard,
-    color: "bg-blue-500",
+    color: "bg-orange-500",
     permission: "DASHBOARD_VIEW",
   },
   {
@@ -139,28 +146,28 @@ const mainNavItems: SidebarNavItem[] = [
     title: "المعلمين",
     href: "/admin/teachers",
     icon: GraduationCap,
-    color: "bg-indigo-500",
+    color: "bg-purple-500",
     permission: "TEACHERS_VIEW",
   },
   {
     title: "عمليات المراقبة اللحظية",
     href: "/admin/live",
     icon: Radio,
-    color: "bg-red-500",
+    color: "bg-rose-500",
     permission: "LIVE_MONITOR_VIEW",
   },
   {
     title: "التقارير والتحليلات",
     href: "/admin/analytics",
     icon: BarChart3,
-    color: "bg-emerald-500",
+    color: "bg-fuchsia-500",
     permission: "ANALYTICS_VIEW",
   },
   {
     title: "مُنشئ التقارير (الخزانة)",
     href: "/admin/reports",
     icon: TableProperties,
-    color: "bg-orange-500",
+    color: "bg-orange-600",
     permission: "REPORTS_VIEW",
   },
 ];
@@ -170,49 +177,77 @@ const contentNavItems: SidebarNavItem[] = [
     title: "الدورات التعليمية",
     href: "/admin/courses",
     icon: PlayCircle,
-    color: "bg-blue-600",
+    color: "bg-orange-500",
     permission: "SUBJECTS_VIEW",
   },
   {
     title: "تصنيفات الدورات",
     href: "/admin/course-categories",
     icon: Bookmark,
-    color: "bg-cyan-600",
+    color: "bg-amber-500",
     permission: "SUBJECTS_VIEW",
   },
   {
     title: "المواد الدراسية",
     href: "/admin/subjects",
     icon: BookOpen,
-    color: "bg-blue-500",
+    color: "bg-orange-600",
     permission: "SUBJECTS_VIEW",
   },
   {
     title: "الكتب",
     href: "/admin/books",
     icon: FileText,
-    color: "bg-amber-500",
+    color: "bg-purple-500",
     permission: "BOOKS_VIEW",
   },
   {
     title: "الامتحانات",
     href: "/admin/exams",
     icon: Target,
-    color: "bg-green-500",
+    color: "bg-violet-500",
     permission: "EXAMS_VIEW",
+  },
+  {
+    title: "بنك الأسئلة",
+    href: "/admin/question-bank",
+    icon: Library,
+    color: "bg-purple-600",
+    permission: "EXAMS_VIEW",
+  },
+  {
+    title: "البث المباشر",
+    href: "/admin/live-sessions",
+    icon: Video,
+    color: "bg-rose-500",
+    permission: "SUBJECTS_MANAGE",
   },
   {
     title: "الموارد",
     href: "/admin/resources",
     icon: Gift,
-    color: "bg-pink-500",
+    color: "bg-fuchsia-500",
     permission: "RESOURCES_VIEW",
+  },
+  {
+    title: "مكتبة الوسائط",
+    href: "/admin/media",
+    icon: ImageIcon,
+    color: "bg-violet-600",
+    permission: "RESOURCES_VIEW",
+  },
+  {
+    title: "منشئ صفحات الهبوط",
+    href: "/admin/landing",
+    icon: LayoutTemplate,
+    color: "bg-purple-500",
+    permission: "SETTINGS_MANAGE",
   },
   {
     title: "المساعد الذكي",
     href: "/admin/ai",
     icon: Bot,
-    color: "bg-red-500",
+    color: "bg-orange-500",
     permission: "AI_MANAGE",
   },
 ];
@@ -229,7 +264,7 @@ const engagementNavItems: SidebarNavItem[] = [
     title: "الأوسمة والتقدير",
     href: "/admin/achievements",
     icon: Award,
-    color: "bg-yellow-500",
+    color: "bg-amber-400",
     permission: "ACHIEVEMENTS_VIEW",
   },
   {
@@ -250,21 +285,21 @@ const engagementNavItems: SidebarNavItem[] = [
     title: "أتمتة العمليات",
     href: "/admin/automations",
     icon: Workflow,
-    color: "bg-blue-500",
+    color: "bg-violet-500",
     permission: "ADMIN_BYPASS",
   },
   {
     title: "حملات التواصل (CRM)",
     href: "/admin/marketing",
     icon: Send,
-    color: "bg-pink-500",
+    color: "bg-violet-600",
     permission: "MARKETING_VIEW",
   },
   {
     title: "تجارب تحسين الأداء A/B",
     href: "/admin/ab-testing",
     icon: Split,
-    color: "bg-teal-500",
+    color: "bg-fuchsia-600",
     permission: "AB_TESTING_VIEW",
   },
 ];
@@ -274,7 +309,7 @@ const communityNavItems: SidebarNavItem[] = [
     title: "الإعلانات الرسمية",
     href: "/admin/announcements",
     icon: Bell,
-    color: "bg-sky-500",
+    color: "bg-orange-400",
     permission: "ANNOUNCEMENTS_VIEW",
   },
   {
@@ -288,28 +323,28 @@ const communityNavItems: SidebarNavItem[] = [
     title: "منتدى الحوار",
     href: "/admin/forum",
     icon: MessageSquare,
-    color: "bg-teal-500",
+    color: "bg-violet-500",
     permission: "FORUM_VIEW",
   },
   {
     title: "المدونة الأكاديمية",
     href: "/admin/blog",
     icon: Newspaper,
-    color: "bg-indigo-500",
+    color: "bg-purple-500",
     permission: "BLOG_VIEW",
   },
   {
     title: "الفعاليات",
     href: "/admin/events",
     icon: Calendar,
-    color: "bg-lime-500",
+    color: "bg-amber-500",
     permission: "EVENTS_VIEW",
   },
   {
     title: "المسابقات العلمية",
     href: "/admin/contests",
     icon: Trophy,
-    color: "bg-red-500",
+    color: "bg-orange-500",
     permission: "CONTESTS_VIEW",
   },
 ];
@@ -319,14 +354,14 @@ const financialNavItems: SidebarNavItem[] = [
     title: "التحليل المالي",
     href: "/admin/revenue",
     icon: DollarSign,
-    color: "bg-emerald-600",
+    color: "bg-amber-500",
     permission: "ANALYTICS_VIEW",
   },
   {
     title: "سجل المدفوعات",
     href: "/admin/payments",
     icon: CreditCard,
-    color: "bg-blue-500",
+    color: "bg-orange-500",
     permission: "ANALYTICS_VIEW",
   },
   {
@@ -336,6 +371,41 @@ const financialNavItems: SidebarNavItem[] = [
     color: "bg-purple-500",
     permission: "MARKETING_VIEW",
   },
+  {
+    title: "المسوقون بالعمولة",
+    href: "/admin/affiliates",
+    icon: Gift,
+    color: "bg-violet-500",
+    permission: "ANALYTICS_VIEW",
+  },
+  {
+    title: "إدارة فشل الدفع",
+    href: "/admin/dunning",
+    icon: AlertTriangle,
+    color: "bg-rose-500",
+    permission: "ANALYTICS_VIEW",
+  },
+  {
+    title: "مولد التقارير",
+    href: "/admin/reports",
+    icon: BarChart3,
+    color: "bg-fuchsia-500",
+    permission: "ANALYTICS_VIEW",
+  },
+  {
+    title: "الخطط والاشتراكات",
+    href: "/admin/plans",
+    icon: Package,
+    color: "bg-orange-600",
+    permission: "ANALYTICS_VIEW",
+  },
+  {
+    title: "تحليلات التعليم",
+    href: "/admin/learning-analytics",
+    icon: Flame,
+    color: "bg-orange-600",
+    permission: "ANALYTICS_VIEW",
+  },
 ];
 
 const infrastructureNavItems: SidebarNavItem[] = [
@@ -343,7 +413,7 @@ const infrastructureNavItems: SidebarNavItem[] = [
     title: "مركز المراقبة والآمان",
     href: "/admin/live",
     icon: ShieldCheck,
-    color: "bg-red-500",
+    color: "bg-rose-500",
     permission: "LIVE_MONITOR_VIEW",
   },
   {
@@ -357,21 +427,21 @@ const infrastructureNavItems: SidebarNavItem[] = [
     title: "مراقبة الأداء",
     href: "/admin/infrastructure",
     icon: Monitor,
-    color: "bg-blue-600",
+    color: "bg-violet-600",
     permission: PERMISSIONS.SETTINGS_VIEW,
   },
   {
     title: "قواعد البيانات",
     href: "/admin/infrastructure/partitions",
     icon: Split,
-    color: "bg-indigo-600",
+    color: "bg-fuchsia-600",
     permission: PERMISSIONS.SETTINGS_VIEW,
   },
   {
     title: "النسخ الاحتياطي",
     href: "/admin/backups",
     icon: Database,
-    color: "bg-emerald-600",
+    color: "bg-amber-500",
     permission: PERMISSIONS.SETTINGS_VIEW,
   },
   {
@@ -385,16 +455,16 @@ const infrastructureNavItems: SidebarNavItem[] = [
     title: "سجلات النظام (Engine)",
     href: "/admin/audit-logs",
     icon: ScrollText,
-    color: "bg-slate-500",
+    color: "bg-violet-500",
     permission: "AUDIT_LOGS_VIEW",
   }
 ];
 
 const quickActions: QuickAction[] = [
-  { title: "إضافة مستخدم", href: "/admin/users/create", icon: UserPlus, color: "blue", permission: "USERS_MANAGE" },
-  { title: "إضافة محتوى", href: "/admin/subjects?create=1", icon: FilePlus, color: "green", permission: "SUBJECTS_MANAGE" },
-  { title: "إضافة مهمة", href: "/admin/challenges?create=1", icon: ClipboardList, color: "orange", permission: "CHALLENGES_MANAGE" },
-  { title: "المساعد الذكي", href: "/admin/ai", icon: Bot, color: "red", permission: "AI_MANAGE" },
+  { title: "إضافة مستخدم", href: "/admin/users/create", icon: UserPlus, color: "orange", permission: "USERS_MANAGE" },
+  { title: "إضافة محتوى", href: "/admin/subjects?create=1", icon: FilePlus, color: "violet", permission: "SUBJECTS_MANAGE" },
+  { title: "إضافة مهمة", href: "/admin/challenges?create=1", icon: ClipboardList, color: "amber", permission: "CHALLENGES_MANAGE" },
+  { title: "المساعد الذكي", href: "/admin/ai", icon: Bot, color: "rose", permission: "AI_MANAGE" },
   { title: "إرسال إعلان", href: "/admin/announcements?create=1", icon: Bell, color: "purple", permission: "ANNOUNCEMENTS_MANAGE" },
 ];
 
@@ -405,6 +475,7 @@ function SidebarNavLink({ item, pathname, collapsed, onBookmarkToggle }: Sidebar
   const linkContent = (
     <Link
       href={item.href}
+      aria-label={collapsed ? item.title : undefined}
       className={cn(
         "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
         isActive
@@ -421,7 +492,7 @@ function SidebarNavLink({ item, pathname, collapsed, onBookmarkToggle }: Sidebar
         className={cn(
           "flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 flex-shrink-0",
           isActive
-            ? "bg-white/20"
+            ? "bg-card/20 text-primary-foreground"
             : "bg-muted/50 group-hover:bg-gradient-to-br group-hover:text-white",
           !isActive && item.color
         )}
@@ -485,6 +556,9 @@ function SidebarNavSection({
   isCollapsed,
   onToggle,
 }: SidebarNavSectionProps) {
+  const sectionId = React.useId();
+  const sectionHidden = !collapsed && !!isCollapsed;
+
   if (items.length === 0) return null;
   return (
     <div className="space-y-1">
@@ -492,26 +566,31 @@ function SidebarNavSection({
         <button
           onClick={onToggle}
           type="button"
-          className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-foreground transition-colors group select-none text-right"
+          aria-expanded={!sectionHidden}
+          aria-controls={sectionId}
+          className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-foreground transition-colors group select-none text-right focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md"
         >
           <span>{title}</span>
           <ChevronDown
             className={cn(
               "h-3.5 w-3.5 transition-transform duration-200 opacity-60 group-hover:opacity-100",
-              isCollapsed ? "rotate-90" : "rotate-0"
+              sectionHidden ? "rotate-90" : "rotate-0"
             )}
+            aria-hidden="true"
           />
         </button>
       )}
       {collapsed && <div className="mx-3 my-2 h-px bg-border/50" />}
-      
+
       <div
+        id={sectionId}
+        inert={sectionHidden || undefined}
         className={cn(
           "space-y-0.5 overflow-hidden transition-all duration-300 ease-in-out",
-          !collapsed && isCollapsed ? "max-h-0 opacity-0 pointer-events-none" : "max-h-[1000px] opacity-100"
+          sectionHidden ? "max-h-0 opacity-0" : "max-h-[1000px] opacity-100"
         )}
       >
-        <nav className="space-y-0.5">
+        <div className="space-y-0.5">
           {items.map((item) => (
             <SidebarNavLink
               key={item.href}
@@ -521,11 +600,56 @@ function SidebarNavSection({
               onBookmarkToggle={onBookmarkToggle}
             />
           ))}
-        </nav>
+        </div>
       </div>
     </div>
   );
 }
+
+// Module-level icon map for bookmarks — avoids rebuilding a 36-entry object
+// on every render for every bookmark.
+const BOOKMARK_ICON_MAP: Record<string, React.ElementType> = {
+  LayoutDashboard,
+  Users,
+  BookOpen,
+  Trophy,
+  Bell,
+  MessageSquare,
+  Calendar,
+  Settings,
+  FileText,
+  Gift,
+  Target,
+  Award,
+  Medal,
+  Newspaper,
+  Gamepad2,
+  BarChart3,
+  Monitor,
+  ScrollText,
+  Home,
+  GraduationCap,
+  Search,
+  Keyboard,
+  Star,
+  Zap,
+  UserPlus,
+  FilePlus,
+  Bookmark,
+  Bot,
+  Radio,
+  TableProperties,
+  Send,
+  Split,
+  Workflow,
+  PlayCircle,
+  ShieldCheck,
+  CreditCard,
+  Ticket,
+  DollarSign,
+  ClipboardList,
+  Database,
+};
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -540,25 +664,30 @@ export function AdminSidebar() {
     setCollapsedSections((prev) => ({ ...prev, [title]: !prev[title] }));
   };
 
-  const canAccessNavItem = (item: SidebarNavItem) => {
-    const routePermission = getRequiredPermissionForAdminPath(item.href);
-    const explicitPermission = item.permission
-      ? resolvePermissionInput(item.permission)
-      : null;
-    const requiredPermission = routePermission || explicitPermission;
+  const canAccessNavItem = React.useCallback(
+    (item: SidebarNavItem) => {
+      const routePermission = getRequiredPermissionForAdminPath(item.href);
+      const explicitPermission = item.permission
+        ? resolvePermissionInput(item.permission)
+        : null;
+      const requiredPermission = routePermission || explicitPermission;
 
-    if (!requiredPermission) return true;
+      if (!requiredPermission) return true;
 
-    return hasPermission(requiredPermission);
-  };
+      return hasPermission(requiredPermission);
+    },
+    [hasPermission]
+  );
 
   const filterBySearchAndPermission = React.useCallback(
     (items: SidebarNavItem[]) => {
-      return items.filter((item) => {
-        if (!canAccessNavItem(item)) return false;
-        if (!searchQuery) return true;
-        return item.title.toLowerCase().includes(searchQuery.toLowerCase());
-      });
+      if (!searchQuery) {
+        return items.filter((item) => canAccessNavItem(item));
+      }
+      const query = searchQuery.toLowerCase();
+      return items.filter(
+        (item) => canAccessNavItem(item) && item.title.toLowerCase().includes(query)
+      );
     },
     [canAccessNavItem, searchQuery]
   );
@@ -579,22 +708,21 @@ export function AdminSidebar() {
     });
   }, [hasPermission]);
 
-  const [bookmarks, setBookmarks] = React.useState<BookmarkItem[]>([]);
-
-  // Load bookmarks from localStorage
-  React.useEffect(() => {
+  // Load bookmarks from localStorage via lazy initializer — runs once during
+  // initial render (no effect needed, no cascading setState warning).
+  const [bookmarks, setBookmarks] = React.useState<BookmarkItem[]>(() => {
+    if (typeof window === "undefined") return [];
     try {
       const saved = window.localStorage.getItem("admin-sidebar-bookmarks");
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setBookmarks(parsed);
-        }
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch (error) {
       console.error("Failed to load bookmarks:", error);
     }
-  }, []);
+    return [];
+  });
 
   const toggleCollapsed = () => {
     setCollapsed((previous) => !previous);
@@ -629,8 +757,6 @@ export function AdminSidebar() {
     }
   };
 
-  const isBookmarked = (href: string) => bookmarks.some(b => b.href === href);
-
   // Keyboard shortcuts
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -649,7 +775,7 @@ export function AdminSidebar() {
   return (
     <aside
       className={cn(
-        "flex h-screen flex-col border-l border-border/60 bg-card/80 backdrop-blur-xl transition-all duration-300 ease-in-out",
+        "flex h-screen flex-col border-l border-border glass-panel-strong transition-all duration-300 ease-in-out",
         collapsed ? "w-[72px]" : "w-[260px]"
       )}
       aria-label="القائمة الجانبية للإدارة"
@@ -658,7 +784,7 @@ export function AdminSidebar() {
       <div className="flex h-16 items-center justify-between border-b px-3">
         {!collapsed && (
           <div className="flex items-center gap-2.5 pr-1">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden bg-white border border-primary/20 shadow-lg shadow-primary/10">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden bg-card border border-primary/20 shadow-lg shadow-primary/10">
               <Image
                 src="/logo-tolo.jpg"
                 alt="TOLO"
@@ -696,10 +822,10 @@ export function AdminSidebar() {
       </div>
 
       {!collapsed && user && (
-        <div className="border-b px-3 py-3">
-          <div className="rounded-2xl border border-primary/10 bg-gradient-to-br from-primary/10 via-background to-background p-3">
+        <div className="border-b border-border px-3 py-3">
+          <div className="rounded-2xl border border-primary/10 bg-gradient-to-br from-primary/10 via-card to-card p-3 backdrop-blur-sm">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-violet-500 text-white font-bold text-xs shadow-md shadow-primary/20">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-chart-2 text-white font-bold text-xs shadow-md shadow-primary/20">
                 {(user.name || "A").substring(0, 2).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
@@ -719,6 +845,7 @@ export function AdminSidebar() {
             <input
               type="text"
               placeholder="بحث سريع في القائمة..."
+              aria-label="بحث سريع في القائمة"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-xl bg-muted/60 pl-8 pr-9 py-2 text-xs transition-all duration-200 hover:bg-muted focus:bg-background focus:outline-none focus:ring-1 focus:ring-primary border border-transparent focus:border-border text-foreground text-right"
@@ -727,8 +854,9 @@ export function AdminSidebar() {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute left-3 top-2 text-muted-foreground hover:text-foreground text-xs p-0.5"
+                className="absolute left-3 top-2 text-muted-foreground hover:text-foreground text-xs p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                 type="button"
+                aria-label="مسح البحث"
               >
                 ✕
               </button>
@@ -755,9 +883,10 @@ export function AdminSidebar() {
                 >
                   <Icon className={cn(
                     "h-3.5 w-3.5",
-                    action.color === "blue" && "text-blue-500",
-                    action.color === "green" && "text-green-500",
                     action.color === "orange" && "text-orange-500",
+                    action.color === "violet" && "text-violet-500",
+                    action.color === "amber" && "text-amber-500",
+                    action.color === "rose" && "text-rose-500",
                     action.color === "purple" && "text-purple-500"
                   )} />
                   <span className="truncate">{action.title}</span>
@@ -777,49 +906,7 @@ export function AdminSidebar() {
           </h3>
           <nav className="space-y-0.5 mt-1">
             {bookmarks.map((bookmark) => {
-              const iconMap: Record<string, React.ElementType> = {
-                'LayoutDashboard': LayoutDashboard,
-                'Users': Users,
-                'BookOpen': BookOpen,
-                'Trophy': Trophy,
-                'Bell': Bell,
-                'MessageSquare': MessageSquare,
-                'Calendar': Calendar,
-                'Settings': Settings,
-                'FileText': FileText,
-                'Gift': Gift,
-                'Target': Target,
-                'Award': Award,
-                'Medal': Medal,
-                'Newspaper': Newspaper,
-                'Gamepad2': Gamepad2,
-                'BarChart3': BarChart3,
-                'Monitor': Monitor,
-                'ScrollText': ScrollText,
-                'Home': Home,
-                'GraduationCap': GraduationCap,
-                'Search': Search,
-                'Keyboard': Keyboard,
-                'Star': Star,
-                'Zap': Zap,
-                'UserPlus': UserPlus,
-                'FilePlus': FilePlus,
-                'Bookmark': Bookmark,
-                'Bot': Bot,
-                'Radio': Radio,
-                'TableProperties': TableProperties,
-                'Send': Send,
-                'Split': Split,
-                'Workflow': Workflow,
-                'PlayCircle': PlayCircle,
-                'ShieldCheck': ShieldCheck,
-                'CreditCard': CreditCard,
-                'Ticket': Ticket,
-                'DollarSign': DollarSign,
-                'ClipboardList': ClipboardList,
-                'Database': Database,
-              };
-              const IconComponent = iconMap[bookmark.iconName] || Bookmark;
+              const IconComponent = BOOKMARK_ICON_MAP[bookmark.iconName] || Bookmark;
               const isActive = pathname === bookmark.href;
               return (
                 <div
@@ -840,9 +927,11 @@ export function AdminSidebar() {
                   </Link>
                   <button
                     onClick={() => removeBookmark(bookmark.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-muted rounded transition-all"
+                    aria-label={`إزالة "${bookmark.title}" من المفضلة`}
+                    title={`إزالة "${bookmark.title}" من المفضلة`}
+                    className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 p-1.5 hover:bg-muted rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
-                    <StarOff className="h-3 w-3 text-muted-foreground" />
+                    <StarOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   </button>
                 </div>
               );
@@ -852,7 +941,7 @@ export function AdminSidebar() {
       )}
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin" role="navigation" aria-label="القائمة الرئيسية">
+      <nav className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin" aria-label="القائمة الرئيسية">
         <SidebarNavSection
           title="الرئيسية"
           items={filteredMainNav}
@@ -907,16 +996,16 @@ export function AdminSidebar() {
           isCollapsed={searchQuery ? false : !!collapsedSections["البنية التحتية"]}
           onToggle={() => toggleSection("البنية التحتية")}
         />
-      </div>
+      </nav>
 
       {/* Footer */}
-      <div className="border-t p-3 space-y-0.5" role="navigation" aria-label="التذييل">
+      <nav className="border-t p-3 space-y-0.5" aria-label="أدوات النظام">
         <SidebarNavLink
           item={{
             title: "سجل النظام",
             href: "/admin/audit-logs",
             icon: ScrollText,
-            color: "bg-slate-500",
+            color: "bg-violet-500",
             permission: "AUDIT_LOGS_VIEW",
           }}
           pathname={pathname}
@@ -927,7 +1016,7 @@ export function AdminSidebar() {
             title: "الإعدادات",
             href: "/admin/settings",
             icon: Settings,
-            color: "bg-gray-500",
+            color: "bg-purple-500",
             permission: PERMISSIONS.SETTINGS_VIEW,
           }}
           pathname={pathname}
@@ -957,7 +1046,7 @@ export function AdminSidebar() {
             {!collapsed && <span>العودة للموقع</span>}
           </Link>
         </div>
-      </div>
+      </nav>
 
       {/* Keyboard Shortcuts Dialog */}
       <Dialog open={shortcutsOpen} onOpenChange={setShortcutsOpen}>
