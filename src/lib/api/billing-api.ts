@@ -18,6 +18,17 @@ export interface Affiliate {
   totalEarned: number;
   totalPaid: number;
   createdAt: string;
+  user?: {
+    id: string;
+    email: string;
+    name?: string;
+    username?: string;
+    avatar?: string;
+  };
+}
+
+export interface AffiliateDetail extends Affiliate {
+  pendingCount?: number;
 }
 
 export interface AffiliateReferral {
@@ -28,6 +39,11 @@ export interface AffiliateReferral {
   commission: number;
   status: string;
   createdAt: string;
+  user?: {
+    id: string;
+    email: string;
+    name?: string;
+  };
 }
 
 export interface DunningRecord {
@@ -60,11 +76,17 @@ export const billingApi = {
   getMRR: () => adminApi.get<MRRData>("/analytics/mrr"),
 
   listAffiliates: () => adminApi.get<Affiliate[]>("/affiliates"),
-  createAffiliate: (body: { userId: string; code?: string; commissionRate?: number; tier?: string }) =>
+  createAffiliate: (body: { userId: string; code?: string; commissionRate?: number; tier?: string; status?: string }) =>
     adminApi.post<Affiliate>("/affiliates", body),
+  getAffiliate: (id: string) =>
+    adminApi.get<{ affiliate: AffiliateDetail; pendingCount: number }>(`/affiliates/${id}`),
+  updateAffiliate: (id: string, body: { code?: string; status?: string; commissionRate?: number; tier?: string }) =>
+    adminApi.patch<Affiliate>(`/affiliates/${id}`, body),
+  deleteAffiliate: (id: string) =>
+    adminApi.delete<{ success: boolean }>(`/affiliates/${id}`),
   listAffiliateReferrals: (id: string) =>
     adminApi.get<AffiliateReferral[]>(`/affiliates/${id}/referrals`),
-  payAffiliate: (id: string) => adminApi.post<{ success: boolean; paid: number }>(`/affiliates/${id}/pay`, {}),
+  payAffiliate: (id: string) => adminApi.post<{ success: boolean; paid: number; count: number }>(`/affiliates/${id}/pay`, {}),
 
   listDunning: () => adminApi.get<DunningRecord[]>("/dunning"),
 

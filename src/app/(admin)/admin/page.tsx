@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { toast } from "sonner";
 import { DashboardSkeleton } from "@/components/admin/ui/loading-skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { AdminButton } from "@/components/admin/ui/admin-button";
@@ -17,6 +18,9 @@ import { DraggableDashboard } from "@/components/admin/dashboard/draggable-dashb
 import { usePremiumSounds } from "@/hooks/use-premium-sounds";
 import { useAuth } from "@/contexts/auth-context";
 import type { UserSegment } from "@/components/admin/broadcast/broadcast-modal";
+import { ComprehensiveStats } from "@/components/admin/dashboard/comprehensive-stats";
+import { useDashboardExport } from "@/lib/export-utils";
+import { buildComprehensiveStats } from "@/lib/dashboard-data";
 
 const BroadcastModal = dynamic(() => import("@/components/admin/broadcast/broadcast-modal").then(mod => ({ default: mod.BroadcastModal })), {
   ssr: false,
@@ -198,6 +202,8 @@ export default function AdminDashboardPage() {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
+  const { exportDashboardData, exportTopCourses } = useDashboardExport(data?.stats || {});
+
   React.useEffect(() => {
     if (!socket) return;
     const handleWsMessage = (event: MessageEvent) => {
@@ -227,10 +233,20 @@ export default function AdminDashboardPage() {
     refetch();
   }, [playSound, refetch]);
 
+  const handleTimeFilterChange = React.useCallback((filter: "today" | "week" | "month" | "year") => {
+    playSound("click");
+    setTimeFilter(filter);
+  }, [playSound]);
+
+  const handleExport = React.useCallback(() => {
+    playSound("click");
+    exportDashboardData();
+  }, [playSound, exportDashboardData]);
+
   const pageControls = React.useMemo(() => ({
     refreshDashboard: handleRefresh,
     openBroadcast: () => setIsBroadcastOpen(true),
-    setTimeFilter: (filter: "today" | "week") => setTimeFilter(filter),
+    setTimeFilter: (filter: "today" | "week" | "month" | "year") => setTimeFilter(filter),
     scrollToSection: (sectionId: string) => {
       const element = document.getElementById(sectionId);
       if (element) {
@@ -389,44 +405,43 @@ export default function AdminDashboardPage() {
     return result;
   }, [safeCharts.activity]);
 
+  const comprehensiveStats = React.useMemo(
+    () => buildComprehensiveStats({
+      stats: {
+        ...safeStats,
+        activeStudents: (data as any)?.stats?.activeStudents ?? safeStats.totalUsers,
+        totalTeachers: (data as any)?.stats?.totalTeachers ?? 0,
+        publishedCourses: (data as any)?.stats?.publishedCourses ?? safeStats.totalSubjects,
+        reviewCourses: (data as any)?.stats?.reviewCourses ?? 0,
+        draftCourses: (data as any)?.stats?.draftCourses ?? 0,
+        dailyRevenue: (data as any)?.stats?.dailyRevenue ?? 0,
+        monthlyRevenue: (data as any)?.stats?.monthlyRevenue ?? 0,
+        newSubscriptions: (data as any)?.stats?.newSubscriptions ?? 0,
+        cancelledSubscriptions: (data as any)?.stats?.cancelledSubscriptions ?? 0,
+        pendingOrders: (data as any)?.stats?.pendingOrders ?? 0,
+        openTickets: (data as any)?.stats?.openTickets ?? 0,
+        moderationQueue: (data as any)?.stats?.moderationQueue ?? 0,
+        pendingApprovals: (data as any)?.stats?.pendingApprovals ?? 0,
+        completionRate: (data as any)?.stats?.completionRate ?? 75,
+      },
+      activity: safeActivity,
+      topSellingCourses: (data as any)?.topSellingCourses,
+      criticalKPIs: (data as any)?.criticalKPIs,
+      systemAlerts: (data as any)?.systemAlerts,
+    }),
+    [safeStats, safeActivity, data,]
+  );
+
   const sections = React.useMemo(() => [
     {
       id: "main-stats",
       content: (
-        <EnhancedStatsCards stats={[
-          {
-            title: "إجمالي المستخدمين",
-            value: safeStats.totalUsers,
-            description: `${safeStats.newUsersToday} مستخدم جديد اليوم`,
-            icon: Users,
-            color: "blue",
-            trend: {
-              value: Math.abs(safeTrends.userGrowth),
-              isPositive: safeTrends.userGrowth >= 0,
-            },
-          },
-          {
-            title: "المواد الدراسية",
-            value: safeStats.totalSubjects,
-            description: "مادة مفعلة حالياً",
-            icon: BookOpen,
-            color: "green",
-          },
-          {
-            title: "إجمالي الاختبارات",
-            value: safeStats.totalExams,
-            description: `${safeActivity.examsTaken} محاولة اختبار`,
-            icon: Target,
-            color: "purple",
-          },
-          {
-            title: "المهام النشطة",
-            value: safeStats.activeChallenges,
-            description: "مهمة قيد التنفيذ حالياً",
-            icon: ClipboardList,
-            color: "orange",
-          },
-        ]} animated={false} />
+        <ComprehensiveStats
+          stats={comprehensiveStats}
+          timeFilter={timeFilter}
+          onTimeFilterChange={handleTimeFilterChange}
+          onExport={handleExport}
+        />
       )
     },
     {
@@ -595,11 +610,20 @@ export default function AdminDashboardPage() {
         </ErrorBoundary>
       )
     }
-  ], [safeStats, safeActivity, safeTrends, safeCharts, safeRecentActivity, safeUpcomingEvents, alertData, agentDashboardContext, pageControls, heatmapData, distributionData, timeFilter, playSound, handleRefresh, isFetching]);
+  ], [comprehensiveStats, safeStats, safeActivity, safeTrends, safeCharts, safeRecentActivity, safeUpcomingEvents, alertData, agentDashboardContext, pageControls, heatmapData, distributionData, timeFilter, playSound, handleRefresh, isFetching]);
+
+  // ── Show toast when no data ─────────────────────────────────────────────
+  React.useEffect(() => {
+    if (!isLoading && !data) {
+      toast.warning("لا توجد بيانات متاحة حالياً لهذه الفترة الزمنية", {
+        description: "حاول اختيار فترة زمنية أخرى",
+        duration: 5000,
+      });
+    }
+  }, [isLoading, data]);
 
   // ── Early returns (after all hooks) ─────────────────────────────────────
   if (isLoading) return <DashboardSkeleton />;
-  if (!data) return <div className="text-center py-20 text-gray-400 font-bold">لا توجد بيانات متاحة حالياً.</div>;
 
   return (
     <div className="space-y-12 pb-20" dir="rtl">

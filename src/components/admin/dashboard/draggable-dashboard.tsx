@@ -93,8 +93,9 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange, .
       if (saved) {
         const savedOrder = JSON.parse(saved) as string[];
         const currentIds = new Set(defaultOrder);
-        const validSavedOrder = savedOrder.filter((id) => currentIds.has(id));
-        const newIds = defaultOrder.filter((id) => !savedOrder.includes(id));
+        // Dedupe to defend against stale localStorage entries (e.g. previously-duplicated IDs)
+        const validSavedOrder = Array.from(new Set(savedOrder.filter((id) => currentIds.has(id))));
+        const newIds = defaultOrder.filter((id) => !validSavedOrder.includes(id));
         return [...validSavedOrder, ...newIds];
       }
     } catch {
@@ -103,9 +104,14 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange, .
     return defaultOrder;
   });
 
-  // Save layout to localStorage whenever it changes
+  // Persist cleaned-up order so stale duplicates don't reappear on next load
   React.useEffect(() => {
     if (typeof window === "undefined") return;
+    const deduped = Array.from(new Set(items));
+    if (deduped.length !== items.length) {
+      setItems(deduped);
+      return;
+    }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch {
@@ -114,7 +120,14 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange, .
   }, [items]);
 
   // Sync items when children change (e.g. new sections added), but avoid infinite loops
-  const childrenIds = React.useMemo(() => children.map((c: any) => c.id), [children]);
+  const childrenIds = React.useMemo(() => {
+    const seen = new Set<string>();
+    return children.map((c: any) => c.id).filter((id) => {
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }, [children]);
   const childrenIdsKey = childrenIds.join(",");
   const itemsKey = items.join(",");
 
@@ -124,8 +137,15 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange, .
       setItems((prev) => {
         const currentIds = childrenIds;
         const existingIds = new Set(prev);
-        // Keep existing order for known IDs, append new ones at the end
-        const validExisting = prev.filter((id) => currentIds.includes(id));
+        // Keep existing order for known IDs (deduped), append new ones at the end
+        const validExisting: string[] = [];
+        const seen = new Set<string>();
+        for (const id of prev) {
+          if (currentIds.includes(id) && !seen.has(id)) {
+            validExisting.push(id);
+            seen.add(id);
+          }
+        }
         const newOnes = currentIds.filter((id) => !existingIds.has(id));
         // If nothing changed, return prev to avoid re-render
         const result = [...validExisting, ...newOnes];

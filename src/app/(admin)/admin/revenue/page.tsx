@@ -75,6 +75,13 @@ export default function AdminRevenuePage() {
     },
   });
 
+  // Show toast notification when no data is available for the selected period
+  React.useEffect(() => {
+    if (stats && !isLoading && stats.chartData.length === 0 && stats.topPlans.length === 0) {
+      toast.info(`لا توجد بيانات متاحة للفترة: ${periodLabels[period]}`);
+    }
+  }, [stats, isLoading, period]);
+
   const handleExport = () => {
     if (!stats) return;
     const blob = new Blob([JSON.stringify(stats, null, 2)], {
@@ -91,6 +98,31 @@ export default function AdminRevenuePage() {
   if (isLoading) {
     return (
       <div className="space-y-8 pb-20" dir="rtl">
+        <PageHeader
+          title="التقارير المالية والإيرادات 💰"
+          description="متابعة الإيرادات، المعاملات المالية، ومعدلات التحويل للمنصة بشكل مباشر ومفصل."
+        >
+          <div className="flex items-center gap-3">
+            <Select value={period} onValueChange={(v) => setPeriod(v as PeriodFilter)}>
+              <SelectTrigger className="w-40 h-11 rounded-2xl bg-background border-border text-foreground font-black hover:bg-accent transition-colors">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  <SelectValue />
+                </div>
+              </SelectTrigger>
+              <SelectContent className="bg-popover/90 backdrop-blur-xl border-border text-popover-foreground font-black rounded-2xl">
+                {Object.entries(periodLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value} className="focus:bg-primary/20">
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <AdminButton variant="outline" icon={RefreshCw} loading={isFetching}>
+              تحديث
+            </AdminButton>
+          </div>
+        </PageHeader>
         <div className="h-24 animate-pulse rounded-[2rem] bg-white/5 border border-white/10" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -108,7 +140,28 @@ export default function AdminRevenuePage() {
         <PageHeader
           title="التقارير المالية والإيرادات 💰"
           description="متابعة الإيرادات، المعاملات المالية، ومعدلات التحويل للمنصة بشكل مباشر ومفصل."
-        />
+        >
+          <div className="flex items-center gap-3">
+            <Select value={period} onValueChange={(v) => setPeriod(v as PeriodFilter)}>
+              <SelectTrigger className="w-40 h-11 rounded-2xl bg-background border-border text-foreground font-black hover:bg-accent transition-colors">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  <SelectValue />
+                </div>
+              </SelectTrigger>
+              <SelectContent className="bg-popover/90 backdrop-blur-xl border-border text-popover-foreground font-black rounded-2xl">
+                {Object.entries(periodLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value} className="focus:bg-primary/20">
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <AdminButton variant="outline" icon={RefreshCw} onClick={() => refetch()}>
+              تحديث
+            </AdminButton>
+          </div>
+        </PageHeader>
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="p-6 rounded-full bg-red-500/10 mb-4">
             <DollarSign className="w-12 h-12 text-red-500" />
@@ -237,13 +290,8 @@ export default function AdminRevenuePage() {
           <div className="h-[350px] w-full">
             {mounted && safeStats.chartData.length > 0 ? (
               <RevenueAreaChart data={safeStats.chartData} />
-            ) : safeStats.chartData.length > 0 ? (
-              <div className="h-[350px] w-full animate-pulse bg-white/5 rounded-[2rem] border border-white/10" />
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                <PieChart className="w-16 h-16 mb-4 opacity-30" />
-                <p className="font-bold">لا توجد بيانات للفترة المحددة</p>
-              </div>
+              <div className="h-[350px] w-full animate-pulse bg-white/5 rounded-[2rem] border border-white/10" />
             )}
           </div>
         </div>
@@ -278,12 +326,6 @@ export default function AdminRevenuePage() {
                 </div>
               </div>
             ))}
-            {safeStats.topPlans.length === 0 && (
-              <div className="text-center py-12">
-                <Banknote className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
-                <p className="text-muted-foreground font-bold text-sm">لا توجد اشتراكات مسجلة بعد</p>
-              </div>
-            )}
           </div>
         </LazySection>
       </div>

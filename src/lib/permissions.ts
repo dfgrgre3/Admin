@@ -18,6 +18,8 @@ export const PERMISSIONS = {
   SUBJECTS_VIEW: "subjects:view",
   SUBJECTS_MANAGE: "subjects:manage",
   OWN_SUBJECTS_MANAGE: "own_subjects:manage",
+  LEARNING_PATHS_VIEW: "learning_paths:view",
+  LEARNING_PATHS_MANAGE: "learning_paths:manage",
 
   BOOKS_VIEW: "books:view",
   BOOKS_MANAGE: "books:manage",
@@ -76,6 +78,15 @@ export const PERMISSIONS = {
   SETTINGS_VIEW: "settings:view",
   // Note: SETTINGS_MANAGE is intentionally omitted - backend uses SETTINGS_VIEW for all settings operations
   AUDIT_LOGS_VIEW: "audit_logs:view",
+
+  // Assignments / Homework
+  ASSIGNMENTS_VIEW: "assignments:view",
+  ASSIGNMENTS_MANAGE: "assignments:manage",
+  OWN_ASSIGNMENTS_MANAGE: "own_assignments:manage",
+
+  // Tax Management
+  TAXES_VIEW: "taxes:view",
+  TAXES_MANAGE: "taxes:manage",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -92,6 +103,8 @@ const PERMISSION_KEY_ALIASES: Record<string, Permission> = {
   TEACHERS_MANAGE: PERMISSIONS.TEACHERS_MANAGE,
   SUBJECTS_VIEW: PERMISSIONS.SUBJECTS_VIEW,
   SUBJECTS_MANAGE: PERMISSIONS.SUBJECTS_MANAGE,
+  LEARNING_PATHS_VIEW: PERMISSIONS.LEARNING_PATHS_VIEW,
+  LEARNING_PATHS_MANAGE: PERMISSIONS.LEARNING_PATHS_MANAGE,
   BOOKS_VIEW: PERMISSIONS.BOOKS_VIEW,
   EXAMS_VIEW: PERMISSIONS.EXAMS_VIEW,
   RESOURCES_VIEW: PERMISSIONS.RESOURCES_VIEW,
@@ -137,7 +150,9 @@ export function resolvePermissionInput(
 export function permissionGrantMatches(grant: string, required: Permission | string): boolean {
   const req = String(required);
   if (grant === req || grant === PERMISSIONS.ADMIN_BYPASS) return true;
-  if (grant === "own_subjects:manage" && (req === "subjects:manage" || req === "subjects:view")) return true;
+  if (grant === "own_subjects:manage" && (req === "subjects:manage" || req === "subjects:view" || req === "learning_paths:manage" || req === "learning_paths:view")) return true;
+  if (grant === "subjects:manage" && (req === "subjects:manage" || req === "subjects:view" || req === "learning_paths:manage" || req === "learning_paths:view")) return true;
+  if (grant === "subjects:view" && (req === "subjects:view" || req === "learning_paths:view")) return true;
   if (grant === "own_books:manage" && (req === "books:manage" || req === "books:view")) return true;
   if (grant === "own_resources:manage" && (req === "resources:manage" || req === "resources:view")) return true;
   if (grant === "own_exams:manage" && (req === "exams:manage" || req === "exams:view")) return true;
@@ -173,6 +188,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.STUDENTS_VIEW,
     PERMISSIONS.TEACHERS_VIEW,
     PERMISSIONS.SUBJECTS_VIEW,
+    PERMISSIONS.LEARNING_PATHS_VIEW,
+    PERMISSIONS.LEARNING_PATHS_MANAGE,
     PERMISSIONS.EXAMS_VIEW,
     PERMISSIONS.BLOG_VIEW,
     PERMISSIONS.FORUM_VIEW,
@@ -190,6 +207,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.DASHBOARD_VIEW,
     PERMISSIONS.STUDENTS_VIEW,
     PERMISSIONS.SUBJECTS_VIEW,
+    PERMISSIONS.LEARNING_PATHS_VIEW,
     PERMISSIONS.OWN_SUBJECTS_MANAGE,
     PERMISSIONS.BOOKS_VIEW,
     PERMISSIONS.OWN_BOOKS_MANAGE,

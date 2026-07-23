@@ -112,7 +112,7 @@ export function AchievementTable({ achievements, onEdit, onDelete }: Achievement
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <Users className="w-3.5 h-3.5 text-muted-foreground" />
-          <span className="text-xs font-black">{row.original._count.users} مستخدم</span>
+          <span className="text-xs font-black">{row.original.unlockedCount} مستخدم</span>
         </div>
       ),
     },

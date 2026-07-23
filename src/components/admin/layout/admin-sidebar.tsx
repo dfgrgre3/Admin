@@ -62,6 +62,7 @@ import {
   AlertTriangle,
   Flame,
   Package,
+  Route,
 } from "lucide-react";
 import { IconButton } from "@/components/admin/ui/admin-button";
 import {
@@ -193,6 +194,13 @@ const contentNavItems: SidebarNavItem[] = [
     icon: BookOpen,
     color: "bg-orange-600",
     permission: "SUBJECTS_VIEW",
+  },
+  {
+    title: "مسارات التعلم",
+    href: "/admin/learning-paths",
+    icon: Route,
+    color: "bg-cyan-600",
+    permission: "LEARNING_PATHS_VIEW",
   },
   {
     title: "الكتب",

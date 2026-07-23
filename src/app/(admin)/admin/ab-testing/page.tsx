@@ -5,11 +5,11 @@ import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/admin/ui/page-header";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import { Split, BarChart3, Plus, Microscope } from "lucide-react";
-import { ExperimentCard } from "@/components/ab-testing/experiment-card";
-import { CreateExperimentDialog } from "@/components/ab-testing/create-experiment-dialog";
-import { StatsCards } from "@/components/ab-testing/stats-cards";
-import { FiltersBar } from "@/components/ab-testing/filters-bar";
-import { EmptyState } from "@/components/ab-testing/empty-state";
+import { ExperimentCard } from "./_components/experiment-card";
+import { CreateExperimentDialog } from "./_components/create-experiment-dialog";
+import { StatsCards } from "./_components/stats-cards";
+import { FiltersBar } from "./_components/filters-bar";
+import { EmptyState } from "./_components/empty-state";
 import { abTestingService } from "@/services/ab-testing-service";
 import { Experiment, CreateExperimentData } from "@/types/ab-testing";
 

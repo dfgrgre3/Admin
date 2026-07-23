@@ -206,6 +206,25 @@ export default function AdminAnalyticsPage() {
     refetchInterval: 5 * 60 * 1000,
   });
 
+  // Show toast notification when no data is available for the selected period
+  React.useEffect(() => {
+    if (analyticsData && !analyticsLoading) {
+      const hasNoData = 
+        analyticsData.users?.total === 0 && 
+        analyticsData.content?.subjects === 0 && 
+        analyticsData.charts?.dailyActiveUsers?.length === 0;
+      
+      if (hasNoData) {
+        const periodLabels: Record<string, string> = {
+          week: "آخر أسبوع",
+          month: "آخر شهر",
+          year: "آخر سنة",
+        };
+        toast.info(`لا توجد بيانات متاحة للفترة: ${periodLabels[period]}`);
+      }
+    }
+  }, [analyticsData, analyticsLoading, period]);
+
   const { data: revenueData, isLoading: revenueLoading, refetch: refetchRevenue } = useQuery<RevenueData>({
     queryKey: ['admin', 'revenue', period],
     queryFn: async () => {
@@ -383,7 +402,33 @@ export default function AdminAnalyticsPage() {
     };
   }, [revenueData, data]);
 
-  if (loading && !data) return <AnalyticsSkeleton />;
+  if (loading && !data) {
+    return (
+      <div className="space-y-6 pb-20">
+        <PageHeader
+          title="التحليلات وذكاء الأعمال (BI)"
+          description="لوحات معلومات مخصصة، تقارير مالية، وتتبع مسار المستخدمين لاستخلاص القرارات."
+        >
+          <div className="flex items-center gap-2">
+            <Select value={period} onValueChange={setPeriod}>
+              <SelectTrigger className="w-40 rounded-xl">
+                <SelectValue placeholder="اختر الفترة" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="week">آخر أسبوع</SelectItem>
+                <SelectItem value="month">آخر شهر</SelectItem>
+                <SelectItem value="year">آخر سنة</SelectItem>
+              </SelectContent>
+            </Select>
+            <AdminButton variant="outline" size="sm" icon={RefreshCw} onClick={() => refetch()}>
+              تحديث
+            </AdminButton>
+          </div>
+        </PageHeader>
+        <AnalyticsSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-20">
@@ -615,12 +660,7 @@ export default function AdminAnalyticsPage() {
                       </div>
                     ))}
                  </div>
-                 ) : (
-                   <div className="text-center py-12 text-muted-foreground">
-                     <PieChart className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                     <p className="font-bold">لا توجد بيانات مبيعات بعد</p>
-                   </div>
-                 )}
+                 ) : null}
               </AdminCard>
 
               <AdminCard variant="glass">

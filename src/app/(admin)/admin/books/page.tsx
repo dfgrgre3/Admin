@@ -4,7 +4,7 @@ import * as React from "react";
 import { PageHeader } from "@/components/admin/ui/page-header";
 import { AdminDataTable, RowActions } from "@/components/admin/ui/admin-table";
 import { AdminButton } from "@/components/admin/ui/admin-button";
-import { AdminCard } from "@/components/admin/ui/admin-card";
+import { AdminStatsCard } from "@/components/admin/ui/admin-card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Plus, BookOpen, Download, Star, Eye, Users, Search, Trash2
@@ -50,7 +50,7 @@ interface Book {
   downloads: number;
   tags: string[];
   createdAt: string;
-  subject: {
+  subject?: {
     id: string;
     name: string;
     nameAr: string | null;
@@ -79,13 +79,15 @@ interface SubjectsListResponse {
   };
 }
 
+const EMPTY_BOOKS: Book[] = [];
+
 const bookSchema = z.object({
   title: z.string().min(1, "عنوان الكتاب مطلوب"),
   author: z.string().min(1, "اسم المؤلف مطلوب"),
   description: z.string().optional(),
   subjectId: z.string().min(1, "المادة مطلوبة"),
-  coverUrl: z.string().optional(),
-  downloadUrl: z.string().min(1, "رابط التحميل مطلوب"),
+  coverUrl: z.string().trim().optional(),
+  downloadUrl: z.string().trim().min(1, "رابط التحميل مطلوب"),
   tags: z.array(z.string()).optional(),
 });
 
@@ -105,7 +107,7 @@ export default function AdminBooksPage() {
   const [search, setSearch] = React.useState("");
   const deferredSearch = React.useDeferredValue(search);
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["admin", "books", page, limit, deferredSearch],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -131,12 +133,21 @@ export default function AdminBooksPage() {
     },
   });
 
-  const books = data?.books || [];
+  const books = data?.books ?? EMPTY_BOOKS;
   const pagination = data?.pagination;
 
+  const stats = React.useMemo(() => ({
+    totalBooks: pagination?.total ?? 0,
+    views: books.reduce((total, book) => total + (book.views || 0), 0),
+    downloads: books.reduce((total, book) => total + (book.downloads || 0), 0),
+    averageRating: books.length
+      ? books.reduce((total, book) => total + (book.rating || 0), 0) / books.length
+      : 0,
+  }), [books, pagination?.total]);
+
   React.useEffect(() => {
-    setPage(1);
-  }, [deferredSearch]);
+    if (isError) toast.error("تعذر تحميل الكتب، حاول التحديث مرة أخرى");
+  }, [isError]);
 
   const form = useForm<BookFormValues>({
     resolver: zodResolver(bookSchema),
@@ -158,7 +169,7 @@ export default function AdminBooksPage() {
         title: book.title,
         author: book.author,
         description: book.description || "",
-        subjectId: book.subject.id,
+        subjectId: book.subject?.id || "",
         coverUrl: book.coverUrl || "",
         downloadUrl: book.downloadUrl,
         tags: book.tags,
@@ -189,12 +200,13 @@ export default function AdminBooksPage() {
       });
 
       if (response.ok) {
-        toast.success(editingBook ? "تم تحديث المجلد الملكي" : "تم تدوين كتاب جديد بالمكتبة");
+        toast.success(editingBook ? "تم تحديث الكتاب بنجاح" : "تمت إضافة الكتاب إلى المكتبة");
         setDialogOpen(false);
         await requestPublicCacheRevalidation(LIBRARY_PUBLIC_CACHE_PATHS);
         refetch();
       } else {
-        toast.error("فشل في حفظ الكتاب");
+        const result = await response.json().catch(() => null);
+        toast.error(result?.error || "فشل في حفظ الكتاب");
       }
     } catch (err: unknown) {
       toast.error("خطأ في الاتصال");
@@ -212,11 +224,12 @@ export default function AdminBooksPage() {
       });
 
       if (response.ok) {
-        toast.success("تم حرق المجلد من السجلات");
+        toast.success("تم حذف الكتاب بنجاح");
         await requestPublicCacheRevalidation(LIBRARY_PUBLIC_CACHE_PATHS);
         refetch();
       } else {
-        toast.error("فشل في الحذف");
+        const result = await response.json().catch(() => null);
+        toast.error(result?.error || "فشل في حذف الكتاب");
       }
     } catch (err: unknown) {
       toast.error("خطأ في الاتصال");
@@ -281,7 +294,7 @@ export default function AdminBooksPage() {
       header: "المجال",
       cell: ({ row }) => (
         <Badge variant="outline" className="rounded-lg bg-white/5 border-white/10 text-muted-foreground font-black text-[10px] uppercase">
-          {row.original.subject.nameAr || row.original.subject.name}
+          {row.original.subject?.nameAr || row.original.subject?.name || "غير محدد"}
         </Badge>
       ),
     },
@@ -292,11 +305,11 @@ export default function AdminBooksPage() {
         <div className="flex gap-4 items-center">
           <div className="flex items-center gap-1.5 text-xs font-bold text-amber-500">
             <Star className="w-3.5 h-3.5 fill-current" />
-            <span>{row.original.rating.toFixed(1)}</span>
+            <span>{(row.original.rating || 0).toFixed(1)}</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs font-bold text-blue-500">
             <Download className="w-3.5 h-3.5" />
-            <span>{row.original.downloads.toLocaleString()}</span>
+            <span>{(row.original.downloads || 0).toLocaleString("ar-EG")}</span>
           </div>
         </div>
       ),
@@ -319,8 +332,8 @@ export default function AdminBooksPage() {
           onEdit={canManageBooks ? handleOpenDialog : undefined}
           onDelete={canManageBooks ? (b) => setDeleteDialog({ open: true, id: b.id }) : undefined}
           extraActions={[
-            { icon: Eye, label: "معاينة المجلد", onClick: (b) => window.open(b.downloadUrl, "_blank") },
-            { icon: Download, label: "تحميل المخطوطة", onClick: (b) => window.open(b.downloadUrl, "_blank") },
+            { icon: Eye, label: "فتح الكتاب", onClick: (b) => window.open(b.downloadUrl, "_blank", "noopener,noreferrer") },
+            { icon: Download, label: "تنزيل الكتاب", onClick: (b) => window.open(b.downloadUrl, "_blank", "noopener,noreferrer") },
           ]}
         />
       ),
@@ -330,8 +343,8 @@ export default function AdminBooksPage() {
   return (
     <div className="space-y-10 pb-20" dir="rtl">
       <PageHeader
-        title="خزانة الكتب الملكية 📚"
-        description="إدارة المراجع العلمية، المذكرات الدراسية، والكتب الخارجية للمحاربين."
+        title="إدارة الكتب 📚"
+        description="أضف المراجع والكتب الدراسية، وتابع القراءة والتنزيلات من مكان واحد."
       >
         {canManageBooks && (
           <AdminButton icon={Plus} onClick={() => handleOpenDialog()}>
@@ -341,24 +354,10 @@ export default function AdminBooksPage() {
       </PageHeader>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {[
-          { label: "إجمالي المجلدات", value: books.length, icon: BookOpen, color: "amber" },
-          { label: "إجمالي القراءات", value: books.reduce((acc, b) => acc + b.views, 0), icon: Eye, color: "blue" },
-          { label: "عمليات التحميل", value: books.reduce((acc, b) => acc + b.downloads, 0), icon: Download, color: "emerald" },
-          { label: "متوسط التقييم", value: (books.reduce((acc, b) => acc + b.rating, 0) / (books.length || 1)).toFixed(1), icon: Star, color: "purple" },
-        ].map((stat, i) => (
-          <AdminCard key={i} variant="glass" className={`p-6 bg-${stat.color}-500/5 border-${stat.color}-500/10`}>
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-2xl bg-${stat.color}-500/10 text-${stat.color}-500`}>
-                <stat.icon className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-black tracking-tighter">{stat.value}</p>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
-              </div>
-            </div>
-          </AdminCard>
-        ))}
+        <AdminStatsCard title="إجمالي الكتب" value={stats.totalBooks} icon={BookOpen} color="amber" description="نتائج البحث الحالية" />
+        <AdminStatsCard title="المشاهدات" value={stats.views} icon={Eye} color="blue" description="ضمن الصفحة المعروضة" />
+        <AdminStatsCard title="التنزيلات" value={stats.downloads} icon={Download} color="green" description="ضمن الصفحة المعروضة" />
+        <AdminStatsCard title="متوسط التقييم" value={stats.averageRating.toFixed(1)} icon={Star} color="purple" description="ضمن الصفحة المعروضة" />
       </div>
 
       <AdminDataTable
@@ -390,7 +389,7 @@ export default function AdminBooksPage() {
               toast.success('تم تصدير الكتب بنجاح');
             },
           },
-          {
+          ...(canManageBooks ? [{
             label: "حذف المحدد",
             icon: Trash2,
             variant: "destructive",
@@ -410,17 +409,24 @@ export default function AdminBooksPage() {
                 toast.error("فشل في حذف الكتب");
               }
             },
-          },
+          }] : []),
         ]}
         actions={{ onRefresh: () => refetch() }}
+        emptyMessage={{
+          title: deferredSearch ? "لا توجد كتب مطابقة" : "لا توجد كتب حتى الآن",
+          description: deferredSearch ? "جرّب عبارة بحث أخرى." : "أضف أول كتاب لبدء بناء مكتبتك.",
+        }}
         toolbar={
           <div className="relative">
             <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="ابحث عن المجلد، المؤلف، أو المجال..."
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+              }}
+              placeholder="ابحث بالعنوان أو المؤلف أو المادة..."
               className="h-10 w-72 rounded-xl border border-border bg-accent/20 px-10 text-sm outline-none ring-primary transition focus:ring-1"
             />
           </div>
@@ -430,11 +436,11 @@ export default function AdminBooksPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md bg-card/80 backdrop-blur-xl border-white/10 rounded-[2rem]">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black">
-              {editingBook ? "تعديل المجلد" : "تدوين كتاب جديد"}
+              <DialogTitle className="text-2xl font-black">
+              {editingBook ? "تعديل الكتاب" : "إضافة كتاب جديد"}
             </DialogTitle>
             <DialogDescription className="font-bold text-muted-foreground">
-              أدخل بيانات الكتاب وأرفق الروابط المرجعية للتحميل.
+              أدخل بيانات الكتاب وروابط الغلاف والتنزيل.
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -494,7 +500,7 @@ export default function AdminBooksPage() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-black text-[10px] uppercase tracking-widest opacity-60">وصف المجلد</FormLabel>
+                    <FormLabel className="font-black text-[10px] uppercase tracking-widest opacity-60">وصف الكتاب</FormLabel>
                     <FormControl><Textarea {...field} className="rounded-xl border-white/10 min-h-[80px]" /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -526,9 +532,28 @@ export default function AdminBooksPage() {
                 />
               </div>
 
+              <FormField
+                control={form.control}
+                name="tags"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-black text-[10px] uppercase tracking-widest opacity-60">الوسوم</FormLabel>
+                    <FormControl>
+                      <Input
+                        value={(field.value || []).join("، ")}
+                        onChange={(event) => field.onChange(event.target.value.split(/[,،]/).map((tag) => tag.trim()).filter(Boolean))}
+                        placeholder="مثال: مراجعة، فيزياء، الصف الثالث"
+                        className="rounded-xl border-white/10"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <DialogFooter>
                 <AdminButton type="submit" className="w-full h-12 text-md font-black">
-                  {editingBook ? "حفظ التغييرات" : "إيداع الكتاب بالمكتبة"}
+                  {editingBook ? "حفظ التغييرات" : "إضافة الكتاب"}
                 </AdminButton>
               </DialogFooter>
             </form>
@@ -539,8 +564,8 @@ export default function AdminBooksPage() {
       <ConfirmDialog
         open={deleteDialog.open}
         onOpenChange={(open) => setDeleteDialog({ open, id: null })}
-        title="حرق المجلد نهائياً؟"
-        description="سيتم حذف هذا الكتاب وجميع بيانات القراءة والتحميل الخاصة به. هل أنت متأكد؟"
+        title="حذف الكتاب نهائياً؟"
+        description="سيتم حذف الكتاب وبياناته المرتبطة. هل أنت متأكد؟"
         confirmText="نعم، احذف الكتاب"
         variant="destructive"
         onConfirm={handleDelete}

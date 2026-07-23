@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { Star, BookOpen, Search, RefreshCw, Download } from 'lucide-react';
 import { DashboardSkeleton } from '@/components/admin/ui/loading-skeleton';
 import Image from 'next/image';
-import { exportToCSV, exportToJSON, ExportColumn } from '@/lib/export-utils';
+import { exportToCSV, ExportColumn } from '@/lib/export-utils';
 
 interface Review {
     id: string;

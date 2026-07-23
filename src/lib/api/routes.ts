@@ -229,6 +229,25 @@ export const apiRoutes = {
     courseReviews: (courseId: string) => `/api/admin/courses/${courseId}/reviews`,
     subjectCurriculum: (subjectId: string) => `/api/admin/subjects/${subjectId}/curriculum`,
 
+    // Course lifecycle workflow (Phase 1)
+    courseSubmitReview: (courseId: string) => `/api/admin/courses/${courseId}/submit-review`,
+    courseApprove: (courseId: string) => `/api/admin/courses/${courseId}/approve`,
+    courseReject: (courseId: string) => `/api/admin/courses/${courseId}/reject`,
+    courseArchive: (courseId: string) => `/api/admin/courses/${courseId}/archive`,
+    courseRestore: (courseId: string) => `/api/admin/courses/${courseId}/restore`,
+    reviewQueue: '/api/admin/courses/review-queue',
+    courseChangelogV2: (courseId: string) => `/api/admin/courses/${courseId}/changelog`,
+
+    // Course tags
+    courseTags: '/api/admin/course-tags',
+    courseAssignTags: (courseId: string) => `/api/admin/courses/${courseId}/tags`,
+
+    // Related / prerequisite courses
+    courseRelated: (courseId: string) => `/api/admin/courses/${courseId}/related`,
+
+    // Review workflow comments
+    courseReviewComments: (courseId: string) => `/api/admin/courses/${courseId}/review-comments`,
+
     // Enrollments
     enrollments: '/api/admin/courses/enrollments',
     manualEnroll: '/api/admin/courses/enroll',
@@ -262,6 +281,18 @@ export const apiRoutes = {
     // Subscription Plans
     plans: '/api/admin/plans',
     planById: (id: string) => `/api/admin/plans/${id}`,
+
+    // Assignments / Homework
+    assignments: '/api/admin/assignments',
+    assignmentById: (id: string) => `/api/admin/assignments/${id}`,
+    assignmentSubmissions: (id: string) => `/api/admin/assignments/${id}/submissions`,
+    gradeAssignment: (id: string) => `/api/admin/assignments/${id}/grade`,
+
+    // Tax Management
+    taxes: '/api/admin/taxes',
+    taxById: (id: string) => `/api/admin/taxes/${id}`,
+    taxRates: '/api/admin/taxes/rates',
+    taxReport: '/api/admin/taxes/report',
 
     // Settings
     settings: '/api/admin/settings',
@@ -317,6 +348,12 @@ export const apiRoutes = {
     // Contests
     contests: '/api/admin/contests',
     contestById: (id: string) => `/api/admin/contests/${id}`,
+
+    // Affiliates
+    affiliates: '/api/admin/affiliates',
+    affiliateById: (id: string) => `/api/admin/affiliates/${id}`,
+    affiliateReferrals: (id: string) => `/api/admin/affiliates/${id}/referrals`,
+    payAffiliate: (id: string) => `/api/admin/affiliates/${id}/pay`,
 
     // Support Tickets
     tickets: '/api/admin/tickets',

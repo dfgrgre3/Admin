@@ -35,7 +35,7 @@ export default function AdminAchievementsPage() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setAchievements(data.data?.achievements || data.data?.items || data.achievements || []);
+      setAchievements(data.data || []);
     } catch (error) {
       logger.error("Error fetching achievements:", error);
       toast.error("حدث خطأ أثناء جلب سجلات الأوسمة.");

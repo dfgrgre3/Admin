@@ -286,10 +286,10 @@ export function CourseFilters({
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
                   <SelectItem value="ALL" className="font-bold text-xs">كل الحالات</SelectItem>
-                  <SelectItem value="PUBLISHED" className="font-bold text-xs">منشورة</SelectItem>
-                  <SelectItem value="DRAFT" className="font-bold text-xs">مسودة</SelectItem>
-                  <SelectItem value="ACTIVE" className="font-bold text-xs">نشطة</SelectItem>
-                  <SelectItem value="INACTIVE" className="font-bold text-xs">موقوفة</SelectItem>
+                  <SelectItem value="draft" className="font-bold text-xs">مسودة</SelectItem>
+                  <SelectItem value="pending_review" className="font-bold text-xs">قيد المراجعة</SelectItem>
+                  <SelectItem value="published" className="font-bold text-xs">منشور</SelectItem>
+                  <SelectItem value="archived" className="font-bold text-xs">مؤرشف</SelectItem>
                 </SelectContent>
               </Select>
 

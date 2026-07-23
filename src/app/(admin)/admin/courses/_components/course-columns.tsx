@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { RowActions } from "@/components/admin/ui/admin-table";
+import { CourseStatusBadge } from "@/components/admin/courses/status-badge";
 import { cn } from "@/lib/utils";
 import type { Course } from "./types";
 
@@ -135,29 +136,15 @@ export function createCourseColumns(params: CreateCourseColumnsParams): ColumnDe
       }
     },
     {
-      accessorKey: "isPublished",
-      header: "النشر",
-      cell: ({ row }) =>
-        <Badge
-          variant="outline"
-          className={cn(
-            "rounded-full px-2.5 py-0.5 text-[11px] font-bold",
-            row.original.isPublished ?
-              "border-emerald-500/20 bg-emerald-500/10 text-emerald-600" :
-              "border-border/60 bg-muted/30 text-muted-foreground"
-          )}>
-          {row.original.isPublished ? "منشورة" : "مسودة"}
-        </Badge>
-    },
-    {
-      accessorKey: "isActive",
+      accessorKey: "status",
       header: "الحالة",
-      cell: ({ row }) =>
-        <Badge
-          variant={row.original.isActive ? "default" : "secondary"}
-          className="rounded-full px-2.5 py-0.5 text-[11px] font-bold">
-          {row.original.isActive ? "نشطة" : "موقوفة"}
-        </Badge>
+      cell: ({ row }) => (
+        <CourseStatusBadge
+          status={row.original.status}
+          isPublished={row.original.isPublished}
+          isActive={row.original.isActive}
+        />
+      )
     },
     {
       id: "actions",

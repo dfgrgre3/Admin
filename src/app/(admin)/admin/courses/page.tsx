@@ -106,11 +106,8 @@ export default function AdminCoursesPage() {
       if (filterLevel !== "ALL") params.set("level", filterLevel);
       if (filterCategory !== "ALL") params.set("categoryId", filterCategory);
 
-      if (filterStatus === "PUBLISHED") params.set("isPublished", "true"); else
-        if (filterStatus === "DRAFT") params.set("isPublished", "false"); else
-          if (filterStatus === "ACTIVE") params.set("isActive", "true"); else
-            if (filterStatus === "INACTIVE") params.set("isActive", "false"); else
-              if (filterStatus === "ALL") params.set("isActive", "all");
+      // Use the new status field for lifecycle filtering
+      if (filterStatus !== "ALL") params.set("status", filterStatus.toLowerCase());
 
       const response = await adminFetch(`${apiRoutes.admin.courses}?${params.toString()}`);
       if (!response.ok) throw new Error("فشل تحميل الدورات");

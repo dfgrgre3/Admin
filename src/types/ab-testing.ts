@@ -28,3 +28,17 @@ export interface CreateExperimentData {
   variantBName: string;
   targetAudience: string;
 }
+
+export interface BackendABExperiment {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  variants: string;
+  trafficPct: number;
+  winner?: string;
+  startDate: string | null;
+  endDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

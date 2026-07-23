@@ -210,6 +210,7 @@ function AdminActionCard({
   className,
   children,
 }: ActionCardProps) {
+  const colorClass = colorClasses[color as ColorKey] || "text-primary";
   return (
     <AdminCard interactive className={cn("group", className)}>
       <div className="flex items-start justify-between">
@@ -218,10 +219,10 @@ function AdminActionCard({
             <div
               className={cn(
                 "flex h-10 w-10 items-center justify-center rounded-xl",
-                colorClasses[color] ? `${colorClasses[color].replace("text-", "bg-")}/10` : "bg-primary/10"
+                colorClass.replace("text-", "bg-") + "/10"
               )}
             >
-              <Icon className={cn("h-5 w-5", colorClasses[color] || "text-primary")} />
+              <Icon className={cn("h-5 w-5", colorClass)} />
             </div>
           )}
           <div>

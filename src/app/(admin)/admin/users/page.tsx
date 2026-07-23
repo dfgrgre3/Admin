@@ -8,8 +8,8 @@ import { AdminButton } from "@/components/admin/ui/admin-button";
 import { RoleBadge, StatusBadge } from "@/components/admin/ui/admin-badge";
 import { AdminStatsCard } from "@/components/admin/ui/admin-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserPlus, Download, Mail, Shield, Users, Zap, Search, Send, LogIn, Upload, AlertTriangle, RefreshCw, FilterX, Filter, ChevronDown, ChevronUp, X, Calendar, MapPin, GraduationCap, Clock, CreditCard } from "lucide-react";
-import { exportToCSV, ExportColumn } from '@/lib/export-utils';
+import { UserPlus, Download, Mail, Shield, Users, Zap, Search, Send, LogIn, Upload, AlertTriangle, RefreshCw } from "lucide-react";
+import { useExport, ExportColumn } from '@/lib/export-utils';
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { AdminConfirm } from "@/components/admin/ui/admin-confirm";
@@ -35,55 +35,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { logger } from '@/lib/logger';
 
-interface AdvancedFiltersState {
-  emailVerified: string;
-  phoneVerified: string;
-  twoFactorEnabled: string;
-  country: string;
-  gradeLevel: string;
-  subscriptionStatus: string;
-  paymentStatus: string;
-  createdFrom: string;
-  createdTo: string;
-  lastLoginFrom: string;
-  lastLoginTo: string;
-  subscriptionExpiresTo: string;
-  includeDeleted: boolean;
-}
-
-const DEFAULT_ADVANCED: AdvancedFiltersState = {
-  emailVerified: "all",
-  phoneVerified: "all",
-  twoFactorEnabled: "all",
-  country: "",
-  gradeLevel: "",
-  subscriptionStatus: "all",
-  paymentStatus: "all",
-  createdFrom: "",
-  createdTo: "",
-  lastLoginFrom: "",
-  lastLoginTo: "",
-  subscriptionExpiresTo: "",
-  includeDeleted: false,
-};
-
-function parseAdvancedFromParams(searchParams: URLSearchParams): AdvancedFiltersState {
-  return {
-    emailVerified: searchParams.get("emailVerified") || "all",
-    phoneVerified: searchParams.get("phoneVerified") || "all",
-    twoFactorEnabled: searchParams.get("twoFactorEnabled") || "all",
-    country: searchParams.get("country") || "",
-    gradeLevel: searchParams.get("gradeLevel") || "",
-    subscriptionStatus: searchParams.get("subscriptionStatus") || "all",
-    paymentStatus: searchParams.get("paymentStatus") || "all",
-    createdFrom: searchParams.get("createdFrom") || "",
-    createdTo: searchParams.get("createdTo") || "",
-    lastLoginFrom: searchParams.get("lastLoginFrom") || "",
-    lastLoginTo: searchParams.get("lastLoginTo") || "",
-    subscriptionExpiresTo: searchParams.get("subscriptionExpiresTo") || "",
-    includeDeleted: searchParams.get("includeDeleted") === "true",
-  };
-}
 
 export default function AdminUsersPage() {
   const router = useRouter();
@@ -100,32 +51,6 @@ export default function AdminUsersPage() {
   const [sortBy, setSortBy] = React.useState(() => searchParams.get("sortBy") || "createdAt");
   const [sortOrder, setSortOrder] = React.useState(() => searchParams.get("sortOrder") || "desc");
 
-  const [localAdvanced, setLocalAdvanced] = React.useState<AdvancedFiltersState>(
-    () => parseAdvancedFromParams(searchParams)
-  );
-  const [advanced, setAdvanced] = React.useState<AdvancedFiltersState>(
-    () => parseAdvancedFromParams(searchParams)
-  );
-  const [showAdvanced, setShowAdvanced] = React.useState(false);
-
-  const activeFiltersCount = React.useMemo(() => {
-    let count = 0;
-    if (advanced.emailVerified !== "all") count++;
-    if (advanced.phoneVerified !== "all") count++;
-    if (advanced.twoFactorEnabled !== "all") count++;
-    if (advanced.country !== "") count++;
-    if (advanced.gradeLevel !== "") count++;
-    if (advanced.subscriptionStatus !== "all") count++;
-    if (advanced.paymentStatus !== "all") count++;
-    if (advanced.createdFrom !== "") count++;
-    if (advanced.createdTo !== "") count++;
-    if (advanced.lastLoginFrom !== "") count++;
-    if (advanced.lastLoginTo !== "") count++;
-    if (advanced.subscriptionExpiresTo !== "") count++;
-    if (advanced.includeDeleted) count++;
-    return count;
-  }, [advanced]);
-
   const [deleteDialog, setDeleteDialog] = React.useState<{ open: boolean; ids: string[] }>({
     open: false,
     ids: [],
@@ -141,14 +66,11 @@ export default function AdminUsersPage() {
   const [impersonating, setImpersonating] = React.useState(false);
   const [importDialogOpen, setImportDialogOpen] = React.useState(false);
   const [exporting, setExporting] = React.useState(false);
-  const [savedViews, setSavedViews] = React.useState<Array<{ name: string; url: string }>>(() => {
-    if (typeof window === "undefined") return [];
-    try { return JSON.parse(localStorage.getItem("admin-user-views") || "[]"); } catch { return []; }
-  });
   const { debouncedCallback: updateQuerySearch } = useAdaptiveDebounce(
     (value: unknown) => setQuerySearch(String(value)),
     { minDelay: 300, maxDelay: 500, initialDelay: 350 },
   );
+  const { exportToCSV } = useExport();
 
   const exportAbortControllerRef = React.useRef<AbortController | null>(null);
   const queryAbortControllerRef = React.useRef<AbortController | null>(null);
@@ -181,46 +103,25 @@ export default function AdminUsersPage() {
       status,
       sortBy,
       sortOrder,
-      ...Object.fromEntries(
-        Object.entries(advanced).map(([key, value]) => [key, String(value)])
-      ),
     };
     Object.entries(values).forEach(([key, value]) => {
       if (value && value !== "all" && value !== "false") params.set(key, value);
     });
-    if (advanced.paymentStatus !== "all") params.set("paymentStatus", advanced.paymentStatus);
     const url = `/admin/users?${params.toString()}`;
     if (typeof window !== "undefined") {
       window.history.replaceState(window.history.state, "", url);
     }
-  }, [page, limit, querySearch, role, status, sortBy, sortOrder, advanced]);
-
-  const applyAdvancedFilters = React.useCallback(() => {
-    setAdvanced({ ...localAdvanced });
-    setPage(1);
-  }, [localAdvanced]);
-
-  const saveCurrentView = () => {
-    const name = window.prompt("اسم العرض المحفوظ");
-    if (!name?.trim()) return;
-    const next = [...savedViews.filter((view) => view.name !== name.trim()), { name: name.trim(), url: window.location.href }];
-    setSavedViews(next);
-    localStorage.setItem("admin-user-views", JSON.stringify(next));
-    toast.success("تم حفظ العرض");
-  };
+  }, [page, limit, querySearch, role, status, sortBy, sortOrder]);
 
   const clearAllFilters = () => {
     setSearch("");
     setQuerySearch("");
     setRole("all");
     setStatus("all");
-    setLocalAdvanced({ ...DEFAULT_ADVANCED });
-    setAdvanced({ ...DEFAULT_ADVANCED });
-    setPage(1);
   };
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["admin", "users", page, limit, querySearch, role, status, sortBy, sortOrder, advanced],
+    queryKey: ["admin", "users", page, limit, querySearch, role, status, sortBy, sortOrder],
     queryFn: async () => {
       return adminUsersApi.list({
         page,
@@ -230,18 +131,6 @@ export default function AdminUsersPage() {
         status: status === "all" ? undefined : status as UserStatus,
         sortBy: sortBy as "name" | "createdAt" | "lastLogin" | "totalXP" | "status",
         sortOrder: sortOrder as "asc" | "desc",
-        emailVerified: advanced.emailVerified === "all" ? undefined : advanced.emailVerified === "true",
-        phoneVerified: advanced.phoneVerified === "all" ? undefined : advanced.phoneVerified === "true",
-        twoFactorEnabled: advanced.twoFactorEnabled === "all" ? undefined : advanced.twoFactorEnabled === "true",
-        country: advanced.country || undefined,
-        gradeLevel: advanced.gradeLevel || undefined,
-        subscriptionStatus: advanced.subscriptionStatus === "all" ? undefined : advanced.subscriptionStatus,
-        createdFrom: advanced.createdFrom || undefined,
-        createdTo: advanced.createdTo || undefined,
-        lastLoginTo: advanced.lastLoginTo || undefined,
-        lastLoginFrom: advanced.lastLoginFrom || undefined,
-        subscriptionExpiresTo: advanced.subscriptionExpiresTo || undefined,
-        includeDeleted: advanced.includeDeleted || undefined,
       });
     },
     placeholderData: keepPreviousData,
@@ -253,7 +142,7 @@ export default function AdminUsersPage() {
     if (!allowed.length) return toast.error("لا توجد حسابات مسموح بتعديلها");
     const results = await adminUsersApi.updateMany(allowed.map((item) => item.id), changes);
     const successIds = new Set(allowed.filter((_, index) => results[index]?.status === "fulfilled").map((item) => item.id));
-    queryClient.setQueryData<AdminUsersPageData>(["admin", "users", page, limit, querySearch, role, status, sortBy, sortOrder, advanced], (old) => old ? {
+    queryClient.setQueryData<AdminUsersPageData>(["admin", "users", page, limit, querySearch, role, status, sortBy, sortOrder], (old) => old ? {
       ...old,
       users: old.users.map((item) => successIds.has(item.id) ? { ...item, ...changes } : item),
     } : old);
@@ -329,18 +218,6 @@ export default function AdminUsersPage() {
         status: status === "all" ? undefined : status as UserStatus,
         sortBy: sortBy as "name" | "createdAt" | "lastLogin" | "totalXP" | "status",
         sortOrder: sortOrder as "asc" | "desc",
-        emailVerified: advanced.emailVerified === "all" ? undefined : advanced.emailVerified === "true",
-        phoneVerified: advanced.phoneVerified === "all" ? undefined : advanced.phoneVerified === "true",
-        twoFactorEnabled: advanced.twoFactorEnabled === "all" ? undefined : advanced.twoFactorEnabled === "true",
-        country: advanced.country || undefined,
-        gradeLevel: advanced.gradeLevel || undefined,
-        subscriptionStatus: advanced.subscriptionStatus === "all" ? undefined : advanced.subscriptionStatus,
-        createdFrom: advanced.createdFrom || undefined,
-        createdTo: advanced.createdTo || undefined,
-        lastLoginTo: advanced.lastLoginTo || undefined,
-        lastLoginFrom: advanced.lastLoginFrom || undefined,
-        subscriptionExpiresTo: advanced.subscriptionExpiresTo || undefined,
-        includeDeleted: advanced.includeDeleted || undefined,
       });
 
       if (abortController.signal.aborted) return;
@@ -359,18 +236,6 @@ export default function AdminUsersPage() {
               status: status === "all" ? undefined : status as UserStatus,
               sortBy: sortBy as "name" | "createdAt" | "lastLogin" | "totalXP" | "status",
               sortOrder: sortOrder as "asc" | "desc",
-              emailVerified: advanced.emailVerified === "all" ? undefined : advanced.emailVerified === "true",
-              phoneVerified: advanced.phoneVerified === "all" ? undefined : advanced.phoneVerified === "true",
-              twoFactorEnabled: advanced.twoFactorEnabled === "all" ? undefined : advanced.twoFactorEnabled === "true",
-              country: advanced.country || undefined,
-              gradeLevel: advanced.gradeLevel || undefined,
-              subscriptionStatus: advanced.subscriptionStatus === "all" ? undefined : advanced.subscriptionStatus,
-              createdFrom: advanced.createdFrom || undefined,
-              createdTo: advanced.createdTo || undefined,
-              lastLoginTo: advanced.lastLoginTo || undefined,
-              lastLoginFrom: advanced.lastLoginFrom || undefined,
-              subscriptionExpiresTo: advanced.subscriptionExpiresTo || undefined,
-              includeDeleted: advanced.includeDeleted || undefined,
             })
           ),
         );
@@ -597,85 +462,6 @@ export default function AdminUsersPage() {
           <TabsTrigger value="BANNED" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg">محظور</TabsTrigger>
         </TabsList>
       </Tabs>
-
-      {/* Advanced Filters Panel */}
-      <div className="admin-glass flex flex-wrap items-end gap-3 rounded-2xl border border-white/10 p-4">
-        <label className="min-w-40 flex-1 text-xs font-bold">الفرز
-          <select className="mt-1 h-10 w-full rounded-xl border bg-background px-3" value={`${sortBy}:${sortOrder}`} onChange={(e) => { const [field, order] = e.target.value.split(":"); setSortBy(field!); setSortOrder(order!); setPage(1); }}>
-            <option value="createdAt:desc">الأحدث تسجيلًا</option><option value="createdAt:asc">الأقدم تسجيلًا</option><option value="name:asc">الاسم تصاعديًا</option><option value="name:desc">الاسم تنازليًا</option><option value="lastLogin:desc">آخر دخول</option><option value="totalXP:desc">الأعلى XP</option><option value="status:asc">الحالة</option>
-          </select>
-        </label>
-        {(["emailVerified", "phoneVerified", "twoFactorEnabled"] as const).map((key) => (
-          <label key={key} className="min-w-36 text-xs font-bold">
-            {key === "emailVerified" ? "توثيق البريد" : key === "phoneVerified" ? "توثيق الهاتف" : "2FA"}
-            <select className="mt-1 h-10 w-full rounded-xl border bg-background px-3" value={localAdvanced[key]} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, [key]: e.target.value })); }}>
-              <option value="all">الكل</option><option value="true">مفعّل</option><option value="false">غير مفعّل</option>
-            </select>
-          </label>
-        ))}
-        <label className="min-w-36 text-xs font-bold">الدولة<Input className="mt-1" value={localAdvanced.country} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, country: e.target.value })); }} /></label>
-        <label className="min-w-36 text-xs font-bold">المرحلة<Input className="mt-1" value={localAdvanced.gradeLevel} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, gradeLevel: e.target.value })); }} /></label>
-        <label className="min-w-36 text-xs font-bold">التسجيل من<Input type="date" className="mt-1" value={localAdvanced.createdFrom} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, createdFrom: e.target.value })); }} /></label>
-        <label className="min-w-36 text-xs font-bold">التسجيل إلى<Input type="date" className="mt-1" value={localAdvanced.createdTo} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, createdTo: e.target.value })); }} /></label>
-        <label className="min-w-36 text-xs font-bold">آخر دخول من<Input type="date" className="mt-1" value={localAdvanced.lastLoginFrom} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, lastLoginFrom: e.target.value })); }} /></label>
-        <label className="min-w-36 text-xs font-bold">آخر دخول إلى<Input type="date" className="mt-1" value={localAdvanced.lastLoginTo} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, lastLoginTo: e.target.value })); }} /></label>
-        <label className="min-w-36 text-xs font-bold">الاشتراك
-          <select className="mt-1 h-10 w-full rounded-xl border bg-background px-3" value={localAdvanced.subscriptionStatus} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, subscriptionStatus: e.target.value })); }}>
-            <option value="all">الكل</option><option value="ACTIVE">نشط</option><option value="EXPIRED">منتهي</option><option value="NONE">بدون اشتراك</option>
-          </select>
-        </label>
-        <label className="min-w-36 text-xs font-bold">حالة الدفع
-          <select className="mt-1 h-10 w-full rounded-xl border bg-background px-3" value={localAdvanced.paymentStatus} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, paymentStatus: e.target.value })); }}>
-            <option value="all">الكل</option><option value="PAID">مدفوع</option><option value="OVERDUE">متأخر</option><option value="TRIAL">تجريبي</option><option value="NONE">بدون</option>
-          </select>
-        </label>
-        <label className="min-w-36 text-xs font-bold">انتهاء الاشتراك إلى<Input type="date" className="mt-1" value={localAdvanced.subscriptionExpiresTo} onChange={(e) => { setLocalAdvanced((old) => ({ ...old, subscriptionExpiresTo: e.target.value })); }} /></label>
-        <label className="flex h-10 items-center gap-2 rounded-xl border px-3 text-xs font-bold">
-          <Checkbox checked={localAdvanced.includeDeleted} onCheckedChange={(checked) => { setLocalAdvanced((old) => ({ ...old, includeDeleted: !!checked })); }} />
-          المحذوفون والمؤرشفون
-        </label>
-        <div className="flex w-full flex-wrap gap-2 border-t pt-3">
-          <Button size="sm" variant="outline" onClick={() => { setLocalAdvanced((old) => ({ ...old, lastLoginTo: new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10) })); }}>غير نشطين منذ 90 يومًا</Button>
-          <Button size="sm" variant="outline" onClick={() => { setLocalAdvanced((old) => ({ ...old, emailVerified: "false" })); }}>بريد غير موثق</Button>
-          <Button size="sm" variant="outline" onClick={() => { setLocalAdvanced((old) => ({ ...old, twoFactorEnabled: "false" })); }}>بدون 2FA</Button>
-          <Button size="sm" variant="ghost" onClick={clearAllFilters}>مسح الفلاتر</Button>
-          <Button size="sm" variant="outline" onClick={saveCurrentView}>حفظ العرض الحالي</Button>
-          {savedViews.length > 0 && (
-            <select className="h-9 rounded-lg border bg-background px-3 text-xs" defaultValue="" onChange={(e) => { if (e.target.value) window.location.href = e.target.value; }}>
-              <option value="" disabled>العروض المحفوظة</option>
-              {savedViews.map((view) => <option key={view.name} value={view.url}>{view.name}</option>)}
-            </select>
-          )}
-        </div>
-        <div className="flex w-full justify-end gap-2 pt-2 border-t border-white/5">
-          <Button size="sm" variant="default" onClick={applyAdvancedFilters} className="bg-primary hover:bg-primary/90 gap-2">
-            <Filter className="h-4 w-4" />
-            تطبيق الفلاتر
-          </Button>
-        </div>
-      </div>
-
-      {/* Active Filters Chips */}
-      {activeFiltersCount > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          {advanced.emailVerified !== "all" && (
-            <Button size="sm" variant="outline" className="rounded-full h-7 text-xs gap-1" onClick={() => { setLocalAdvanced(prev => ({ ...prev, emailVerified: "all" })); setAdvanced(prev => ({ ...prev, emailVerified: "all" })); setPage(1); }}>
-              البريد: {advanced.emailVerified === "true" ? "موثق" : "غير موثق"} <X className="h-3 w-3" />
-            </Button>
-          )}
-          {advanced.phoneVerified !== "all" && (
-            <Button size="sm" variant="outline" className="rounded-full h-7 text-xs gap-1" onClick={() => { setLocalAdvanced(prev => ({ ...prev, phoneVerified: "all" })); setAdvanced(prev => ({ ...prev, phoneVerified: "all" })); setPage(1); }}>
-              الهاتف: {advanced.phoneVerified === "true" ? "موثق" : "غير موثق"} <X className="h-3 w-3" />
-            </Button>
-          )}
-          {activeFiltersCount > 0 && (
-            <Button size="sm" variant="ghost" className="rounded-full h-7 text-xs" onClick={clearAllFilters}>
-              <FilterX className="h-3 w-3 ml-1" />
-              مسح الكل
-            </Button>
-          )}
-        </div>
-      )}
 
       {isError && (
         <div role="alert" className="flex flex-col gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 sm:flex-row sm:items-center sm:justify-between">

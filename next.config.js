@@ -52,7 +52,6 @@ const nextConfig = {
       '@radix-ui/react-dropdown-menu',
       '@radix-ui/react-tabs',
       '@radix-ui/react-select',
-      'recharts',
     ],
     proxyClientMaxBodySize: '35mb',
     scrollRestoration: true,

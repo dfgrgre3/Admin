@@ -69,7 +69,12 @@ const quickCourseSchema = z.object({
   isFeatured: z.boolean().optional().default(false),
   coursePrerequisites: z.string().optional().nullable(),
   targetAudience: z.string().optional().nullable(),
-  whatYouLearn: z.string().optional().nullable()
+  whatYouLearn: z.string().optional().nullable(),
+  // Phase 1 lifecycle fields
+  maxStudents: z.coerce.number().optional().nullable(),
+  shortDescription: z.string().optional().nullable(),
+  hasCertificate: z.boolean().optional().default(false),
+  isTrending: z.boolean().optional().default(false),
 });
 
 export type QuickCourseValues = z.infer<typeof quickCourseSchema>;
@@ -99,7 +104,11 @@ export const quickCourseDefaults: QuickCourseValues = {
   isFeatured: false,
   coursePrerequisites: "",
   targetAudience: "",
-  whatYouLearn: ""
+  whatYouLearn: "",
+  maxStudents: null,
+  shortDescription: "",
+  hasCertificate: false,
+  isTrending: false,
 };
 
 export interface CourseFormDialogProps {
@@ -419,11 +428,13 @@ export function CourseFormDialog({
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-3">
-                  {(["isActive", "isPublished", "isFeatured"] as const).map((name) => {
+                  {(["isActive", "isPublished", "isFeatured", "isTrending", "hasCertificate"] as const).map((name) => {
                     const labels = {
                       isActive: { title: "تفعيل الدورة", desc: "تظهر في النظام" },
                       isPublished: { title: "نشر للطلاب", desc: "مرئية للجمهور" },
-                      isFeatured: { title: "دورة مميزة", desc: "تمييز خاص" }
+                      isFeatured: { title: "دورة مميزة", desc: "تمييز خاص" },
+                      isTrending: { title: "رائجة", desc: "إظهار كرائجة" },
+                      hasCertificate: { title: "شهادة", desc: "تمنح شهادة إتمام" }
                     };
                     return (
                       <div
@@ -448,6 +459,47 @@ export function CourseFormDialog({
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Phase 1: max students + short description */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={quickForm.control}
+                    name="maxStudents"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold">الحد الأقصى للطلاب</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            {...field}
+                            value={field.value ?? ""}
+                            placeholder="بدون حد"
+                            className="h-11 rounded-xl"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={quickForm.control}
+                    name="shortDescription"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold">وصف مختصر</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value || ""}
+                            placeholder="وصف قصير يظهر في البطاقة"
+                            className="h-11 rounded-xl"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <DialogFooter className="gap-2 pt-2">

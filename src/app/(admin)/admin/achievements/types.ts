@@ -12,9 +12,6 @@ export interface Achievement {
   difficulty: string;
   unlockedCount: number;
   createdAt: string;
-  _count: {
-    users: number;
-  };
 }
 
 export const rarityOptions = [

@@ -39,6 +39,14 @@ export const courseSchema = z.object({
   coursePrerequisites: z.string().optional().nullable(),
   targetAudience: z.string().optional().nullable(),
   whatYouLearn: z.string().optional().nullable(),
+  // Phase 1 lifecycle fields
+  maxStudents: z.coerce.number().optional().nullable(),
+  shortDescription: z.string().optional().nullable(),
+  longDescription: z.string().optional().nullable(),
+  hasCertificate: z.boolean().optional().default(false),
+  isTrending: z.boolean().optional().default(false),
+  availableFrom: z.string().optional().nullable(),
+  availableUntil: z.string().optional().nullable(),
 });
 
 export type CourseFormValues = z.infer<typeof courseSchema>;
@@ -82,6 +90,14 @@ export interface CourseInitialData {
   coursePrerequisites?: string | string[] | null;
   targetAudience?: string | string[] | null;
   whatYouLearn?: string | string[] | null;
+  // Phase 1 lifecycle fields
+  maxStudents?: number | null;
+  shortDescription?: string | null;
+  longDescription?: string | null;
+  hasCertificate?: boolean;
+  isTrending?: boolean;
+  availableFrom?: string | null;
+  availableUntil?: string | null;
 }
 
 export interface CourseEditorProps {

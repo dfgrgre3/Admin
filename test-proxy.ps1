@@ -1,4 +1,24 @@
-$body = '{"email":"admin@thanawy.com","password":"admin123"}'
+# =====================================================
+# Test Proxy Login - Use environment variables only
+# =====================================================
+# WARNING: Do NOT hardcode credentials in scripts.
+# Pass credentials via environment variables:
+#   $env:TEST_EMAIL = "admin@thanawy.com"
+#   $env:TEST_PASSWORD = "<your-password>"
+# =====================================================
+
+$email = $env:TEST_EMAIL
+$password = $env:TEST_PASSWORD
+
+if (-not $email -or -not $password) {
+    Write-Host "ERROR: Set TEST_EMAIL and TEST_PASSWORD environment variables first." -ForegroundColor Red
+    Write-Host "Example:" -ForegroundColor Yellow
+    Write-Host '  $env:TEST_EMAIL = "admin@thanawy.com"' -ForegroundColor Gray
+    Write-Host '  $env:TEST_PASSWORD = "<your-password>"' -ForegroundColor Gray
+    exit 1
+}
+
+$body = "{`"email`":`"$email`",`"password`":`"$password`"}"
 try {
     $response = Invoke-WebRequest -Uri 'http://localhost:3001/api/auth/admin-login' -Method POST -ContentType 'application/json' -Body $body -UseBasicParsing
     Write-Host "Status: $($response.StatusCode)"

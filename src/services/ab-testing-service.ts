@@ -2,24 +2,13 @@
  * AB Testing Service
  *
  * Provides AB testing management via the backend API.
+ * Backend response format: { success: true, data: { experiments: [...] } }
+ * or for single item: { success: true, data: { experiment: {...} } }
  */
 
-import { Experiment, CreateExperimentData } from "@/types/ab-testing";
+import { Experiment, CreateExperimentData, BackendABExperiment } from "@/types/ab-testing";
 import { adminFetch } from "@/lib/api/admin-api";
 import { apiRoutes } from "@/lib/api/routes";
-
-interface BackendABExperiment {
-  id: string;
-  name: string;
-  description: string;
-  status: string;
-  variants: string;
-  trafficPct: number;
-  startDate: string | null;
-  endDate: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
 
 const statusMap: Record<string, Experiment["status"]> = {
   DRAFT: "draft",
@@ -35,8 +24,17 @@ const reverseStatusMap: Record<Experiment["status"], string> = {
   completed: "COMPLETED",
 };
 
+function parseBackendData<T>(json: any, key: string): T | null {
+  // Backend wraps in { success: true, data: { key: value } }
+  if (json.data && json.data[key]) return json.data[key];
+  // Fallback for plain responses
+  if (json[key]) return json[key];
+  // Fallback for direct object
+  return null;
+}
+
 function mapBackendToFrontend(item: BackendABExperiment): Experiment {
-  let variants: { name: string; views: number; completionRate: number }[] = [];
+  let variants: { name: string; views: number; completionRate: number; avgScore?: number }[] = [];
   try {
     variants = item.variants ? JSON.parse(item.variants) : [];
   } catch {
@@ -50,6 +48,7 @@ function mapBackendToFrontend(item: BackendABExperiment): Experiment {
     status: statusMap[item.status] || "draft",
     variantA: variants[0] || { name: "A", views: 0, completionRate: 0 },
     variantB: variants[1] || { name: "B", views: 0, completionRate: 0 },
+    winner: (item.winner === "A" || item.winner === "B") ? item.winner as "A" | "B" : undefined,
     startDate: item.startDate || item.createdAt,
     endDate: item.endDate || undefined,
     createdBy: "Admin",
@@ -61,9 +60,12 @@ function mapBackendToFrontend(item: BackendABExperiment): Experiment {
 
 const getAllExperiments = async (): Promise<Experiment[]> => {
   const response = await adminFetch(apiRoutes.admin.abTesting);
-  if (!response.ok) throw new Error("Failed to fetch AB experiments");
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}));
+    throw new Error(errBody.error || "Failed to fetch AB experiments");
+  }
   const json = await response.json();
-  const items: BackendABExperiment[] = json.data?.experiments || json.experiments || [];
+  const items: BackendABExperiment[] = parseBackendData<BackendABExperiment[]>(json, "experiments") || [];
   return items.map(mapBackendToFrontend);
 };
 
@@ -85,9 +87,12 @@ const createExperiment = async (data: CreateExperimentData): Promise<Experiment>
     }),
   });
 
-  if (!response.ok) throw new Error("Failed to create experiment");
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}));
+    throw new Error(errBody.error || "Failed to create experiment");
+  }
   const json = await response.json();
-  const item: BackendABExperiment = json.data?.experiment || json.experiment || json;
+  const item: BackendABExperiment = parseBackendData<BackendABExperiment>(json, "experiment") || json;
   return mapBackendToFrontend(item);
 };
 
@@ -105,9 +110,12 @@ const updateExperimentStatus = async (
     }),
   });
 
-  if (!response.ok) throw new Error("Failed to update experiment status");
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}));
+    throw new Error(errBody.error || "Failed to update experiment status");
+  }
   const json = await response.json();
-  const item: BackendABExperiment = json.data?.experiment || json.experiment || json;
+  const item: BackendABExperiment = parseBackendData<BackendABExperiment>(json, "experiment") || json;
   return mapBackendToFrontend(item);
 };
 
@@ -122,9 +130,12 @@ const declareWinner = async (id: string, winner: "A" | "B"): Promise<Experiment>
     }),
   });
 
-  if (!response.ok) throw new Error("Failed to declare winner");
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}));
+    throw new Error(errBody.error || "Failed to declare winner");
+  }
   const json = await response.json();
-  const item: BackendABExperiment = json.data?.experiment || json.experiment || json;
+  const item: BackendABExperiment = parseBackendData<BackendABExperiment>(json, "experiment") || json;
   return mapBackendToFrontend(item);
 };
 
@@ -132,10 +143,14 @@ const deleteExperiment = async (id: string): Promise<void> => {
   const response = await adminFetch(`${apiRoutes.admin.abTesting}/${id}`, {
     method: "DELETE",
   });
-  if (!response.ok) throw new Error("Failed to delete experiment");
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}));
+    throw new Error(errBody.error || "Failed to delete experiment");
+  }
 };
 
 const getExperimentVariant = async (experimentId: string, userId: string): Promise<string> => {
+  // Simple hash-based variant assignment (client-side fallback)
   const hash = (experimentId + userId).split("").reduce((a, b) => {
     a = Math.trunc((a << 5) - a + b.charCodeAt(0));
     return a;

@@ -1,5 +1,3 @@
-import { apiClient } from "./api/api-client";
-
 type AdminAction = "CREATE" | "UPDATE" | "DELETE" | "VIEW" | "PUBLISH" | "UNPUBLISH" | "LOGIN" | "LOGOUT";
 
 interface AuditLogEntry {
@@ -34,15 +32,6 @@ function saveAuditLogs(logs: AuditLogEntry[]) {
   }
 }
 
-async function sendAuditLogToServer(entry: AuditLogEntry) {
-  try {
-    // Use apiClient.post so the X-CSRF-Token header is automatically injected
-    await apiClient.post("/api/admin/audit-logs", entry);
-  } catch {
-    // Server logging is optional, don't block the UI
-  }
-}
-
 export function logAdminAction(
   action: AdminAction,
   entityType: string,
@@ -64,8 +53,6 @@ export function logAdminAction(
   const logs = getAuditLogs();
   logs.push(entry);
   saveAuditLogs(logs);
-
-  void sendAuditLogToServer(entry);
 }
 
 export function getRecentAuditLogs(limit: number = 50): AuditLogEntry[] {

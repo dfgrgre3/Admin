@@ -2,23 +2,25 @@
 
 import * as React from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { 
-  BarChart3, 
-  BookOpen, 
-  ChevronRight, 
-  ExternalLink, 
-  LayoutDashboard, 
-  Layers, 
-  Settings, 
+import {
+  BarChart3,
+  BookOpen,
+  ChevronRight,
+  ExternalLink,
+  LayoutDashboard,
+  Layers,
+  Settings,
   Users,
   Globe,
   Sparkles,
-  MessageSquare
+  MessageSquare,
+  GitBranch
 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import { Badge } from "@/components/ui/badge";
+import { CourseStatusBadge } from "@/components/admin/courses/status-badge";
 import { useQuery } from "@tanstack/react-query";
 import { apiRoutes } from "@/lib/api/routes";
 import { adminFetch } from "@/lib/api/admin-api";
@@ -81,6 +83,12 @@ export default function CourseDetailLayout({ children }: CourseLayoutProps) {
       icon: Settings,
       href: `/admin/courses/${courseId}/edit`,
       active: pathname === `/admin/courses/${courseId}/edit`,
+    },
+    {
+      label: "سير العمل والمراجعة",
+      icon: GitBranch,
+      href: `/admin/courses/${courseId}/workflow`,
+      active: pathname === `/admin/courses/${courseId}/workflow`,
     },
     {
       label: "التسويق و SEO",
