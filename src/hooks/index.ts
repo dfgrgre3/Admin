@@ -7,8 +7,6 @@ export * from './use-network-status';
 export * from './use-client-effect';
 export * from './use-adaptive-debounce';
 export * from './use-keyboard-shortcuts';
-export * from './use-premium-sounds';
-
 export * from './use-admin-notifications';
 export * from './use-admin-realtime';
 export * from './use-2fa';

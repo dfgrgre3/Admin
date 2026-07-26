@@ -139,22 +139,17 @@ export async function middleware(req: NextRequest) {
       });
 
       if (refreshRes.ok) {
-        // Parse cookies from backend refresh response and forward them to the client
+        // Parse cookies from backend refresh response and forward them to the client.
+        // Single pass: append Set-Cookie headers AND extract the new access_token
+        // in one loop (avoiding an O(2n) traversal).
         const setCookies = refreshRes.headers.getSetCookie();
         if (setCookies && setCookies.length > 0) {
-          for (const setCookieHeader of setCookies) {
-            nextResponse.headers.append("Set-Cookie", setCookieHeader);
-          }
-
-          // Verify the freshly issued access token to read trusted claims.
-          // Extract the token from the Set-Cookie header (not body) to avoid
-          // relying on token exposure in the response body.
           let newToken: string | null = null;
           for (const setCookieHeader of setCookies) {
+            nextResponse.headers.append("Set-Cookie", setCookieHeader);
             const match = setCookieHeader.match(/^access_token=([^;]+)/);
             if (match && match[1] != null) {
               newToken = decodeURIComponent(match[1]);
-              break;
             }
           }
           if (!newToken) {
