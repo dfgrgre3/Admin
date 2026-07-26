@@ -25,6 +25,8 @@ interface JwtPayload {
 const JWT_SECRET = process.env.JWT_SECRET?.trim();
 const JWT_ISSUER = process.env.JWT_ISSUER_URL || "";
 
+let jwtSecretWarningLogged = false;
+
 // Reuse a single CryptoKey-like SecretKey across requests.
 const secretKey = JWT_SECRET ? new TextEncoder().encode(JWT_SECRET) : null;
 
@@ -47,7 +49,10 @@ async function verifyAccessToken(
   token: string
 ): Promise<{ payload: JwtPayload | null; expired: boolean }> {
   if (!secretKey) {
-    // No secret configured: cannot verify anything. Fail closed.
+    if (!jwtSecretWarningLogged) {
+      console.error('[Admin Middleware] JWT_SECRET is missing. Authentication will fail closed.');
+      jwtSecretWarningLogged = true;
+    }
     return { payload: null, expired: false };
   }
   try {
