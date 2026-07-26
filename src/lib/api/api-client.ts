@@ -177,7 +177,12 @@ class ApiClient {
         return message.toLowerCase().includes('csrf');
     }
 
-    public async fetch(endpoint: string, options: FetchOptions = {}, retryCount = 0): Promise<Response> {
+    /**
+     * Core fetch implementation with retry, refresh, timeout, and CSRF logic.
+     * This is the single source of truth for all HTTP requests.
+     * The public `fetch` method and typed convenience methods all delegate here.
+     */
+    private async executeFetch(endpoint: string, options: FetchOptions = {}, retryCount = 0): Promise<Response> {
         if (retryCount === 0) enforceClientRequestLimit();
         const { timeout = API_TIMEOUT, retries = MAX_RETRIES, ...customOptions } = options;
 
@@ -201,13 +206,13 @@ class ApiClient {
 
             if (await this.isCsrfValidationFailure(response) && retryCount < 1) {
                 await this.ensureCsrfToken(true);
-                return this.fetch(endpoint, options, retryCount + 1);
+                return this.executeFetch(endpoint, options, retryCount + 1);
             }
 
             if (response.status === 401 && !endpoint.includes('/auth/refresh') && !endpoint.includes('/auth/login') && retryCount < 1) {
                 const refreshed = await this.refreshToken();
                 if (refreshed) {
-                    return this.fetch(endpoint, options, retryCount + 1);
+                    return this.executeFetch(endpoint, options, retryCount + 1);
                 }
                 this.resetAuthStore();
             }
@@ -215,7 +220,7 @@ class ApiClient {
             const shouldRetry = [408, 429, 500, 502, 503, 504].includes(response.status) && retryCount < retries;
             if (shouldRetry) {
                 await sleep(retryDelay(retryCount));
-                return this.fetch(endpoint, options, retryCount + 1);
+                return this.executeFetch(endpoint, options, retryCount + 1);
             }
 
             return response;
@@ -224,7 +229,7 @@ class ApiClient {
 
             if (this.isRetryableError(error, retryCount, retries)) {
                 await sleep(retryDelay(retryCount));
-                return this.fetch(endpoint, options, retryCount + 1);
+                return this.executeFetch(endpoint, options, retryCount + 1);
             }
 
             this.logNetworkError(error, endpoint);
@@ -233,10 +238,18 @@ class ApiClient {
     }
 
     /**
-     * Parses an error response. Returns `true` when the caller should retry;
-     * otherwise throws an ApiError (caught and re-thrown by `request`).
+     * Public raw fetch access — returns the raw Response for callers that
+     * need direct access to headers, streaming, etc.
      */
-    private async handleApiErrorResponse(response: Response, retryCount: number, retries: number): Promise<true> {
+    public async fetch(endpoint: string, options?: FetchOptions): Promise<Response> {
+        return this.executeFetch(endpoint, options);
+    }
+
+    /**
+     * Parses an error response. Returns `true` when the caller should retry;
+     * otherwise throws an ApiError.
+     */
+    private async handleErrorAndReturnRetry(response: Response, retryCount: number, retries: number): Promise<boolean> {
         let errorMessage = `Server error: ${response.statusText}`;
         let errorCode = 'HTTP_ERROR';
         let errorData: unknown = null;
@@ -254,79 +267,35 @@ class ApiClient {
         }
 
         const shouldRetry = [408, 429, 500, 502, 503, 504].includes(response.status) && retryCount < retries;
-        if (shouldRetry) return true;
-
-        throw new ApiError(errorMessage, response.status, errorCode, errorData);
+        if (!shouldRetry) {
+            throw new ApiError(errorMessage, response.status, errorCode, errorData);
+        }
+        return true;
     }
 
+    /**
+     * Typed request — uses executeFetch internally and parses the JSON response.
+     * This eliminates the duplication between fetch() and request().
+     */
     private async request<T>(endpoint: string, options: FetchOptions = {}, retryCount = 0): Promise<T> {
-        if (retryCount === 0) enforceClientRequestLimit();
-        const { timeout = API_TIMEOUT, retries = MAX_RETRIES, ...customOptions } = options;
+        const response = await this.executeFetch(endpoint, options, retryCount);
+        
+        // Check for empty response
+        const contentLength = response.headers.get('content-length');
+        if (response.status === 204 || contentLength === '0') {
+            return {} as T;
+        }
 
-        const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeout);
-
-        const headers = await this.buildHeaders(customOptions);
-
-        try {
-            const url = normalizeEndpoint(endpoint);
-            
-            const timer = performanceMonitor.startTimer('API Request', { endpoint, method: customOptions.method || 'GET' });
-            const response = await fetch(url, {
-                ...customOptions,
-                headers,
-                credentials: 'include', // Ensure cookies are sent (access_token)
-                signal: controller.signal,
-            });
-            timer.stop();
-
-            clearTimeout(id);
-
-            if (await this.isCsrfValidationFailure(response) && retryCount < 1) {
-                await this.ensureCsrfToken(true);
-                return this.request<T>(endpoint, options, retryCount + 1);
-            }
-
-            // Handle 401 Unauthorized - Attempt Token Refresh
-            if (response.status === 401 && !endpoint.includes('/auth/refresh') && !endpoint.includes('/auth/login') && retryCount < 1) {
-                const refreshed = await this.refreshToken();
-                if (refreshed) {
-                    // Retry original request once more
-                    return this.request<T>(endpoint, options, retryCount + 1);
-                }
-                
-                this.resetAuthStore();
-            }
-
-            if (!response.ok) {
-                const shouldRetry = await this.handleApiErrorResponse(response, retryCount, retries);
-                if (shouldRetry) {
-                    await sleep(retryDelay(retryCount));
-                    return this.request<T>(endpoint, options, retryCount + 1);
-                }
-            }
-
-            // Check for empty response
-            const contentLength = response.headers.get('content-length');
-            if (response.status === 204 || contentLength === '0') {
-                return {} as T;
-            }
-
-            const payload = await response.json() as T | ApiEnvelope<T>;
-            return unwrapApiEnvelope<T>(payload);
-        } catch (error: unknown) {
-            clearTimeout(id);
-
-            if (error instanceof ApiError) throw error;
-
-            if (this.isRetryableError(error, retryCount, retries)) {
+        if (!response.ok) {
+            const shouldRetry = await this.handleErrorAndReturnRetry(response, retryCount, options.retries ?? MAX_RETRIES);
+            if (shouldRetry) {
                 await sleep(retryDelay(retryCount));
                 return this.request<T>(endpoint, options, retryCount + 1);
             }
-
-            this.logNetworkError(error, endpoint);
-            throw error;
         }
+
+        const payload = await response.json() as T | ApiEnvelope<T>;
+        return unwrapApiEnvelope<T>(payload);
     }
 
     private refreshPromise: Promise<boolean> | null = null;

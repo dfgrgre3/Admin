@@ -283,15 +283,20 @@ export function useIPWhitelist() {
   };
 }
 
-// Hook to get current IP info
+/**
+ * Hook to get current IP info via the server-side proxy.
+ * Uses the internal /security/my-ip endpoint instead of a third-party
+ * external API (ipify.org) to avoid leaking the client IP to an external
+ * service and to reduce latency.
+ */
 export function useCurrentIP() {
   return useQuery({
     queryKey: ["current-ip"],
     queryFn: async () => {
-      const response = await fetch("https://api.ipify.org?format=json");
+      const response = await adminFetch("/security/my-ip");
       if (!response.ok) throw new Error("Failed to fetch IP");
       const data = await response.json();
-      return data.ip as string;
+      return (data.data?.ip || data.ip) as string;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

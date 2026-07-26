@@ -696,6 +696,18 @@ export async function safeFetch<T = unknown>(
   }
 }
 
+/**
+ * Reads the user ID from client-side storage (localStorage).
+ *
+ * ⚠ SECURITY NOTE: This value is CLIENT-SIDE and can be forged by the user.
+ * The returned ID is a hint for non-sensitive operations (e.g., optimistic UI
+ * updates, guest session tracking). Server-side operations MUST validate the
+ * user ID from the authenticated session (JWT/session cookie), NOT from this
+ * value. The Go backend is the authoritative source for user identity.
+ *
+ * Guest user IDs are created via GET /api/users/guest (server-issued) and
+ * cached in localStorage for subsequent page loads.
+ */
 export function getSafeUserId(): string | null {
   const normalizeUserId = (value: unknown): string | null => {
     if (typeof value !== 'string') return null;
