@@ -74,7 +74,7 @@ export default function LiveSessionsPage() {
                     <td className="p-3">{new Date(s.scheduledAt).toLocaleString("ar-EG")}</td>
                     <td className="p-3">{s.durationMin} د</td>
                     <td className="p-3"><span className={`rounded-full px-2 py-0.5 text-xs ${st?.color ?? statusLabel.SCHEDULED?.color ?? ""}`}>{st?.label ?? statusLabel.SCHEDULED?.label ?? ""}</span></td>
-                    <td className="p-3">{s.joinUrl ? <a href={s.joinUrl} target="_blank" className="text-blue-600 underline">انضمام</a> : "-"}</td>
+                    <td className="p-3">{s.joinUrl ? <a href={s.joinUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline">انضمام</a> : "-"}</td>
                   </tr>
                 );
               })}

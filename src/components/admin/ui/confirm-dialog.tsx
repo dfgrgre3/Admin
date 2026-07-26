@@ -23,6 +23,7 @@ interface ConfirmDialogProps {
   cancelText?: string;
   onConfirm: () => void;
   variant?: "default" | "destructive";
+  confirmVariant?: "default" | "destructive";
   loading?: boolean;
 }
 
@@ -35,6 +36,7 @@ export function ConfirmDialog({
   cancelText = "إلغاء",
   onConfirm,
   variant = "default",
+  confirmVariant,
   loading = false,
 }: ConfirmDialogProps) {
   return (
@@ -72,7 +74,7 @@ export function ConfirmDialog({
           </AlertDialogCancel>
           <AlertDialogAction asChild>
             <Button
-              variant={variant}
+              variant={confirmVariant || variant}
               onClick={onConfirm}
               disabled={loading}
               className="rounded-xl gap-2"

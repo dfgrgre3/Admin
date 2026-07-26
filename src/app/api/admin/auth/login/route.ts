@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest as NextRequestType } from 'next/server';
 import { forwardToGoApi } from '@/app/api/admin/_proxy';
+import { logger } from '@/lib/logger';
 
 /**
  * Validate email format
@@ -18,7 +20,7 @@ function isValidPassword(password: string): boolean {
   return passwordRegex.test(password);
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequestType) {
   try {
     // Parse request body
     const body = await request.json();
@@ -73,23 +75,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Log attempt for auditing (without sensitive data)
-    console.info(`Admin login attempt for email: ${trimmedEmail}`);
+    logger.info('Admin login attempt received', { source: 'api/admin/auth/login' });
 
     // Forward request to Go API with validated data
-    const forwardedRequest = new Request(request, {
+    const response = await forwardToGoApi(request, '/api/admin/auth/login', {
+      method: 'POST',
       body: JSON.stringify({ email: trimmedEmail, password: trimmedPassword }),
-      headers: request.headers
     });
 
-    const response = await forwardToGoApi(forwardedRequest, '/api/admin/auth/login', { method: 'POST' });
-
     // Log response status for monitoring
-    console.info(`Admin login request completed with status: ${response.status}`);
+    logger.info('Admin login request completed', { source: 'api/admin/auth/login', statusCode: response.status });
 
     return response;
   } catch (error) {
     // Log detailed error for debugging (avoid exposing internal details in response)
-    console.error('Admin login error:', error);
+    logger.error('Admin login handler failed', error, { source: 'api/admin/auth/login' });
     
     // Return appropriate error response
     return NextResponse.json(

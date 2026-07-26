@@ -34,6 +34,7 @@ import { useAdaptiveDebounce } from "@/hooks/use-adaptive-debounce";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { logger } from '@/lib/logger';
+import { AnalyticsSection } from "./_components/analytics-section";
 
 
 export default function AdminUsersPage() {
@@ -46,7 +47,7 @@ export default function AdminUsersPage() {
   const [limit, setLimit] = React.useState(() => Number(searchParams.get("limit")) || 10);
   const [search, setSearch] = React.useState(() => searchParams.get("search") || "");
   const [querySearch, setQuerySearch] = React.useState(() => searchParams.get("search") || "");
-  const [role, setRole] = React.useState<string>(() => searchParams.get("role") || "all");
+  const [role, setRole] = React.useState<"all" | UserRole>(() => (searchParams.get("role") as UserRole) || "all");
   const [status, setStatus] = React.useState<string>(() => searchParams.get("status") || "all");
   const [sortBy, setSortBy] = React.useState(() => searchParams.get("sortBy") || "createdAt");
   const [sortOrder, setSortOrder] = React.useState(() => searchParams.get("sortOrder") || "desc");
@@ -444,10 +445,14 @@ export default function AdminUsersPage() {
         />
       </div>
 
-      <Tabs value={role} onValueChange={(val) => { setRole(val); setPage(1); }} className="w-full">
+      {/* Analytics Charts Section */}
+      <AnalyticsSection />
+
+      <Tabs value={role} onValueChange={(val) => { setRole(val as "all" | UserRole); setPage(1); }} className="w-full">
         <TabsList className="bg-white/5 p-1 rounded-2xl border border-white/10 h-12 flex gap-1 mb-6 w-full max-w-full justify-start overflow-x-auto sm:w-fit">
           <TabsTrigger value="all" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">كل المستخدمين</TabsTrigger>
           <TabsTrigger value="STUDENT" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">الطلاب</TabsTrigger>
+          <TabsTrigger value="PARENT" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">أولياء الأمور</TabsTrigger>
           <TabsTrigger value="TEACHER" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">المعلمون</TabsTrigger>
           <TabsTrigger value="MODERATOR" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">المشرفون</TabsTrigger>
           <TabsTrigger value="ADMIN" className="rounded-xl px-5 text-sm font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">المدراء</TabsTrigger>

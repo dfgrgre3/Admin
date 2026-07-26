@@ -64,7 +64,8 @@ export default function InstructorDetailPage() {
       REJECTED: { label: "مرفوض", variant: "destructive" },
       SUSPENDED: { label: "موقوف", variant: "outline" },
     };
-    const config = statusConfig[status] || statusConfig.PENDING;
+    const config = statusConfig[status] ?? statusConfig.PENDING;
+    if (!config) return null;
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 

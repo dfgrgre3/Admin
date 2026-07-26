@@ -51,12 +51,16 @@ export async function POST(
     const targetUrl = `${BACKEND_URL}/api/exams${path ? '/' + path : ''}${search}`;
     const body = await request.text();
 
+    const postHeaders = new Headers({
+      ...headers,
+      'Content-Type': 'application/json',
+    });
+    // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
+    postHeaders.delete('origin');
+
     const response = await fetch(targetUrl, {
       method: 'POST',
-      headers: {
-        ...headers,
-        'Content-Type': 'application/json',
-      },
+      headers: postHeaders,
       body,
       credentials: 'include',
     });

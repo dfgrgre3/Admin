@@ -3,6 +3,8 @@
 import * as React from "react";
 import { m, AnimatePresence } from "framer-motion";
 import {
+  Archive,
+  ArchiveRestore,
   CheckCircle2,
   Globe,
   EyeOff,
@@ -11,6 +13,8 @@ import {
   Trash2,
   Power,
   AlertTriangle,
+  UserPlus,
+  UserMinus,
 } from "lucide-react";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import { cn } from "@/lib/utils";
@@ -23,6 +27,10 @@ interface CourseBulkActionsProps {
   onDeactivate?: () => void;
   onDelete: () => void;
   onExport?: () => void;
+  onArchive?: () => void;
+  onUnarchive?: () => void;
+  onAssignTeacher?: () => void;
+  onRemoveTeacher?: () => void;
   onClear: () => void;
   className?: string;
 }
@@ -35,6 +43,10 @@ export function CourseBulkActions({
   onDeactivate,
   onDelete,
   onExport,
+  onArchive,
+  onUnarchive,
+  onAssignTeacher,
+  onRemoveTeacher,
   onClear,
   className,
 }: CourseBulkActionsProps) {
@@ -121,6 +133,51 @@ export function CourseBulkActions({
 
             <div className="h-6 w-px bg-border/40 mx-1" />
 
+            {onArchive && (
+              <AdminButton
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-xl text-[11px] font-black gap-1.5 border-slate-500/20 hover:bg-slate-500/10"
+                onClick={onArchive}
+              >
+                <Archive className="h-3.5 w-3.5 text-slate-500" />
+                أرشفة
+              </AdminButton>
+            )}
+            {onUnarchive && (
+              <AdminButton
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-xl text-[11px] font-black gap-1.5 border-emerald-500/20 hover:bg-emerald-500/10 hover:text-emerald-600"
+                onClick={onUnarchive}
+              >
+                <ArchiveRestore className="h-3.5 w-3.5 text-emerald-500" />
+                استعادة
+              </AdminButton>
+            )}
+            {onAssignTeacher && (
+              <AdminButton
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-xl text-[11px] font-black gap-1.5 border-blue-500/20 hover:bg-blue-500/10 hover:text-blue-600"
+                onClick={onAssignTeacher}
+              >
+                <UserPlus className="h-3.5 w-3.5 text-blue-500" />
+                تعيين معلم
+              </AdminButton>
+            )}
+            {onRemoveTeacher && (
+              <AdminButton
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-xl text-[11px] font-black gap-1.5 border-orange-500/20 hover:bg-orange-500/10 hover:text-orange-600"
+                onClick={onRemoveTeacher}
+              >
+                <UserMinus className="h-3.5 w-3.5 text-orange-500" />
+                إزالة معلم
+              </AdminButton>
+            )}
+
             {onExport && (
               <AdminButton
                 variant="ghost"
@@ -160,3 +217,4 @@ export function CourseBulkActions({
     </AnimatePresence>
   );
 }
+

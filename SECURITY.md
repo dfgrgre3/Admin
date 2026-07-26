@@ -1,3 +1,51 @@
+# Security Operations
+
+## Administrative audit trail
+
+Administrative audit events are server-authoritative. The Go backend records
+requests to `/api/admin/*` with `NewAdminAuditLogger` and persists them in the
+`AuditLog` database table. The frontend must never write audit records to
+`localStorage`, accept a client-supplied audit event, or expose a delete/clear
+operation. Read the feed through the authenticated `GET /api/admin/audit-logs`
+endpoint only.
+
+## CSRF cookie
+
+The `_csrf` cookie intentionally is **not** `HttpOnly`: the application uses a
+Double Submit Cookie design, so browser JavaScript must copy its value into the
+`X-CSRF-Token` header. This is not an authentication cookie and must never be
+used as one. The backend also uses `SameSite=Lax`, HTTPS `Secure` cookies in
+production, constant-time token comparison, and Origin/Referer validation.
+The API proxy preserves Origin and Referer; it must not strip them to make a
+request pass.
+
+For stronger XSS defense, maintain a strict Content Security Policy and output
+encoding. Switching `_csrf` to `HttpOnly` requires a different CSRF design
+(for example a server-rendered token or a synchronizer-token endpoint), not
+just changing the flag while retaining the current client-readable flow.
+
+## Cache safety
+
+`FLUSHALL` is disabled in the application because it is process-wide and can
+destroy unrelated data. Invalidate only an explicitly scoped key/pattern after
+authorization at the calling admin endpoint. Any operational emergency flush
+must be performed by an authenticated operator using a separately protected
+Redis administration channel.
+
+## Secret exposure and rotation runbook
+
+If a secret was ever committed, treat it as compromised even after the commit
+is deleted. Rotate/revoke all affected credentials in the provider, update the
+deployment secret store, restart all services, invalidate sessions/tokens where
+applicable, and verify the old values no longer work. Then remove the values
+from reachable Git history using the repository's approved history-rewrite
+process and force-update protected remotes only with maintainer approval.
+
+Do not paste secret values into tickets, logs, or chat. The following names
+require rotation review when their history contains a credential: JWT signing
+keys, session/refresh secrets, database URLs/passwords, Redis URLs/passwords,
+S3 access keys/secrets, OAuth client secrets, webhook signing secrets, and API
+keys. Use a secret scanner in CI and keep only placeholders in `.env.example`.
 # Security Policy
 
 ## 🔴 Critical: Secrets Management
@@ -20,10 +68,9 @@ The following secrets were exposed in git history and must be considered **fully
 
 | Secret | Location (git history) | Action Required |
 |--------|----------------------|-----------------|
-| PostgreSQL connection string with password | `fix-admin-access.ps1` (commit `42a04e4`) | Rotate DB password immediately |
-| Supabase Service Role Key | `fix-user-role.js` (commit `42a04e4`) | Rotate service role key in Supabase dashboard |
-| User password `Khaled@2008` | `fix-admin-access.ps1` (commit `42a04e4`) | Reset user password immediately |
-| User email `ffyoussef12@gmail.com` | `fix-admin-access.ps1` (commit `42a04e4`) | Exposed PII — monitor account |
+| PostgreSQL connection string with password | historical provisioning script | Rotate DB password immediately |
+| Supabase Service Role Key | historical provisioning script | Rotate service role key in Supabase dashboard |
+| User credentials/PII | historical provisioning script | Reset affected account and review access |
 | JWT Secret | Potentially in `.env` history | Rotate JWT secret |
 | OpenRouter API Key | Potentially in `.env` history | Rotate API key |
 | Redis Password | Potentially in `.env` history | Rotate Redis password |
@@ -116,7 +163,7 @@ JWT_SECRET=your-secret-here
 
 - [ ] **Immediate (P0):** Rotate PostgreSQL password in Supabase dashboard
 - [ ] **Immediate (P0):** Rotate Supabase service role key
-- [ ] **Immediate (P0):** Reset password for user `ffyoussef12@gmail.com`
+- [ ] **Immediate (P0):** Reset passwords for all accounts affected by the historical leak
 - [ ] **Immediate (P0):** Rotate JWT secret
 - [ ] **Immediate (P0):** Rotate OpenRouter API key
 - [ ] **Immediate (P0):** Rotate Redis password

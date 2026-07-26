@@ -283,6 +283,7 @@ export default function AdminStudentsPage() {
       header: "الحالة",
       cell: ({ row }) => {
         const config = statusConfig[row.original.status] || statusConfig.ACTIVE;
+        if (!config) return null;
         return (
           <div className={`inline-flex items-center px-2.5 py-1 rounded-lg border ${config.bgColor}`}>
             <span className={`text-[10px] font-black uppercase tracking-widest ${config.color}`}>

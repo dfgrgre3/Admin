@@ -35,12 +35,13 @@ import { Badge } from "@/components/ui/badge";
 import { TabsContent } from "@/components/ui/tabs";
 
 import type { CourseFormValues, CourseTeacher } from "./types";
+import type { CourseOption } from "./course-options";
 
 interface DetailsTabProps {
   control: Control<CourseFormValues>;
   teachers: CourseTeacher[];
   courseId?: string;
-  allCourses: Array<{ id: string; name: string; nameAr?: string | null }>;
+  allCourses: CourseOption[];
   onNext: () => void;
   onPrev: () => void;
 }
@@ -54,6 +55,7 @@ export function DetailsTab({
   onPrev,
 }: DetailsTabProps) {
   const [customReq, setCustomReq] = React.useState("");
+  const courseOptions = Array.isArray(allCourses) ? allCourses : [];
 
   return (
     <TabsContent value="details" className="mt-0 space-y-6">
@@ -260,7 +262,7 @@ export function DetailsTab({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {allCourses
+                          {courseOptions
                             .filter((c) => c.id !== courseId)
                             .map((c) => (
                               <SelectItem key={c.id} value={c.nameAr || c.name}>

@@ -3,9 +3,11 @@
 import * as React from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import {
+  Award,
   BarChart3,
   BookOpen,
   ChevronRight,
+  DollarSign,
   ExternalLink,
   LayoutDashboard,
   Layers,
@@ -55,10 +57,22 @@ export default function CourseDetailLayout({ children }: CourseLayoutProps) {
       active: pathname === `/admin/courses/${courseId}`,
     },
     {
+      label: "المعلومات العامة",
+      icon: BookOpen,
+      href: `/admin/courses/${courseId}/general`,
+      active: pathname === `/admin/courses/${courseId}/general`,
+    },
+    {
       label: "المنهج الدراسي",
       icon: Layers,
       href: `/admin/courses/${courseId}/curriculum`,
       active: pathname === `/admin/courses/${courseId}/curriculum`,
+    },
+    {
+      label: "المعلمين",
+      icon: Users,
+      href: `/admin/courses/${courseId}/teachers`,
+      active: pathname === `/admin/courses/${courseId}/teachers`,
     },
     {
       label: "الطلاب والاشتراكات",
@@ -77,6 +91,18 @@ export default function CourseDetailLayout({ children }: CourseLayoutProps) {
       icon: BarChart3,
       href: `/admin/courses/${courseId}/analytics`,
       active: pathname === `/admin/courses/${courseId}/analytics`,
+    },
+    {
+      label: "التسعير",
+      icon: DollarSign,
+      href: `/admin/courses/${courseId}/pricing`,
+      active: pathname === `/admin/courses/${courseId}/pricing`,
+    },
+    {
+      label: "الشهادات",
+      icon: Award,
+      href: `/admin/courses/${courseId}/certificates`,
+      active: pathname === `/admin/courses/${courseId}/certificates`,
     },
     {
       label: "إعدادات الدورة",

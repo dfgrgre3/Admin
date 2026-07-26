@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import {
   BACKEND_URL,
   backendJsonResponse,
+  addUpstreamCsrfHeaders,
   upstreamAuthHeaders,
 } from '@/app/api/auth/_utils';
 import { getRequiredPermissionForAdminApiRequest } from '@/lib/admin-panel-route-access';
@@ -169,6 +170,8 @@ export async function forwardToGoApi(
     headers.set(key, authHeaders[key] as string);
   });
 
+  addUpstreamCsrfHeaders(request, headers);
+
   if (
     init.body &&
     typeof init.body === 'string' &&
@@ -176,6 +179,12 @@ export async function forwardToGoApi(
   ) {
     headers.set('Content-Type', 'application/json');
   }
+
+  // The Next.js same-origin route is the browser security boundary. Do not send
+  // the UI Origin to the internal API, where it would be compared with the API
+  // host and reject an otherwise valid double-submit token.
+  headers.delete('origin');
+  headers.delete('referer');
 
   const response = await fetch(target, {
     ...init,

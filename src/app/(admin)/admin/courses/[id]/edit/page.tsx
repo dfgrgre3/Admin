@@ -1,6 +1,8 @@
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { apiClient } from "@/lib/api/api-client";
 import { CourseEditor } from "@/components/admin/courses/course-editor";
+import { extractCourseOptions } from "@/components/admin/courses/course-editor/course-options";
 
 interface EditCoursePageProps {
   params: Promise<{
@@ -16,15 +18,18 @@ function extractCourse(payload: any) {
 
 export default async function EditCoursePage({ params }: EditCoursePageProps) {
   const { id } = await params;
-
-  const [coursePayload, categories, teachers, allCourses] = await Promise.all([
+  const cookieHeader = (await cookies()).toString();
+  const [coursePayload, categories, teachers, allCoursesPayload] = await Promise.all([
     apiClient.get<any>(`/courses/${id}`).catch(() => null),
     apiClient.get<any[]>("/categories?type=COURSE").catch(() => []),
     apiClient.get<any[]>("/teachers").catch(() => []),
-    apiClient.get<any[]>("/subjects").catch(() => []),
+    apiClient.get<unknown>("/admin/subjects?limit=100", {
+      headers: { Cookie: cookieHeader },
+    }).catch(() => []),
   ]);
 
   const initialData = extractCourse(coursePayload);
+  const allCourses = extractCourseOptions(allCoursesPayload);
 
   if (!initialData?.id) {
     notFound();

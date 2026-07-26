@@ -295,8 +295,14 @@ class UnifiedLogger {
   private async logToConsole(level: LogLevel, message: string, context?: LogContext, error?: Error | unknown): Promise<void> {
     if (!this.config.enableConsole) return;
 
-    const formattedMessage = this.formatMessage(level, message, context);
-    const errorStr = this.formatError(error);
+    const logEntry = this.createLogEntry(level, message, error, context);
+    const sanitizedContext = logEntry.context;
+    const sanitizedMessage = logEntry.message;
+    const sanitizedError = logEntry.error;
+    const formattedMessage = this.formatMessage(level, sanitizedMessage, sanitizedContext);
+    const errorStr = sanitizedError
+      ? `\nError: ${sanitizedError.message}${sanitizedError.stack ? `\n${sanitizedError.stack}` : ''}`
+      : '';
     const fullMessage = formattedMessage + errorStr;
 
     if (!isServer) {

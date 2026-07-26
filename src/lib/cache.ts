@@ -11,8 +11,23 @@ const redisClient = new Redis(redisUrl, {
     enableReadyCheck: true,
 });
 
+let redisConnectPromise: Promise<void> | null = null;
+
+/** Establish the lazy Redis connection once, sharing concurrent attempts. */
+export async function connectRedisClient(): Promise<void> {
+    if (redisClient.status === 'ready') return;
+    if (redisConnectPromise) return redisConnectPromise;
+
+    redisConnectPromise = redisClient.connect()
+        .then(() => undefined)
+        .finally(() => {
+            redisConnectPromise = null;
+        });
+    return redisConnectPromise;
+}
+
 redisClient.on('error', (error) => {
-    logger.error('[Redis] Connection error:', error);
+    logger.error('[Redis] Connection error', error);
 });
 
 redisClient.on('connect', () => {
@@ -23,15 +38,16 @@ export function getRedisClient(): Redis {
     return redisClient;
 }
 
-async function closeRedisClient(): Promise<void> {
-    await redisClient.quit();
+async function getConnectedRedisClient(): Promise<Redis> {
+    await connectRedisClient();
+    return redisClient;
 }
 
 // Cache service wrapper for compatibility
-const CacheService = {
+export const CacheService = {
     async get<T = any>(key: string): Promise<T | null> {
         try {
-            const client = getRedisClient();
+            const client = await getConnectedRedisClient();
             const value = await client.get(key);
             return value ? JSON.parse(value) : null;
         } catch (error) {
@@ -42,7 +58,7 @@ const CacheService = {
 
     async set(key: string, value: any, ttlSeconds?: number): Promise<void> {
         try {
-            const client = getRedisClient();
+            const client = await getConnectedRedisClient();
             const stringValue = JSON.stringify(value);
             if (ttlSeconds) {
                 await client.setex(key, ttlSeconds, stringValue);
@@ -56,7 +72,7 @@ const CacheService = {
 
     async del(key: string): Promise<void> {
         try {
-            const client = getRedisClient();
+            const client = await getConnectedRedisClient();
             await client.del(key);
         } catch (error) {
             logger.error(`[CacheService] Delete error for key ${key}:`, error);
@@ -66,7 +82,7 @@ const CacheService = {
     async mdel(keys: string[]): Promise<void> {
         if (!keys.length) return;
         try {
-            const client = getRedisClient();
+            const client = await getConnectedRedisClient();
             await client.del(...keys);
         } catch (error) {
             logger.error(`[CacheService] MDelete error for keys:`, error);
@@ -79,7 +95,7 @@ const CacheService = {
 
     async invalidatePattern(pattern: string): Promise<void> {
         try {
-            const client = getRedisClient();
+            const client = await getConnectedRedisClient();
             // Stream keys with SCAN instead of KEYS to avoid blocking Redis
             // (KEYS blocks the single-threaded event loop on large datasets).
             const keysToDelete: string[] = [];
@@ -105,13 +121,12 @@ const CacheService = {
         }
     },
 
-    async flushAll(): Promise<void> {
-        try {
-            const client = getRedisClient();
-            await client.flushall();
-        } catch (error) {
-            logger.error('[CacheService] FlushAll error:', error);
-        }
+    /**
+     * Deliberately disabled: FLUSHALL is process-wide and can destroy unrelated
+     * tenants/data. Use invalidatePattern with an explicitly scoped namespace.
+     */
+    async flushAll(): Promise<never> {
+        throw new Error('CacheService.flushAll is disabled; invalidate a scoped namespace instead');
     },
 
     async getOrSet<T = any>(key: string, fetchFn: () => Promise<T>, ttlSeconds?: number): Promise<T> {
@@ -124,13 +139,3 @@ const CacheService = {
         return value;
     },
 };
-
-enum CachePrefixes {
-  USER_PROFILE = 'user:profile',
-  USER_ANALYTICS = 'user:analytics',
-  EDUCATIONAL_CONTENT = 'educational',
-  ANNOUNCEMENTS = 'announcements',
-  AUTH_SESSION = 'auth:session',
-}
-
-

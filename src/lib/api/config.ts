@@ -8,10 +8,12 @@ function ensureProtocol(url: string): string {
 }
 
 export function getBackendOrigin(): string {
-  const configured =
-    process.env.INTERNAL_API_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    DEFAULT_BACKEND_ORIGIN;
+  const configured = process.env.INTERNAL_API_URL ||
+    (process.env.NODE_ENV !== "production" ? process.env.NEXT_PUBLIC_API_URL || DEFAULT_BACKEND_ORIGIN : "");
+
+  if (!configured) {
+    throw new Error("INTERNAL_API_URL is required in production for the server backend origin");
+  }
 
   return ensureProtocol(trimTrailingSlashes(configured).replace(/\/api$/, ""));
 }

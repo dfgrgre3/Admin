@@ -84,9 +84,13 @@ export const authApiService = {
   },
 
   /** Logout the current user */
-  async logout(): Promise<void> {
+  async logout(allDevices?: boolean): Promise<void> {
     try {
-      await apiClient.fetch(apiRoutes.auth.logout, { method: 'POST' });
+      await apiClient.fetch(apiRoutes.auth.logout, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: allDevices ? JSON.stringify({ allDevices: true }) : undefined,
+      });
     } catch {
       // Ignore errors — always clear client state
     }
@@ -120,6 +124,21 @@ export const authApiService = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      return { success: res.ok, ...data };
+    } catch {
+      return { success: false, error: 'Network error' };
+    }
+  },
+
+  /** Verify forgot password code */
+  async verifyForgotPasswordCode(email: string, code: string): Promise<AuthResult & { resetToken?: string }> {
+    try {
+      const res = await apiClient.fetch('/api/auth/password-reset/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code }),
       });
       const data = await res.json();
       return { success: res.ok, ...data };

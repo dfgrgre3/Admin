@@ -133,7 +133,7 @@ export function formatRelativeTime(date: Date | string | null | undefined): stri
 /**
  * Truncate text with validation
  */
-function truncateText(text: string | null | undefined, maxLength: number): string {
+export function truncateText(text: string | null | undefined, maxLength: number): string {
   // Validate input
   if (!text || typeof text !== 'string') {
     return '';
@@ -188,20 +188,28 @@ export function generateId(): string {
  * Generate a cryptographically secure numeric PIN
  */
 export function generateSecurePin(length: number = 6): string {
-  try {
-    if (typeof window !== 'undefined' && window.crypto) {
-      const array = new Uint32Array(1);
-      window.crypto.getRandomValues(array);
-      const min = Math.pow(10, length - 1);
-      const range = Math.pow(10, length) - min;
-      return (array[0]! % range + min).toString();
-    }
-  } catch (_error) {
-    // Fallback handled below
+  if (!Number.isSafeInteger(length) || length < 1 || length > 15) {
+    throw new RangeError('PIN length must be an integer between 1 and 15');
   }
-  
-  // Fallback for environments without crypto (less secure but functional)
-  return Math.floor(Math.pow(10, length - 1) + Math.random() * (Math.pow(10, length) - Math.pow(10, length - 1))).toString();
+
+  const cryptoApi = globalThis.crypto;
+  if (!cryptoApi?.getRandomValues) {
+    throw new Error('A cryptographically secure random number generator is unavailable');
+  }
+
+  // Draw each decimal digit with rejection sampling. Values >= 250 are
+  // discarded because 250 is divisible by 10, eliminating modulo bias.
+  const digits: number[] = [];
+  const bytes = new Uint8Array(Math.max(16, length * 2));
+  while (digits.length < length) {
+    cryptoApi.getRandomValues(bytes);
+    for (const byte of bytes) {
+      if (byte >= 250) continue;
+      digits.push(byte % 10);
+      if (digits.length === length) break;
+    }
+  }
+  return digits.join('');
 }
 
 /**

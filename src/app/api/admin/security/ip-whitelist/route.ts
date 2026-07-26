@@ -42,14 +42,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { searchParams } = new URL(request.url);
     const path = searchParams.get('path') || '';
+
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+      ...upstreamAuthHeaders(request),
+    });
+    // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
+    headers.delete('origin');
+
     const response = await fetch(
       `${BACKEND_URL}/api/admin/security/ip-whitelist${path}`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...upstreamAuthHeaders(request),
-        },
+        headers,
         body: JSON.stringify(body),
         cache: 'no-store',
       },
@@ -73,14 +78,19 @@ export async function DELETE(request: NextRequest) {
     if (!id) {
       return NextResponse.json({ error: 'ID required' }, { status: 400 });
     }
+
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+      ...upstreamAuthHeaders(request),
+    });
+    // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
+    headers.delete('origin');
+
     const response = await fetch(
       `${BACKEND_URL}/api/admin/security/ip-whitelist/${id}`,
       {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          ...upstreamAuthHeaders(request),
-        },
+        headers,
         cache: 'no-store',
       },
     );

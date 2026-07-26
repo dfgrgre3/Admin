@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 import { forwardToGoApi } from '@/app/api/admin/_proxy';
 
 /**
@@ -41,7 +42,7 @@ export async function GET(
     }
 
     // Log request for auditing (avoid logging sensitive data)
-    console.info(`Fetching security logs for user ID: ${trimmedId}`);
+    logger.info('Admin user security logs requested', { source: 'api/admin/security/logs/users' });
 
     // Forward request to Go API
     const response = await forwardToGoApi(
@@ -51,12 +52,12 @@ export async function GET(
     );
 
     // Log response status for monitoring
-    console.info(`Security logs request completed with status: ${response.status}`);
+    logger.info('Admin user security logs request completed', { source: 'api/admin/security/logs/users', statusCode: response.status });
 
     return response;
   } catch (error) {
     // Log detailed error for debugging (avoid exposing internal details in response)
-    console.error('Admin security logs GET error:', error);
+    logger.error('Admin user security logs request failed', error, { source: 'api/admin/security/logs/users' });
     
     // Return appropriate error response
     return NextResponse.json(

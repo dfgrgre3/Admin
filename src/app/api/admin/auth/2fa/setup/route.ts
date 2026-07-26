@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
+import type { NextRequest } from 'next/server';
 import { forwardToGoApi } from '@/app/api/admin/_proxy';
 
 /**
@@ -41,23 +43,21 @@ export async function POST(
     }
 
     // Log request for auditing (without sensitive data)
-    console.info(`2FA setup request for user ID: ${trimmedUserId}`);
+    logger.info('Admin 2FA setup requested', { source: 'api/admin/auth/2fa/setup' });
 
     // Forward request to Go API with validated data
-    const forwardedRequest = new Request(request, {
+    const response = await forwardToGoApi(request, '/api/admin/auth/2fa/setup', {
+      method: 'POST',
       body: JSON.stringify({ userId: trimmedUserId }),
-      headers: request.headers
     });
 
-    const response = await forwardToGoApi(forwardedRequest, '/api/admin/auth/2fa/setup', { method: 'POST' });
-
     // Log response status for monitoring
-    console.info(`2FA setup completed with status: ${response.status}`);
+    logger.info('Admin 2FA setup completed', { source: 'api/admin/auth/2fa/setup', statusCode: response.status });
 
     return response;
   } catch (error) {
     // Log detailed error for debugging (avoid exposing internal details in response)
-    console.error('2FA setup error:', error);
+    logger.error('Admin 2FA setup failed', error, { source: 'api/admin/auth/2fa/setup' });
     
     // Return appropriate error response
     return NextResponse.json(

@@ -4,7 +4,7 @@ import { PERMISSIONS, type Permission } from "@/lib/permissions";
  * First matching rule wins. Order: most specific routes before generic `/admin`.
  * Unmatched `/admin/*` requires full bypass (`*:*`) — same bar as sensitive Go routes without a dedicated rule.
  */
-const ADMIN_PATH_RULES: { pattern: RegExp; permission: Permission }[] = [
+export const ADMIN_PATH_RULES: ReadonlyArray<{ pattern: RegExp; permission: Permission }> = [
   { pattern: /^\/admin\/users\/permissions/, permission: PERMISSIONS.USERS_MANAGE },
   { pattern: /^\/admin\/users\/(?:new|create)$/, permission: PERMISSIONS.USERS_MANAGE },
   { pattern: /^\/admin\/users\/[^/]+\/(?:edit|permissions)$/, permission: PERMISSIONS.USERS_MANAGE },
@@ -23,7 +23,7 @@ const ADMIN_PATH_RULES: { pattern: RegExp; permission: Permission }[] = [
   { pattern: /^\/admin\/course-categories/, permission: PERMISSIONS.SUBJECTS_VIEW },
   { pattern: /^\/admin\/courses/, permission: PERMISSIONS.SUBJECTS_VIEW },
   { pattern: /^\/admin\/subjects/, permission: PERMISSIONS.SUBJECTS_VIEW },
-  { pattern: /^\/admin\/learning-paths/, permission: PERMISSIONS.LEARNING_PATHS_VIEW },
+  { pattern: /^\/admin\/learning-paths/, permission: PERMISSIONS.SUBJECTS_VIEW },
   { pattern: /^\/admin\/books/, permission: PERMISSIONS.BOOKS_VIEW },
   { pattern: /^\/admin\/exams/, permission: PERMISSIONS.EXAMS_VIEW },
   { pattern: /^\/admin\/resources/, permission: PERMISSIONS.RESOURCES_VIEW },
@@ -58,11 +58,11 @@ export function getRequiredPermissionForAdminPath(pathname: string): Permission 
   return PERMISSIONS.ADMIN_BYPASS;
 }
 
-const ADMIN_API_RULES: {
+export const ADMIN_API_RULES: ReadonlyArray<{
   pattern: RegExp;
   view: Permission;
   manage?: Permission;
-}[] = [
+}> = [
   { pattern: /^\/api\/admin\/security\/(?:sessions|logs\/users)/, view: PERMISSIONS.USERS_MANAGE, manage: PERMISSIONS.USERS_MANAGE },
   { pattern: /^\/api\/admin\/users\/bulk-send-message/, view: PERMISSIONS.USERS_MANAGE },
   { pattern: /^\/api\/admin\/users/, view: PERMISSIONS.USERS_VIEW, manage: PERMISSIONS.USERS_MANAGE },

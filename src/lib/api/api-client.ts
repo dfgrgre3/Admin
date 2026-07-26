@@ -79,17 +79,21 @@ class ApiClient {
      * has no _csrf cookie, so any POST/PUT/PATCH/DELETE would fail with
      * "CSRF token validation failed" until a GET request triggered ensureCSRFToken on the backend.
      */
-    private async ensureCsrfToken(): Promise<void> {
-        if (typeof window === 'undefined') return; // SSR — cannot read/set browser cookies here
-        if (this.getCookie('_csrf')) return;        // Cookie already present, nothing to do
+    private async ensureCsrfToken(forceRefresh = false): Promise<void> {
+        if (typeof window === 'undefined') return;
+        if (!forceRefresh && this.getCookie('_csrf')) return;
 
         if (!this.csrfBootstrapPromise) {
             this.csrfBootstrapPromise = fetch('/api/auth/csrf', {
                 method: 'GET',
                 credentials: 'include',
+                cache: 'no-store',
             })
-                .then(() => { /* The Set-Cookie header sets _csrf automatically */ })
-                .catch(() => { /* Ignore errors — the next request will retry */ })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`CSRF bootstrap failed with status ${response.status}`);
+                    }
+                })
                 .finally(() => { this.csrfBootstrapPromise = null; });
         }
 
@@ -142,6 +146,13 @@ class ApiClient {
         return !!((errName === 'AbortError' || errMsg?.includes('fetch')) && retryCount < retries);
     }
 
+    private async isCsrfValidationFailure(response: Response): Promise<boolean> {
+        if (response.status !== 403) return false;
+        const body = await response.clone().json().catch(() => null) as { error?: string; message?: string } | null;
+        const message = body?.error || body?.message || '';
+        return message.toLowerCase().includes('csrf');
+    }
+
     public async fetch(endpoint: string, options: FetchOptions = {}, retryCount = 0): Promise<Response> {
         const { timeout = API_TIMEOUT, retries = MAX_RETRIES, ...customOptions } = options;
 
@@ -162,6 +173,11 @@ class ApiClient {
 
             timer.stop();
             clearTimeout(id);
+
+            if (await this.isCsrfValidationFailure(response) && retryCount < 1) {
+                await this.ensureCsrfToken(true);
+                return this.fetch(endpoint, options, retryCount + 1);
+            }
 
             if (response.status === 401 && !endpoint.includes('/auth/refresh') && !endpoint.includes('/auth/login') && retryCount < 1) {
                 const refreshed = await this.refreshToken();
@@ -232,6 +248,11 @@ class ApiClient {
             timer.stop();
 
             clearTimeout(id);
+
+            if (await this.isCsrfValidationFailure(response) && retryCount < 1) {
+                await this.ensureCsrfToken(true);
+                return this.request<T>(endpoint, options, retryCount + 1);
+            }
 
             // Handle 401 Unauthorized - Attempt Token Refresh
             if (response.status === 401 && !endpoint.includes('/auth/refresh') && !endpoint.includes('/auth/login') && retryCount < 1) {

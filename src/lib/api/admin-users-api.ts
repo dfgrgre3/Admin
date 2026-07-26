@@ -230,6 +230,75 @@ export const adminUsersApi = {
     const result = await adminApi.get<{ total: number; avgProgress: number; enrollments: UserEnrollment[] } | DataEnvelope<{ total: number; avgProgress: number; enrollments: UserEnrollment[] }>>("users/" + userId + "/enrollments");
     return unwrapData(result);
   },
+
+  // GET /api/admin/users/analytics
+  async getAnalytics(): Promise<{
+    growth: Array<{ name: string; users: number }>;
+    roles: Array<{ name: string; value: number }>;
+    countries: Array<{ name: string; users: number }>;
+    loginActivity: Array<{ name: string; logins: number }>;
+    registrations: Array<{ name: string; registrations: number }>;
+  }> {
+    const result = await adminApi.get<any>("users/analytics");
+    return unwrapData(result);
+  },
+
+  // GET /api/admin/users/filter-options
+  async getFilterOptions(): Promise<{
+    teachers: Array<{ id: string; name: string }>;
+    courses: Array<{ id: string; name: string }>;
+    categories: Array<{ id: string; name: string }>;
+  }> {
+    const result = await adminApi.get<any>("users/filter-options");
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/{id}/ban
+  async ban(userId: string, options?: { reason?: string; durationHours?: number; notifyUser?: boolean; permanent?: boolean; expiresAt?: string; hideContent?: boolean }): Promise<UserDetails> {
+    const result = await adminApi.post<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}/ban`, options || {});
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/{id}/suspend
+  async suspend(userId: string, options?: { reason?: string; durationHours?: number; notifyUser?: boolean }): Promise<UserDetails> {
+    const result = await adminApi.post<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}/suspend`, options || {});
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/{id}/role
+  async changeRole(userId: string, options?: { role?: string; reason?: string }): Promise<UserDetails> {
+    const result = await adminApi.post<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}/role`, options || {});
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/{id}/password-reset
+  async sendPasswordReset(userId: string): Promise<void> {
+    await adminApi.post<void>(`users/${userId}/password-reset`, {});
+  },
+
+  // POST /api/admin/users/invite
+  async invite(options?: { email?: string; name?: string; role?: string; message?: string; expiresInHours?: number }): Promise<UserDetails> {
+    const result = await adminApi.post<UserDetails | DataEnvelope<UserDetails>>("users/invite", options || {});
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/merge
+  async merge(primaryUserId: string, secondaryUserId: string, options?: { mergeOrders?: boolean; mergeEnrollments?: boolean; mergeCertificates?: boolean }): Promise<UserDetails> {
+    const result = await adminApi.post<UserDetails | DataEnvelope<UserDetails>>(`users/merge`, { primaryUserId, secondaryUserId, ...options });
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/{id}/anonymize
+  async anonymize(userId: string, options?: { reason?: string; keepFinancials?: boolean }): Promise<UserDetails> {
+    const result = await adminApi.post<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}/anonymize`, options || {});
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/{id}/activate
+  async activate(userId: string): Promise<UserDetails> {
+    const result = await adminApi.post<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}/activate`, {});
+    return unwrapData(result);
+  },
 };
 
 export interface UserEnrollment {

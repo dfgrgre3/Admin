@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { getBackendOrigin } from "@/lib/api/config";
 
 // =============================================================================
 //  JWT signature verification (replaces unsafe base64-only decoding).
@@ -21,7 +22,7 @@ interface JwtPayload {
   iss?: string;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET_KEY || process.env.JWT_SECRET || "";
+const JWT_SECRET = process.env.JWT_SECRET || "";
 const JWT_ISSUER = process.env.JWT_ISSUER_URL || "";
 
 // Reuse a single CryptoKey-like SecretKey across requests.
@@ -54,7 +55,9 @@ async function verifyAccessToken(
   }
 }
 
-const ALLOWED_ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN", "MODERATOR", "SUPPORT", "TEACHER"];
+// Match Go AdminOrModerator exactly (auth_guards.go): ADMIN, SUPER_ADMIN,
+// MODERATOR, and SUPPORT. The Go backend remains the final authority.
+const ALLOWED_ADMIN_ROLES = ["ADMIN", "SUPER_ADMIN", "MODERATOR", "SUPPORT"];
 
 const isProtectedRoute = (req: NextRequest): boolean => {
   const { pathname } = req.nextUrl;
@@ -109,7 +112,7 @@ export async function middleware(req: NextRequest) {
   // 2. Perform silent token rotation if needed and refresh token is present
   let nextResponse = NextResponse.next();
   if (shouldRefresh && refreshToken) {
-    const backendUrl = process.env.INTERNAL_API_URL || "http://127.0.0.1:8082";
+    const backendUrl = getBackendOrigin();
     try {
       const refreshRes = await fetch(`${backendUrl}/api/auth/refresh`, {
         method: "POST",
@@ -123,16 +126,16 @@ export async function middleware(req: NextRequest) {
         // Parse cookies from backend refresh response and forward them to the client
         const setCookies = refreshRes.headers.getSetCookie();
         if (setCookies && setCookies.length > 0) {
-          for (const cookie of setCookies) {
-            nextResponse.headers.append("Set-Cookie", cookie);
+          for (const setCookieHeader of setCookies) {
+            nextResponse.headers.append("Set-Cookie", setCookieHeader);
           }
 
           // Verify the freshly issued access token to read trusted claims.
           // Extract the token from the Set-Cookie header (not body) to avoid
           // relying on token exposure in the response body.
           let newToken: string | null = null;
-          for (const cookie of setCookies) {
-            const match = cookie.match(/^access_token=([^;]+)/);
+          for (const setCookieHeader of setCookies) {
+            const match = setCookieHeader.match(/^access_token=([^;]+)/);
             if (match && match[1] != null) {
               newToken = decodeURIComponent(match[1]);
               break;
@@ -165,6 +168,12 @@ export async function middleware(req: NextRequest) {
       if (req.nextUrl.pathname.startsWith("/api/")) {
         return NextResponse.json({ error: "Service unavailable during session verification" }, { status: 503 });
       }
+      // A refresh network failure is not proof of authentication. Fail closed
+      // instead of rendering a protected page with an unverifiable session.
+      const url = new URL("/admin-login", req.url);
+      url.searchParams.set("redirect", req.nextUrl.pathname);
+      url.searchParams.set("error", "session_verification_unavailable");
+      return NextResponse.redirect(url);
     }
   }
 

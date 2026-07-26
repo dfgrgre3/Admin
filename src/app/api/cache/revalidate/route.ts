@@ -27,8 +27,12 @@ function isAllowedRevalidatePath(path: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
+  const headers = new Headers(upstreamAuthHeaders(request));
+  // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
+  headers.delete('origin');
+
   const me = await fetch(`${BACKEND_URL}/api/auth/me`, {
-    headers: upstreamAuthHeaders(request),
+    headers,
     cache: "no-store",
   });
 

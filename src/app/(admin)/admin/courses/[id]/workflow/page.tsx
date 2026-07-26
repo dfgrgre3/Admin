@@ -16,6 +16,7 @@ import {
   XCircle,
   Archive,
   RotateCcw,
+  Settings,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -23,6 +24,7 @@ import { AdminButton } from "@/components/admin/ui/admin-button";
 import { AdminCard } from "@/components/admin/ui/admin-card";
 import { CourseStatusBadge } from "@/components/admin/courses/status-badge";
 import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog";
+import { Badge } from "@/components/ui/badge";
 import { apiRoutes } from "@/lib/api/routes";
 import { adminFetch } from "@/lib/api/admin-api";
 import { readJsonOrThrow, throwIfApiError } from "@/lib/api/api-error-utils";
@@ -43,33 +45,33 @@ export default function CourseWorkflowPage() {
   const [newComment, setNewComment] = React.useState("");
 
   // Fetch course data
-  const { data: course, isLoading } = useQuery({
+  const { data: course, isLoading } = useQuery<{ data?: { course?: any; [key: string]: any }; [key: string]: any }>({
     queryKey: ["admin", "courses", courseId],
     queryFn: async () => {
       const res = await adminFetch(`${apiRoutes.admin.courses}/${courseId}`);
-      return readJsonOrThrow(res);
+      return readJsonOrThrow(res, "فشل تحميل بيانات الدورة");
     },
   });
 
   const courseData = course?.data?.course || course?.data || course;
 
   // Fetch changelog
-  const { data: changelogData } = useQuery({
+  const { data: changelogData } = useQuery<{ data?: { changelog?: CourseChangelogEntry[]; [key: string]: any }; [key: string]: any }>({
     queryKey: ["admin", "courses", courseId, "changelog"],
     queryFn: async () => {
       const res = await adminFetch(apiRoutes.admin.courseChangelogV2(courseId));
-      return readJsonOrThrow(res);
+      return readJsonOrThrow(res, "فشل تحميل سجل التعديلات");
     },
   });
 
   const changelog: CourseChangelogEntry[] = changelogData?.data?.changelog || [];
 
   // Fetch review comments
-  const { data: commentsData, refetch: refetchComments } = useQuery({
+  const { data: commentsData, refetch: refetchComments } = useQuery<{ data?: { comments?: CourseReviewComment[]; [key: string]: any }; [key: string]: any }>({
     queryKey: ["admin", "courses", courseId, "review-comments"],
     queryFn: async () => {
       const res = await adminFetch(apiRoutes.admin.courseReviewComments(courseId));
-      return readJsonOrThrow(res);
+      return readJsonOrThrow(res, "فشل تحميل تعليقات المراجعة");
     },
   });
 
@@ -81,7 +83,7 @@ export default function CourseWorkflowPage() {
       const res = await adminFetch(apiRoutes.admin.courseSubmitReview(courseId), {
         method: "POST",
       });
-      return throwIfApiError(res);
+      await throwIfApiError(res, "فشل إرسال الدورة للمراجعة");
     },
     onSuccess: () => {
       toast.success("تم إرسال الدورة للمراجعة");
@@ -95,7 +97,7 @@ export default function CourseWorkflowPage() {
       const res = await adminFetch(apiRoutes.admin.courseApprove(courseId), {
         method: "POST",
       });
-      return throwIfApiError(res);
+      await throwIfApiError(res, "فشل اعتماد الدورة");
     },
     onSuccess: () => {
       toast.success("تم اعتماد الدورة ونشرها");
@@ -110,7 +112,7 @@ export default function CourseWorkflowPage() {
         method: "POST",
         body: JSON.stringify({ reason: rejectReason }),
       });
-      return throwIfApiError(res);
+      await throwIfApiError(res, "فشل رفض الدورة");
     },
     onSuccess: () => {
       toast.success("تم رفض الدورة وإعادتها للمسودة");
@@ -126,7 +128,7 @@ export default function CourseWorkflowPage() {
       const res = await adminFetch(apiRoutes.admin.courseArchive(courseId), {
         method: "POST",
       });
-      return throwIfApiError(res);
+      await throwIfApiError(res, "فشل أرشفة الدورة");
     },
     onSuccess: () => {
       toast.success("تم أرشفة الدورة");
@@ -140,7 +142,7 @@ export default function CourseWorkflowPage() {
       const res = await adminFetch(apiRoutes.admin.courseRestore(courseId), {
         method: "POST",
       });
-      return throwIfApiError(res);
+      await throwIfApiError(res, "فشل استعادة الدورة");
     },
     onSuccess: () => {
       toast.success("تم استعادة الدورة");
@@ -155,7 +157,7 @@ export default function CourseWorkflowPage() {
         method: "POST",
         body: JSON.stringify({ comment: newComment, status: "pending" }),
       });
-      return throwIfApiError(res);
+      await throwIfApiError(res, "فشل إضافة التعليق");
     },
     onSuccess: () => {
       toast.success("تم إضافة التعليق");
@@ -393,7 +395,7 @@ export default function CourseWorkflowPage() {
         title="رفض الدورة"
         description="أدخل سبب الرفض (سيتم إعادة الدورة إلى حالة المسودة)"
         confirmText="رفض"
-        confirmVariant="destructive"
+        variant="destructive"
         onConfirm={() => rejectCourse.mutate()}
       />
     </div>

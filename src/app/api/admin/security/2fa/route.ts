@@ -42,14 +42,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { searchParams } = new URL(request.url);
     const path = searchParams.get('path') || '/setup';
+
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+      ...upstreamAuthHeaders(request),
+    });
+    // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
+    headers.delete('origin');
+
     const response = await fetch(
       `${BACKEND_URL}/api/admin/security/2fa${path}`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...upstreamAuthHeaders(request),
-        },
+        headers,
         body: JSON.stringify(body),
         cache: 'no-store',
       },

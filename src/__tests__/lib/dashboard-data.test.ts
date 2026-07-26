@@ -48,6 +48,6 @@ describe("buildComprehensiveStats", () => {
     expect(result.dailyRevenue).toBe(12500);
     expect(result.openTickets).toBe(4);
     expect(result.topSellingCourses).toHaveLength(1);
-    expect(result.systemAlerts[0].message).toContain("تحتاج مراجعة");
+    expect(result.systemAlerts[0]?.message).toContain("تحتاج مراجعة");
   });
 });

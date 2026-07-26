@@ -3,9 +3,13 @@ import { BACKEND_URL, backendJsonResponse, upstreamAuthHeaders } from '../_utils
 
 export async function POST(request: NextRequest) {
   try {
+    const headers = new Headers(upstreamAuthHeaders(request));
+    // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
+    headers.delete('origin');
+
     const response = await fetch(`${BACKEND_URL}/api/auth/logout`, {
       method: 'POST',
-      headers: upstreamAuthHeaders(request),
+      headers,
       credentials: 'include',
     });
 

@@ -24,7 +24,7 @@ interface AuthContextType {
   logout: (allDevices?: boolean) => Promise<void>;
   verify2FA: (userId: string, token: string, rememberMe?: boolean) => Promise<{success: boolean; error?: string;}>;
   refreshUser: (options?: {clearOnFailure?: boolean;}) => Promise<boolean>;
-  fetchWithAuth: (url: string, options?: RequestInit) => Promise<Response>;
+  fetchWithAuth: (input: RequestInfo | URL, options?: RequestInit) => Promise<Response>;
   forgotPassword: (email: string) => Promise<{success: boolean; error?: string; message?: string;}>;
   resetPassword: (token: string, newPassword: string) => Promise<{success: boolean; error?: string;}>;
   verifyEmail: (token: string) => Promise<{success: boolean; error?: string;}>;
@@ -137,8 +137,8 @@ export function AuthProvider({
     }
   }, []);
 
-  const logout = useCallback(async () => {
-    await authApiService.logout();
+  const logout = useCallback(async (allDevices?: boolean) => {
+    await authApiService.logout(allDevices);
     resetStore();
     router.replace('/admin-login');
   }, [resetStore, router]);

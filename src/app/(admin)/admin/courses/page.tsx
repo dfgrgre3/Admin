@@ -7,11 +7,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { Resolver } from "react-hook-form";
 import {
+  Archive,
   BookOpen,
   CheckCircle2,
   DollarSign,
+  Gift,
   Plus,
   Tags,
+  TrendingUp,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -80,6 +83,7 @@ export default function AdminCoursesPage() {
   const [filterLevel, setFilterLevel] = React.useState("ALL");
   const [filterStatus, setFilterStatus] = React.useState("ALL");
   const [filterCategory, setFilterCategory] = React.useState("ALL");
+  const [sortBy, setSortBy] = React.useState("newest");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const deferredSearch = React.useDeferredValue(search);
@@ -94,7 +98,8 @@ export default function AdminCoursesPage() {
       selectedCategoryId,
       filterLevel,
       filterStatus,
-      filterCategory],
+      filterCategory,
+      sortBy],
 
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -108,6 +113,9 @@ export default function AdminCoursesPage() {
 
       // Use the new status field for lifecycle filtering
       if (filterStatus !== "ALL") params.set("status", filterStatus.toLowerCase());
+
+      // Add sorting parameter
+      if (sortBy !== "newest") params.set("sort", sortBy);
 
       const response = await adminFetch(`${apiRoutes.admin.courses}?${params.toString()}`);
       if (!response.ok) throw new Error("فشل تحميل الدورات");
@@ -163,21 +171,33 @@ export default function AdminCoursesPage() {
 
   React.useEffect(() => {
     setPage(1);
-  }, [deferredSearch, filterLevel, filterStatus, filterCategory]);
+  }, [deferredSearch, filterLevel, filterStatus, filterCategory, sortBy]);
 
   const statsData = React.useMemo(() => {
     const totalEnrollments = courses.reduce((s, c) => s + (c._count?.enrollments || 0), 0);
     const totalRevenue = courses.reduce((s, c) => s + c.price * (c._count?.enrollments || 0), 0);
     const publishedCourses = courses.filter((c) => c.isPublished).length;
     const draftCourses = courses.filter((c) => !c.isPublished).length;
+    const archivedCourses = courses.filter((c) => !c.isActive).length;
+    const privateCourses = courses.filter((c) => !c.isPublished).length;
+    const publicCourses = courses.filter((c) => c.isPublished).length;
+    const paidCourses = courses.filter((c) => c.price > 0).length;
+    const freeCourses = courses.filter((c) => c.price === 0).length;
+    const activeEnrollments = Math.round(totalEnrollments * 0.72);
+    
     return {
       totalEnrollments,
       totalRevenue,
-      activeStudents: Math.round(totalEnrollments * 0.72),
+      activeStudents: activeEnrollments,
       avgCompletion: 65,
       totalCourses: pagination?.total ?? courses.length,
       publishedCourses,
       draftCourses,
+      archivedCourses,
+      privateCourses,
+      publicCourses,
+      paidCourses,
+      freeCourses,
       growth: { enrollments: 12, revenue: 8 }
     };
   }, [courses, pagination]);
@@ -369,7 +389,7 @@ const handleToggleActive = async (course: Course) => {
   };
 
   const handleBatchAction = async (
-    action: "publish" | "unpublish" | "activate" | "deactivate" | "delete") => {
+    action: "publish" | "unpublish" | "activate" | "deactivate" | "delete" | "archive" | "unarchive" | "assign_teacher" | "remove_teacher") => {
     if (selectedIds.length === 0) return;
     try {
       const response = await adminFetch(apiRoutes.admin.courseBatch, {
@@ -451,12 +471,16 @@ const handleToggleActive = async (course: Course) => {
           </div>}
         </div>
 
-        <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="mt-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
           {[
             { label: "إجمالي الدورات", value: statsData.totalCourses, icon: BookOpen, color: "text-blue-500" },
-            { label: "الدورات المنشورة", value: statsData.publishedCourses, icon: CheckCircle2, color: "text-emerald-500" },
+            { label: "المنشورة", value: statsData.publishedCourses, icon: CheckCircle2, color: "text-emerald-500" },
+            { label: "مسودة", value: statsData.draftCourses, icon: Tags, color: "text-orange-500" },
+            { label: "مؤرشفة", value: statsData.archivedCourses, icon: Archive, color: "text-slate-500" },
             { label: "إجمالي الاشتراكات", value: statsData.totalEnrollments, icon: Users, color: "text-violet-500" },
-            { label: "صافي الإيرادات", value: formatPrice(statsData.totalRevenue), icon: DollarSign, color: "text-amber-500" },
+            { label: "نشطة", value: statsData.activeStudents, icon: TrendingUp, color: "text-cyan-500" },
+            { label: "مدفوعة", value: statsData.paidCourses, icon: DollarSign, color: "text-emerald-500" },
+            { label: "مجانية", value: statsData.freeCourses, icon: Gift, color: "text-pink-500" },
           ].map((stat, i) => (
             <div key={i} className="rounded-2xl border border-border/50 bg-background/40 p-4 backdrop-blur-md">
               <div className="flex items-center gap-2 mb-1">
@@ -476,6 +500,7 @@ const handleToggleActive = async (course: Course) => {
           setFilterStatus(filters.status);
           setFilterCategory(filters.category);
         }}
+        onSortChange={setSortBy}
         onViewChange={setView}
         currentView={view}
         categories={categories}
@@ -492,6 +517,10 @@ const handleToggleActive = async (course: Course) => {
         onDeactivate={() => handleBatchAction("deactivate")}
         onDelete={() => handleBatchAction("delete")}
         onExport={handleExport}
+        onArchive={() => handleBatchAction("archive")}
+        onUnarchive={() => handleBatchAction("unarchive")}
+        onAssignTeacher={() => handleBatchAction("assign_teacher")}
+        onRemoveTeacher={() => handleBatchAction("remove_teacher")}
         onClear={() => setSelectedIds([])}
       />
 

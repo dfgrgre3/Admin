@@ -208,6 +208,24 @@ export const apiRoutes = {
 
     // Teachers
     teachers: '/api/admin/teachers',
+    teacherById: (id: string) => `/api/admin/teachers/${id}`,
+
+    // Instructors (comprehensive teacher management)
+    instructors: '/api/admin/instructors',
+    instructorById: (id: string) => `/api/admin/instructors/${id}`,
+    instructorStatistics: '/api/admin/instructors/statistics',
+    instructorExport: '/api/admin/instructors/export',
+    instructorBulkDelete: '/api/admin/instructors/bulk-delete',
+    instructorBulkNotifications: '/api/admin/instructors/bulk-notifications',
+    instructorApprove: (id: string) => `/api/admin/instructors/${id}/approve`,
+    instructorReject: (id: string) => `/api/admin/instructors/${id}/reject`,
+    instructorSuspend: (id: string) => `/api/admin/instructors/${id}/suspend`,
+    instructorDocuments: (id: string) => `/api/admin/instructors/${id}/documents`,
+    instructorContracts: (id: string) => `/api/admin/instructors/${id}/contracts`,
+    instructorPayouts: (id: string) => `/api/admin/instructors/${id}/payouts`,
+    instructorPerformance: (id: string) => `/api/admin/instructors/${id}/performance`,
+    instructorViolations: (id: string) => `/api/admin/instructors/${id}/violations`,
+    instructorNotifications: (id: string) => `/api/admin/instructors/${id}/notifications`,
 
     // Subjects & Courses
     subjects: '/api/admin/subjects',
@@ -227,6 +245,8 @@ export const apiRoutes = {
     courseChangelog: (courseId: string) => `/api/admin/courses/${courseId}/changelog`,
     courseProjects: (courseId: string) => `/api/admin/courses/${courseId}/projects`,
     courseReviews: (courseId: string) => `/api/admin/courses/${courseId}/reviews`,
+    coursePricing: (courseId: string) => `/api/admin/courses/${courseId}/pricing`,
+    courseTeachers: (courseId: string) => `/api/admin/courses/${courseId}/teachers`,
     subjectCurriculum: (subjectId: string) => `/api/admin/subjects/${subjectId}/curriculum`,
 
     // Course lifecycle workflow (Phase 1)

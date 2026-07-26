@@ -68,7 +68,7 @@ interface StatsCardProps {
     isPositive: boolean;
     label?: string;
   };
-  color?: "default" | "violet" | "fuchsia" | "rose" | "amber" | "purple" | "blue" | "green" | "yellow" | "red";
+  color?: "default" | "violet" | "fuchsia" | "rose" | "amber" | "purple" | "blue" | "green" | "yellow" | "red" | "slate";
   className?: string;
 }
 
@@ -83,6 +83,7 @@ const colorClasses = {
   green: "text-emerald-500",
   yellow: "text-amber-500",
   red: "text-red-500",
+  slate: "text-slate-500",
 } as const;
 
 type ColorKey = keyof typeof colorClasses;
@@ -98,6 +99,7 @@ const iconBgClasses = {
   green: "bg-emerald-500/10",
   yellow: "bg-amber-500/10",
   red: "bg-red-500/10",
+  slate: "bg-slate-500/10",
 };
 
 export function AdminStatsCard({
@@ -130,6 +132,7 @@ export function AdminStatsCard({
           color === "green" && "bg-emerald-500",
           color === "yellow" && "bg-amber-500",
           color === "red" && "bg-red-500",
+          color === "slate" && "bg-slate-500",
           color === "default" && "bg-primary"
         )} 
       />

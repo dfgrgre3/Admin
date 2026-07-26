@@ -1,6 +1,7 @@
 "use client";
 
 import { z } from "zod";
+import type { CourseOption } from "./course-options";
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 export const courseSchema = z.object({
@@ -105,7 +106,7 @@ export interface CourseEditorProps {
   courseId?: string;
   categories?: CourseCategory[];
   teachers?: CourseTeacher[];
-  allCourses?: Array<{ id: string; name: string; nameAr?: string | null }>;
+  allCourses?: CourseOption[];
 }
 
 export interface CurriculumStats {

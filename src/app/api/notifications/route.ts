@@ -6,8 +6,10 @@ import { trimTrailingSlashes } from '@/lib/utils';
 function backendOriginCandidates(): string[] {
   const primary = trimTrailingSlashes(BACKEND_URL);
   const set = new Set<string>([primary]);
-  if (primary.includes(':8082')) set.add(primary.replace(':8082', ':8080'));
-  else if (primary.includes(':8080')) set.add(primary.replace(':8080', ':8082'));
+  for (const extra of (process.env.BACKEND_FAILOVER_URLS || '').split(',')) {
+    const origin = trimTrailingSlashes(extra.trim());
+    if (origin) set.add(origin);
+  }
   return [...set];
 }
 

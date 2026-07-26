@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { forwardToGoApi } from '@/app/api/admin/_proxy';
 
 /**
@@ -79,12 +80,10 @@ export async function POST(request: NextRequest) {
     console.info('Password reset confirmation requested');
 
     // Forward request to Go API with validated data
-    const forwardedRequest = new Request(request, {
+    const response = await forwardToGoApi(request, '/api/admin/auth/password-reset/confirm', {
+      method: 'POST',
       body: JSON.stringify({ token: trimmedToken, password: trimmedPassword }),
-      headers: request.headers
     });
-
-    const response = await forwardToGoApi(forwardedRequest, '/api/admin/auth/password-reset/confirm', { method: 'POST' });
 
     // Log response status for monitoring
     console.info(`Password reset confirmation completed with status: ${response.status}`);

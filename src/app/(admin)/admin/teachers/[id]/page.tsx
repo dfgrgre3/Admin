@@ -10,11 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   GraduationCap, BookOpen, Star, Calendar, Mail, Phone, Globe, 
-  Edit, ArrowRight, Users, Trophy, TrendingUp 
+  Edit, ArrowRight, Users, Trophy, TrendingUp, Clock, CheckCircle2, 
+  XCircle, AlertCircle, Video, FileText, DollarSign, History, ShieldCheck,
+  Monitor, MapPin, Languages, Award, Target, BarChart3
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRoutes } from "@/lib/api/routes";
 import { adminFetch } from "@/lib/api/admin-api";
+import { AdminDataTable } from "@/components/admin/ui/admin-table";
+import { ColumnDef } from "@tanstack/react-table";
 
 
 interface TeacherDetail {
@@ -27,7 +31,16 @@ interface TeacherDetail {
   onlineUrl?: string;
   rating: number;
   notes?: string;
+  bio?: string;
+  status?: string;
+  country?: string;
+  city?: string;
+  specialties?: string[];
+  languages?: string[];
+  commissionRate?: number;
   createdAt: string;
+  updatedAt: string;
+  lastLogin?: string;
   subject?: {
     id: string;
     name: string;
@@ -39,7 +52,49 @@ interface TeacherDetail {
     totalCourses: number;
     averageRating: number;
     totalHours: number;
+    totalRevenue?: number;
+    completedLessons?: number;
+    activeCourses?: number;
   };
+}
+
+interface Course {
+  id: string;
+  title: string;
+  status: string;
+  studentsCount: number;
+  lessonsCount: number;
+  completionRate: number;
+  revenue: number;
+  createdAt: string;
+}
+
+interface Lesson {
+  id: string;
+  title: string;
+  chapter: string;
+  course: string;
+  published: boolean;
+  views: number;
+  duration: number;
+  createdAt: string;
+}
+
+interface Student {
+  id: string;
+  name: string;
+  progress: number;
+  attendance: number;
+  lastActivity: string;
+  enrolledAt: string;
+}
+
+interface ActivityLog {
+  id: string;
+  action: string;
+  description: string;
+  timestamp: string;
+  ipAddress?: string;
 }
 
 export default function AdminTeacherDetailPage() {
@@ -50,14 +105,47 @@ export default function AdminTeacherDetailPage() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["admin", "teachers", teacherId],
     queryFn: async () => {
-      const response = await adminFetch(`${apiRoutes.admin.teachers}/${teacherId}`);
+      const response = await adminFetch(apiRoutes.admin.instructorById(teacherId));
       if (!response.ok) throw new Error("Failed to fetch teacher details");
       return response.json();
     },
     enabled: !!teacherId,
   });
 
-  const teacher: TeacherDetail | undefined = data?.teacher || data;
+  const { data: performance } = useQuery({
+    queryKey: ["admin", "instructor-performance", teacherId],
+    queryFn: async () => {
+      const response = await adminFetch(apiRoutes.admin.instructorPerformance(teacherId));
+      if (!response.ok) throw new Error("Failed to fetch performance data");
+      return response.json();
+    },
+    enabled: !!teacherId,
+  });
+
+  const teacher: TeacherDetail | undefined = data?.instructor || data?.teacher || data;
+
+  const getStatusBadge = (status: string | undefined) => {
+    const statusConfig: Record<string, { icon: React.ElementType; color: string; label: string }> = {
+      APPROVED: { icon: CheckCircle2, color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", label: "نشط" },
+      ACTIVE: { icon: CheckCircle2, color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", label: "نشط" },
+      PENDING: { icon: Clock, color: "bg-amber-500/10 text-amber-500 border-amber-500/20", label: "قيد المراجعة" },
+      UNDER_REVIEW: { icon: Clock, color: "bg-amber-500/10 text-amber-500 border-amber-500/20", label: "قيد المراجعة" },
+      SUSPENDED: { icon: XCircle, color: "bg-red-500/10 text-red-500 border-red-500/20", label: "موقوف" },
+      REJECTED: { icon: XCircle, color: "bg-red-500/10 text-red-500 border-red-500/20", label: "مرفوض" },
+    };
+
+    const config = statusConfig[status || ""] || statusConfig.PENDING;
+    if (!config) return null;
+    
+    const Icon = config.icon;
+
+    return (
+      <Badge className={`gap-1.5 ${config.color}`}>
+        <Icon className="h-3 w-3" />
+        {config.label}
+      </Badge>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -116,7 +204,7 @@ export default function AdminTeacherDetailPage() {
       </PageHeader>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <AdminStatsCard
           title="إجمالي الطلاب"
           value={teacher.stats?.totalStudents || 0}
@@ -132,11 +220,32 @@ export default function AdminTeacherDetailPage() {
           description="دورة دراسية"
         />
         <AdminStatsCard
+          title="الدروس المكتملة"
+          value={teacher.stats?.completedLessons || 0}
+          icon={FileText}
+          color="purple"
+          description="درس منشور"
+        />
+        <AdminStatsCard
+          title="ساعات التدريس"
+          value={teacher.stats?.totalHours || 0}
+          icon={Clock}
+          color="amber"
+          description="ساعة تدريس"
+        />
+        <AdminStatsCard
           title="متوسط التقييم"
           value={teacher.rating || 0}
           icon={Star}
           color="yellow"
           description="من 5 نجوم"
+        />
+        <AdminStatsCard
+          title="إجمالي الإيرادات"
+          value={teacher.stats?.totalRevenue || 0}
+          icon={DollarSign}
+          color="green"
+          description="ريال"
         />
       </div>
 
@@ -162,10 +271,26 @@ export default function AdminTeacherDetailPage() {
             </div>
 
             <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">الحالة</span>
+                {getStatusBadge(teacher.status)}
+              </div>
+              {teacher.email && (
+                <div className="flex items-center gap-3">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{teacher.email}</span>
+                </div>
+              )}
               {teacher.phone && (
                 <div className="flex items-center gap-3">
                   <Phone className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">{teacher.phone}</span>
+                </div>
+              )}
+              {teacher.country && (
+                <div className="flex items-center gap-3">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{teacher.country}{teacher.city && `, ${teacher.city}`}</span>
                 </div>
               )}
               {teacher.onlineUrl && (
@@ -181,12 +306,26 @@ export default function AdminTeacherDetailPage() {
                   </a>
                 </div>
               )}
+              {teacher.commissionRate && (
+                <div className="flex items-center gap-3">
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">نسبة العمولة: {teacher.commissionRate}%</span>
+                </div>
+              )}
               <div className="flex items-center gap-3">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">
                   انضم في {new Date(teacher.createdAt).toLocaleDateString("ar-EG")}
                 </span>
               </div>
+              {teacher.lastLogin && (
+                <div className="flex items-center gap-3">
+                  <Monitor className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    آخر تسجيل دخول: {new Date(teacher.lastLogin).toLocaleDateString("ar-EG")}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -194,15 +333,24 @@ export default function AdminTeacherDetailPage() {
         {/* Tabs for Details */}
         <div className="lg:col-span-2">
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="w-full bg-background/50 h-14 p-1 border-border rounded-xl mb-6">
-              <TabsTrigger value="overview" className="w-full h-full text-base font-bold rounded-lg data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
+            <TabsList className="w-full bg-background/50 h-14 p-1 border-border rounded-xl mb-6 overflow-x-auto">
+              <TabsTrigger value="overview" className="flex-shrink-0 h-full text-base font-bold rounded-lg data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
                 نظرة عامة
               </TabsTrigger>
-              <TabsTrigger value="courses" className="w-full h-full text-base font-bold rounded-lg data-[state=active]:bg-green-500/10 data-[state=active]:text-green-500">
+              <TabsTrigger value="courses" className="flex-shrink-0 h-full text-base font-bold rounded-lg data-[state=active]:bg-green-500/10 data-[state=active]:text-green-500">
                 الدورات
               </TabsTrigger>
-              <TabsTrigger value="performance" className="w-full h-full text-base font-bold rounded-lg data-[state=active]:bg-yellow-500/10 data-[state=active]:text-yellow-500">
+              <TabsTrigger value="students" className="flex-shrink-0 h-full text-base font-bold rounded-lg data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-500">
+                الطلاب
+              </TabsTrigger>
+              <TabsTrigger value="performance" className="flex-shrink-0 h-full text-base font-bold rounded-lg data-[state=active]:bg-yellow-500/10 data-[state=active]:text-yellow-500">
                 الأداء
+              </TabsTrigger>
+              <TabsTrigger value="earnings" className="flex-shrink-0 h-full text-base font-bold rounded-lg data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-500">
+                الإيرادات
+              </TabsTrigger>
+              <TabsTrigger value="activity" className="flex-shrink-0 h-full text-base font-bold rounded-lg data-[state=active]:bg-purple-500/10 data-[state=active]:text-purple-500">
+                النشاط
               </TabsTrigger>
             </TabsList>
 
@@ -212,7 +360,7 @@ export default function AdminTeacherDetailPage() {
                   <TrendingUp className="h-5 w-5 text-primary" />
                   إحصائيات الأداء
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="p-4 bg-accent/20 rounded-xl">
                     <p className="text-2xl font-black text-primary">{teacher.stats?.totalHours || 0}</p>
                     <p className="text-xs text-muted-foreground font-bold">ساعة تدريس</p>
@@ -221,13 +369,56 @@ export default function AdminTeacherDetailPage() {
                     <p className="text-2xl font-black text-green-500">{teacher.stats?.averageRating || teacher.rating || 0}</p>
                     <p className="text-xs text-muted-foreground font-bold">تقييم الطلاب</p>
                   </div>
+                  <div className="p-4 bg-accent/20 rounded-xl">
+                    <p className="text-2xl font-black text-blue-500">{teacher.stats?.completedLessons || 0}</p>
+                    <p className="text-xs text-muted-foreground font-bold">درس مكتمل</p>
+                  </div>
+                  <div className="p-4 bg-accent/20 rounded-xl">
+                    <p className="text-2xl font-black text-emerald-500">{teacher.stats?.activeCourses || 0}</p>
+                    <p className="text-xs text-muted-foreground font-bold">دورة نشطة</p>
+                  </div>
                 </div>
               </div>
 
-              {teacher.notes && (
+              {(teacher.bio || teacher.notes) && (
                 <div className="admin-glass p-6 rounded-[2rem] border border-white/10">
-                  <h3 className="text-lg font-black mb-4">ملاحظات</h3>
-                  <p className="text-sm text-muted-foreground">{teacher.notes}</p>
+                  <h3 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    نبذة تعريفية
+                  </h3>
+                  <p className="text-sm text-muted-foreground">{teacher.bio || teacher.notes}</p>
+                </div>
+              )}
+
+              {teacher.specialties && teacher.specialties.length > 0 && (
+                <div className="admin-glass p-6 rounded-[2rem] border border-white/10">
+                  <h3 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <Target className="h-5 w-5 text-primary" />
+                    التخصصات
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {teacher.specialties.map((spec, i) => (
+                      <Badge key={i} variant="outline" className="text-sm">
+                        {spec}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {teacher.languages && teacher.languages.length > 0 && (
+                <div className="admin-glass p-6 rounded-[2rem] border border-white/10">
+                  <h3 className="text-lg font-black mb-4 flex items-center gap-2">
+                    <Languages className="h-5 w-5 text-primary" />
+                    اللغات
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {teacher.languages.map((lang, i) => (
+                      <Badge key={i} variant="outline" className="text-sm">
+                        {lang}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
             </TabsContent>
@@ -250,6 +441,23 @@ export default function AdminTeacherDetailPage() {
                 <div className="text-center py-8 text-muted-foreground">
                   <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>لم يتم إضافة دورات بعد</p>
+                  <p className="text-xs mt-2">سيتم عرض الدورات المسندة للمعلم هنا</p>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="students" className="space-y-6">
+              <div className="admin-glass p-6 rounded-[2rem] border border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-black flex items-center gap-2">
+                    <Users className="h-5 w-5 text-blue-500" />
+                    الطلاب المسجلين
+                  </h3>
+                </div>
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>لم يتم تسجيل طلاب بعد</p>
+                  <p className="text-xs mt-2">سيتم عرض الطلاب المسجلين في دورات المعلم هنا</p>
                 </div>
               </div>
             </TabsContent>
@@ -257,7 +465,7 @@ export default function AdminTeacherDetailPage() {
             <TabsContent value="performance" className="space-y-6">
               <div className="admin-glass p-6 rounded-[2rem] border border-white/10">
                 <h3 className="text-lg font-black mb-4 flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-yellow-500" />
+                  <BarChart3 className="h-5 w-5 text-yellow-500" />
                   تقييم الأداء
                 </h3>
                 <div className="space-y-4">
@@ -272,6 +480,53 @@ export default function AdminTeacherDetailPage() {
                       ))}
                     </div>
                   </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-accent/20 rounded-xl">
+                      <p className="text-2xl font-black text-primary">{teacher.stats?.totalHours || 0}</p>
+                      <p className="text-xs text-muted-foreground font-bold">ساعة تدريس</p>
+                    </div>
+                    <div className="p-4 bg-accent/20 rounded-xl">
+                      <p className="text-2xl font-black text-green-500">{teacher.stats?.completedLessons || 0}</p>
+                      <p className="text-xs text-muted-foreground font-bold">درس مكتمل</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="earnings" className="space-y-6">
+              <div className="admin-glass p-6 rounded-[2rem] border border-white/10">
+                <h3 className="text-lg font-black mb-4 flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-emerald-500" />
+                  الإيرادات
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-accent/20 rounded-xl">
+                    <p className="text-2xl font-black text-emerald-500">{teacher.stats?.totalRevenue || 0}</p>
+                    <p className="text-xs text-muted-foreground font-bold">إجمالي الإيرادات</p>
+                  </div>
+                  <div className="p-4 bg-accent/20 rounded-xl">
+                    <p className="text-2xl font-black text-blue-500">{teacher.commissionRate || 0}%</p>
+                    <p className="text-xs text-muted-foreground font-bold">نسبة العمولة</p>
+                  </div>
+                </div>
+                <div className="text-center py-8 text-muted-foreground mt-4">
+                  <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>سيتم عرض تفاصيل الإيرادات والمدفوعات هنا</p>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="activity" className="space-y-6">
+              <div className="admin-glass p-6 rounded-[2rem] border border-white/10">
+                <h3 className="text-lg font-black mb-4 flex items-center gap-2">
+                  <History className="h-5 w-5 text-purple-500" />
+                  سجل النشاط
+                </h3>
+                <div className="text-center py-8 text-muted-foreground">
+                  <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>سيتم عرض سجل نشاط المعلم هنا</p>
+                  <p className="text-xs mt-2">تسجيلات الدخول، التعديلات، والعمليات الأخرى</p>
                 </div>
               </div>
             </TabsContent>

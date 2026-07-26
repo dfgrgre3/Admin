@@ -1,0 +1,1551 @@
+
+> thanawy@0.1.0 dev
+> node --max-old-space-size=4096 ./node_modules/next/dist/bin/next dev
+
+▲ Next.js 16.2.7 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.15:3000
+- Environments: .env.local, .env
+✓ Ready in 499ms
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+2026-07-26 02:38:04 [32minfo[39m: [2026-07-25T23:38:04.336Z] [INFO] [Instrumentation] Next.js workers disabled (migrated to Go)
+2026-07-26 02:38:04 [32minfo[39m: [2026-07-25T23:38:04.353Z] [INFO] [Instrumentation] Dummy cleanup registered for: Redis
+2026-07-26 02:38:04 [32minfo[39m: [2026-07-25T23:38:04.353Z] [INFO] System Foundation: Environment validated, Notification Workers active.
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "35mb"
+  ✓ scrollRestoration
+  ✓ webpackMemoryOptimizations
+
+ GET /api/settings 200 in 580ms (next.js: 485ms, proxy.ts: 65ms, application-code: 30ms)
+ GET /api/settings 200 in 20ms (next.js: 3ms, proxy.ts: 4ms, application-code: 13ms)
+○ Compiling /api/settings ...
+ GET /admin-login 200 in 7.8s (next.js: 7.5s, proxy.ts: 5ms, application-code: 288ms)
+ GET /api/settings 200 in 19ms (next.js: 4ms, proxy.ts: 5ms, application-code: 10ms)
+[API Proxy] Backend returned 401: {"code":"missing_token","error":"Authentication required"}
+ GET /api/auth/me 401 in 125ms (next.js: 111ms, proxy.ts: 2ms, application-code: 12ms)
+[API Proxy] Login request body size: 76 bytes
+[API Proxy] Proxying login for: ffyoussef12@gmail.com
+[API Proxy] POST request to: http://127.0.0.1:8082/api/auth/login
+[API Proxy] Backend responded with status: 200
+ POST /api/auth/login 200 in 360ms (next.js: 100ms, proxy.ts: 4ms, application-code: 255ms)
+ GET /api/auth/me 200 in 16ms (next.js: 3ms, proxy.ts: 3ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 187ms (next.js: 170ms, proxy.ts: 3ms, application-code: 14ms)
+ GET /admin 200 in 1828ms (next.js: 1783ms, proxy.ts: 7ms, application-code: 37ms)
+ GET /admin 200 in 91ms (next.js: 20ms, proxy.ts: 7ms, application-code: 64ms)
+ GET /api/auth/me 200 in 44ms (next.js: 9ms, proxy.ts: 4ms, application-code: 32ms)
+ GET /api/admin/notifications?limit=50 200 in 518ms (next.js: 382ms, proxy.ts: 12ms, application-code: 124ms)
+ GET /api/admin/ai 200 in 527ms (next.js: 303ms, proxy.ts: 13ms, application-code: 211ms)
+ GET /api/admin/users?limit=1000&fields=id,name,email,avatar,role,lastLogin 200 in 532ms (next.js: 342ms, proxy.ts: 12ms, application-code: 178ms)
+ GET /api/admin/dashboard?time=today 200 in 959ms (next.js: 247ms, proxy.ts: 12ms, application-code: 700ms)
+[API Proxy] GET /api/admin/infrastructure/stats -> http://127.0.0.1:8082/api/admin/infrastructure/stats
+ GET /api/admin/infrastructure/stats 200 in 895ms (next.js: 870ms, proxy.ts: 5ms, application-code: 21ms)
+[API Proxy] GET /api/admin/infrastructure/stats -> http://127.0.0.1:8082/api/admin/infrastructure/stats
+ GET /api/admin/infrastructure/stats 200 in 28ms (next.js: 13ms, proxy.ts: 5ms, application-code: 10ms)
+ GET /admin/courses 200 in 984ms (next.js: 950ms, proxy.ts: 3ms, application-code: 31ms)
+ GET /api/admin/courses?offset=0&limit=12 200 in 240ms (next.js: 142ms, proxy.ts: 9ms, application-code: 89ms)
+ GET /api/admin/course-categories 200 in 240ms (next.js: 220ms, proxy.ts: 8ms, application-code: 12ms)
+ GET /api/admin/teachers 200 in 246ms (next.js: 180ms, proxy.ts: 9ms, application-code: 57ms)
+[API Proxy] Backend returned 401: {"code":"missing_token","error":"Authentication required"}
+ GET /api/auth/me 401 in 15ms (next.js: 3ms, proxy.ts: 1743µs, application-code: 11ms)
+ GET /admin/courses/new 200 in 780ms (next.js: 717ms, proxy.ts: 2ms, application-code: 61ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses%2Fnew 200 in 64ms (next.js: 5ms, proxy.ts: 2ms, application-code: 57ms)
+⚠ Blocked cross-origin request to Next.js dev resource /_next/webpack-hmr from "192.168.1.15".
+Cross-origin access to Next.js dev resources is blocked by default for safety.
+
+To allow this host in development, add it to "allowedDevOrigins" in next.config.js and restart the dev server:
+
+// next.config.js
+module.exports = {
+  allowedDevOrigins: ['192.168.1.15'],
+}
+
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ GET /admin-login?redirect=%2Fadmin 200 in 92ms (next.js: 6ms, proxy.ts: 3ms, application-code: 82ms)
+ GET /api/settings 200 in 19ms (next.js: 3ms, proxy.ts: 2ms, application-code: 14ms)
+ GET / 200 in 540ms (next.js: 477ms, proxy.ts: 1846µs, application-code: 61ms)
+ GET /admin-login?redirect=%2Fadmin 200 in 55ms (next.js: 4ms, proxy.ts: 1671µs, application-code: 49ms)
+[API Proxy] Stripping Origin header for POST /api/upload/presign: http://localhost:3000
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+[API Proxy] Backend (403) for upload/presign: {"error":"CSRF token validation failed"}
+ POST /api/upload/presign 403 in 31ms (next.js: 12ms, proxy.ts: 2ms, application-code: 16ms)
+[API Proxy] GET /api/auth/csrf -> http://127.0.0.1:8082/api/auth/csrf
+ GET /api/auth/csrf 200 in 16ms (next.js: 4ms, proxy.ts: 3ms, application-code: 9ms)
+[API Proxy] Stripping Origin header for POST /api/upload/presign: http://localhost:3000
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+[API Proxy] Backend (403) for upload/presign: {"error":"CSRF token validation failed"}
+ POST /api/upload/presign 403 in 17ms (next.js: 4ms, proxy.ts: 2ms, application-code: 11ms)
+[API Proxy] Login request body size: 79 bytes
+[API Proxy] Proxying login for: invalid@example.com
+[API Proxy] POST request to: http://127.0.0.1:8082/api/auth/login
+[API Proxy] Backend responded with status: 401
+[API Proxy] Backend returned 401: {"error":"invalid email or password","success":false}
+ POST /api/auth/login 401 in 16ms (next.js: 3ms, proxy.ts: 3ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 18ms (next.js: 3ms, proxy.ts: 3ms, application-code: 12ms)
+ GET /admin/course-categories 200 in 453ms (next.js: 428ms, proxy.ts: 2ms, application-code: 22ms)
+ GET /api/admin/course-categories 200 in 23ms (next.js: 4ms, proxy.ts: 3ms, application-code: 16ms)
+ GET /api/admin/course-categories 200 in 13ms (next.js: 2ms, proxy.ts: 2ms, application-code: 8ms)
+ GET /admin/courses 200 in 24ms (next.js: 4ms, proxy.ts: 3ms, application-code: 17ms)
+ GET /api/admin/courses?offset=0&limit=12 200 in 16ms (next.js: 4ms, proxy.ts: 3ms, application-code: 10ms)
+[browser] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[browser] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[API Proxy] Stripping Origin header for POST /api/upload/presign: http://localhost:3000
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+[API Proxy] Backend (403) for upload/presign: {"error":"CSRF token validation failed"}
+ POST /api/upload/presign 403 in 21ms (next.js: 10ms, proxy.ts: 2ms, application-code: 9ms)
+[API Proxy] GET /api/auth/csrf -> http://127.0.0.1:8082/api/auth/csrf
+ GET /api/auth/csrf 200 in 14ms (next.js: 4ms, proxy.ts: 1654µs, application-code: 8ms)
+[API Proxy] Stripping Origin header for POST /api/upload/presign: http://localhost:3000
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+[API Proxy] Backend (403) for upload/presign: {"error":"CSRF token validation failed"}
+ POST /api/upload/presign 403 in 16ms (next.js: 4ms, proxy.ts: 2ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 16ms (next.js: 4ms, proxy.ts: 2ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 20ms (next.js: 4ms, proxy.ts: 3ms, application-code: 13ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 15ms (next.js: 3ms, proxy.ts: 3ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 16ms (next.js: 4ms, proxy.ts: 3ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 3ms, proxy.ts: 2ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 3ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 3ms, proxy.ts: 3ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 15ms (next.js: 3ms, proxy.ts: 1990µs, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 2ms, proxy.ts: 1990µs, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 15ms (next.js: 3ms, proxy.ts: 3ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 12ms (next.js: 2ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 3ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 17ms (next.js: 4ms, proxy.ts: 4ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Backend returned 401: {"code":"missing_token","error":"Authentication required"}
+ GET /api/notifications?limit=20&offset=0 401 in 12ms (next.js: 3ms, proxy.ts: 2ms, application-code: 7ms)
+ POST /api/auth/refresh 200 in 155ms (next.js: 94ms, proxy.ts: 1962µs, application-code: 59ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 12ms (next.js: 3ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 15ms (next.js: 3ms, proxy.ts: 1915µs, application-code: 11ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 2ms, proxy.ts: 1907µs, application-code: 8ms)
+ GET /admin/courses/new 200 in 69ms (next.js: 4ms, proxy.ts: 2ms, application-code: 63ms)
+[API Proxy] Stripping Origin header for POST /api/upload/presign: http://localhost:3000
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+[API Proxy] Backend (403) for upload/presign: {"error":"CSRF token validation failed"}
+ POST /api/upload/presign 403 in 22ms (next.js: 10ms, proxy.ts: 2ms, application-code: 10ms)
+[API Proxy] GET /api/auth/csrf -> http://127.0.0.1:8082/api/auth/csrf
+ GET /api/auth/csrf 200 in 14ms (next.js: 4ms, proxy.ts: 1766µs, application-code: 7ms)
+[API Proxy] Stripping Origin header for POST /api/upload/presign: http://localhost:3000
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+[API Proxy] Backend (403) for upload/presign: {"error":"CSRF token validation failed"}
+ POST /api/upload/presign 403 in 14ms (next.js: 3ms, proxy.ts: 1963µs, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 18ms (next.js: 3ms, proxy.ts: 1761µs, application-code: 13ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 15ms (next.js: 4ms, proxy.ts: 2ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 17ms (next.js: 4ms, proxy.ts: 3ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 40ms (next.js: 5ms, proxy.ts: 3ms, application-code: 31ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 38ms (next.js: 13ms, proxy.ts: 3ms, application-code: 21ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 15ms (next.js: 3ms, proxy.ts: 1991µs, application-code: 9ms)
+✓ Finished filesystem cache database compaction in 11.7s
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 2ms, proxy.ts: 1829µs, application-code: 9ms)
+ GET /admin-login?redirect=%2Fadmin 200 in 90ms (next.js: 22ms, proxy.ts: 1808µs, application-code: 66ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses%2Fnew 200 in 55ms (next.js: 6ms, proxy.ts: 3ms, application-code: 46ms)
+ GET /api/settings 200 in 27ms (next.js: 12ms, proxy.ts: 2ms, application-code: 12ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 15ms (next.js: 3ms, proxy.ts: 2ms, application-code: 9ms)
+ GET /admin-login?redirect=%2Fadmin 200 in 51ms (next.js: 4ms, proxy.ts: 1750µs, application-code: 44ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 4ms, proxy.ts: 1839µs, application-code: 8ms)
+ GET /admin-login?redirect=%2Fadmin 200 in 50ms (next.js: 4ms, proxy.ts: 1787µs, application-code: 45ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 3ms, proxy.ts: 1821µs, application-code: 9ms)
+ GET /admin-login?redirect=%2Fadmin 200 in 52ms (next.js: 4ms, proxy.ts: 1791µs, application-code: 47ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 16ms (next.js: 3ms, proxy.ts: 2ms, application-code: 10ms)
+ GET /admin-login?redirect=%2Fadmin 200 in 54ms (next.js: 4ms, proxy.ts: 1895µs, application-code: 48ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 15ms (next.js: 3ms, proxy.ts: 3ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 3ms, proxy.ts: 3ms, application-code: 9ms)
+ GET /admin-login?redirect=%2Fadmin 200 in 51ms (next.js: 4ms, proxy.ts: 3ms, application-code: 44ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Backend returned 401: {"code":"missing_token","error":"Authentication required"}
+ GET /api/notifications?limit=20&offset=0 401 in 13ms (next.js: 3ms, proxy.ts: 2ms, application-code: 8ms)
+ POST /api/auth/refresh 200 in 83ms (next.js: 3ms, proxy.ts: 2ms, application-code: 78ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 12ms (next.js: 3ms, proxy.ts: 1567µs, application-code: 8ms)
+ GET /admin/courses/new 200 in 5.6s (next.js: 183ms, proxy.ts: 2ms, application-code: 5.4s)
+ GET /api/auth/me 200 in 233ms (next.js: 217ms, proxy.ts: 3ms, application-code: 13ms)
+ GET /api/settings 200 in 254ms (next.js: 222ms, proxy.ts: 3ms, application-code: 29ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 19ms (next.js: 3ms, proxy.ts: 3ms, application-code: 14ms)
+[API Proxy] Stripping Origin header for POST /api/upload/presign: http://localhost:3000
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+[API Proxy] Backend (403) for upload/presign: {"error":"CSRF token validation failed"}
+ POST /api/upload/presign 403 in 30ms (next.js: 14ms, proxy.ts: 4ms, application-code: 12ms)
+[API Proxy] GET /api/auth/csrf -> http://127.0.0.1:8082/api/auth/csrf
+ GET /api/auth/csrf 200 in 13ms (next.js: 4ms, proxy.ts: 2ms, application-code: 7ms)
+[API Proxy] Stripping Origin header for POST /api/upload/presign: http://localhost:3000
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+[API Proxy] Backend (403) for upload/presign: {"error":"CSRF token validation failed"}
+ POST /api/upload/presign 403 in 13ms (next.js: 4ms, proxy.ts: 2ms, application-code: 7ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 16ms (next.js: 3ms, proxy.ts: 3ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 76ms (next.js: 3ms, proxy.ts: 2ms, application-code: 71ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 13ms (next.js: 2ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 12ms (next.js: 2ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] /api/auth/me upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] /api/auth/me upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Me error: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/auth/me 502 in 22ms (next.js: 4ms, proxy.ts: 3ms, application-code: 14ms)
+ GET /api/settings 200 in 22ms (next.js: 9ms, proxy.ts: 3ms, application-code: 10ms)
+[API Proxy] /api/auth/me upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] /api/auth/me upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Me error: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/auth/me 502 in 12ms (next.js: 3ms, proxy.ts: 2ms, application-code: 7ms)
+[API Proxy] /api/auth/me upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] /api/auth/me upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Me error: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/auth/me 502 in 14ms (next.js: 3ms, proxy.ts: 3ms, application-code: 9ms)
+ GET /admin/courses/new 200 in 7.2s (next.js: 3ms, proxy.ts: 2ms, application-code: 7.2s)
+[API Proxy] /api/auth/me upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] /api/auth/me upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Me error: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/auth/me 502 in 13ms (next.js: 3ms, proxy.ts: 3ms, application-code: 8ms)
+ GET /admin-login 200 in 127ms (next.js: 50ms, proxy.ts: 2ms, application-code: 74ms)
+[API Proxy] Login request body size: 76 bytes
+[API Proxy] Proxying login for: ffyoussef12@gmail.com
+[API Proxy] POST request to: http://127.0.0.1:8082/api/auth/login
+[API Proxy] Login error connecting to http://127.0.0.1:8082: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ POST /api/auth/login 502 in 32ms (next.js: 22ms, proxy.ts: 3ms, application-code: 8ms)
+[API Proxy] Login request body size: 76 bytes
+[API Proxy] Proxying login for: ffyoussef12@gmail.com
+[API Proxy] POST request to: http://127.0.0.1:8082/api/auth/login
+[API Proxy] Login error connecting to http://127.0.0.1:8082: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ POST /api/auth/login 502 in 11ms (next.js: 2ms, proxy.ts: 1896µs, application-code: 7ms)
+[API Proxy] Login request body size: 76 bytes
+[API Proxy] Proxying login for: ffyoussef12@gmail.com
+[API Proxy] POST request to: http://127.0.0.1:8082/api/auth/login
+[API Proxy] Login error connecting to http://127.0.0.1:8082: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ POST /api/auth/login 502 in 11ms (next.js: 2ms, proxy.ts: 2ms, application-code: 6ms)
+[API Proxy] Login request body size: 76 bytes
+[API Proxy] Proxying login for: ffyoussef12@gmail.com
+[API Proxy] POST request to: http://127.0.0.1:8082/api/auth/login
+[API Proxy] Login error connecting to http://127.0.0.1:8082: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ POST /api/auth/login 502 in 11ms (next.js: 2ms, proxy.ts: 2ms, application-code: 6ms)
+✓ Finished filesystem cache database compaction in 15.5s
+[API Proxy] Login request body size: 76 bytes
+[API Proxy] Proxying login for: ffyoussef12@gmail.com
+[API Proxy] POST request to: http://127.0.0.1:8082/api/auth/login
+[API Proxy] Backend responded with status: 403
+[API Proxy] Backend returned 403: {"code":"already_authenticated","error":"Already authenticated"}
+ POST /api/auth/login 403 in 15ms (next.js: 3ms, proxy.ts: 2ms, application-code: 10ms)
+[API Proxy] Login request body size: 76 bytes
+[API Proxy] Proxying login for: ffyoussef12@gmail.com
+[API Proxy] POST request to: http://127.0.0.1:8082/api/auth/login
+[API Proxy] Backend responded with status: 403
+[API Proxy] Backend returned 403: {"code":"already_authenticated","error":"Already authenticated"}
+ POST /api/auth/login 403 in 14ms (next.js: 3ms, proxy.ts: 2ms, application-code: 9ms)
+ GET /admin-login 200 in 52ms (next.js: 4ms, proxy.ts: 2ms, application-code: 46ms)
+ GET /api/settings 200 in 20ms (next.js: 8ms, proxy.ts: 3ms, application-code: 9ms)
+ GET /api/auth/me 200 in 55ms (next.js: 3ms, proxy.ts: 3ms, application-code: 48ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /admin 200 in 100ms (next.js: 20ms, proxy.ts: 3ms, application-code: 77ms)
+ GET /api/notifications?limit=20&offset=0 200 in 106ms (next.js: 4ms, proxy.ts: 3ms, application-code: 99ms)
+ GET /admin 200 in 38ms (next.js: 7ms, proxy.ts: 4ms, application-code: 28ms)
+ GET /api/admin/notifications?limit=50 200 in 66ms (next.js: 14ms, proxy.ts: 9ms, application-code: 44ms)
+ GET /api/admin/ai 200 in 71ms (next.js: 7ms, proxy.ts: 9ms, application-code: 55ms)
+ GET /api/admin/users?limit=1000&fields=id,name,email,avatar,role,lastLogin 200 in 152ms (next.js: 20ms, proxy.ts: 8ms, application-code: 124ms)
+ GET /api/admin/dashboard?time=today 200 in 254ms (next.js: 26ms, proxy.ts: 8ms, application-code: 221ms)
+[API Proxy] GET /api/admin/infrastructure/stats -> http://127.0.0.1:8082/api/admin/infrastructure/stats
+ GET /api/admin/infrastructure/stats 200 in 22ms (next.js: 10ms, proxy.ts: 3ms, application-code: 9ms)
+[API Proxy] GET /api/admin/infrastructure/stats -> http://127.0.0.1:8082/api/admin/infrastructure/stats
+ GET /api/admin/infrastructure/stats 200 in 15ms (next.js: 4ms, proxy.ts: 3ms, application-code: 9ms)
+ GET /admin/courses 200 in 46ms (next.js: 6ms, proxy.ts: 2ms, application-code: 38ms)
+ GET /api/admin/teachers 200 in 36ms (next.js: 14ms, proxy.ts: 5ms, application-code: 17ms)
+ GET /api/admin/courses?offset=0&limit=12 200 in 39ms (next.js: 7ms, proxy.ts: 6ms, application-code: 27ms)
+ GET /api/admin/course-categories 200 in 46ms (next.js: 21ms, proxy.ts: 5ms, application-code: 21ms)
+ GET /admin/courses/new 200 in 44ms (next.js: 4ms, proxy.ts: 3ms, application-code: 37ms)
+[API Proxy] Stripping Origin header for POST /api/upload/presign: http://localhost:3000
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+[API Proxy] Backend (403) for upload/presign: {"error":"CSRF token validation failed"}
+ POST /api/upload/presign 403 in 23ms (next.js: 10ms, proxy.ts: 3ms, application-code: 10ms)
+[API Proxy] GET /api/auth/csrf -> http://127.0.0.1:8082/api/auth/csrf
+ GET /api/auth/csrf 200 in 14ms (next.js: 4ms, proxy.ts: 1893µs, application-code: 8ms)
+[API Proxy] Stripping Origin header for POST /api/upload/presign: http://localhost:3000
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+[API Proxy] Backend (403) for upload/presign: {"error":"CSRF token validation failed"}
+ POST /api/upload/presign 403 in 16ms (next.js: 5ms, proxy.ts: 2ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 21ms (next.js: 5ms, proxy.ts: 3ms, application-code: 13ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 2ms, proxy.ts: 1700µs, application-code: 8ms)
+ GET /admin/course-categories 200 in 72ms (next.js: 27ms, proxy.ts: 2ms, application-code: 42ms)
+ GET /api/admin/course-categories 200 in 17ms (next.js: 3ms, proxy.ts: 2ms, application-code: 11ms)
+○ Compiling /admin/subjects ...
+ GET /admin/subjects 200 in 7.3s (next.js: 7.3s, proxy.ts: 3ms, application-code: 17ms)
+ GET /api/admin/subjects?page=1&limit=10 200 in 160ms (next.js: 145ms, proxy.ts: 3ms, application-code: 12ms)
+ GET /admin/learning-paths 200 in 1526ms (next.js: 1505ms, proxy.ts: 3ms, application-code: 19ms)
+[API Proxy] GET /api/admin/learning-paths -> http://127.0.0.1:8082/api/admin/learning-paths
+[API Proxy] Backend (404) for admin/learning-paths: 404 page not found
+ GET /api/admin/learning-paths 404 in 30ms (next.js: 13ms, proxy.ts: 4ms, application-code: 13ms)
+ GET /admin/books 200 in 694ms (next.js: 668ms, proxy.ts: 3ms, application-code: 23ms)
+ GET /api/admin/subjects?limit=100 200 in 38ms (next.js: 6ms, proxy.ts: 16ms, application-code: 16ms)
+ GET /api/admin/books?page=1&limit=10 200 in 172ms (next.js: 131ms, proxy.ts: 18ms, application-code: 23ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 3ms, proxy.ts: 3ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 15ms (next.js: 3ms, proxy.ts: 4ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 15ms (next.js: 3ms, proxy.ts: 3ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 14ms (next.js: 2ms, proxy.ts: 1737µs, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 14ms (next.js: 3ms, proxy.ts: 1692µs, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 13ms (next.js: 3ms, proxy.ts: 1684µs, application-code: 8ms)
+[browser] [2026-07-26T00:22:10.934Z] [WARN] Error fetching notifications: {"error":{"message":"Failed to connect to backend","stack":"ApiError: Failed to connect to backend\n    at ApiClient.handleApiErrorResponse (http://localhost:3000/_next/static/chunks/src_1nri8e0._.js:2477:15)\n    at async ApiClient.request (http://localhost:3000/_next/static/chunks/src_1nri8e0._.js:2512:37)\n    at async NotificationsProvider.useCallback[fetchNotifications] (http://localhost:3000/_next/static/chunks/src_1nri8e0._.js:3856:34)","name":"ApiError"}} (src/lib/logging/unified-logger.ts:267:17)
+ GET /admin/books 200 in 154ms (next.js: 4ms, proxy.ts: 4ms, application-code: 146ms)
+ GET /api/settings 200 in 24ms (next.js: 9ms, proxy.ts: 5ms, application-code: 10ms)
+ GET /api/auth/me 200 in 59ms (next.js: 4ms, proxy.ts: 5ms, application-code: 49ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 19ms (next.js: 2ms, proxy.ts: 1756µs, application-code: 15ms)
+ GET /admin/courses 200 in 68ms (next.js: 27ms, proxy.ts: 3ms, application-code: 38ms)
+ GET /api/admin/courses?offset=0&limit=12 200 in 51ms (next.js: 6ms, proxy.ts: 7ms, application-code: 38ms)
+ GET /api/admin/teachers 200 in 63ms (next.js: 16ms, proxy.ts: 7ms, application-code: 41ms)
+ GET /api/admin/course-categories 200 in 81ms (next.js: 28ms, proxy.ts: 6ms, application-code: 47ms)
+[browser] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[browser] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[API Proxy] Stripping Origin header for POST /api/upload/presign: http://localhost:3000
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+[API Proxy] Backend (403) for upload/presign: {"error":"CSRF token validation failed"}
+ POST /api/upload/presign 403 in 22ms (next.js: 10ms, proxy.ts: 2ms, application-code: 10ms)
+[API Proxy] GET /api/auth/csrf -> http://127.0.0.1:8082/api/auth/csrf
+ GET /api/auth/csrf 200 in 13ms (next.js: 4ms, proxy.ts: 1733µs, application-code: 7ms)
+[API Proxy] Stripping Origin header for POST /api/upload/presign: http://localhost:3000
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+[API Proxy] Backend (403) for upload/presign: {"error":"CSRF token validation failed"}
+ POST /api/upload/presign 403 in 15ms (next.js: 3ms, proxy.ts: 1875µs, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 18ms (next.js: 2ms, proxy.ts: 1781µs, application-code: 14ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 3ms, proxy.ts: 1894µs, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Backend returned 401: {"code":"missing_token","error":"Authentication required"}
+ GET /api/notifications?limit=20&offset=0 401 in 13ms (next.js: 3ms, proxy.ts: 1784µs, application-code: 8ms)
+ POST /api/auth/refresh 200 in 135ms (next.js: 2ms, proxy.ts: 1895µs, application-code: 131ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 3ms, proxy.ts: 1589µs, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 15ms (next.js: 2ms, proxy.ts: 1833µs, application-code: 11ms)
+✓ Compiled in 323ms
+✓ Compiled in 438ms
+✓ Compiled in 0ms
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/auth/me 200 in 895ms (next.js: 334ms, proxy.ts: 7ms, application-code: 554ms)
+ GET /api/notifications?limit=20&offset=0 200 in 899ms (next.js: 587ms, proxy.ts: 8ms, application-code: 304ms)
+ GET /api/admin/courses?offset=0&limit=12 200 in 926ms (next.js: 841ms, proxy.ts: 10ms, application-code: 74ms)
+ GET /admin/courses 200 in 2.9s (next.js: 1010ms, proxy.ts: 305ms, application-code: 1594ms)
+ GET /api/settings 200 in 410ms (next.js: 267ms, proxy.ts: 17ms, application-code: 126ms)
+ GET /admin/courses 200 in 1635ms (next.js: 185ms, proxy.ts: 63ms, application-code: 1388ms)
+ GET /admin/courses 200 in 1336ms (next.js: 597ms, proxy.ts: 11ms, application-code: 728ms)
+ GET /admin/courses 200 in 415ms (next.js: 337ms, proxy.ts: 10ms, application-code: 68ms)
+✓ Compiled in 145ms
+ GET /admin/courses 200 in 215ms (next.js: 139ms, proxy.ts: 20ms, application-code: 56ms)
+ GET /admin/courses 200 in 266ms (next.js: 170ms, proxy.ts: 22ms, application-code: 74ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 58ms (next.js: 35ms, proxy.ts: 1910µs, application-code: 21ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 21ms (next.js: 5ms, proxy.ts: 3ms, application-code: 13ms)
+ GET /admin/courses 200 in 231ms (next.js: 164ms, proxy.ts: 19ms, application-code: 48ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 60ms (next.js: 41ms, proxy.ts: 3ms, application-code: 16ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 12ms (next.js: 3ms, proxy.ts: 1838µs, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 4ms, proxy.ts: 1862µs, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 3ms, proxy.ts: 1806µs, application-code: 9ms)
+✓ Compiled in 346ms
+ GET /admin/courses 200 in 165ms (next.js: 84ms, proxy.ts: 21ms, application-code: 60ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 56ms (next.js: 37ms, proxy.ts: 2ms, application-code: 17ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 15ms (next.js: 3ms, proxy.ts: 1692µs, application-code: 11ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 16ms (next.js: 5ms, proxy.ts: 1780µs, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 3ms, proxy.ts: 3ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 3ms, proxy.ts: 3ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 23ms (next.js: 3ms, proxy.ts: 7ms, application-code: 13ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 3ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Backend returned 401: {"code":"missing_token","error":"Authentication required"}
+ GET /api/notifications?limit=20&offset=0 401 in 12ms (next.js: 3ms, proxy.ts: 1985µs, application-code: 7ms)
+ POST /api/auth/refresh 200 in 329ms (next.js: 272ms, proxy.ts: 2ms, application-code: 54ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 3ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 3ms, proxy.ts: 2ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 2ms, proxy.ts: 2ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 3ms, proxy.ts: 1897µs, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 2ms, proxy.ts: 1876µs, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 2ms, proxy.ts: 2ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 2ms, proxy.ts: 1762µs, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 3ms, proxy.ts: 2ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 4ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 3ms, proxy.ts: 3ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 4ms, proxy.ts: 1892µs, application-code: 8ms)
+ GET /admin/courses 200 in 1447ms (next.js: 5ms, proxy.ts: 2ms, application-code: 1439ms)
+ GET /api/auth/me 200 in 76ms (next.js: 30ms, proxy.ts: 4ms, application-code: 43ms)
+ GET /api/settings 200 in 98ms (next.js: 60ms, proxy.ts: 4ms, application-code: 34ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 454ms (next.js: 6ms, proxy.ts: 4ms, application-code: 444ms)
+ GET /api/admin/teachers 200 in 465ms (next.js: 267ms, proxy.ts: 6ms, application-code: 192ms)
+ GET /api/admin/courses?offset=0&limit=12 200 in 482ms (next.js: 42ms, proxy.ts: 7ms, application-code: 434ms)
+ GET /api/admin/course-categories 200 in 497ms (next.js: 440ms, proxy.ts: 5ms, application-code: 51ms)
+ GET /admin/courses/new 200 in 306ms (next.js: 243ms, proxy.ts: 2ms, application-code: 61ms)
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+ POST /api/upload/presign 200 in 84ms (next.js: 66ms, proxy.ts: 3ms, application-code: 16ms)
+ PUT /uploads/uploads/88108654-d423-4cdd-8681-e52d49717314.png 404 in 2.2s (next.js: 2.1s, application-code: 113ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 21ms (next.js: 4ms, proxy.ts: 3ms, application-code: 14ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 15ms (next.js: 3ms, proxy.ts: 3ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 3ms, proxy.ts: 2ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 16ms (next.js: 3ms, proxy.ts: 3ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Backend returned 401: {"code":"missing_token","error":"Authentication required"}
+ GET /api/notifications?limit=20&offset=0 401 in 11ms (next.js: 2ms, proxy.ts: 2ms, application-code: 7ms)
+ POST /api/auth/refresh 200 in 41ms (next.js: 4ms, proxy.ts: 3ms, application-code: 34ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 9ms (next.js: 2ms, proxy.ts: 1768µs, application-code: 6ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 12ms (next.js: 3ms, proxy.ts: 1694µs, application-code: 8ms)
+✓ Compiled in 200ms
+ GET /admin/courses/new 200 in 409ms (next.js: 118ms, proxy.ts: 47ms, application-code: 244ms)
+ GET /admin/courses/new 200 in 121ms (next.js: 6ms, proxy.ts: 17ms, application-code: 98ms)
+ GET /admin/courses/new 200 in 54ms (next.js: 9ms, proxy.ts: 7ms, application-code: 38ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 53ms (next.js: 39ms, proxy.ts: 2ms, application-code: 12ms)
+✓ Compiled in 160ms
+ GET /admin/courses/new 200 in 330ms (next.js: 79ms, proxy.ts: 17ms, application-code: 234ms)
+ GET /admin/courses/new 200 in 168ms (next.js: 6ms, proxy.ts: 14ms, application-code: 148ms)
+ GET /admin/courses/new 200 in 76ms (next.js: 11ms, proxy.ts: 9ms, application-code: 56ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 47ms (next.js: 33ms, proxy.ts: 1913µs, application-code: 13ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 2ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+ POST /api/upload/presign 200 in 48ms (next.js: 33ms, proxy.ts: 2ms, application-code: 12ms)
+[API Proxy] POST /api/upload -> http://127.0.0.1:8082/api/upload
+ POST /api/upload 200 in 14ms (next.js: 4ms, proxy.ts: 2ms, application-code: 8ms)
+ GET /uploads/uploads/6d8ae9dd-2c84-4a38-97f5-e8f3435966fb.png 404 in 121ms (next.js: 10ms, application-code: 110ms)
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+ POST /api/upload/presign 200 in 19ms (next.js: 9ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] POST /api/upload -> http://127.0.0.1:8082/api/upload
+ POST /api/upload 200 in 17ms (next.js: 4ms, proxy.ts: 2ms, application-code: 11ms)
+ GET /uploads/uploads/967b6b05-fcfe-4cb1-9b9c-542543757ce2.png 404 in 47ms (next.js: 6ms, application-code: 42ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 16ms (next.js: 3ms, proxy.ts: 2ms, application-code: 10ms)
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+ POST /api/upload/presign 200 in 20ms (next.js: 9ms, proxy.ts: 3ms, application-code: 8ms)
+[API Proxy] POST /api/upload -> http://127.0.0.1:8082/api/upload
+ POST /api/upload 200 in 14ms (next.js: 3ms, proxy.ts: 2ms, application-code: 8ms)
+ GET /uploads/uploads/3fb2d5fb-378e-447a-b312-0079089ee72f.png 404 in 39ms (next.js: 6ms, application-code: 34ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 2ms, proxy.ts: 1714µs, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 12ms (next.js: 2ms, proxy.ts: 1818µs, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 3ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 12ms (next.js: 2ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 2ms, proxy.ts: 1897µs, application-code: 9ms)
+✓ Compiled in 856ms
+ GET /admin/courses/new 200 in 160ms (next.js: 67ms, proxy.ts: 16ms, application-code: 77ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 59ms (next.js: 46ms, proxy.ts: 2ms, application-code: 12ms)
+ GET /admin/courses/new 200 in 474ms (next.js: 194ms, proxy.ts: 6ms, application-code: 275ms)
+ GET /admin/courses/new 200 in 206ms (next.js: 11ms, proxy.ts: 21ms, application-code: 175ms)
+ GET /admin/courses/new 200 in 136ms (next.js: 13ms, proxy.ts: 14ms, application-code: 108ms)
+ GET /admin/courses/new 200 in 134ms (next.js: 49ms, proxy.ts: 13ms, application-code: 73ms)
+✓ Finished filesystem cache database compaction in 15.3s
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 588ms (next.js: 538ms, proxy.ts: 6ms, application-code: 43ms)
+[AI Chat] Received request: {
+  "message": "أنت خبير في كتابة أوصاف الدورات التعليمية الاحترافية. قم بتحليل بيانات الدورة التالية ثم اكتب وصفاً تفصيلياً شاملاً وجذاباً:\n\nعنوان الدورة: الدراسات الاجتماعية   (نسخة)\nالاسم بالإنجليزية: Web Programming (Copy)\nكود الدورة: 5464836-7208\nالمستوى: متوسط\nالسعر: 0\nاللغة: العربية\n\n\n\n\n\n\nاكتب وصفاً تفصيلياً احترافياً يتضمن:\n1. مقدمة جذابة ومشجعة للتسجيل\n2. نظرة عامة شاملة عن محتوى الدورة\n3. الفوائد الرئيسية وما سيحققه المتعلم\n4. الجمهور المستهدف المناسب لهذه الدورة\n5. لماذا تختار هذه الدورة تحديداً\n\nاجعل الوصف:\n- احترافياً ومقنعاً\n- منظم بشكل واضح مع عناوين فرعية\n- مشجعاً للطلاب على التسجيل\n- شاملاً لجميع الجوانب المهمة\n- مناسباً للغة العربية"
+}
+[AI Chat] Calling backend at: http://127.0.0.1:8082/api/ai/chat
+[AI Chat] Backend payload: {"message":"أنت خبير في كتابة أوصاف الدورات التعليمية الاحترافية. قم بتحليل بيانات الدورة التالية ثم اكتب وصفاً تفصيلياً شاملاً وجذاباً:\n\nعنوان الدورة: الدراسات الاجتماعية   (نسخة)\nالاسم بالإنجليزية: Web Programming (Copy)\nكود الدورة: 5464836-7208\nالمستوى: متوسط\nالسعر: 0\nاللغة: العربية\n\n\n\n\n\n\nاكتب وصفاً تفصيلياً احترافياً يتضمن:\n1. مقدمة جذابة ومشجعة للتسجيل\n2. نظرة عامة شاملة عن محتوى الدورة\n3. الفوائد الرئيسية وما سيحققه المتعلم\n4. الجمهور المستهدف المناسب لهذه الدورة\n5. لماذا تختار هذه الدورة تحديداً\n\nاجعل الوصف:\n- احترافياً ومقنعاً\n- منظم بشكل واضح مع عناوين فرعية\n- مشجعاً للطلاب على التسجيل\n- شاملاً لجميع الجوانب المهمة\n- مناسباً للغة العربية","stream":false}
+[AI Chat] Backend response status: 403
+[AI Chat] Backend error response: {"error":"CSRF token validation failed"}
+ POST /api/ai/chat 403 in 1194ms (next.js: 1181ms, proxy.ts: 2ms, application-code: 10ms)
+[API Proxy] GET /api/auth/csrf -> http://127.0.0.1:8082/api/auth/csrf
+ GET /api/auth/csrf 200 in 265ms (next.js: 254ms, proxy.ts: 1847µs, application-code: 9ms)
+[AI Chat] Received request: {
+  "message": "أنت خبير في كتابة أوصاف الدورات التعليمية الاحترافية. قم بتحليل بيانات الدورة التالية ثم اكتب وصفاً تفصيلياً شاملاً وجذاباً:\n\nعنوان الدورة: الدراسات الاجتماعية   (نسخة)\nالاسم بالإنجليزية: Web Programming (Copy)\nكود الدورة: 5464836-7208\nالمستوى: متوسط\nالسعر: 0\nاللغة: العربية\n\n\n\n\n\n\nاكتب وصفاً تفصيلياً احترافياً يتضمن:\n1. مقدمة جذابة ومشجعة للتسجيل\n2. نظرة عامة شاملة عن محتوى الدورة\n3. الفوائد الرئيسية وما سيحققه المتعلم\n4. الجمهور المستهدف المناسب لهذه الدورة\n5. لماذا تختار هذه الدورة تحديداً\n\nاجعل الوصف:\n- احترافياً ومقنعاً\n- منظم بشكل واضح مع عناوين فرعية\n- مشجعاً للطلاب على التسجيل\n- شاملاً لجميع الجوانب المهمة\n- مناسباً للغة العربية"
+}
+[AI Chat] Calling backend at: http://127.0.0.1:8082/api/ai/chat
+[AI Chat] Backend payload: {"message":"أنت خبير في كتابة أوصاف الدورات التعليمية الاحترافية. قم بتحليل بيانات الدورة التالية ثم اكتب وصفاً تفصيلياً شاملاً وجذاباً:\n\nعنوان الدورة: الدراسات الاجتماعية   (نسخة)\nالاسم بالإنجليزية: Web Programming (Copy)\nكود الدورة: 5464836-7208\nالمستوى: متوسط\nالسعر: 0\nاللغة: العربية\n\n\n\n\n\n\nاكتب وصفاً تفصيلياً احترافياً يتضمن:\n1. مقدمة جذابة ومشجعة للتسجيل\n2. نظرة عامة شاملة عن محتوى الدورة\n3. الفوائد الرئيسية وما سيحققه المتعلم\n4. الجمهور المستهدف المناسب لهذه الدورة\n5. لماذا تختار هذه الدورة تحديداً\n\nاجعل الوصف:\n- احترافياً ومقنعاً\n- منظم بشكل واضح مع عناوين فرعية\n- مشجعاً للطلاب على التسجيل\n- شاملاً لجميع الجوانب المهمة\n- مناسباً للغة العربية","stream":false}
+[AI Chat] Backend response status: 403
+[AI Chat] Backend error response: {"error":"CSRF token validation failed"}
+ POST /api/ai/chat 403 in 13ms (next.js: 3ms, proxy.ts: 2ms, application-code: 7ms)
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+ POST /api/upload/presign 200 in 19ms (next.js: 8ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] POST /api/upload -> http://127.0.0.1:8082/api/upload
+ POST /api/upload 200 in 14ms (next.js: 4ms, proxy.ts: 2ms, application-code: 8ms)
+ GET /uploads/uploads/c9f857dd-c0ee-4d1f-b967-7394db7349fa.jpg 404 in 1791ms (next.js: 167ms, application-code: 1624ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 4ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] Backend returned 403: {"error":"CSRF token validation failed"}
+ POST /api/admin/courses 403 in 190ms (next.js: 173ms, proxy.ts: 3ms, application-code: 13ms)
+[API Proxy] GET /api/auth/csrf -> http://127.0.0.1:8082/api/auth/csrf
+ GET /api/auth/csrf 200 in 23ms (next.js: 10ms, proxy.ts: 1871µs, application-code: 11ms)
+[API Proxy] Backend returned 403: {"error":"CSRF token validation failed"}
+ POST /api/admin/courses 403 in 15ms (next.js: 3ms, proxy.ts: 3ms, application-code: 9ms)
+ GET /admin/courses/new 200 in 1598ms (next.js: 1145ms, proxy.ts: 2ms, application-code: 450ms)
+ GET /admin/courses/new 200 in 377ms (next.js: 13ms, proxy.ts: 298ms, application-code: 67ms)
+ GET /admin/courses 200 in 259ms (next.js: 208ms, proxy.ts: 3ms, application-code: 48ms)
+ GET /api/admin/courses?offset=0&limit=12 200 in 450ms (next.js: 39ms, proxy.ts: 9ms, application-code: 402ms)
+ GET /api/admin/teachers 200 in 451ms (next.js: 256ms, proxy.ts: 8ms, application-code: 188ms)
+ GET /api/admin/course-categories 200 in 499ms (next.js: 420ms, proxy.ts: 7ms, application-code: 72ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 50ms (next.js: 29ms, proxy.ts: 3ms, application-code: 18ms)
+ GET /admin/courses 200 in 786ms (next.js: 6ms, proxy.ts: 3ms, application-code: 778ms)
+ GET /api/auth/me 200 in 500ms (next.js: 278ms, proxy.ts: 5ms, application-code: 217ms)
+ GET /api/settings 200 in 502ms (next.js: 483ms, proxy.ts: 5ms, application-code: 15ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 20ms (next.js: 4ms, proxy.ts: 3ms, application-code: 13ms)
+ GET /api/admin/courses?offset=0&limit=12 200 in 24ms (next.js: 10ms, proxy.ts: 4ms, application-code: 11ms)
+✓ Finished filesystem cache database compaction in 10.2s
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Backend returned 401: {"code":"missing_token","error":"Authentication required"}
+ GET /api/notifications?limit=20&offset=0 401 in 351ms (next.js: 42ms, proxy.ts: 2ms, application-code: 306ms)
+ POST /api/auth/refresh 200 in 6.6s (next.js: 468ms, proxy.ts: 5ms, application-code: 6.2s)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 21ms (next.js: 5ms, proxy.ts: 3ms, application-code: 13ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 111ms (next.js: 49ms, proxy.ts: 3ms, application-code: 59ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 199ms (next.js: 122ms, proxy.ts: 5ms, application-code: 72ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 257ms (next.js: 39ms, proxy.ts: 125ms, application-code: 93ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13.9s (next.js: 2.4s, proxy.ts: 2.5s, application-code: 8.9s)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 666ms (next.js: 136ms, proxy.ts: 400ms, application-code: 130ms)
+[browser] [2026-07-26T01:16:07.461Z] [WARN] Slow Performance detected: API Request {"duration":"16541.30ms","context":"browser","endpoint":"/notifications?limit=20&offset=0","method":"GET"} (src/lib/logging/unified-logger.ts:267:17)
+[browser] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[browser] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+ GET /admin/courses 200 in 1432ms (next.js: 258ms, proxy.ts: 381ms, application-code: 794ms)
+ GET /api/settings 200 in 139ms (next.js: 116ms, proxy.ts: 4ms, application-code: 19ms)
+ GET /api/auth/me 200 in 159ms (next.js: 124ms, proxy.ts: 18ms, application-code: 16ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 32ms (next.js: 11ms, proxy.ts: 8ms, application-code: 14ms)
+ GET /api/admin/teachers 200 in 123ms (next.js: 55ms, proxy.ts: 14ms, application-code: 54ms)
+ GET /api/admin/courses?offset=0&limit=12 200 in 131ms (next.js: 67ms, proxy.ts: 14ms, application-code: 50ms)
+ GET /api/admin/course-categories 200 in 333ms (next.js: 77ms, proxy.ts: 19ms, application-code: 237ms)
+ GET /admin/courses 200 in 5.4s (next.js: 4.7s, proxy.ts: 396ms, application-code: 236ms)
+ GET /admin/courses 200 in 179ms (next.js: 2ms, proxy.ts: 6ms, application-code: 171ms)
+ GET /admin/courses 200 in 172ms (next.js: 5ms, proxy.ts: 13ms, application-code: 154ms)
+ GET /admin/courses 200 in 172ms (next.js: 28ms, proxy.ts: 12ms, application-code: 131ms)
+ GET /admin/courses 200 in 171ms (next.js: 52ms, proxy.ts: 12ms, application-code: 107ms)
+ GET /admin/courses 200 in 194ms (next.js: 79ms, proxy.ts: 11ms, application-code: 105ms)
+ GET /admin/courses 200 in 180ms (next.js: 3ms, proxy.ts: 3ms, application-code: 174ms)
+ GET /admin/courses 200 in 158ms (next.js: 4ms, proxy.ts: 5ms, application-code: 150ms)
+ GET /admin/courses 200 in 157ms (next.js: 9ms, proxy.ts: 8ms, application-code: 140ms)
+ GET /admin/courses 200 in 156ms (next.js: 30ms, proxy.ts: 9ms, application-code: 117ms)
+ GET /admin/courses 200 in 178ms (next.js: 53ms, proxy.ts: 8ms, application-code: 117ms)
+ GET /admin/courses 200 in 175ms (next.js: 77ms, proxy.ts: 4ms, application-code: 95ms)
+ GET /admin/courses 200 in 115ms (next.js: 3ms, proxy.ts: 3ms, application-code: 110ms)
+ GET /admin/courses 200 in 90ms (next.js: 5ms, proxy.ts: 5ms, application-code: 81ms)
+ GET /admin/courses 200 in 84ms (next.js: 6ms, proxy.ts: 27ms, application-code: 52ms)
+ GET /admin/courses 200 in 63ms (next.js: 25ms, proxy.ts: 7ms, application-code: 30ms)
+ GET /admin/courses 200 in 264ms (next.js: 58ms, proxy.ts: 20ms, application-code: 186ms)
+ GET /admin/courses 200 in 152ms (next.js: 2ms, proxy.ts: 5ms, application-code: 145ms)
+ GET /admin/courses 200 in 155ms (next.js: 52ms, proxy.ts: 10ms, application-code: 94ms)
+ GET /admin/courses 200 in 155ms (next.js: 27ms, proxy.ts: 9ms, application-code: 119ms)
+ GET /admin/courses 200 in 157ms (next.js: 5ms, proxy.ts: 10ms, application-code: 142ms)
+ GET /admin/courses 200 in 199ms (next.js: 73ms, proxy.ts: 9ms, application-code: 117ms)
+ GET /admin/courses 200 in 357ms (next.js: 4ms, proxy.ts: 4ms, application-code: 350ms)
+ GET /admin/courses 200 in 534ms (next.js: 6ms, proxy.ts: 6ms, application-code: 522ms)
+ GET /admin/courses 200 in 519ms (next.js: 9ms, proxy.ts: 13ms, application-code: 498ms)
+ GET /admin/courses 200 in 517ms (next.js: 32ms, proxy.ts: 11ms, application-code: 474ms)
+ GET /admin/courses 200 in 538ms (next.js: 59ms, proxy.ts: 10ms, application-code: 470ms)
+ GET /admin/courses 200 in 614ms (next.js: 423ms, proxy.ts: 5ms, application-code: 186ms)
+ GET /admin/courses 200 in 345ms (next.js: 7ms, proxy.ts: 199ms, application-code: 139ms)
+ GET /admin/courses 200 in 120ms (next.js: 4ms, proxy.ts: 5ms, application-code: 111ms)
+ GET /admin/courses 200 in 92ms (next.js: 6ms, proxy.ts: 6ms, application-code: 79ms)
+ GET /admin/courses 200 in 87ms (next.js: 49ms, proxy.ts: 5ms, application-code: 33ms)
+ GET /admin/courses 200 in 90ms (next.js: 29ms, proxy.ts: 7ms, application-code: 54ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 700ms (next.js: 675ms, proxy.ts: 1892µs, application-code: 23ms)
+ GET /admin/courses/new 200 in 306ms (next.js: 223ms, proxy.ts: 4ms, application-code: 79ms)
+[API Proxy] POST /api/upload/presign -> http://127.0.0.1:8082/api/upload/presign
+ POST /api/upload/presign 200 in 229ms (next.js: 211ms, proxy.ts: 3ms, application-code: 16ms)
+[API Proxy] POST /api/upload -> http://127.0.0.1:8082/api/upload
+ POST /api/upload 200 in 76ms (next.js: 7ms, proxy.ts: 11ms, application-code: 59ms)
+ GET /uploads/uploads/7e493471-297b-42d6-a5cf-50d74f8ee06c.jpg 404 in 1858ms (next.js: 126ms, application-code: 1732ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 19ms (next.js: 2ms, proxy.ts: 1990µs, application-code: 15ms)
+ POST /api/admin/courses 201 in 319ms (next.js: 164ms, proxy.ts: 4ms, application-code: 150ms)
+ GET /admin/courses/new 200 in 54ms (next.js: 2ms, proxy.ts: 2ms, application-code: 49ms)
+ POST /api/admin/courses 201 in 39ms (next.js: 5ms, proxy.ts: 4ms, application-code: 30ms)
+ GET /admin/courses/new 200 in 59ms (next.js: 5ms, proxy.ts: 4ms, application-code: 50ms)
+ GET /admin/courses 200 in 27ms (next.js: 3ms, proxy.ts: 3ms, application-code: 21ms)
+ GET /api/admin/courses?offset=0&limit=12 200 in 18ms (next.js: 4ms, proxy.ts: 3ms, application-code: 11ms)
+ GET /admin/courses 200 in 919ms (next.js: 4ms, proxy.ts: 3ms, application-code: 913ms)
+ GET /api/settings 200 in 702ms (next.js: 349ms, proxy.ts: 3ms, application-code: 350ms)
+ GET /api/auth/me 200 in 706ms (next.js: 685ms, proxy.ts: 3ms, application-code: 19ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 12ms (next.js: 3ms, proxy.ts: 1858µs, application-code: 7ms)
+ GET /admin/courses 200 in 83ms (next.js: 3ms, proxy.ts: 2ms, application-code: 78ms)
+ GET /api/auth/me 200 in 20ms (next.js: 3ms, proxy.ts: 4ms, application-code: 13ms)
+ GET /api/settings 200 in 20ms (next.js: 7ms, proxy.ts: 3ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 10ms (next.js: 1781µs, proxy.ts: 1806µs, application-code: 7ms)
+ GET /admin/course-categories 200 in 559ms (next.js: 465ms, proxy.ts: 3ms, application-code: 91ms)
+ GET /api/admin/course-categories 200 in 322ms (next.js: 301ms, proxy.ts: 4ms, application-code: 17ms)
+ GET /admin/courses 200 in 22ms (next.js: 3ms, proxy.ts: 2ms, application-code: 17ms)
+ GET /api/admin/courses?offset=0&limit=12 200 in 17ms (next.js: 3ms, proxy.ts: 3ms, application-code: 11ms)
+ GET /admin 200 in 436ms (next.js: 379ms, proxy.ts: 2ms, application-code: 55ms)
+[API Proxy] GET /api/admin/infrastructure/stats -> http://127.0.0.1:8082/api/admin/infrastructure/stats
+ GET /api/admin/notifications?limit=50 200 in 1831ms (next.js: 833ms, proxy.ts: 5ms, application-code: 994ms)
+ GET /api/admin/ai 200 in 1849ms (next.js: 452ms, proxy.ts: 6ms, application-code: 1391ms)
+ GET /api/admin/infrastructure/stats 200 in 261ms (next.js: 11ms, proxy.ts: 14ms, application-code: 237ms)
+[API Proxy] GET /api/admin/infrastructure/stats -> http://127.0.0.1:8082/api/admin/infrastructure/stats
+ GET /api/admin/infrastructure/stats 200 in 16ms (next.js: 5ms, proxy.ts: 3ms, application-code: 9ms)
+ GET /api/admin/users?limit=1000&fields=id,name,email,avatar,role,lastLogin 200 in 1923ms (next.js: 1616ms, proxy.ts: 7ms, application-code: 300ms)
+ GET /api/admin/dashboard?time=today 200 in 2.1s (next.js: 1257ms, proxy.ts: 7ms, application-code: 809ms)
+ GET /admin/courses 200 in 19ms (next.js: 2ms, proxy.ts: 2ms, application-code: 15ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 24ms (next.js: 4ms, proxy.ts: 3ms, application-code: 17ms)
+ GET /admin/courses 200 in 127ms (next.js: 4ms, proxy.ts: 17ms, application-code: 106ms)
+ GET /api/auth/me 200 in 36ms (next.js: 9ms, proxy.ts: 6ms, application-code: 20ms)
+ GET /api/settings 200 in 37ms (next.js: 13ms, proxy.ts: 7ms, application-code: 16ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 30ms (next.js: 7ms, proxy.ts: 5ms, application-code: 19ms)
+ GET /api/admin/courses?offset=0&limit=12 200 in 31ms (next.js: 9ms, proxy.ts: 6ms, application-code: 15ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 27ms (next.js: 2ms, proxy.ts: 2ms, application-code: 22ms)
+ GET /admin/courses 200 in 1785ms (next.js: 752ms, proxy.ts: 4ms, application-code: 1029ms)
+ GET /api/settings 200 in 248ms (next.js: 231ms, proxy.ts: 3ms, application-code: 14ms)
+ GET /api/auth/me 200 in 251ms (next.js: 3ms, proxy.ts: 3ms, application-code: 246ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 5.2s (next.js: 210ms, proxy.ts: 4ms, application-code: 5.0s)
+ GET /api/admin/courses?offset=0&limit=12 200 in 5.2s (next.js: 370ms, proxy.ts: 8ms, application-code: 4.8s)
+ GET /api/admin/teachers 200 in 5.2s (next.js: 5.1s, proxy.ts: 6ms, application-code: 38ms)
+[browser] [2026-07-26T01:24:24.184Z] [WARN] Slow Performance detected: API Request {"duration":"5174.10ms","context":"browser","endpoint":"/notifications?limit=20&offset=0","method":"GET"} (src/lib/logging/unified-logger.ts:267:17)
+ GET /api/admin/course-categories 200 in 5.4s (next.js: 839ms, proxy.ts: 7ms, application-code: 4.6s)
+[browser] [2026-07-26T01:24:24.444Z] [WARN] Slow Performance detected: API Request {"duration":"5433.60ms","context":"browser","endpoint":"/api/admin/course-categories","method":"GET"} (src/lib/logging/unified-logger.ts:267:17)
+[browser] [2026-07-26T01:24:24.278Z] [WARN] Slow Performance detected: API Request {"duration":"5268.20ms","context":"browser","endpoint":"/api/admin/courses?offset=0&limit=12","method":"GET"} (src/lib/logging/unified-logger.ts:267:17)
+[browser] [2026-07-26T01:24:24.279Z] [WARN] Slow Performance detected: API Request {"duration":"5269.10ms","context":"browser","endpoint":"/api/admin/teachers","method":"GET"} (src/lib/logging/unified-logger.ts:267:17)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 857ms (next.js: 2ms, proxy.ts: 3ms, application-code: 851ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 58ms (next.js: 2ms, proxy.ts: 3ms, application-code: 52ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 13ms (next.js: 4ms, proxy.ts: 1797µs, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 12ms (next.js: 3ms, proxy.ts: 2ms, application-code: 7ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 15ms (next.js: 4ms, proxy.ts: 2ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 12ms (next.js: 2ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 11ms (next.js: 1821µs, proxy.ts: 1930µs, application-code: 7ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 17ms (next.js: 4ms, proxy.ts: 4ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 14ms (next.js: 3ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 25ms (next.js: 4ms, proxy.ts: 4ms, application-code: 18ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 10ms (next.js: 3ms, proxy.ts: 1817µs, application-code: 6ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 10ms (next.js: 1706µs, proxy.ts: 1737µs, application-code: 6ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 12ms (next.js: 2ms, proxy.ts: 3ms, application-code: 7ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 13ms (next.js: 2ms, proxy.ts: 3ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 12ms (next.js: 2ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 10ms (next.js: 2ms, proxy.ts: 2ms, application-code: 6ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 17ms (next.js: 4ms, proxy.ts: 3ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 27ms (next.js: 4ms, proxy.ts: 10ms, application-code: 13ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 19ms (next.js: 4ms, proxy.ts: 3ms, application-code: 12ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 12ms (next.js: 1634µs, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 16ms (next.js: 3ms, proxy.ts: 3ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 14ms (next.js: 3ms, proxy.ts: 3ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 17ms (next.js: 3ms, proxy.ts: 4ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 14ms (next.js: 3ms, proxy.ts: 3ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 17ms (next.js: 5ms, proxy.ts: 3ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 13ms (next.js: 2ms, proxy.ts: 2ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 15ms (next.js: 3ms, proxy.ts: 1909µs, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 16ms (next.js: 4ms, proxy.ts: 3ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 18ms (next.js: 3ms, proxy.ts: 4ms, application-code: 11ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 18ms (next.js: 4ms, proxy.ts: 3ms, application-code: 11ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 14ms (next.js: 4ms, proxy.ts: 2ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 12ms (next.js: 4ms, proxy.ts: 1712µs, application-code: 7ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 70ms (next.js: 3ms, proxy.ts: 2ms, application-code: 65ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 281ms (next.js: 172ms, proxy.ts: 40ms, application-code: 69ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 445ms (next.js: 116ms, proxy.ts: 160ms, application-code: 168ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 12ms (next.js: 1842µs, proxy.ts: 1835µs, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 14ms (next.js: 2ms, proxy.ts: 1835µs, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 12ms (next.js: 1722µs, proxy.ts: 3ms, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 13ms (next.js: 3ms, proxy.ts: 1834µs, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 11ms (next.js: 1582µs, proxy.ts: 1694µs, application-code: 8ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 16ms (next.js: 3ms, proxy.ts: 4ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 15ms (next.js: 2ms, proxy.ts: 3ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 16ms (next.js: 3ms, proxy.ts: 2ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 14ms (next.js: 3ms, proxy.ts: 3ms, application-code: 7ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 8.6s (next.js: 5.6s, proxy.ts: 2ms, application-code: 3.0s)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 1811ms (next.js: 320ms, proxy.ts: 2ms, application-code: 1488ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 896ms (next.js: 856ms, proxy.ts: 4ms, application-code: 36ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 99ms (next.js: 40ms, proxy.ts: 6ms, application-code: 53ms)
+✓ Finished writing to filesystem cache in 10.1s
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+✓ Compiled in 31s
+[API Proxy] /api/auth/me upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] /api/auth/me upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8080/api/notifications?limit=20&offset=0
+[API Proxy] /api/auth/me upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Me error: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/auth/me 502 in 12.7s (next.js: 12.3s, proxy.ts: 4ms, application-code: 360ms)
+[API Proxy] /api/auth/me upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Me error: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/auth/me 502 in 12.7s (next.js: 12.3s, proxy.ts: 4ms, application-code: 353ms)
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8080: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8080
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8080) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8080
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 20.6s (next.js: 20.4s, proxy.ts: 1963µs, application-code: 218ms)
+ GET /api/settings 200 in 12.7s (next.js: 12.6s, proxy.ts: 5ms, application-code: 109ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 187ms (next.js: 108ms, proxy.ts: 34ms, application-code: 45ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 10.1s (next.js: 211ms, proxy.ts: 8ms, application-code: 9.9s)
+ GET /api/settings 200 in 13ms (next.js: 2ms, proxy.ts: 4ms, application-code: 7ms)
+✓ Finished writing to filesystem cache in 10.2s

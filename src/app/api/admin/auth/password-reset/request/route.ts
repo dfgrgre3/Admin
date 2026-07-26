@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
+import type { NextRequest } from 'next/server';
 import { forwardToGoApi } from '@/app/api/admin/_proxy';
 
 /**
@@ -39,23 +41,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Log request (without sensitive data)
-    console.info(`Password reset requested for email: ${trimmedEmail}`);
+    logger.info('Admin password reset requested', { source: 'api/admin/auth/password-reset/request' });
 
     // Forward request to Go API with validated email
-    const forwardedRequest = new Request(request, {
+    const response = await forwardToGoApi(request, '/api/admin/auth/password-reset/request', {
+      method: 'POST',
       body: JSON.stringify({ email: trimmedEmail }),
-      headers: request.headers
     });
 
-    const response = await forwardToGoApi(forwardedRequest, '/api/admin/auth/password-reset/request', { method: 'POST' });
-
     // Log response status for monitoring
-    console.info(`Password reset request completed with status: ${response.status}`);
+    logger.info('Admin password reset request completed', { source: 'api/admin/auth/password-reset/request', statusCode: response.status });
 
     return response;
   } catch (error) {
     // Log detailed error for debugging (avoid exposing internal details in response)
-    console.error('Password reset request error:', error);
+    logger.error('Admin password reset request failed', error, { source: 'api/admin/auth/password-reset/request' });
     
     // Return appropriate error response
     return NextResponse.json(

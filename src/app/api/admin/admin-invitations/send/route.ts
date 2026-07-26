@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
+import type { NextRequest as NextRequestType } from 'next/server';
 import { forwardToGoApi } from '@/app/api/admin/_proxy';
 
 /**
@@ -17,7 +19,7 @@ function isValidUUID(id: string): boolean {
   return uuidRegex.test(id);
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequestType) {
   try {
     const body = await request.json();
     const { email, role, inviterId } = body;
@@ -70,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log request (without sensitive data)
-    console.info(`Admin invitation requested for email: ${trimmedEmail}`);
+    logger.info('Admin invitation requested', { source: 'api/admin/admin-invitations/send' });
 
     // Prepare request body
     const requestBody: any = { email: trimmedEmail };
@@ -82,20 +84,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Forward request to Go API
-    const forwardedRequest = new Request(request, {
+    const response = await forwardToGoApi(request, '/api/admin/admin-invitations/send', {
+      method: 'POST',
       body: JSON.stringify(requestBody),
-      headers: request.headers
     });
 
-    const response = await forwardToGoApi(forwardedRequest, '/api/admin/admin-invitations/send', { method: 'POST' });
-
     // Log response status for monitoring
-    console.info(`Admin invitation sent with status: ${response.status}`);
+    logger.info('Admin invitation request completed', { source: 'api/admin/admin-invitations/send', statusCode: response.status });
 
     return response;
   } catch (error) {
     // Log detailed error for debugging (avoid exposing internal details in response)
-    console.error('Admin invitation error:', error);
+    logger.error('Admin invitation handler failed', error, { source: 'api/admin/admin-invitations/send' });
     
     // Return appropriate error response
     return NextResponse.json(

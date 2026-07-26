@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BACKEND_URL, backendJsonResponse, upstreamAuthHeaders } from '@/app/api/auth/_utils';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const headers = upstreamAuthHeaders(request);
-
-    console.log('[AI Chat] Received request:', JSON.stringify(body, null, 2));
 
     // Validate request
     if (!body.message && !body.messages) {
@@ -41,8 +40,11 @@ export async function POST(request: NextRequest) {
       backendPayload.conversationId = body.conversationId;
     }
 
-    console.log('[AI Chat] Calling backend at:', `${BACKEND_URL}/api/ai/chat`);
-    console.log('[AI Chat] Backend payload:', JSON.stringify(backendPayload));
+    logger.info('AI chat request received', {
+      source: 'api/ai/chat',
+      stream: Boolean(backendPayload.stream),
+      hasConversationId: Boolean(backendPayload.conversationId),
+    });
 
     // Handle streaming request
     if (backendPayload.stream) {
@@ -53,13 +55,17 @@ export async function POST(request: NextRequest) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
 
+    const postHeaders = new Headers({
+      'Content-Type': 'application/json',
+      ...headers
+    });
+    // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
+    postHeaders.delete('origin');
+
     try {
       const response = await fetch(`${BACKEND_URL}/api/ai/chat`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...headers
-        },
+        headers: postHeaders,
         body: JSON.stringify(backendPayload),
         credentials: 'include',
         signal: controller.signal
@@ -67,29 +73,24 @@ export async function POST(request: NextRequest) {
 
       clearTimeout(timeoutId);
 
-      console.log('[AI Chat] Backend response status:', response.status);
+      logger.info('AI chat backend response', { source: 'api/ai/chat', statusCode: response.status });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[AI Chat] Backend error response:', errorText);
-        let errorData = {};
-        try {
-          errorData = JSON.parse(errorText);
-        } catch (e) {
-          errorData = { error: errorText };
-        }
+        await response.body?.cancel();
+        logger.error('AI chat backend request failed', undefined, {
+          source: 'api/ai/chat',
+          statusCode: response.status,
+        });
         return NextResponse.json(
           { 
             success: false, 
-            error: (errorData as any).error || 'Failed to communicate with AI assistant'
+            error: 'Failed to communicate with AI assistant'
           },
           { status: response.status }
         );
       }
 
       const data = await response.json();
-      console.log('[AI Chat] Backend response data:', JSON.stringify(data));
-
       const reply = data.reply || data.message || '';
 
       return NextResponse.json({
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
       clearTimeout(timeoutId);
       
       if (error.name === 'AbortError') {
-        console.error('[AI Chat] Request timed out');
+        logger.warn('AI chat request timed out', { source: 'api/ai/chat' });
         return NextResponse.json(
           { 
             success: false, 
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
         );
       }
       
-      console.error('[AI Chat] Error:', error);
+      logger.error('AI chat request failed', error, { source: 'api/ai/chat' });
       return NextResponse.json(
         { 
           success: false, 
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error: any) {
-    console.error('[AI Chat] Error:', error);
+    logger.error('AI chat handler failed', error, { source: 'api/ai/chat' });
     
     if (error.name === 'AbortError') {
       return NextResponse.json(
@@ -154,12 +155,16 @@ async function handleStreamingRequest(request: NextRequest, payload: any) {
   const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for streaming
 
   try {
+    const streamHeaders = new Headers({
+      'Content-Type': 'application/json',
+      ...headers
+    });
+    // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
+    streamHeaders.delete('origin');
+
     const response = await fetch(`${backendUrl}/api/ai/chat`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers
-      },
+      headers: streamHeaders,
       body: JSON.stringify(payload),
       credentials: 'include',
       signal: controller.signal
@@ -168,9 +173,13 @@ async function handleStreamingRequest(request: NextRequest, payload: any) {
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      const errorText = await response.text();
+      await response.body?.cancel();
+      logger.error('AI streaming backend request failed', undefined, {
+        source: 'api/ai/chat',
+        statusCode: response.status,
+      });
       return NextResponse.json(
-        { error: `Backend error: ${errorText}` },
+        { error: 'AI streaming request failed' },
         { status: response.status }
       );
     }
@@ -220,18 +229,20 @@ export async function GET(request: NextRequest) {
     // Handle different actions
     if (action === 'conversations') {
       // Get user's conversations
+      const getHeaders = new Headers(headers);
+      // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
+      getHeaders.delete('origin');
+
       const response = await fetch(`${backendUrl}/api/ai/conversations`, {
         method: 'GET',
-        headers: {
-          ...headers
-        },
+        headers: getHeaders,
         credentials: 'include'
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
+        await response.body?.cancel();
         return NextResponse.json(
-          { error: errorText },
+          { error: 'Failed to retrieve conversations' },
           { status: response.status }
         );
       }
@@ -249,18 +260,20 @@ export async function GET(request: NextRequest) {
         );
       }
 
+      const getConvHeaders = new Headers(headers);
+      // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
+      getConvHeaders.delete('origin');
+
       const response = await fetch(`${backendUrl}/api/ai/conversation/${conversationId}`, {
         method: 'GET',
-        headers: {
-          ...headers
-        },
+        headers: getConvHeaders,
         credentials: 'include'
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
+        await response.body?.cancel();
         return NextResponse.json(
-          { error: errorText },
+          { error: 'Failed to retrieve conversation' },
           { status: response.status }
         );
       }
@@ -274,7 +287,7 @@ export async function GET(request: NextRequest) {
       { status: 400 }
     );
   } catch (error: any) {
-    console.error('[AI Chat GET] Error:', error);
+    logger.error('AI conversations handler failed', error, { source: 'api/ai/chat' });
     return NextResponse.json(
       { error: 'Failed to process request' },
       { status: 500 }
@@ -298,18 +311,20 @@ export async function DELETE(request: NextRequest) {
 
     const backendUrl = BACKEND_URL;
 
+    const deleteHeaders = new Headers(headers);
+    // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
+    deleteHeaders.delete('origin');
+
     const response = await fetch(`${backendUrl}/api/ai/conversation/${conversationId}`, {
       method: 'DELETE',
-      headers: {
-        ...headers
-      },
+      headers: deleteHeaders,
       credentials: 'include'
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
+      await response.body?.cancel();
       return NextResponse.json(
-        { error: errorText },
+        { error: 'Failed to delete conversation' },
         { status: response.status }
       );
     }
@@ -317,7 +332,7 @@ export async function DELETE(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error('[AI Chat DELETE] Error:', error);
+    logger.error('AI conversation deletion failed', error, { source: 'api/ai/chat' });
     return NextResponse.json(
       { error: 'Failed to delete conversation' },
       { status: 500 }

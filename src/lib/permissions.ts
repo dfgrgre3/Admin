@@ -12,6 +12,10 @@ export const PERMISSIONS = {
   // User Management
   USERS_VIEW: "users:view",
   USERS_MANAGE: "users:manage",
+  USERS_VIEW_FINANCIAL: "users:view:financial",
+  USERS_VIEW_CONTACT: "users:view:contact",
+  USERS_VIEW_AUDIT_LOG: "users:view:audit_log",
+  USERS_ADD_NOTE: "users:add:note",
   STUDENTS_VIEW: "students:view",
 
   // Content Management (Subjects, Books, Resources, Exams)
@@ -35,6 +39,9 @@ export const PERMISSIONS = {
 
   TEACHERS_VIEW: "teachers:view",
   TEACHERS_MANAGE: "teachers:manage",
+
+  PARENTS_VIEW: "parents:view",
+  PARENTS_MANAGE: "parents:manage",
 
   SEASONS_VIEW: "seasons:view",
   SEASONS_MANAGE: "seasons:manage",
@@ -87,6 +94,19 @@ export const PERMISSIONS = {
   // Tax Management
   TAXES_VIEW: "taxes:view",
   TAXES_MANAGE: "taxes:manage",
+
+  // Roles & Permissions Management
+  ROLES_VIEW: "roles:view",
+  ROLES_CREATE: "roles:create",
+  ROLES_UPDATE: "roles:update",
+  ROLES_DELETE: "roles:delete",
+  ROLES_RESTORE: "roles:restore",
+  ROLES_ASSIGN_PERMISSIONS: "roles:assign_permissions",
+  ROLES_REMOVE_PERMISSIONS: "roles:remove_permissions",
+  ROLES_ASSIGN_USERS: "roles:assign_users",
+  ROLES_REMOVE_USERS: "roles:remove_users",
+  PERMISSIONS_VIEW: "permissions:view",
+  PERMISSIONS_MANAGE: "permissions:manage",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -180,6 +200,8 @@ function getEffectivePermissionStrings(user: {
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   ADMIN: [PERMISSIONS.ADMIN_BYPASS],
 
+  SUPER_ADMIN: [PERMISSIONS.ADMIN_BYPASS],
+
   MODERATOR: [
     PERMISSIONS.DASHBOARD_VIEW,
     PERMISSIONS.ANALYTICS_VIEW,
@@ -187,6 +209,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.USERS_VIEW,
     PERMISSIONS.STUDENTS_VIEW,
     PERMISSIONS.TEACHERS_VIEW,
+    PERMISSIONS.PARENTS_VIEW,
     PERMISSIONS.SUBJECTS_VIEW,
     PERMISSIONS.LEARNING_PATHS_VIEW,
     PERMISSIONS.LEARNING_PATHS_MANAGE,
@@ -201,6 +224,15 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.AUDIT_LOGS_VIEW,
     PERMISSIONS.LIVE_MONITOR_VIEW,
     PERMISSIONS.MARKETING_VIEW,
+  ],
+
+  SUPPORT: [
+    PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.USERS_VIEW,
+    PERMISSIONS.STUDENTS_VIEW,
+    PERMISSIONS.TEACHERS_VIEW,
+    PERMISSIONS.PARENTS_VIEW,
+    PERMISSIONS.AUDIT_LOGS_VIEW,
   ],
 
   TEACHER: [
@@ -220,6 +252,11 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.ANALYTICS_VIEW,
   ],
 
+  PARENT: [
+    PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.PARENTS_VIEW,
+  ],
+
   STUDENT: [],
 };
 
@@ -234,7 +271,7 @@ export function hasPermission(
   if (!user) return false;
 
   const role = user.role?.toUpperCase();
-  if (role === "ADMIN") return true;
+  if (role === "SUPER_ADMIN") return true;
 
   const required = resolvePermissionInput(permission);
   if (!required) return false;

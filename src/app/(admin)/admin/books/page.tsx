@@ -392,8 +392,8 @@ export default function AdminBooksPage() {
           ...(canManageBooks ? [{
             label: "حذف المحدد",
             icon: Trash2,
-            variant: "destructive",
-            onClick: async (rows) => {
+            variant: "destructive" as const,
+            onClick: async (rows: Book[]) => {
               const ids = rows.map((r: Book) => r.id);
               const response = await adminFetch(apiRoutes.admin.books, {
                 method: "DELETE",

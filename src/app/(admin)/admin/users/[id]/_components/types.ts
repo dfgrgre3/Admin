@@ -130,7 +130,8 @@ export const statusColors: Record<UserStatus, string> = {
   SUSPENDED: "bg-warning/10 text-warning border-warning/20",
   BANNED: "bg-danger/10 text-danger border-danger/20",
   INACTIVE: "bg-muted text-muted-foreground border-border/20",
-  DELETED: "bg-muted text-muted-foreground border-border/20"
+  DELETED: "bg-muted text-muted-foreground border-border/20",
+  PENDING_VERIFICATION: "bg-info/10 text-info border-info/20"
 };
 
 export const statusLabels: Record<UserStatus, string> = {
@@ -138,7 +139,8 @@ export const statusLabels: Record<UserStatus, string> = {
   SUSPENDED: "موقوف",
   BANNED: "محظور",
   INACTIVE: "غير نشط",
-  DELETED: "محذوف"
+  DELETED: "محذوف",
+  PENDING_VERIFICATION: "قيد التحقق"
 };
 
 export const gradeLabels: Record<string, string> = {
@@ -175,8 +177,10 @@ export const roleOptions: ReadonlyArray<{ value: string; label: string }> = [
   { value: UserRole.STUDENT, label: "طالب" },
   { value: UserRole.TEACHER, label: "معلم" },
   { value: UserRole.ADMIN, label: "مدير" },
+  { value: UserRole.SUPER_ADMIN, label: "مدير عام" },
+  { value: UserRole.SUPPORT, label: "دعم فني" },
   { value: UserRole.MODERATOR, label: "مشرف" },
-  { value: "USER", label: "مستخدم" },
+  { value: UserRole.PARENT, label: "ولي أمر" },
 ];
 
 export const gradeLevelOptions: ReadonlyArray<{ value: string; label: string }> = Object.entries(gradeLabels).map(

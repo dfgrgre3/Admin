@@ -105,7 +105,12 @@ export function AdminUpload({
         throw new Error(result?.details || result?.error || "فشل رفع الملف");
       }
 
-      onUploadComplete(result.fileUrl, buildMetadata(file, durationSeconds));
+      const uploadedData = result?.data ?? result;
+      if (!uploadedData?.fileUrl) {
+        throw new Error("لم يُرجع الخادم رابط الملف بعد الرفع");
+      }
+
+      onUploadComplete(uploadedData.fileUrl, buildMetadata(file, durationSeconds));
     },
     [buildMetadata, onUploadComplete],
   );
@@ -127,13 +132,23 @@ export function AdminUpload({
       });
 
       const presignResult = await presignResponse.json();
-      if (!presignResponse.ok || !presignResult?.data?.uploadUrl) {
+      const presignedData = presignResult?.data ?? presignResult;
+      if (!presignResponse.ok || !presignedData?.uploadUrl) {
         throw new Error(presignResult?.error || presignResult?.details || "فشل الحصول على رابط الرفع");
       }
 
-      const { uploadUrl, fileKey, publicUrl } = presignResult.data;
+      const { uploadUrl, publicUrl } = presignedData;
 
-      await new Promise<void>((resolve, reject) => {
+      // Local storage returns /uploads/... as its public URL. It is not a
+      // presigned PUT endpoint, so sending the browser there produces a 404.
+      // In that mode use the authenticated multipart endpoint instead.
+      if (!/^https?:\/\//i.test(uploadUrl)) {
+        await uploadSingleRequest(file, durationSeconds);
+        return;
+      }
+
+      try {
+        await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("PUT", uploadUrl, true);
 
@@ -147,19 +162,30 @@ export function AdminUpload({
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve();
           } else {
-            reject(new Error(`فشل رفع الملف إلى السحابة (Status: ${xhr.status})`));
+            const error = new Error(`فشل رفع الملف إلى السحابة (Status: ${xhr.status})`);
+            (error as Error & { status?: number }).status = xhr.status;
+            reject(error);
           }
         };
 
         xhr.onerror = () => reject(new Error("خطأ في الاتصال بسحابة التخزين"));
         xhr.setRequestHeader("Content-Type", file.type);
         xhr.send(file);
-      });
+        });
+      } catch (error) {
+        // A stale/misconfigured presigned endpoint can return 404. Retry via
+        // the backend multipart route instead of exposing a storage URL error.
+        if ((error as Error & { status?: number })?.status === 404) {
+          await uploadSingleRequest(file, durationSeconds);
+          return;
+        }
+        throw error;
+      }
 
       setProgress(100);
       onUploadComplete(publicUrl || `${uploadUrl.split("?")[0]}`, buildMetadata(file, durationSeconds));
     },
-    [buildMetadata, onUploadComplete],
+    [buildMetadata, onUploadComplete, uploadSingleRequest],
   );
 
   const uploadChunked = React.useCallback(

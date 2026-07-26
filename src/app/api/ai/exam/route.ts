@@ -40,14 +40,18 @@ export async function POST(request: NextRequest) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for AI generation
 
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+      'Cookie': cookieHeader
+    });
+    // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
+    headers.delete('origin');
+
     let response;
     try {
       response = await fetch(`${BACKEND_URL}/api/ai/exam`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': cookieHeader
-        },
+        headers,
         body: JSON.stringify(body),
         credentials: 'include',
         signal: controller.signal

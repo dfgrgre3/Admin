@@ -1,4 +1,4 @@
-type AdminAction = "CREATE" | "UPDATE" | "DELETE" | "VIEW" | "PUBLISH" | "UNPUBLISH" | "LOGIN" | "LOGOUT";
+export type AdminAction = "CREATE" | "UPDATE" | "DELETE" | "VIEW" | "PUBLISH" | "UNPUBLISH" | "LOGIN" | "LOGOUT";
 
 interface AuditLogEntry {
   action: AdminAction;
@@ -9,29 +9,12 @@ interface AuditLogEntry {
   timestamp: string;
 }
 
-const AUDIT_LOG_KEY = "admin_audit_log";
-const MAX_LOG_ENTRIES = 500;
-
-function getAuditLogs(): AuditLogEntry[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const stored = localStorage.getItem(AUDIT_LOG_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveAuditLogs(logs: AuditLogEntry[]) {
-  if (typeof window === "undefined") return;
-  try {
-    const trimmed = logs.slice(-MAX_LOG_ENTRIES);
-    localStorage.setItem(AUDIT_LOG_KEY, JSON.stringify(trimmed));
-  } catch {
-    // Storage full or unavailable
-  }
-}
-
+/**
+ * The Go admin middleware is the source of truth for audit events. Never write
+ * audit data to browser storage: it is user-controlled and can be erased or
+ * forged. This compatibility function intentionally does not send a second,
+ * browser-supplied event (the backend already logs the actual request).
+ */
 export function logAdminAction(
   action: AdminAction,
   entityType: string,
@@ -41,27 +24,29 @@ export function logAdminAction(
     details?: Record<string, unknown>;
   }
 ) {
-  const entry: AuditLogEntry = {
-    action,
-    entityType,
-    entityId: options?.entityId,
-    entityName: options?.entityName,
-    details: options?.details,
-    timestamp: new Date().toISOString(),
-  };
-
-  const logs = getAuditLogs();
-  logs.push(entry);
-  saveAuditLogs(logs);
+  void action;
+  void entityType;
+  void options;
 }
 
-export function getRecentAuditLogs(limit: number = 50): AuditLogEntry[] {
-  const logs = getAuditLogs();
-  return logs.slice(-limit).reverse();
-}
-
-export function clearAuditLogs() {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem(AUDIT_LOG_KEY);
+export async function getRecentAuditLogs(limit: number = 50): Promise<unknown[]> {
+  const safeLimit = Math.min(Math.max(Math.floor(limit), 1), 100);
+  const response = await fetch(`/api/admin/audit-logs?limit=${safeLimit}`, {
+    credentials: "include",
+    headers: { Accept: "application/json" },
+  });
+  if (!response.ok) throw new Error(`Audit log request failed (${response.status})`);
+  const result: unknown = await response.json();
+  if (Array.isArray(result)) return result;
+  if (result && typeof result === "object") {
+    const data = result as { logs?: unknown; data?: { logs?: unknown } };
+    const logs = data.logs ?? data.data?.logs;
+    if (Array.isArray(logs)) return logs;
   }
+  return [];
+}
+
+/** Audit logs are append-only; deletion is intentionally unavailable. */
+export function clearAuditLogs(): never {
+  throw new Error("Audit logs are server-authoritative and cannot be cleared from the client");
 }

@@ -37,7 +37,6 @@ import {
   Keyboard,
   Star,
   StarOff,
-  Zap,
   UserPlus,
   FilePlus,
   Bookmark,
@@ -86,14 +85,6 @@ interface SidebarNavItem {
   icon: React.ElementType;
   badge?: number;
   color?: string;
-  permission?: string;
-}
-
-interface QuickAction {
-  title: string;
-  href: string;
-  icon: React.ElementType;
-  color: string;
   permission?: string;
 }
 
@@ -468,14 +459,6 @@ const infrastructureNavItems: SidebarNavItem[] = [
   }
 ];
 
-const quickActions: QuickAction[] = [
-  { title: "إضافة مستخدم", href: "/admin/users/create", icon: UserPlus, color: "orange", permission: "USERS_MANAGE" },
-  { title: "إضافة محتوى", href: "/admin/subjects?create=1", icon: FilePlus, color: "violet", permission: "SUBJECTS_MANAGE" },
-  { title: "إضافة مهمة", href: "/admin/challenges?create=1", icon: ClipboardList, color: "amber", permission: "CHALLENGES_MANAGE" },
-  { title: "المساعد الذكي", href: "/admin/ai", icon: Bot, color: "rose", permission: "AI_MANAGE" },
-  { title: "إرسال إعلان", href: "/admin/announcements?create=1", icon: Bell, color: "purple", permission: "ANNOUNCEMENTS_MANAGE" },
-];
-
 function SidebarNavLink({ item, pathname, collapsed, onBookmarkToggle }: SidebarNavLinkProps) {
   const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
   const Icon = item.icon;
@@ -485,39 +468,41 @@ function SidebarNavLink({ item, pathname, collapsed, onBookmarkToggle }: Sidebar
       href={item.href}
       aria-label={collapsed ? item.title : undefined}
       className={cn(
-        "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+        "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 outline-none",
+        "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         isActive
-          ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
-          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+          ? "bg-gradient-to-l from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/30"
+          : "text-muted-foreground hover:bg-accent/80 hover:text-foreground"
       )}
       aria-current={isActive ? "page" : undefined}
     >
       {isActive && (
-        <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-1 h-6 rounded-l-full bg-primary" />
+        <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-1 h-7 rounded-l-full bg-gradient-to-b from-primary to-primary/60 shadow-lg shadow-primary/50" />
       )}
 
       <div
         className={cn(
-          "flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 flex-shrink-0",
+          "flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200 flex-shrink-0",
+          "border",
           isActive
-            ? "bg-card/20 text-primary-foreground"
-            : "bg-muted/50 group-hover:bg-gradient-to-br group-hover:text-white",
-          !isActive && item.color
+            ? "bg-card/30 border-primary/30 text-primary-foreground shadow-md"
+            : "bg-muted/60 border-transparent group-hover:border-primary/20 group-hover:shadow-md",
+          !isActive && item.color && "group-hover:bg-gradient-to-br"
         )}
       >
         <Icon
           className={cn(
-            "h-4 w-4 transition-transform duration-200",
-            "group-hover:scale-110"
+            "h-4 w-4 transition-all duration-200",
+            "group-hover:scale-110 group-hover:rotate-3"
           )}
           aria-hidden="true"
         />
       </div>
 
-      {!collapsed && <span className="truncate flex-1">{item.title}</span>}
+      {!collapsed && <span className="truncate flex-1 font-medium">{item.title}</span>}
 
       {!collapsed && item.badge && (
-        <span className="mr-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground px-1">
+        <span className="mr-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground px-1.5 shadow-sm">
           {item.badge}
         </span>
       )}
@@ -529,11 +514,11 @@ function SidebarNavLink({ item, pathname, collapsed, onBookmarkToggle }: Sidebar
             e.stopPropagation();
             onBookmarkToggle(item);
           }}
-          className="p-1 rounded-md transition-all opacity-0 group-hover:opacity-100 hover:bg-muted"
+          className="p-1.5 rounded-lg transition-all opacity-0 group-hover:opacity-100 hover:bg-background/80 focus-visible:opacity-100"
           aria-label="إضافة للمفضلة"
           title="إضافة للمفضلة"
         >
-          <Star className="h-3.5 w-3.5 text-muted-foreground hover:text-yellow-500" />
+          <Star className="h-3.5 w-3.5 text-muted-foreground hover:text-yellow-500 transition-colors" />
         </button>
       )}
     </Link>
@@ -544,7 +529,7 @@ function SidebarNavLink({ item, pathname, collapsed, onBookmarkToggle }: Sidebar
       <TooltipProvider delayDuration={0}>
         <Tooltip>
           <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-          <TooltipContent side="left" className="font-medium">
+          <TooltipContent side="left" className="font-medium shadow-lg">
             {item.title}
           </TooltipContent>
         </Tooltip>
@@ -576,19 +561,19 @@ function SidebarNavSection({
           type="button"
           aria-expanded={!sectionHidden}
           aria-controls={sectionId}
-          className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60 hover:text-foreground transition-colors group select-none text-right focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-md"
+          className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70 hover:text-foreground transition-all duration-200 group select-none text-right focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg hover:bg-accent/50"
         >
-          <span>{title}</span>
+          <span className="transition-colors">{title}</span>
           <ChevronDown
             className={cn(
-              "h-3.5 w-3.5 transition-transform duration-200 opacity-60 group-hover:opacity-100",
-              sectionHidden ? "rotate-90" : "rotate-0"
+              "h-4 w-4 transition-all duration-200 opacity-70 group-hover:opacity-100 group-hover:scale-110",
+              sectionHidden ? "rotate-180" : "rotate-0"
             )}
             aria-hidden="true"
           />
         </button>
       )}
-      {collapsed && <div className="mx-3 my-2 h-px bg-border/50" />}
+      {collapsed && <div className="mx-3 my-2.5 h-px bg-gradient-to-r from-transparent via-border to-transparent" />}
 
       <div
         id={sectionId}
@@ -640,7 +625,6 @@ const BOOKMARK_ICON_MAP: Record<string, React.ElementType> = {
   Search,
   Keyboard,
   Star,
-  Zap,
   UserPlus,
   FilePlus,
   Bookmark,
@@ -706,15 +690,6 @@ export function AdminSidebar() {
   const filteredCommunityNav = React.useMemo(() => filterBySearchAndPermission(communityNavItems), [filterBySearchAndPermission]);
   const filteredFinancialNav = React.useMemo(() => filterBySearchAndPermission(financialNavItems), [filterBySearchAndPermission]);
   const filteredInfrastructureNav = React.useMemo(() => filterBySearchAndPermission(infrastructureNavItems), [filterBySearchAndPermission]);
-  const filteredQuickActions = React.useMemo(() => {
-    return quickActions.filter((action) => {
-      const requiredPermission = action.permission
-        ? resolvePermissionInput(action.permission)
-        : getRequiredPermissionForAdminPath(action.href);
-
-      return !requiredPermission || hasPermission(requiredPermission);
-    });
-  }, [hasPermission]);
 
   // Load bookmarks from localStorage via lazy initializer — runs once during
   // initial render (no effect needed, no cascading setState warning).
@@ -789,22 +764,22 @@ export function AdminSidebar() {
       aria-label="القائمة الجانبية للإدارة"
     >
       {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b px-3">
+      <div className="flex h-16 items-center justify-between border-b border-border/50 bg-gradient-to-b from-background/80 to-background/50 backdrop-blur-sm px-3">
         {!collapsed && (
-          <div className="flex items-center gap-2.5 pr-1">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden bg-card border border-primary/20 shadow-lg shadow-primary/10">
+          <div className="flex items-center gap-3 pr-1 animate-in fade-in slide-in-from-right-2 duration-300">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/30 shadow-lg shadow-primary/20 ring-2 ring-primary/10">
               <Image
                 src="/logo-tolo.jpg"
                 alt="TOLO"
-                width={36}
-                height={36}
+                width={40}
+                height={40}
                 className="h-full w-full object-cover"
                 priority
               />
             </div>
             <div>
               <span className="font-bold text-sm tracking-tight text-foreground">لوحة التحكم</span>
-              <p className="text-[10px] text-muted-foreground font-medium">إدارة الموقع</p>
+              <p className="text-[10px] text-muted-foreground font-medium mt-0.5">إدارة الموقع</p>
             </div>
           </div>
         )}
@@ -816,6 +791,7 @@ export function AdminSidebar() {
               variant="ghost"
               onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
               aria-label="البحث"
+              className="hover:bg-primary/10 hover:text-primary transition-all"
             />
           )}
           <IconButton
@@ -823,22 +799,26 @@ export function AdminSidebar() {
             label={collapsed ? "توسيع" : "طي"}
             variant="ghost"
             onClick={toggleCollapsed}
-            className={collapsed ? "mx-auto" : ""}
+            className={cn(
+              "transition-all duration-200",
+              collapsed ? "mx-auto" : "",
+              "hover:bg-primary/10 hover:text-primary"
+            )}
             aria-label={collapsed ? "توسيع القائمة الجانبية" : "طي القائمة الجانبية"}
           />
         </div>
       </div>
 
       {!collapsed && user && (
-        <div className="border-b border-border px-3 py-3">
-          <div className="rounded-2xl border border-primary/10 bg-gradient-to-br from-primary/10 via-card to-card p-3 backdrop-blur-sm">
+        <div className="border-b border-border/50 px-3 py-3 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card p-3 backdrop-blur-sm shadow-lg shadow-primary/5 hover:shadow-primary/10 transition-all duration-300">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-chart-2 text-white font-bold text-xs shadow-md shadow-primary/20">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-chart-2 text-white font-bold text-sm shadow-lg shadow-primary/30 ring-2 ring-primary/20">
                 {(user.name || "A").substring(0, 2).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-black text-foreground">{user.name || "Admin"}</p>
-                <p className="truncate mt-0.5 text-[10px] text-muted-foreground">{user.email || "admin@tolo.com"}</p>
+                <p className="truncate mt-0.5 text-[10px] text-muted-foreground font-medium">{user.email || "admin@tolo.com"}</p>
               </div>
             </div>
           </div>
@@ -847,72 +827,44 @@ export function AdminSidebar() {
 
       {/* Search Input */}
       {!collapsed && (
-        <div className="px-3 pt-2 pb-2 border-b">
-          <div className="relative">
-            <Search className="absolute right-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+        <div className="px-3 pt-3 pb-2 border-b border-border/50">
+          <div className="relative group">
+            <Search className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
             <input
               type="text"
               placeholder="بحث سريع في القائمة..."
               aria-label="بحث سريع في القائمة"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl bg-muted/60 pl-8 pr-9 py-2 text-xs transition-all duration-200 hover:bg-muted focus:bg-background focus:outline-none focus:ring-1 focus:ring-primary border border-transparent focus:border-border text-foreground text-right"
+              className="w-full rounded-xl bg-muted/40 pl-8 pr-10 py-2.5 text-xs transition-all duration-200 hover:bg-muted/60 focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary border border-transparent focus:border-primary/30 text-foreground text-right shadow-sm"
               dir="rtl"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute left-3 top-2 text-muted-foreground hover:text-foreground text-xs p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                className="absolute left-3 top-2.5 text-muted-foreground hover:text-foreground text-xs p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md hover:bg-muted transition-all"
                 type="button"
                 aria-label="مسح البحث"
               >
-                ✕
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             )}
           </div>
         </div>
       )}
 
-      {/* Quick Actions */}
-      {!collapsed && filteredQuickActions.length > 0 && (
-        <div className="px-3 py-2 border-b">
-          <h3 className="px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1">
-            <Zap className="h-3 w-3" />
-            إجراءات سريعة
-          </h3>
-          <div className="grid grid-cols-2 gap-1 mt-1">
-            {filteredQuickActions.map((action) => {
-              const Icon = action.icon;
-              return (
-                <Link
-                  key={action.href}
-                  href={action.href}
-                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                >
-                  <Icon className={cn(
-                    "h-3.5 w-3.5",
-                    action.color === "orange" && "text-orange-500",
-                    action.color === "violet" && "text-violet-500",
-                    action.color === "amber" && "text-amber-500",
-                    action.color === "rose" && "text-rose-500",
-                    action.color === "purple" && "text-purple-500"
-                  )} />
-                  <span className="truncate">{action.title}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {/* Bookmarks */}
       {!collapsed && bookmarks.length > 0 && (
-        <div className="px-3 py-2 border-b">
-          <h3 className="px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60 flex items-center gap-1">
-            <Star className="h-3 w-3" />
-            المفضلة
+        <div className="px-3 py-3 border-b border-border/50">
+          <h3 className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70 flex items-center gap-2">
+            <div className="flex items-center justify-center h-5 w-5 rounded-md bg-yellow-500/10 text-yellow-500">
+              <Star className="h-3 w-3" />
+            </div>
+            <span>المفضلة</span>
           </h3>
-          <nav className="space-y-0.5 mt-1">
+          <nav className="space-y-0.5 mt-2">
             {bookmarks.map((bookmark) => {
               const IconComponent = BOOKMARK_ICON_MAP[bookmark.iconName] || Bookmark;
               const isActive = pathname === bookmark.href;
@@ -924,22 +876,22 @@ export function AdminSidebar() {
                   <Link
                     href={bookmark.href}
                     className={cn(
-                      "flex-1 flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors",
+                      "flex-1 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs transition-all duration-200",
                       isActive
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                        ? "bg-primary/15 text-primary font-semibold shadow-sm"
+                        : "text-muted-foreground hover:bg-accent/80 hover:text-foreground"
                     )}
                   >
-                    <IconComponent className="h-3.5 w-3.5" />
-                    <span className="truncate">{bookmark.title}</span>
+                    <IconComponent className="h-4 w-4" />
+                    <span className="truncate font-medium">{bookmark.title}</span>
                   </Link>
                   <button
                     onClick={() => removeBookmark(bookmark.id)}
                     aria-label={`إزالة "${bookmark.title}" من المفضلة`}
                     title={`إزالة "${bookmark.title}" من المفضلة`}
-                    className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 p-1.5 hover:bg-muted rounded transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 p-1.5 hover:bg-destructive/10 rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
-                    <StarOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    <StarOff className="h-4 w-4 text-muted-foreground hover:text-destructive transition-colors" aria-hidden="true" />
                   </button>
                 </div>
               );
@@ -949,7 +901,7 @@ export function AdminSidebar() {
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-3 space-y-4 scrollbar-thin" aria-label="القائمة الرئيسية">
+      <nav className="flex-1 overflow-y-auto p-3 space-y-5 scrollbar-thin" aria-label="القائمة الرئيسية">
         <SidebarNavSection
           title="الرئيسية"
           items={filteredMainNav}
@@ -1007,7 +959,7 @@ export function AdminSidebar() {
       </nav>
 
       {/* Footer */}
-      <nav className="border-t p-3 space-y-0.5" aria-label="أدوات النظام">
+      <nav className="border-t border-border/50 p-3 space-y-0.5" aria-label="أدوات النظام">
         <SidebarNavLink
           item={{
             title: "سجل النظام",
@@ -1034,24 +986,24 @@ export function AdminSidebar() {
         {!collapsed && (
           <button
             onClick={() => setShortcutsOpen(true)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-xl transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary hover:shadow-sm"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/60 border border-border/50">
               <Keyboard className="h-4 w-4" />
             </div>
-            <span>اختصارات لوحة المفاتيح</span>
+            <span className="font-medium">اختصارات لوحة المفاتيح</span>
           </button>
         )}
 
-        <div className={cn("pt-2 mt-2 border-t", collapsed && "px-0")}>
+        <div className={cn("pt-2 mt-2 border-t border-border/50", collapsed && "px-0")}>
           <Link
             href="/"
-            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-accent/80 hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary hover:shadow-sm"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/60 border border-border/50">
               <Home className="h-4 w-4" />
             </div>
-            {!collapsed && <span>العودة للموقع</span>}
+            {!collapsed && <span className="font-medium">العودة للموقع</span>}
           </Link>
         </div>
       </nav>

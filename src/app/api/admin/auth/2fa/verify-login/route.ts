@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
+import type { NextRequest } from 'next/server';
 import { forwardToGoApi } from '@/app/api/admin/_proxy';
 
 /**
@@ -73,23 +75,21 @@ export async function POST(
     }
 
     // Log attempt (without sensitive data)
-    console.info(`2FA verification for login attempt for user ID: ${trimmedUserId}`);
+    logger.info('Admin login 2FA verification requested', { source: 'api/admin/auth/2fa/verify-login' });
 
     // Forward request to Go API with validated data
-    const forwardedRequest = new Request(request, {
+    const response = await forwardToGoApi(request, '/api/admin/auth/2fa/verify-login', {
+      method: 'POST',
       body: JSON.stringify({ code: trimmedCode, userId: trimmedUserId }),
-      headers: request.headers
     });
 
-    const response = await forwardToGoApi(forwardedRequest, '/api/admin/auth/2fa/verify-login', { method: 'POST' });
-
     // Log response status for monitoring
-    console.info(`2FA verification for login completed with status: ${response.status}`);
+    logger.info('Admin login 2FA verification completed', { source: 'api/admin/auth/2fa/verify-login', statusCode: response.status });
 
     return response;
   } catch (error) {
     // Log detailed error for debugging (avoid exposing internal details in response)
-    console.error('2FA verification for login error:', error);
+    logger.error('Admin login 2FA verification failed', error, { source: 'api/admin/auth/2fa/verify-login' });
     
     // Return appropriate error response
     return NextResponse.json(

@@ -87,8 +87,8 @@ export default function EditInstructorPage() {
           phone: values.phone,
           country: values.country,
           status: values.status,
-          specialties: values.specialties.split(",").map(s => s.trim()).filter(Boolean),
-          languages: values.languages.split(",").map(s => s.trim()).filter(Boolean),
+          specialties: (values.specialties || "").split(",").map(s => s.trim()).filter(Boolean),
+          languages: (values.languages || "").split(",").map(s => s.trim()).filter(Boolean),
           commissionRate: values.commissionRate,
           experience: values.experience,
         },
@@ -153,7 +153,7 @@ export default function EditInstructorPage() {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-bold">الدولة</label>
-            <Select value={form.watch("country")} onValueChange={form.setValue("country")}>
+            <Select value={form.watch("country") || ""} onValueChange={(value) => form.setValue("country", value as string)}>
               <SelectTrigger>
                 <SelectValue placeholder="اختر الدولة" />
               </SelectTrigger>
@@ -176,7 +176,7 @@ export default function EditInstructorPage() {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-bold">الحالة *</label>
-            <Select value={form.watch("status")} onValueChange={form.setValue("status")}>
+            <Select value={form.watch("status")} onValueChange={(value: "PENDING" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "SUSPENDED") => form.setValue("status", value)}>
               <SelectTrigger>
                 <SelectValue placeholder="اختر الحالة" />
               </SelectTrigger>

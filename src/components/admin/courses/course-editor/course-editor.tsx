@@ -328,7 +328,7 @@ ${seoContext}
 - يكون باللغة ${courseData.language === "en" ? "الإنجليزية" : "العربية"}`;
       }
 
-      const response = await fetch(apiRoutes.ai.chat, {
+      const response = await apiClient.fetch(apiRoutes.ai.chat, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: prompt }),
@@ -394,7 +394,7 @@ ${Object.entries(courseData)
 
 اجعل التحليل احترافياً وعملياً.`;
 
-      const response = await fetch(apiRoutes.ai.chat, {
+      const response = await apiClient.fetch(apiRoutes.ai.chat, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: prompt }),

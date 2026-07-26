@@ -1,7 +1,12 @@
 export interface DashboardPayload {
   stats?: Record<string, any>;
   activity?: Record<string, any>;
-  topSellingCourses?: Array<Record<string, any>>;
+  topSellingCourses?: Array<{
+    id: string;
+    title: string;
+    sales: number;
+    revenue: number;
+  }>;
   criticalKPIs?: Array<Record<string, any>>;
   systemAlerts?: Array<Record<string, any>>;
 }
@@ -43,7 +48,18 @@ export function buildComprehensiveStats(payload: DashboardPayload = {}) {
     moderationQueue: Number(stats.moderationQueue ?? 0),
     pendingApprovals: Number(stats.pendingApprovals ?? 0),
     topSellingCourses: Array.isArray(payload.topSellingCourses) ? payload.topSellingCourses : [],
-    criticalKPIs: Array.isArray(payload.criticalKPIs) ? payload.criticalKPIs : [],
-    systemAlerts: Array.isArray(payload.systemAlerts) ? payload.systemAlerts : [],
+    criticalKPIs: Array.isArray(payload.criticalKPIs) ? payload.criticalKPIs.map(kpi => ({
+      name: (kpi as any).name || '',
+      value: Number((kpi as any).value ?? 0),
+      target: Number((kpi as any).target ?? 0),
+      unit: (kpi as any).unit || '',
+    })) : [],
+    systemAlerts: Array.isArray(payload.systemAlerts) ? payload.systemAlerts.map((alert: any) => ({
+      id: String(alert.id ?? ''),
+      type: String(alert.type ?? ''),
+      message: String(alert.message ?? ''),
+      severity: String(alert.severity ?? ''),
+      createdAt: String(alert.createdAt ?? ''),
+    })) : [],
   };
 }

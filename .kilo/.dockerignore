@@ -1,8 +1,10 @@
 **/.classpath
 **/.dockerignore
 **/.env
+**/.env.*
 **/.git
 **/.gitignore
+**/.next
 **/.project
 **/.settings
 **/.toolstarget
@@ -20,5 +22,11 @@
 **/obj
 **/secrets.dev.yaml
 **/values.dev.yaml
+.kilo/worktrees
+.venv
+coverage
+docs
+*.log
+*.tsbuildinfo
 LICENSE
 README.md

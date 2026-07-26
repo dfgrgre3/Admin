@@ -40,8 +40,17 @@ export function getUserActionBlockReason(
   if (actorRank < targetRank) {
     return "لا يمكن إدارة حساب أعلى منك صلاحية";
   }
+  if (actorRank === targetRank && actor.role === "ADMIN") {
+    return "لا يمكن تنفيذ هذا الإجراء على مدير بنفس مستوى صلاحيتك";
+  }
   if (actorRank === targetRank && target.role === "SUPER_ADMIN") {
     return "لا يمكن تنفيذ إجراء حساس على مدير أعلى آخر";
   }
   return null;
+}
+
+export function canAssignRole(actorRole: string, targetRole: string): boolean {
+  const actorRank = ROLE_RANK[actorRole] ?? -1;
+  const targetRank = ROLE_RANK[targetRole] ?? Number.POSITIVE_INFINITY;
+  return actorRank >= targetRank;
 }

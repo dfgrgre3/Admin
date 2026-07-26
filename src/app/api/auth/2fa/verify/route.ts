@@ -17,12 +17,16 @@ export async function POST(request: NextRequest) {
     const targetUrl = `${BACKEND_URL}/api/auth/mfa/verify`;
     console.log(`[API Proxy] POST 2FA verify to: ${targetUrl}`);
 
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+      ...upstreamAuthHeaders(request),
+    });
+    // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
+    headers.delete('origin');
+
     const response = await fetch(targetUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...upstreamAuthHeaders(request),
-      },
+      headers,
       body: body,
       credentials: 'include',
     });

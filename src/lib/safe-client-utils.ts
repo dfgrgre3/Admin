@@ -449,7 +449,7 @@ async function refreshAuthSession(): Promise<boolean> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000); // 8s timeout
 
-    const refreshUrl = buildRuntimeApiUrl('/auth/refresh');
+    const refreshUrl = '/api/auth/refresh';
     const refreshResponse = await fetch(refreshUrl, {
       method: 'POST',
       credentials: 'include',

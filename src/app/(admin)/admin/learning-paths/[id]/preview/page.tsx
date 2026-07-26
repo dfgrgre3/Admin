@@ -116,7 +116,6 @@ export default function LearningPathPreviewPage() {
                 </div>
               </div>
               {path.thumbnailUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={path.thumbnailUrl}
                   alt={path.name}

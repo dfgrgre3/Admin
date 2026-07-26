@@ -24,14 +24,18 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const targetUrl = `${BACKEND_URL}/api/settings/preferences`;
   const body = await request.arrayBuffer();
-  
+
+  const headers = new Headers({
+    ...upstreamAuthHeaders(request),
+    'Content-Type': request.headers.get('content-type') || 'application/json',
+  });
+  // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
+  headers.delete('origin');
+
   try {
     const response = await fetch(targetUrl, {
       method: 'PATCH',
-      headers: {
-        ...upstreamAuthHeaders(request),
-        'Content-Type': request.headers.get('content-type') || 'application/json',
-      },
+      headers,
       body,
       credentials: 'include',
     });

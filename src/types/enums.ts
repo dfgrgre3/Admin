@@ -31,9 +31,12 @@ export enum TaskStatus {
 
 export enum UserRole {
     STUDENT = 'STUDENT',
+    PARENT = 'PARENT',
     ADMIN = 'ADMIN',
+    SUPER_ADMIN = 'SUPER_ADMIN',
     TEACHER = 'TEACHER',
     MODERATOR = 'MODERATOR',
+    SUPPORT = 'SUPPORT',
 }
 
 export enum UserStatus {
@@ -42,6 +45,7 @@ export enum UserStatus {
     SUSPENDED = 'SUSPENDED',
     BANNED = 'BANNED',
     DELETED = 'DELETED',
+    PENDING_VERIFICATION = 'PENDING_VERIFICATION',
 }
 
 export enum Difficulty {

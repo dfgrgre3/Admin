@@ -134,16 +134,19 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
 
 // Role Badge
 interface RoleBadgeProps {
-  role: "ADMIN" | "TEACHER" | "STUDENT" | "MODERATOR" | "USER";
+  role: "ADMIN" | "TEACHER" | "STUDENT" | "MODERATOR" | "USER" | "PARENT" | "SUPER_ADMIN" | "SUPPORT";
   className?: string;
 }
 
 const roleConfig: Record<RoleBadgeProps["role"], { label: string; color: string; bg: string }> = {
   ADMIN: { label: "مدير", color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-500/10 border-orange-500/20" },
+  SUPER_ADMIN: { label: "مدير عام", color: "text-red-600 dark:text-red-400", bg: "bg-red-500/10 border-red-500/20" },
+  SUPPORT: { label: "دعم فني", color: "text-cyan-600 dark:text-cyan-400", bg: "bg-cyan-500/10 border-cyan-500/20" },
   TEACHER: { label: "معلم", color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-500/10 border-violet-500/20" },
   STUDENT: { label: "طالب", color: "text-fuchsia-600 dark:text-fuchsia-400", bg: "bg-fuchsia-500/10 border-fuchsia-500/20" },
   MODERATOR: { label: "مشرف", color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
   USER: { label: "مستخدم", color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-500/10 border-purple-500/20" },
+  PARENT: { label: "ولي أمر", color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10 border-blue-500/20" },
 };
 
 export function RoleBadge({ role, className }: RoleBadgeProps) {
