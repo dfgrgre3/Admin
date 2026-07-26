@@ -16,8 +16,8 @@ export async function register() {
 
       logger.info('[Instrumentation] Environment validated; background workers are managed by the Go backend.');
     } catch (error) {
-       logger.error('CRITICAL: System Startup Failed', error instanceof Error ? error : new Error(String(error)));
-       if (process.env.NODE_ENV === 'production') process.exit(1);
+       // Keep the process alive; platform lifecycle and request boundaries handle degraded startup safely.
+       logger.error('CRITICAL: System Startup Failed; running in degraded mode', error instanceof Error ? error : new Error(String(error)));
     }
   }
 }

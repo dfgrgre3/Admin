@@ -2,6 +2,12 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Base document styles kept in the stylesheet instead of inline HTML. */
+html { font-family: var(--font-alexandria), var(--font-sans), system-ui, sans-serif; background: hsl(var(--background)); color: hsl(var(--foreground)); }
+body { min-height: 100vh; margin: 0; }
+h1, h2, h3, h4, h5, h6 { font-weight: 700; color: hsl(var(--foreground)); }
+
+
 /* Design tokens migrated from the legacy tailwind.config.js to Tailwind CSS v4.
    NOTE: `@theme` makes the generated utilities reference the CSS
    variables (e.g. `hsl(var(--card))`) while supporting the

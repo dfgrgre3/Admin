@@ -41,14 +41,6 @@ export default async function RootLayout({
       <head>
         {/* No font preconnects: next/font/google self-hosts fonts at build time. */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        {/* Inline critical CSS to reduce render-blocking */}
-        <style dangerouslySetInnerHTML={{__html: `
-          /* Critical above-the-fold styles */
-          html{font-family:var(--font-alexandria),var(--font-sans),system-ui,sans-serif;background:hsl(var(--background));color:hsl(var(--foreground))}
-          body{min-height:100vh;margin:0}
-          /* Prevent FOIT for critical elements */
-          h1,h2,h3,h4,h5,h6{font-weight:700;color:hsl(var(--foreground))}
-        `}} />
       </head>
       <body className={`${alexandria.variable} font-sans`} suppressHydrationWarning>
         <SWRegistration />

@@ -51,9 +51,9 @@ function enforceClientRequestLimit(): void {
 class ApiError extends Error {
     public status: number;
     public code?: string;
-    public data?: any;
+    public data?: unknown;
 
-    constructor(message: string, status: number, code?: string, data?: any) {
+    constructor(message: string, status: number, code?: string, data?: unknown) {
         super(message);
         this.name = 'ApiError';
         this.status = status;
@@ -239,13 +239,16 @@ class ApiClient {
     private async handleApiErrorResponse(response: Response, retryCount: number, retries: number): Promise<true> {
         let errorMessage = `Server error: ${response.statusText}`;
         let errorCode = 'HTTP_ERROR';
-        let errorData: any = null;
+        let errorData: unknown = null;
         
         const responseText = await response.text();
         try {
             errorData = JSON.parse(responseText);
-            errorMessage = errorData.error || errorData.message || errorMessage;
-            errorCode = errorData.code || errorCode;
+            const body = errorData as Record<string, unknown>;
+            errorMessage = typeof body.error === 'string'
+                ? body.error
+                : typeof body.message === 'string' ? body.message : errorMessage;
+            errorCode = typeof body.code === 'string' ? body.code : errorCode;
         } catch {
             if (responseText) errorMessage = responseText;
         }
