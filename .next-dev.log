@@ -1549,3 +1549,81 @@ Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allow
  GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 10.1s (next.js: 211ms, proxy.ts: 8ms, application-code: 9.9s)
  GET /api/settings 200 in 13ms (next.js: 2ms, proxy.ts: 4ms, application-code: 7ms)
 ✓ Finished writing to filesystem cache in 10.2s
+✓ Finished filesystem cache database compaction in 45s
+✓ Finished filesystem cache database compaction in 17.3s
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 331ms (next.js: 153ms, proxy.ts: 20ms, application-code: 159ms)
+✓ Finished filesystem cache database compaction in 13.3s
+✓ Compiled in 1903ms
+ GET /api/settings 200 in 740ms (next.js: 641ms, proxy.ts: 90ms, application-code: 10ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 2.2s (next.js: 687ms, proxy.ts: 21ms, application-code: 1497ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 1560ms (next.js: 94ms, proxy.ts: 28ms, application-code: 1439ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 641ms (next.js: 8ms, proxy.ts: 508ms, application-code: 125ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 1093ms (next.js: 523ms, proxy.ts: 18ms, application-code: 552ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 196ms (next.js: 125ms, proxy.ts: 17ms, application-code: 55ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 52ms (next.js: 7ms, proxy.ts: 5ms, application-code: 41ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 118ms (next.js: 13ms, proxy.ts: 4ms, application-code: 100ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 84ms (next.js: 7ms, proxy.ts: 8ms, application-code: 69ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 782ms (next.js: 367ms, proxy.ts: 27ms, application-code: 388ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 785ms (next.js: 410ms, proxy.ts: 21ms, application-code: 353ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 779ms (next.js: 436ms, proxy.ts: 24ms, application-code: 319ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 788ms (next.js: 499ms, proxy.ts: 21ms, application-code: 268ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 791ms (next.js: 478ms, proxy.ts: 22ms, application-code: 291ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 238ms (next.js: 93ms, proxy.ts: 20ms, application-code: 124ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 274ms (next.js: 149ms, proxy.ts: 20ms, application-code: 104ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 65ms (next.js: 19ms, proxy.ts: 17ms, application-code: 29ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 278ms (next.js: 165ms, proxy.ts: 16ms, application-code: 97ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 345ms (next.js: 214ms, proxy.ts: 15ms, application-code: 115ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 83ms (next.js: 4ms, proxy.ts: 4ms, application-code: 75ms)
+○ Compiling middleware ...
+✓ Compiled in 31.9s
+✓ Finished writing to filesystem cache in 57s
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 18.0s (next.js: 17.8s, proxy.ts: 67ms, application-code: 121ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 86ms (next.js: 8ms, proxy.ts: 18ms, application-code: 60ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 41ms (next.js: 4ms, proxy.ts: 5ms, application-code: 32ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 573ms (next.js: 401ms, proxy.ts: 16ms, application-code: 156ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 88ms (next.js: 6ms, proxy.ts: 36ms, application-code: 46ms)
+✓ Compiled in 3.8s
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 3.6s (next.js: 2.9s, proxy.ts: 26ms, application-code: 657ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 1189ms (next.js: 166ms, proxy.ts: 221ms, application-code: 802ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 714ms (next.js: 4ms, proxy.ts: 4ms, application-code: 706ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 690ms (next.js: 4ms, proxy.ts: 4ms, application-code: 683ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 420ms (next.js: 7ms, proxy.ts: 4ms, application-code: 410ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 420ms (next.js: 26ms, proxy.ts: 4ms, application-code: 390ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 419ms (next.js: 44ms, proxy.ts: 4ms, application-code: 371ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 30ms (next.js: 4ms, proxy.ts: 2ms, application-code: 24ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 635ms (next.js: 29ms, proxy.ts: 7ms, application-code: 600ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 637ms (next.js: 10ms, proxy.ts: 7ms, application-code: 620ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 635ms (next.js: 50ms, proxy.ts: 7ms, application-code: 579ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 635ms (next.js: 72ms, proxy.ts: 7ms, application-code: 556ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 633ms (next.js: 325ms, proxy.ts: 7ms, application-code: 302ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 635ms (next.js: 306ms, proxy.ts: 7ms, application-code: 323ms)
+ GET /api/settings 200 in 2.0s (next.js: 1350ms, proxy.ts: 6ms, application-code: 674ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 2.7s (next.js: 9ms, proxy.ts: 271ms, application-code: 2.4s)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 2.7s (next.js: 297ms, proxy.ts: 271ms, application-code: 2.1s)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 2.7s (next.js: 620ms, proxy.ts: 271ms, application-code: 1759ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 2.7s (next.js: 315ms, proxy.ts: 271ms, application-code: 2.1s)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 2.7s (next.js: 334ms, proxy.ts: 271ms, application-code: 2.0s)
+ GET /api/settings 200 in 217ms (next.js: 2ms, proxy.ts: 48ms, application-code: 167ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 490ms (next.js: 52ms, proxy.ts: 2ms, application-code: 436ms)
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 362ms (next.js: 298ms, proxy.ts: 22ms, application-code: 42ms)
+✓ Finished writing to filesystem cache in 25.4s
+✓ Finished writing to filesystem cache in 16.7s
+✓ Compiled in 3.2s
+ GET /admin-login?redirect=%2Fadmin%2Fcourses%2Fnew 200 in 11.4s (next.js: 5.8s, proxy.ts: 76ms, application-code: 5.5s)
+ GET /admin-login?redirect=%2Fadmin 200 in 14.1s (next.js: 4.4s, proxy.ts: 2.7s, application-code: 6.9s)
+ GET /api/settings 200 in 1105ms (next.js: 876ms, proxy.ts: 61ms, application-code: 167ms)
+ GET /admin-login?redirect=%2Fadmin 200 in 62ms (next.js: 5ms, proxy.ts: 3ms, application-code: 55ms)
+ GET /admin-login?redirect=%2Fadmin 200 in 54ms (next.js: 4ms, proxy.ts: 2ms, application-code: 48ms)
+ GET /admin-login?redirect=%2Fadmin 200 in 785ms (next.js: 4ms, proxy.ts: 1713µs, application-code: 780ms)
+ GET /admin-login?redirect=%2Fadmin 200 in 50ms (next.js: 4ms, proxy.ts: 2ms, application-code: 43ms)
+ GET /admin-login?redirect=%2Fadmin 200 in 52ms (next.js: 4ms, proxy.ts: 1753µs, application-code: 46ms)
+ GET /admin-login?redirect=%2Fadmin 200 in 59ms (next.js: 4ms, proxy.ts: 2ms, application-code: 53ms)
+ GET /admin-login?redirect=%2Fadmin 200 in 64ms (next.js: 4ms, proxy.ts: 3ms, application-code: 57ms)
+✓ Compiled in 283ms
+✓ Finished filesystem cache database compaction in 15.7s
+✓ Compiled in 169ms
+✓ Compiled in 160ms
+✓ Compiled in 148ms
+✓ Finished writing to filesystem cache in 12.2s
+✓ Finished filesystem cache database compaction in 24.9s
+✓ Compiled in 231ms
