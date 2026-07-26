@@ -1,0 +1,96 @@
+services:
+  database:
+    image: postgres:18-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: thanawy
+      POSTGRES_USER: thanawy
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your local .env file}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U thanawy -d thanawy"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      NODE_ENV: development
+      APP_ENV: development
+      GIN_MODE: release
+      PORT: 8082
+      BACKEND_PORT: 8082
+      DATABASE_URL: postgresql://thanawy:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your local .env file}@database:5432/thanawy?sslmode=disable
+      DATABASE_URL_DIRECT: postgresql://thanawy:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your local .env file}@database:5432/thanawy?sslmode=disable
+      DATABASE_WRITE_DSN: postgresql://thanawy:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your local .env file}@database:5432/thanawy?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your local .env file}
+      JWT_ISSUER_URL: http://localhost:8082
+      IMPERSONATION_SECRET: ${IMPERSONATION_SECRET:?Set IMPERSONATION_SECRET in your local .env file}
+      COOKIE_SECURE: "false"
+      COOKIE_SAME_SITE: lax
+      COOKIE_DOMAIN: ""
+      CORS_ORIGINS: http://localhost:3000
+      TRUST_PROXY: "false"
+      STORAGE_TYPE: local
+      STORAGE_PATH: /app/uploads
+      STORAGE_PUBLIC_URL: http://localhost:8082/uploads
+      DEFAULT_ADMIN_EMAIL: admin@thanawy.local
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:?Set DEFAULT_ADMIN_PASSWORD in your local .env file}
+    volumes:
+      - backend_uploads:/app/uploads
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8082/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: .kilo/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      INTERNAL_API_URL: http://backend:8082
+      NEXT_PUBLIC_API_URL: http://localhost:8082
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_BASE_URL: http://localhost:3000
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_uploads:
