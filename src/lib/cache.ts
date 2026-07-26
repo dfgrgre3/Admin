@@ -4,6 +4,17 @@ import { logger } from './logger';
 
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
+// Production guards: never fall back to an unsecured local instance silently.
+if (process.env.NODE_ENV === 'production') {
+    if (!process.env.REDIS_URL) {
+        throw new Error('[Redis] REDIS_URL must be set in production; refusing insecure localhost fallback.');
+    }
+    const parsed = new URL(redisUrl);
+    if (parsed.protocol !== 'rediss:' && !parsed.password) {
+        logger.warn('[Redis] REDIS_URL has neither TLS (rediss://) nor a password in production.');
+    }
+}
+
 // Create Redis client instance (lazy connect)
 const redisClient = new Redis(redisUrl, {
     maxRetriesPerRequest: 3,

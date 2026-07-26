@@ -1,25 +1,36 @@
 import { renderHook, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { useAdminNotifications } from "@/hooks/use-admin-notifications";
 import * as adminApi from "@/lib/api/admin-api";
+
+const websocketMock = vi.hoisted(() => {
+  const listeners = new Map<string, Set<EventListener>>();
+  const socket = {
+    addEventListener: vi.fn((type: string, listener: EventListener) => {
+      const registered = listeners.get(type) ?? new Set<EventListener>();
+      registered.add(listener);
+      listeners.set(type, registered);
+    }),
+    removeEventListener: vi.fn((type: string, listener: EventListener) => {
+      listeners.get(type)?.delete(listener);
+    }),
+  };
+  return {
+    socket,
+    emit(type: string, event: Event) {
+      listeners.get(type)?.forEach((listener) => listener(event));
+    },
+  };
+});
+
+vi.mock("@/contexts/websocket-context", () => ({
+  useWebSocket: () => ({ socket: websocketMock.socket, isConnected: true }),
+}));
 
 // Mock the admin API
 vi.mock("@/lib/api/admin-api", () => ({
   adminFetch: vi.fn(),
 }));
-
-// Mock WebSocket
-class MockWebSocket {
-  onmessage: ((event: MessageEvent) => void) | null = null;
-  onopen: (() => void) | null = null;
-  onclose: (() => void) | null = null;
-  send = vi.fn();
-  close = vi.fn();
-}
-
-const mockWebSocket = new MockWebSocket();
-vi.stubGlobal("WebSocket", vi.fn(() => mockWebSocket));
 
 describe("useAdminNotifications", () => {
   let queryClient: QueryClient;
@@ -82,16 +93,12 @@ describe("useAdminNotifications", () => {
 
     // Simulate WebSocket message
     act(() => {
-      if (mockWebSocket.onmessage) {
-        mockWebSocket.onmessage(
-          new MessageEvent("message", {
-            data: JSON.stringify({
-              type: "notification",
-              notification: { id: "2", message: "New notification", read: false },
-            }),
-          })
-        );
-      }
+      websocketMock.emit("message", new MessageEvent("message", {
+        data: JSON.stringify({
+          type: "notification",
+          notification: { id: "2", message: "New notification", read: false },
+        }),
+      }));
     });
 
     expect(result.current.notifications).toHaveLength(1);
@@ -151,10 +158,16 @@ describe("useAdminNotifications", () => {
 
     const { result } = renderHook(() => useAdminNotifications(), { wrapper });
 
+    await vi.waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
     await act(async () => {
       await result.current.refetch();
     });
 
-    expect(adminApi.adminFetch).toHaveBeenCalledTimes(2);
+    await vi.waitFor(() => {
+      expect(adminApi.adminFetch).toHaveBeenCalledTimes(2);
+    });
   });
 });

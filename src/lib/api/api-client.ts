@@ -4,12 +4,14 @@
  */
 import { performanceMonitor } from '../metrics/performance';
 import { buildRuntimeApiUrl } from './config';
+import { errorService } from '@/lib/logging/error-service';
+import { useAuthStore } from '@/lib/auth/auth-store';
 
-// NOTE: ErrorManager is intentionally NOT imported at the top level.
-// Doing so creates a circular dependency:
-//   api-client → ErrorManager → safe-client-utils → client-logger → unified-logger → ErrorManager
-// This cycle causes api-client to resolve as `undefined` in modules that import it (e.g. auth-client).
-// Instead, ErrorManager is loaded lazily inside the catch block below.
+// The import graph is acyclic and verified:
+//   api-client → error-service → safe-client-utils → api/config → utils
+//   api-client → auth-store    → user-utils        → safe-client-utils
+// (the old client-logger link in the cycle was removed; unified-logger loads
+// error-service lazily, so no static path leads back here).
 
 interface FetchOptions extends RequestInit {
     timeout?: number;
@@ -148,16 +150,16 @@ class ApiClient {
 
     private resetAuthStore(): void {
         if (typeof window !== 'undefined') {
-            import('@/lib/auth/auth-store').then(({ useAuthStore }) => {
-                useAuthStore.getState().reset();
-            }).catch(() => {});
+            useAuthStore.getState().reset();
         }
     }
 
     private logNetworkError(error: unknown, endpoint: string): void {
-        import('@/lib/logging/error-service').then(({ errorService: errorManager }) => {
-            errorManager.handleNetworkError(error, endpoint);
-        }).catch(() => {});
+        try {
+            errorService.handleNetworkError(error, endpoint);
+        } catch {
+            // Logging must never mask the original network error.
+        }
     }
 
     private isRetryableError(error: unknown, retryCount: number, retries: number): boolean {
@@ -230,7 +232,11 @@ class ApiClient {
         }
     }
 
-    private async handleApiErrorResponse(response: Response, retryCount: number, retries: number): Promise<boolean> {
+    /**
+     * Parses an error response. Returns `true` when the caller should retry;
+     * otherwise throws an ApiError (caught and re-thrown by `request`).
+     */
+    private async handleApiErrorResponse(response: Response, retryCount: number, retries: number): Promise<true> {
         let errorMessage = `Server error: ${response.statusText}`;
         let errorCode = 'HTTP_ERROR';
         let errorData: any = null;

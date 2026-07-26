@@ -28,6 +28,14 @@ const JWT_ISSUER = process.env.JWT_ISSUER_URL || "";
 // Reuse a single CryptoKey-like SecretKey across requests.
 const secretKey = JWT_SECRET ? new TextEncoder().encode(JWT_SECRET) : null;
 
+if (!secretKey) {
+  // Failing closed is correct, but a missing secret must never be silent:
+  // every protected request is being rejected until this is fixed.
+  console.error(
+    "[middleware] JWT_SECRET is not configured — all protected routes will fail closed (401/redirect)."
+  );
+}
+
 /**
  * Verify the access token signature and claims.
  * Returns the decoded payload on success, or `{ expired: true }` when the only

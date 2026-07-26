@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { buildComprehensiveStats } from "@/lib/dashboard-data";
 
 describe("buildComprehensiveStats", () => {

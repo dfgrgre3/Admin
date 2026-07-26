@@ -9,9 +9,6 @@ export default defineConfig({
     exclude: [
       "node_modules/**",
       "src/__tests__/e2e/**",
-      "src/__tests__/utils/format-utils.test.ts",
-      "src/__tests__/hooks/**",
-      "src/__tests__/integration/websocket.test.ts",
     ],
     pool: "threads",
   },

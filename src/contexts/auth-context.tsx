@@ -6,7 +6,6 @@ import { useAuthStore, type AuthUser } from '@/lib/auth/auth-store';
 import { logger } from '@/lib/logger';
 import { authApiService } from '@/services/auth/auth-api-service';
 import { isStaffAdminPanelRole } from '@/lib/auth/admin-panel-roles';
-import { apiClient } from '@/lib/api/api-client';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -23,7 +22,6 @@ interface AuthContextType {
   logout: (allDevices?: boolean) => Promise<void>;
   verify2FA: (userId: string, token: string, rememberMe?: boolean) => Promise<{success: boolean; error?: string;}>;
   refreshUser: (options?: {clearOnFailure?: boolean;}) => Promise<boolean>;
-  fetchWithAuth: (input: RequestInfo | URL, options?: RequestInit) => Promise<Response>;
   forgotPassword: (email: string) => Promise<{success: boolean; error?: string; message?: string;}>;
   resetPassword: (token: string, newPassword: string) => Promise<{success: boolean; error?: string;}>;
   verifyEmail: (token: string) => Promise<{success: boolean; error?: string;}>;
@@ -92,10 +90,6 @@ export function AuthProvider({
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   const isLoading = isStoreLoading || isInitialLoad;
-
-  const fetchWithAuth = useCallback(async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    return apiClient.fetch(typeof input === 'string' ? input : input.toString(), init);
-  }, []);
 
   const login = useCallback(async (email: string, password: string, rememberMe?: boolean) => {
     try {
@@ -188,7 +182,6 @@ export function AuthProvider({
     logout,
     verify2FA,
     refreshUser,
-    fetchWithAuth,
     forgotPassword,
     resetPassword,
     verifyEmail,

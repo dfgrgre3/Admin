@@ -1,6 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { useBroadcastUsers } from "@/hooks/use-broadcast-users";
 import * as adminApi from "@/lib/api/admin-api";
 
@@ -187,7 +186,7 @@ describe("useBroadcastUsers", () => {
     });
 
     expect(adminApi.adminFetch).toHaveBeenCalledWith(
-      "/admin/broadcast",
+      "/admin/notifications/broadcast",
       expect.objectContaining({
         method: "POST",
         body: expect.stringContaining("Test message"),

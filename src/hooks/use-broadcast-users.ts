@@ -29,7 +29,7 @@ export function useBroadcastUsers() {
   const [isSending, setIsSending] = useState(false);
 
   // Fetch all users for broadcast
-  const { data: usersData, isLoading: isLoadingUsers } = useQuery({
+  const { data: usersData, isLoading: isLoadingUsers, error: usersError } = useQuery({
     queryKey: ["admin", "broadcast-users"],
     queryFn: async () => {
       const response = await adminFetch("/admin/users?limit=1000&fields=id,name,email,avatar,role,lastLogin");
@@ -184,6 +184,6 @@ export function useBroadcastUsers() {
     deselectAll,
     sendBroadcast,
     isSending,
-    error,
+    error: error ?? usersError,
   };
 }

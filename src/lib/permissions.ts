@@ -311,15 +311,6 @@ export const FIELD_GROUPS: Record<FieldGroup, string[]> = {
   behavioral: [],
 };
 
-/** Human-readable Arabic labels for field groups (shown in UI badges). */
-export const FIELD_GROUP_LABELS: Record<FieldGroup, string> = {
-  financial: "البيانات المالية",
-  grades: "الدرجات والتقييمات",
-  contact: "بيانات التواصل",
-  auth_secrets: "أسرار المصادقة",
-  behavioral: "النشاط السلوكي",
-};
-
 const FIELD_TO_GROUP: Record<string, FieldGroup> = (() => {
   const map: Record<string, FieldGroup> = {};
   (Object.keys(FIELD_GROUPS) as FieldGroup[]).forEach((g) => {

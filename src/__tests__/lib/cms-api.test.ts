@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { cmsApi } from "@/lib/api/cms-api";
 
 describe("cmsApi live sessions", () => {

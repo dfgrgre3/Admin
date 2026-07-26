@@ -29,6 +29,7 @@ export function useAdminNotifications() {
       // Transform the data
       const notifications: RealtimeNotification[] = (json.data?.notifications || json.notifications || []).map((n: any) => ({
         ...n,
+        description: n.description ?? n.message ?? "",
         timestamp: new Date(n.createdAt || n.timestamp || Date.now()),
         read: n.read ?? false,
       }));
@@ -54,15 +55,16 @@ export function useAdminNotifications() {
         const message = JSON.parse(event.data);
 
         if (message.type === "notification" || message.type === "admin-notification") {
+          const payload = message.notification ?? message;
           const newNotification: RealtimeNotification = {
-            id: message.id || crypto.randomUUID(),
-            type: message.notificationType || "system",
-            title: message.title || "إشعار جديد",
-            description: message.message || message.description,
+            id: payload.id || crypto.randomUUID(),
+            type: payload.notificationType || payload.type || "system",
+            title: payload.title || "إشعار جديد",
+            description: payload.message || payload.description || "",
             timestamp: new Date(),
             read: false,
-            actionUrl: message.actionUrl,
-            metadata: message.metadata,
+            actionUrl: payload.actionUrl,
+            metadata: payload.metadata,
           };
 
           setRealtimeNotifications((prev) => [newNotification, ...prev]);

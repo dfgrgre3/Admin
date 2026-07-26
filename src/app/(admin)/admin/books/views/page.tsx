@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
+import { apiClient } from '@/lib/api/api-client';
 import { AdminButton } from '@/components/admin/ui/admin-button';
 import { AdminCard, AdminStatsCard } from '@/components/admin/ui/admin-card';
 import { AdminDataTable } from '@/components/admin/ui/admin-table';
@@ -46,7 +46,6 @@ interface ReviewsResponse {
 }
 
 export default function AdminBookReviewsPage() {
-    const { fetchWithAuth } = useAuth();
     const queryClient = useQueryClient();
 
     const [page, setPage] = useState(1);
@@ -68,7 +67,7 @@ export default function AdminBookReviewsPage() {
         if (minRating) params.set('minRating', minRating);
         if (maxRating) params.set('maxRating', maxRating);
 
-        const response = await fetchWithAuth(`/api/admin/books/reviews?${params.toString()}`);
+        const response = await apiClient.fetch(`/api/admin/books/reviews?${params.toString()}`);
         if (!response.ok) throw new Error('Failed to fetch reviews');
         return response.json();
     };
@@ -80,7 +79,7 @@ export default function AdminBookReviewsPage() {
 
     const deleteMutation = useMutation({
         mutationFn: async (reviewId: string) => {
-            const response = await fetchWithAuth(`/api/admin/books/reviews?reviewId=${reviewId}`, {
+            const response = await apiClient.fetch(`/api/admin/books/reviews?reviewId=${reviewId}`, {
                 method: 'DELETE',
             });
             if (!response.ok) throw new Error('Failed to delete review');
