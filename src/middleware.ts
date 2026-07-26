@@ -28,13 +28,15 @@ const JWT_ISSUER = process.env.JWT_ISSUER_URL || "";
 let jwtSecretWarningLogged = false;
 
 // Reuse a single CryptoKey-like SecretKey across requests.
-const secretKey = JWT_SECRET ? new TextEncoder().encode(JWT_SECRET) : null;
+const secretKey = JWT_SECRET && JWT_SECRET.length >= 32
+  ? new TextEncoder().encode(JWT_SECRET)
+  : null;
 
 if (!secretKey) {
   // Failing closed is correct, but a missing secret must never be silent:
   // every protected request is being rejected until this is fixed.
   console.error(
-    "[middleware] JWT_SECRET is not configured — all protected routes will fail closed (401/redirect)."
+    "[middleware] JWT_SECRET is missing or shorter than 32 characters — protected routes fail closed."
   );
 }
 
@@ -43,7 +45,7 @@ if (!secretKey) {
  * Returns the decoded payload on success, or `{ expired: true }` when the only
  * failure is expiry (so the caller can attempt a silent refresh). Any other
  * failure (bad signature, malformed, claim mismatch) returns no payload — the
- * caller must reject or fall back to refresh.
+ * caller must reject it without attempting refresh.
  */
 async function verifyAccessToken(
   token: string
@@ -113,10 +115,11 @@ export async function middleware(req: NextRequest) {
     if (result.payload) {
       payload = result.payload;
     } else {
-      // Expired → try to refresh. Any other verification failure also falls
-      // back to refresh (if a refresh token exists) so a legitimate session
-      // recovers; without a refresh token the request is rejected below.
-      shouldRefresh = true;
+      // Only an authenticated-but-expired access token may trigger rotation.
+      // A malformed or incorrectly signed token must never be rescued by a
+      // refresh request; doing so creates unnecessary refresh races and widens
+      // the replay window during token rotation.
+      shouldRefresh = result.expired;
     }
   } else {
     shouldRefresh = true;

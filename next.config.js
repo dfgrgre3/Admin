@@ -31,9 +31,8 @@ const nextConfig = {
   },
 
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production' ? {
-      exclude: ['error', 'warn', 'info', 'debug'],
-    } : false,
+    // Keep errors in production logs, but do not ship development diagnostics.
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
   },
 
   typescript: {
@@ -53,7 +52,8 @@ const nextConfig = {
       '@radix-ui/react-tabs',
       '@radix-ui/react-select',
     ],
-    proxyClientMaxBodySize: '35mb',
+    // Uploads use the dedicated file-upload API; keep proxy request bodies bounded.
+    proxyClientMaxBodySize: '10mb',
     scrollRestoration: true,
     // Reduce JavaScript execution time
     webpackMemoryOptimizations: true,
@@ -197,45 +197,6 @@ const nextConfig = {
       maxEntrypointSize: 300000,
       maxAssetSize: 300000,
     };
-
-    if (!dev) {
-      config.optimization.minimize = true;
-      // Advanced optimizations for production
-      config.optimization = {
-        ...config.optimization,
-        // Split chunks more aggressively
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            // Separate vendor chunks for better caching
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              priority: 10,
-              reuseExistingChunk: true,
-            },
-            // Separate heavy libraries
-            heavy: {
-              test: /[\\/]node_modules[\\/](recharts|framer-motion|chart\.js)[\\/]/,
-              name: 'heavy-libs',
-              priority: 20,
-              reuseExistingChunk: true,
-            },
-            // Separate UI components
-            ui: {
-              test: /[\\/]node_modules[\\/]@radix-ui[\\/]/,
-              name: 'ui-libs',
-              priority: 15,
-              reuseExistingChunk: true,
-            },
-          },
-        },
-        // Tree shaking
-        usedExports: true,
-        // Side effects optimization
-        sideEffects: false,
-      };
-    }
 
     return config;
   },

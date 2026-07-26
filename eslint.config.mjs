@@ -28,6 +28,9 @@ export default [
       "env/**",
       "**/__pycache__/**",
       "**/*.py",
+      ".ide/**",
+      "**/*.log",
+      ".git-rewrite/**",
       "next-env.d.ts",
       "eslint-report.json",
     ],
@@ -65,15 +68,16 @@ export default [
       },
     },
     rules: {
-      // Keep these as warnings while we incrementally refactor hydration patterns.
-      "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/exhaustive-deps": "warn",
+      // Hook correctness rules are errors: violations can create stale data,
+      // render loops, or side effects during render.
+      "react-hooks/set-state-in-effect": "error",
+      "react-hooks/exhaustive-deps": "error",
       "react-hooks/immutability": "warn",
       "react-hooks/preserve-manual-memoization": "warn",
       "react-hooks/refs": "warn",
-      "react-hooks/purity": "warn",
+      "react-hooks/purity": "error",
       "react/no-unescaped-entities": "warn",
-      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-explicit-any": "error",
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
       // Disable base no-unused-vars in favor of TypeScript version
