@@ -3,16 +3,6 @@ import { buildBackendApiUrl } from '@/lib/api/config';
 
 type NotificationChannel = 'email' | 'sms' | 'push' | 'in-app';
 
-export type NotificationJobPayload = {
-    userId: string;
-    type: string;
-    title: string;
-    message: string;
-    channels?: NotificationChannel[];
-    metadata?: Record<string, unknown>;
-    priority?: 'high' | 'normal' | 'low';
-};
-
 export class NotificationQueueService {
     /**
      * Enqueue a notification to be sent via multiple channels
@@ -60,7 +50,4 @@ export class NotificationQueueService {
         }
     }
 
-    static async processJob(job?: unknown): Promise<void> {
-        throw new Error('Notification processing has moved to the Go backend. Use enqueueNotification instead.');
-    }
 }

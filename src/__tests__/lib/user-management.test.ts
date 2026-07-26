@@ -1,8 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { UserRole, UserStatus } from "@/types/enums";
+import { UserRole } from "@/types/enums";
 import { createUserSchema, bulkActionSchema, impersonateSchema } from "@/lib/validations/user-schema";
 import { getUserActionBlockReason, canAssignRole } from "@/lib/user-action-guards";
-import { logUserAdminAction, auditUserStatusChange, auditImpersonation } from "@/lib/audit-logger";
+import { logUserAdminAction, auditImpersonation } from "@/lib/audit-logger";
 import { useUserPermissions } from "@/hooks/use-user-permissions";
 import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 

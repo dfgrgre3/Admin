@@ -7,12 +7,18 @@ export interface ExportColumn<T = any> {
   accessor: string | ((row: T) => any);
 }
 
+const MAX_EXPORT_ROWS = 100_000;
+
 function escapeCsvValue(value: any): string {
   if (value === null || value === undefined) {
     return "";
   }
   let str = typeof value === "string" ? value : String(value);
-  if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+  // Prefix formula-like values so Excel/Sheets cannot execute them as formulas.
+  if (/^[=+\-@]/.test(str)) {
+    str = `'${str}`;
+  }
+  if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
     str = `"${str.replace(/"/g, '""')}"`;
   }
   return str;
@@ -25,6 +31,9 @@ function resolveAccessor<T>(col: ExportColumn<T>, row: T): string {
 
 export function exportToCSV<T>(data: T[], columns: ExportColumn<T>[], filename: string): void {
   try {
+    if (data.length > MAX_EXPORT_ROWS) {
+      throw new Error(`CSV export exceeds the maximum of ${MAX_EXPORT_ROWS.toLocaleString()} rows`);
+    }
     const headers = columns.map(col => escapeCsvValue(col.header)).join(",");
     const rows = data.map(row => columns.map(col => resolveAccessor(col, row)).join(","));
     const csv = [headers, ...rows].join("\n");

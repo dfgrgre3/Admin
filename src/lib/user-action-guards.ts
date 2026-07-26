@@ -12,7 +12,9 @@ export interface UserActionTarget {
 
 const ROLE_RANK: Record<string, number> = {
   STUDENT: 0,
+  PARENT: 0,
   TEACHER: 1,
+  SUPPORT: 2,
   MODERATOR: 2,
   ADMIN: 3,
   SUPER_ADMIN: 4,

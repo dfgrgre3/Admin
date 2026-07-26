@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Alexandria } from 'next/font/google';
 import { cookies } from 'next/headers';
 import { GlobalProviders } from '@/providers';
@@ -21,9 +21,11 @@ export const metadata: Metadata = {
   description: 'لوحة التحكم وإدارة نظام Tolo التعليمي',
 };
 
-export const viewport = {
+export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#f97316',
 };
 
 export default async function RootLayout({
@@ -39,9 +41,7 @@ export default async function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <meta name="theme-color" content="#f97316" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
         {/* Inline critical CSS to reduce render-blocking */}
         <style dangerouslySetInnerHTML={{__html: `
           /* Critical above-the-fold styles */
@@ -50,9 +50,6 @@ export default async function RootLayout({
           /* Prevent FOIT for critical elements */
           h1,h2,h3,h4,h5,h6{font-weight:700;color:hsl(var(--foreground))}
         `}} />
-        {/* Preload critical CSS to reduce render-blocking time */}
-        <link rel="preload" href="/_next/static/css/app/layout.css" as="style" />
-        {/* Defer non-critical CSS - handled by Next.js optimizeCss */}
       </head>
       <body className={`${alexandria.variable} font-sans`} suppressHydrationWarning>
         <SWRegistration />

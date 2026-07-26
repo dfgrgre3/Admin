@@ -22,7 +22,7 @@ export function formatDate(date: Date | string | null | undefined): string {
       return 'تاريخ غير صحيح';
     }
 
-    return dateObj.toLocaleDateString("ar-SA", {
+    return dateObj.toLocaleDateString("ar-EG-u-ca-gregory", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -49,7 +49,7 @@ export function formatDateTime(date: Date | string | null | undefined): string {
       return 'تاريخ غير صحيح';
     }
 
-    return dateObj.toLocaleDateString("ar-SA", {
+    return dateObj.toLocaleDateString("ar-EG-u-ca-gregory", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -131,35 +131,6 @@ export function formatRelativeTime(date: Date | string | null | undefined): stri
 }
 
 /**
- * Truncate text with validation
- */
-export function truncateText(text: string | null | undefined, maxLength: number): string {
-  // Validate input
-  if (!text || typeof text !== 'string') {
-    return '';
-  }
-
-  // Validate maxLength
-  if (typeof maxLength !== 'number' || maxLength < 0) {
-    return text;
-  }
-
-  if (text.length <= maxLength) {
-    return text;
-  }
-
-  // Ensure we don't cut in the middle of a word if possible
-  const truncated = text.slice(0, maxLength);
-  const lastSpace = truncated.lastIndexOf(' ');
-
-  if (lastSpace > maxLength * 0.7) {
-    return truncated.slice(0, lastSpace) + "...";
-  }
-
-  return truncated + "...";
-}
-
-/**
  * Generate unique ID with validation using cryptographically secure methods if available
  */
 export function generateId(): string {
@@ -220,9 +191,9 @@ export function formatNumber(number: number | string | null | undefined, decimal
   const num = typeof number === "string" ? parseFloat(number) : number;
   if (isNaN(num)) return "0";
   if (decimals !== undefined) {
-    return num.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    return num.toLocaleString("ar-EG", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
   }
-  return num.toLocaleString("en-US");
+  return num.toLocaleString("ar-EG");
 }
 
 export function formatCurrency(amount: number | string | null | undefined, currency = "EGP"): string {

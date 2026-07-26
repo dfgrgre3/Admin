@@ -21,7 +21,16 @@ interface EnvValidationResult {
  * Validate JWT_SECRET format and security
  */
 function validateJWTSecret(): {valid: boolean;error?: string;} {
-  const jwtSecret = process.env.JWT_SECRET;
+  const jwtSecret = process.env.JWT_SECRET?.trim();
+  const legacySecret = process.env.JWT_SECRET_KEY?.trim();
+
+  if (legacySecret && jwtSecret && legacySecret !== jwtSecret) {
+    return { valid: false, error: 'JWT_SECRET_KEY conflicts with JWT_SECRET; configure JWT_SECRET only' };
+  }
+
+  if (!jwtSecret && legacySecret) {
+    return { valid: false, error: 'JWT_SECRET_KEY is deprecated; configure JWT_SECRET instead' };
+  }
 
   if (!jwtSecret) {
     return {
@@ -73,6 +82,20 @@ function checkProductionVars(errors: string[], isProduction: boolean) {
     for (const envVar of REQUIRED_ENV_VARS.production) {
       if (!process.env[envVar]) {
         errors.push(`Required environment variable ${envVar} is not set`);
+      }
+    }
+
+    const internalApiUrl = process.env.INTERNAL_API_URL?.trim();
+    if (!internalApiUrl) {
+      errors.push('INTERNAL_API_URL is required in production');
+    } else {
+      try {
+        const url = new URL(/^https?:\/\//i.test(internalApiUrl) ? internalApiUrl : `https://${internalApiUrl}`);
+        if (url.protocol !== 'https:') {
+          errors.push('INTERNAL_API_URL must use HTTPS in production');
+        }
+      } catch {
+        errors.push('INTERNAL_API_URL is not a valid URL format');
       }
     }
   }

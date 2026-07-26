@@ -150,12 +150,30 @@ const deleteExperiment = async (id: string): Promise<void> => {
 };
 
 const getExperimentVariant = async (experimentId: string, userId: string): Promise<string> => {
-  // Simple hash-based variant assignment (client-side fallback)
-  const hash = (experimentId + userId).split("").reduce((a, b) => {
-    a = Math.trunc((a << 5) - a + b.charCodeAt(0));
-    return a;
-  }, 0);
-  return hash % 2 === 0 ? "A" : "B";
+  if (!experimentId.trim() || !userId.trim()) {
+    throw new Error("Experiment ID and user ID are required");
+  }
+
+  const experiments = await getAllExperiments();
+  if (!experiments.some((experiment) => experiment.id === experimentId)) {
+    throw new Error("Experiment not found");
+  }
+
+  // Assignment must be generated and persisted by the backend. A client-side
+  // hash is user-controlled and can bias experiments or expose allocation rules.
+  const response = await adminFetch(
+    `${apiRoutes.admin.abTesting}/${encodeURIComponent(experimentId)}/variant?userId=${encodeURIComponent(userId)}`,
+    { cache: "no-store" },
+  );
+  if (!response.ok) {
+    throw new Error("Failed to resolve experiment variant");
+  }
+  const json = await response.json();
+  const variant = json?.data?.variant ?? json?.variant;
+  if (variant !== "A" && variant !== "B") {
+    throw new Error("Backend returned an invalid experiment variant");
+  }
+  return variant;
 };
 
 const trackExperimentEvent = async (
@@ -163,11 +181,12 @@ const trackExperimentEvent = async (
   userId: string,
   event: string
 ): Promise<void> => {
-  await adminFetch(`${apiRoutes.admin.abTesting}/${experimentId}/track`, {
+  const response = await adminFetch(`${apiRoutes.admin.abTesting}/${experimentId}/track`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ userId, event }),
   });
+  if (!response.ok) throw new Error("Failed to track experiment event");
 };
 
 const abTestingService = {

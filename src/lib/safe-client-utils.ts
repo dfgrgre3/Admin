@@ -143,7 +143,7 @@ options: SafeStorageOptions<T> = {})
  * حذف قيمة من التخزين بشكل آمن
  * Safely remove a value from storage
  */
-function safeRemoveItem(
+export function safeRemoveItem(
 key: string,
 options: SafeStorageOptions = {})
 : boolean {
@@ -763,4 +763,3 @@ const safeClientUtils = {
   safeJsonParse,
   safeFetch
 };
-

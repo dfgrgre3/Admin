@@ -62,8 +62,8 @@ export const authApiService = {
     }
   },
 
-  /** Register a new user */
-  async register(data: { email: string; password: string; username?: string; role?: string }): Promise<RegisterResult> {
+  /** Register a new user. Role is never client-supplied: the backend forces STUDENT. */
+  async register(data: { email: string; password: string; username?: string }): Promise<RegisterResult> {
     try {
       const res = await apiClient.fetch(apiRoutes.auth.register, {
         method: 'POST',

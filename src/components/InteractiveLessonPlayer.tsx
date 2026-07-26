@@ -31,20 +31,12 @@ interface LessonProps {
 }
 
 export default function InteractiveLessonPlayer({
-  lessonId = "demo-lesson",
-  title = "المقدمة في بناء تطبيقات LMS المعقدة",
-  videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-  studentName = "يوسف أحمد",
-  studentEmail = "student@example.com",
-  quizzes = [
-    {
-      id: "q1",
-      timestampSec: 15,
-      question: "ما هي الحالة التلقائية للدرس عند إنشائه؟",
-      options: ["Published", "Draft", "Pending Review", "Archived"],
-      correctIndex: 1
-    }
-  ]
+  lessonId,
+  title,
+  videoUrl,
+  studentName,
+  studentEmail,
+  quizzes = []
 }: LessonProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -141,7 +133,10 @@ export default function InteractiveLessonPlayer({
           />
 
           {/* DYNAMIC WATERMARK (SECURITY & ANTI-PIRACY) */}
-          <div className="absolute top-8 right-8 pointer-events-none select-none opacity-35 bg-black/40 px-3 py-1.5 rounded-lg border border-slate-700/50 backdrop-blur-md text-xs text-amber-400 font-mono flex items-center gap-2 animate-pulse">
+          <div
+            aria-hidden="true"
+            className="absolute top-8 right-8 pointer-events-none select-none opacity-70 bg-black/60 px-3 py-1.5 rounded-lg border border-slate-700/70 backdrop-blur-md text-xs text-amber-300 font-mono flex items-center gap-2 animate-pulse"
+          >
             <Shield className="w-3.5 h-3.5 text-amber-400" />
             <span>{studentName} • {studentEmail}</span>
           </div>

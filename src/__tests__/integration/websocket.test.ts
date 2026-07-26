@@ -9,8 +9,6 @@
  *   backend Redis adapter must satisfy. They document expected behaviour —
  *   not a live Redis connection — so they run in CI without infrastructure.
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-
 // ─── Minimal Vitest-native WebSocket mock ─────────────────────────────────────
 
 type WsMessageHandler = (event: MessageEvent) => void;
@@ -442,11 +440,10 @@ describe("WebSocket Integration", () => {
     it("should simulate rate limit rejection when connections exceed limit", async () => {
       const rateLimitServer = createMockServer();
       
-      const client1 = new MockWebSocket(WS_URL, rateLimitServer);
-      const client2 = new MockWebSocket(WS_URL, rateLimitServer);
-      const client3 = new MockWebSocket(WS_URL, rateLimitServer);
-      const client4 = new MockWebSocket(WS_URL, rateLimitServer);
-      const client5 = new MockWebSocket(WS_URL, rateLimitServer);
+      for (let index = 0; index < 5; index += 1) {
+        new MockWebSocket(WS_URL, rateLimitServer);
+      }
+      expect(rateLimitServer.clients).toHaveLength(5);
       
       // The 6th connection attempts under rate limit threshold and is rejected:
       const rateLimitedClient = new MockWebSocket(WS_URL, rateLimitServer);

@@ -11,11 +11,12 @@ const baseUrl = getRuntimeApiBaseUrl();
 
 const transport = createConnectTransport({
   baseUrl,
-  // Ensure Next.js fetch caching is enabled for gRPC POST requests
+  // ConnectRPC uses POST for reads and mutations. Never apply implicit Next.js
+  // caching here; callers may explicitly cache known read-only operations.
   fetch: (input, init) => {
     return fetch(input, {
       ...init,
-      next: { revalidate: 60 } // Cache for 60 seconds
+      cache: "no-store",
     });
   }
 });
@@ -24,42 +25,15 @@ export const courseClient = createClient(CourseService, transport);
 export const authClient = createClient(AuthService, transport);
 export const analyticsClient = createClient(AnalyticsService, transport);
 
-// Helper for caching server-side gRPC requests across different users (SSR Cache Stampede fix)
-let serverCacheWrapper = <T extends (...args: any[]) => Promise<unknown>>(fn: T, method: string): T => fn;
-if (!isBrowser) {
-  try {
-    const { unstable_cache } = require('next/cache');
-    serverCacheWrapper = ((fn: (...args: any[]) => Promise<unknown>, method: string) => 
-      async (...args: any[]) => {
-        // Create a stable cache key based on the method and serialized arguments
-        const cacheKey = [method, JSON.stringify(args)];
-        
-        return await unstable_cache(
-          async () => {
-            return await fn(...args);
-          },
-          cacheKey,
-          { 
-            revalidate: 60,
-            tags: ['grpc', method]
-          }
-        )();
-      }) as typeof serverCacheWrapper;
-  } catch (e) {
-    // Ignore if unstable_cache is not available
-  }
-}
-
-// Implement SSR request deduplication using React cache and Next.js unstable_cache
-export const cachedGetCourse = cache(serverCacheWrapper(
+// React cache deduplicates identical calls during one server render without
+// cross-user persistence or fragile JSON serialization.
+export const cachedGetCourse = cache(
   async (req: Parameters<typeof courseClient.getCourse>[0]) => await courseClient.getCourse(req!),
-  'getCourse'
-));
+);
 
-export const cachedGetCourses = cache(serverCacheWrapper(
+export const cachedGetCourses = cache(
   async (req: Parameters<typeof courseClient.getCourses>[0]) => await courseClient.getCourses(req!),
-  'getCourses'
-));
+);
 
 // Legacy export for backward compatibility if needed
 export const rpcClient = {

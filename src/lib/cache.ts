@@ -38,6 +38,21 @@ export function getRedisClient(): Redis {
     return redisClient;
 }
 
+/** Gracefully close Redis during server shutdown or test teardown. */
+export async function closeRedisClient(): Promise<void> {
+    if (redisClient.status === 'end') return;
+    if (redisClient.status === 'wait') {
+        redisClient.disconnect();
+        return;
+    }
+    await redisClient.quit();
+}
+
+if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'test') {
+    process.once('SIGTERM', () => void closeRedisClient());
+    process.once('SIGINT', () => void closeRedisClient());
+}
+
 async function getConnectedRedisClient(): Promise<Redis> {
     await connectRedisClient();
     return redisClient;

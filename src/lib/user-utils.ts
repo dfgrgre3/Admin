@@ -5,7 +5,7 @@
  * Helper functions for user ID management
  */
 
-import { safeGetItem, safeSetItem } from './safe-client-utils';
+import { safeGetItem, safeSetItem, safeRemoveItem } from './safe-client-utils';
 import { logger } from '@/lib/logger';
 import { apiRoutes } from '@/lib/api/routes';
 
@@ -121,7 +121,7 @@ export function setUserId(userId: string): boolean {
  * Remove user ID from storage
  */
 export function clearUserId(): boolean {
-  return safeSetItem(LOCAL_USER_KEY, null);
+  return safeRemoveItem(LOCAL_USER_KEY);
 }
 
 export { LOCAL_USER_KEY };

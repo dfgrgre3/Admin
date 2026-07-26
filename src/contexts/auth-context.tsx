@@ -18,7 +18,6 @@ interface AuthContextType {
       email: string;
       password: string;
       username?: string;
-      role?: string;
     }
   ) => Promise<{success: boolean; error?: string; message?: string; autoLoggedIn?: boolean;}>;
   logout: (allDevices?: boolean) => Promise<void>;
@@ -128,7 +127,7 @@ export function AuthProvider({
     }
   }, [setUser]);
 
-  const register = useCallback(async (data: { email: string; password: string; username?: string; role?: string; }) => {
+  const register = useCallback(async (data: { email: string; password: string; username?: string; }) => {
     try {
       return await authApiService.register(data);
     } catch (err) {

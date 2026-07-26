@@ -22,7 +22,7 @@ interface JwtPayload {
   iss?: string;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || "";
+const JWT_SECRET = process.env.JWT_SECRET?.trim();
 const JWT_ISSUER = process.env.JWT_ISSUER_URL || "";
 
 // Reuse a single CryptoKey-like SecretKey across requests.

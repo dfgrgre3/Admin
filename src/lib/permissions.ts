@@ -270,9 +270,6 @@ export function hasPermission(
 ): boolean {
   if (!user) return false;
 
-  const role = user.role?.toUpperCase();
-  if (role === "SUPER_ADMIN") return true;
-
   const required = resolvePermissionInput(permission);
   if (!required) return false;
 
@@ -284,8 +281,9 @@ export function hasPermission(
 
 // ─────────────────────────────────────────────
 //  Field-Level Permissions (FLP)
-//  Mirrors Go's models/field_permissions.go. Used by the UI to show a
-//  clear indicator when sensitive fields are hidden by the backend.
+//  Frontend-only: there is no Go counterpart enforcing field visibility,
+//  so this is a UI convenience, not a security boundary — the API may
+//  still return these fields to any caller.
 // ─────────────────────────────────────────────
 
 export type FieldGroup = "financial" | "grades" | "contact" | "auth_secrets" | "behavioral";

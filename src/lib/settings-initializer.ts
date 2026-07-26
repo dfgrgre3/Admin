@@ -3,8 +3,8 @@ export async function initializeSettings(): Promise<void> {
     return;
   }
 
-  const theme = window.localStorage.getItem("tolo-theme") || window.localStorage.getItem("theme");
-  if (theme) {
+  const theme = window.localStorage.getItem("tolo-theme");
+  if (theme === "light" || theme === "dark" || theme === "system") {
     document.documentElement.dataset.theme = theme;
   }
 }

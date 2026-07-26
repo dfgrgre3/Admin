@@ -1627,3 +1627,1004 @@ Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allow
 ✓ Finished writing to filesystem cache in 12.2s
 ✓ Finished filesystem cache database compaction in 24.9s
 ✓ Compiled in 231ms
+✓ Compiled in 418ms
+✓ Compiled in 328ms
+✓ Compiled in 497ms
+✓ Compiled in 704ms
+✓ Compiled in 311ms
+✓ Compiled in 0ms
+✓ Compiled in 687ms
+✓ Compiled in 238ms
+✓ Compiled in 159ms
+✓ Compiled in 212ms
+✓ Compiled in 1844ms
+✓ Compiled in 198ms
+✓ Compiled in 219ms
+ GET /admin-login?redirect=%2Fadmin%2Fcourses 200 in 9.6s (next.js: 4.3s, proxy.ts: 803ms, application-code: 4.4s)
+2026-07-26 06:34:51 [32minfo[39m: [2026-07-26T03:34:50.990Z] [INFO] Login proxy request received {"source":"api/auth/login","bodyLength":76}
+2026-07-26 06:34:52 [32minfo[39m: [2026-07-26T03:34:52.002Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"health"}
+2026-07-26 06:34:52 [32minfo[39m: [2026-07-26T03:34:52.019Z] [INFO] Login proxy backend response {"source":"api/auth/login","statusCode":200}
+ POST /api/auth/login 200 in 1602ms (next.js: 552ms, proxy.ts: 5ms, application-code: 1045ms)
+ GET /api/health 200 in 763ms (next.js: 725ms, proxy.ts: 4ms, application-code: 34ms)
+ GET /api/auth/me 200 in 426ms (next.js: 410ms, proxy.ts: 1708µs, application-code: 14ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 1560ms (next.js: 319ms, proxy.ts: 11ms, application-code: 1230ms)
+ GET /admin/courses 200 in 1582ms (next.js: 1465ms, proxy.ts: 14ms, application-code: 102ms)
+ GET /admin/courses 200 in 48ms (next.js: 8ms, proxy.ts: 5ms, application-code: 34ms)
+ GET /api/auth/me 200 in 1878ms (next.js: 11ms, proxy.ts: 8ms, application-code: 1859ms)
+ GET /api/admin/teachers 200 in 1896ms (next.js: 777ms, proxy.ts: 11ms, application-code: 1108ms)
+ GET /api/admin/course-categories 200 in 2.4s (next.js: 1851ms, proxy.ts: 11ms, application-code: 524ms)
+ GET /api/admin/courses?offset=0&limit=12 200 in 2.4s (next.js: 1252ms, proxy.ts: 11ms, application-code: 1133ms)
+ GET /admin/courses/new 200 in 579ms (next.js: 428ms, proxy.ts: 7ms, application-code: 144ms)
+ GET /uploads/uploads/7e493471-297b-42d6-a5cf-50d74f8ee06c.jpg 404 in 558ms (next.js: 378ms, application-code: 180ms)
+ GET /uploads/uploads/7e493471-297b-42d6-a5cf-50d74f8ee06c.jpg 404 in 51ms (next.js: 7ms, application-code: 44ms)
+○ Compiling /admin/courses/[id]/edit ...
+ GET /uploads/uploads/7e493471-297b-42d6-a5cf-50d74f8ee06c.jpg 404 in 192ms (next.js: 16ms, application-code: 176ms)
+2026-07-26 06:35:24 [32minfo[39m: [2026-07-26T03:35:24.742Z] [INFO] Login proxy request received {"source":"api/auth/admin-login","bodyLength":80}
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/edit 200 in 24.1s (next.js: 24.0s, proxy.ts: 4ms, application-code: 100ms)
+2026-07-26 06:35:24 [32minfo[39m: [2026-07-26T03:35:24.976Z] [INFO] Login proxy backend response {"source":"api/auth/admin-login","statusCode":401}
+2026-07-26 06:35:24 [33mwarn[39m: [2026-07-26T03:35:24.977Z] [WARN] Backend authentication request rejected {"source":"api/auth/proxy","statusCode":401}
+ POST /api/auth/admin-login 401 in 4.7s (next.js: 4.5s, proxy.ts: 2ms, application-code: 244ms)
+2026-07-26 06:35:25 [32minfo[39m: [2026-07-26T03:35:25.092Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:35:25 [33mwarn[39m: [2026-07-26T03:35:25.097Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 42ms (next.js: 17ms, proxy.ts: 6ms, application-code: 19ms)
+2026-07-26 06:35:26 [32minfo[39m: [2026-07-26T03:35:26.121Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:35:26 [33mwarn[39m: [2026-07-26T03:35:26.123Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 23ms (next.js: 10ms, proxy.ts: 5ms, application-code: 7ms)
+2026-07-26 06:35:26 [32minfo[39m: [2026-07-26T03:35:26.211Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 200 in 16ms (next.js: 4ms, proxy.ts: 2ms, application-code: 9ms)
+2026-07-26 06:35:26 [32minfo[39m: [2026-07-26T03:35:26.236Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 200 in 24ms (next.js: 5ms, proxy.ts: 9ms, application-code: 10ms)
+✓ Finished writing to filesystem cache in 11.5s
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 200 in 3.2s (next.js: 3.2s, proxy.ts: 4ms, application-code: 42ms)
+2026-07-26 06:35:39 [32minfo[39m: [2026-07-26T03:35:39.875Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 200 in 37ms (next.js: 17ms, proxy.ts: 6ms, application-code: 14ms)
+2026-07-26 06:35:39 [32minfo[39m: [2026-07-26T03:35:39.897Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 200 in 19ms (next.js: 7ms, proxy.ts: 3ms, application-code: 9ms)
+2026-07-26 06:35:40 [31merror[39m: [2026-07-26T03:35:40.146Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":404}
+ GET /api/admin/exams?subjectId=7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 309ms (next.js: 291ms, proxy.ts: 3ms, application-code: 16ms)
+2026-07-26 06:35:40 [31merror[39m: [2026-07-26T03:35:40.171Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":404}
+ GET /api/admin/exams?subjectId=7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 22ms (next.js: 4ms, proxy.ts: 7ms, application-code: 12ms)
+2026-07-26 06:35:45 [32minfo[39m: [2026-07-26T03:35:45.448Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/lessons/new-lesson-1785036943911/interactive-questions"}
+2026-07-26 06:35:45 [33mwarn[39m: [2026-07-26T03:35:45.488Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":500}
+ GET /api/admin/courses/lessons/new-lesson-1785036943911/interactive-questions 500 in 93ms (next.js: 45ms, proxy.ts: 3ms, application-code: 45ms)
+2026-07-26 06:35:46 [32minfo[39m: [2026-07-26T03:35:46.508Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/lessons/new-lesson-1785036943911/interactive-questions"}
+2026-07-26 06:35:46 [33mwarn[39m: [2026-07-26T03:35:46.512Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":500}
+ GET /api/admin/courses/lessons/new-lesson-1785036943911/interactive-questions 500 in 22ms (next.js: 9ms, proxy.ts: 2ms, application-code: 10ms)
+2026-07-26 06:35:48 [32minfo[39m: [2026-07-26T03:35:48.533Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/lessons/new-lesson-1785036943911/interactive-questions"}
+2026-07-26 06:35:48 [33mwarn[39m: [2026-07-26T03:35:48.538Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":500}
+ GET /api/admin/courses/lessons/new-lesson-1785036943911/interactive-questions 500 in 24ms (next.js: 10ms, proxy.ts: 2ms, application-code: 12ms)
+2026-07-26 06:35:51 [32minfo[39m: [2026-07-26T03:35:51.413Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/lessons/new-lesson-1785036943911/interactive-questions"}
+2026-07-26 06:35:51 [33mwarn[39m: [2026-07-26T03:35:51.416Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":500}
+ GET /api/admin/courses/lessons/new-lesson-1785036943911/interactive-questions 500 in 23ms (next.js: 11ms, proxy.ts: 3ms, application-code: 9ms)
+2026-07-26 06:35:52 [32minfo[39m: [2026-07-26T03:35:52.433Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/lessons/new-lesson-1785036943911/interactive-questions"}
+2026-07-26 06:35:52 [33mwarn[39m: [2026-07-26T03:35:52.439Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":500}
+ GET /api/admin/courses/lessons/new-lesson-1785036943911/interactive-questions 500 in 20ms (next.js: 8ms, proxy.ts: 2ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 18ms (next.js: 3ms, proxy.ts: 4ms, application-code: 12ms)
+2026-07-26 06:35:52 [32minfo[39m: [2026-07-26T03:35:52.551Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/lessons/new-lesson-1785036943911/interactive-questions"}
+2026-07-26 06:35:52 [33mwarn[39m: [2026-07-26T03:35:52.555Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":500}
+ GET /api/admin/courses/lessons/new-lesson-1785036943911/interactive-questions 500 in 14ms (next.js: 4ms, proxy.ts: 2ms, application-code: 8ms)
+2026-07-26 06:35:53 [32minfo[39m: [2026-07-26T03:35:53.997Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/lessons/new-lesson-1785036943911/interactive-questions"}
+2026-07-26 06:35:54 [33mwarn[39m: [2026-07-26T03:35:54.002Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":500}
+ GET /api/admin/courses/lessons/new-lesson-1785036943911/interactive-questions 500 in 21ms (next.js: 9ms, proxy.ts: 2ms, application-code: 10ms)
+2026-07-26 06:35:54 [32minfo[39m: [2026-07-26T03:35:54.453Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/lessons/new-lesson-1785036943911/interactive-questions"}
+2026-07-26 06:35:54 [33mwarn[39m: [2026-07-26T03:35:54.455Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":500}
+ GET /api/admin/courses/lessons/new-lesson-1785036943911/interactive-questions 500 in 12ms (next.js: 4ms, proxy.ts: 2ms, application-code: 6ms)
+2026-07-26 06:35:55 [32minfo[39m: [2026-07-26T03:35:55.019Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/lessons/new-lesson-1785036943911/interactive-questions"}
+2026-07-26 06:35:55 [33mwarn[39m: [2026-07-26T03:35:55.021Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":500}
+ GET /api/admin/courses/lessons/new-lesson-1785036943911/interactive-questions 500 in 17ms (next.js: 8ms, proxy.ts: 2ms, application-code: 7ms)
+2026-07-26 06:35:57 [32minfo[39m: [2026-07-26T03:35:57.939Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/lessons/new-lesson-1785036943911/interactive-questions"}
+2026-07-26 06:35:57 [33mwarn[39m: [2026-07-26T03:35:57.941Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":500}
+ GET /api/admin/courses/lessons/new-lesson-1785036943911/interactive-questions 500 in 21ms (next.js: 8ms, proxy.ts: 2ms, application-code: 11ms)
+2026-07-26 06:35:58 [32minfo[39m: [2026-07-26T03:35:58.936Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/lessons/new-lesson-1785036943911/interactive-questions"}
+2026-07-26 06:35:58 [33mwarn[39m: [2026-07-26T03:35:58.941Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":500}
+ GET /api/admin/courses/lessons/new-lesson-1785036943911/interactive-questions 500 in 20ms (next.js: 9ms, proxy.ts: 2ms, application-code: 9ms)
+2026-07-26 06:36:01 [32minfo[39m: [2026-07-26T03:36:01.958Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/lessons/new-lesson-1785036943911/interactive-questions"}
+2026-07-26 06:36:01 [33mwarn[39m: [2026-07-26T03:36:01.964Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":500}
+ GET /api/admin/courses/lessons/new-lesson-1785036943911/interactive-questions 500 in 20ms (next.js: 8ms, proxy.ts: 2ms, application-code: 10ms)
+✓ Finished filesystem cache database compaction in 11.4s
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 16ms (next.js: 3ms, proxy.ts: 2ms, application-code: 12ms)
+2026-07-26 06:37:11 [32minfo[39m: [2026-07-26T03:37:11.726Z] [INFO] API proxy request {"source":"api/catch-all","method":"POST","path":"upload/presign"}
+ POST /api/upload/presign 200 in 21ms (next.js: 9ms, proxy.ts: 2ms, application-code: 9ms)
+2026-07-26 06:37:11 [32minfo[39m: [2026-07-26T03:37:11.804Z] [INFO] API proxy request {"source":"api/catch-all","method":"POST","path":"upload"}
+ POST /api/upload 200 in 94ms (next.js: 4ms, proxy.ts: 53ms, application-code: 38ms)
+[browser] Select is changing from controlled to uncontrolled. Components should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled value for the lifetime of the component.
+2026-07-26 06:37:24 [32minfo[39m: [2026-07-26T03:37:24.328Z] [INFO] API proxy request {"source":"api/catch-all","method":"PUT","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+2026-07-26 06:37:24 [33mwarn[39m: [2026-07-26T03:37:24.344Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"PUT","statusCode":500}
+ PUT /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 500 in 41ms (next.js: 12ms, proxy.ts: 3ms, application-code: 26ms)
+2026-07-26 06:37:25 [32minfo[39m: [2026-07-26T03:37:25.368Z] [INFO] API proxy request {"source":"api/catch-all","method":"PUT","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+2026-07-26 06:37:25 [33mwarn[39m: [2026-07-26T03:37:25.374Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"PUT","statusCode":500}
+ PUT /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 500 in 27ms (next.js: 11ms, proxy.ts: 3ms, application-code: 13ms)
+2026-07-26 06:37:27 [32minfo[39m: [2026-07-26T03:37:27.396Z] [INFO] API proxy request {"source":"api/catch-all","method":"PUT","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+2026-07-26 06:37:27 [33mwarn[39m: [2026-07-26T03:37:27.402Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"PUT","statusCode":500}
+ PUT /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 500 in 24ms (next.js: 9ms, proxy.ts: 4ms, application-code: 11ms)
+2026-07-26 06:37:31 [32minfo[39m: [2026-07-26T03:37:31.941Z] [INFO] API proxy request {"source":"api/catch-all","method":"PUT","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+2026-07-26 06:37:31 [33mwarn[39m: [2026-07-26T03:37:31.948Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"PUT","statusCode":500}
+ PUT /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 500 in 26ms (next.js: 11ms, proxy.ts: 3ms, application-code: 13ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 3ms, proxy.ts: 2ms, application-code: 9ms)
+2026-07-26 06:38:01 [32minfo[39m: [2026-07-26T03:38:01.037Z] [INFO] API proxy request {"source":"api/catch-all","method":"PUT","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+2026-07-26 06:38:01 [33mwarn[39m: [2026-07-26T03:38:01.044Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"PUT","statusCode":500}
+ PUT /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 500 in 30ms (next.js: 11ms, proxy.ts: 3ms, application-code: 16ms)
+2026-07-26 06:38:02 [32minfo[39m: [2026-07-26T03:38:02.063Z] [INFO] API proxy request {"source":"api/catch-all","method":"PUT","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+2026-07-26 06:38:02 [33mwarn[39m: [2026-07-26T03:38:02.071Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"PUT","statusCode":500}
+ PUT /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 500 in 24ms (next.js: 9ms, proxy.ts: 2ms, application-code: 13ms)
+ GET /admin/courses 200 in 28ms (next.js: 4ms, proxy.ts: 2ms, application-code: 22ms)
+ GET /api/admin/courses?offset=0&limit=12 200 in 28ms (next.js: 5ms, proxy.ts: 5ms, application-code: 18ms)
+ GET /uploads/uploads/7e493471-297b-42d6-a5cf-50d74f8ee06c.jpg 404 in 61ms (next.js: 15ms, application-code: 46ms)
+2026-07-26 06:38:04 [32minfo[39m: [2026-07-26T03:38:04.092Z] [INFO] API proxy request {"source":"api/catch-all","method":"PUT","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+2026-07-26 06:38:04 [33mwarn[39m: [2026-07-26T03:38:04.102Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"PUT","statusCode":500}
+ PUT /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 500 in 29ms (next.js: 9ms, proxy.ts: 4ms, application-code: 16ms)
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/edit 200 in 61ms (next.js: 10ms, proxy.ts: 2ms, application-code: 49ms)
+2026-07-26 06:38:06 [32minfo[39m: [2026-07-26T03:38:06.594Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:06 [33mwarn[39m: [2026-07-26T03:38:06.597Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 21ms (next.js: 10ms, proxy.ts: 2ms, application-code: 8ms)
+2026-07-26 06:38:07 [32minfo[39m: [2026-07-26T03:38:07.615Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:07 [33mwarn[39m: [2026-07-26T03:38:07.618Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 19ms (next.js: 10ms, proxy.ts: 2ms, application-code: 7ms)
+2026-07-26 06:38:07 [32minfo[39m: [2026-07-26T03:38:07.695Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 200 in 19ms (next.js: 8ms, proxy.ts: 2ms, application-code: 8ms)
+2026-07-26 06:38:07 [32minfo[39m: [2026-07-26T03:38:07.713Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 200 in 17ms (next.js: 6ms, proxy.ts: 3ms, application-code: 8ms)
+2026-07-26 06:38:08 [32minfo[39m: [2026-07-26T03:38:08.117Z] [INFO] API proxy request {"source":"api/catch-all","method":"PUT","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+2026-07-26 06:38:08 [33mwarn[39m: [2026-07-26T03:38:08.124Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"PUT","statusCode":500}
+ PUT /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 500 in 18ms (next.js: 5ms, proxy.ts: 2ms, application-code: 11ms)
+ GET /uploads/uploads/7e493471-297b-42d6-a5cf-50d74f8ee06c.jpg 404 in 114ms (next.js: 7ms, application-code: 106ms)
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/edit 200 in 116ms (next.js: 10ms, proxy.ts: 2ms, application-code: 104ms)
+2026-07-26 06:38:10 [32minfo[39m: [2026-07-26T03:38:10.839Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:10 [33mwarn[39m: [2026-07-26T03:38:10.842Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 23ms (next.js: 10ms, proxy.ts: 4ms, application-code: 10ms)
+2026-07-26 06:38:12 [32minfo[39m: [2026-07-26T03:38:12.350Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:12 [33mwarn[39m: [2026-07-26T03:38:12.355Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 511ms (next.js: 498ms, proxy.ts: 2ms, application-code: 11ms)
+2026-07-26 06:38:12 [32minfo[39m: [2026-07-26T03:38:12.425Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 200 in 21ms (next.js: 5ms, proxy.ts: 4ms, application-code: 11ms)
+2026-07-26 06:38:12 [32minfo[39m: [2026-07-26T03:38:12.444Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 200 in 19ms (next.js: 5ms, proxy.ts: 3ms, application-code: 10ms)
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 200 in 2.9s (next.js: 2.9s, proxy.ts: 3ms, application-code: 21ms)
+2026-07-26 06:38:17 [32minfo[39m: [2026-07-26T03:38:17.109Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+2026-07-26 06:38:17 [32minfo[39m: [2026-07-26T03:38:17.116Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:17 [33mwarn[39m: [2026-07-26T03:38:17.160Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 79ms (next.js: 21ms, proxy.ts: 9ms, application-code: 50ms)
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 200 in 83ms (next.js: 16ms, proxy.ts: 7ms, application-code: 60ms)
+2026-07-26 06:38:18 [32minfo[39m: [2026-07-26T03:38:18.300Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:18 [33mwarn[39m: [2026-07-26T03:38:18.363Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 198ms (next.js: 127ms, proxy.ts: 3ms, application-code: 69ms)
+2026-07-26 06:38:18 [32minfo[39m: [2026-07-26T03:38:18.398Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:18 [33mwarn[39m: [2026-07-26T03:38:18.400Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 62ms (next.js: 4ms, proxy.ts: 2ms, application-code: 56ms)
+2026-07-26 06:38:19 [32minfo[39m: [2026-07-26T03:38:19.421Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:19 [33mwarn[39m: [2026-07-26T03:38:19.425Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 22ms (next.js: 9ms, proxy.ts: 2ms, application-code: 10ms)
+2026-07-26 06:38:19 [32minfo[39m: [2026-07-26T03:38:19.462Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:19 [33mwarn[39m: [2026-07-26T03:38:19.465Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 32ms (next.js: 21ms, proxy.ts: 3ms, application-code: 8ms)
+2026-07-26 06:38:20 [32minfo[39m: [2026-07-26T03:38:20.484Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:20 [33mwarn[39m: [2026-07-26T03:38:20.485Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 17ms (next.js: 8ms, proxy.ts: 2ms, application-code: 6ms)
+2026-07-26 06:38:20 [32minfo[39m: [2026-07-26T03:38:20.504Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:20 [33mwarn[39m: [2026-07-26T03:38:20.506Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 12ms (next.js: 4ms, proxy.ts: 2ms, application-code: 6ms)
+2026-07-26 06:38:25 [32minfo[39m: [2026-07-26T03:38:25.458Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:25 [33mwarn[39m: [2026-07-26T03:38:25.461Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 20ms (next.js: 9ms, proxy.ts: 3ms, application-code: 8ms)
+2026-07-26 06:38:25 [32minfo[39m: [2026-07-26T03:38:25.482Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:25 [33mwarn[39m: [2026-07-26T03:38:25.483Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 12ms (next.js: 4ms, proxy.ts: 3ms, application-code: 6ms)
+2026-07-26 06:38:26 [32minfo[39m: [2026-07-26T03:38:26.501Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:26 [33mwarn[39m: [2026-07-26T03:38:26.504Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 18ms (next.js: 8ms, proxy.ts: 3ms, application-code: 7ms)
+2026-07-26 06:38:26 [32minfo[39m: [2026-07-26T03:38:26.523Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:26 [33mwarn[39m: [2026-07-26T03:38:26.527Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 15ms (next.js: 4ms, proxy.ts: 2ms, application-code: 9ms)
+2026-07-26 06:38:27 [32minfo[39m: [2026-07-26T03:38:27.545Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:27 [33mwarn[39m: [2026-07-26T03:38:27.548Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 18ms (next.js: 8ms, proxy.ts: 2ms, application-code: 7ms)
+2026-07-26 06:38:27 [32minfo[39m: [2026-07-26T03:38:27.570Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:27 [33mwarn[39m: [2026-07-26T03:38:27.574Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 17ms (next.js: 6ms, proxy.ts: 3ms, application-code: 9ms)
+2026-07-26 06:38:28 [32minfo[39m: [2026-07-26T03:38:28.594Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:28 [33mwarn[39m: [2026-07-26T03:38:28.596Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 19ms (next.js: 10ms, proxy.ts: 3ms, application-code: 7ms)
+2026-07-26 06:38:28 [32minfo[39m: [2026-07-26T03:38:28.615Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:28 [33mwarn[39m: [2026-07-26T03:38:28.618Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 13ms (next.js: 4ms, proxy.ts: 3ms, application-code: 7ms)
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 200 in 224ms (next.js: 10ms, proxy.ts: 3ms, application-code: 211ms)
+ GET /api/auth/me 200 in 198ms (next.js: 3ms, proxy.ts: 3ms, application-code: 192ms)
+ GET /api/settings 200 in 202ms (next.js: 181ms, proxy.ts: 3ms, application-code: 18ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+2026-07-26 06:38:29 [32minfo[39m: [2026-07-26T03:38:29.483Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+ GET /api/notifications?limit=20&offset=0 200 in 26ms (next.js: 4ms, proxy.ts: 3ms, application-code: 19ms)
+2026-07-26 06:38:29 [33mwarn[39m: [2026-07-26T03:38:29.486Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 30ms (next.js: 16ms, proxy.ts: 5ms, application-code: 9ms)
+2026-07-26 06:38:30 [32minfo[39m: [2026-07-26T03:38:30.504Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:30 [33mwarn[39m: [2026-07-26T03:38:30.508Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 19ms (next.js: 8ms, proxy.ts: 2ms, application-code: 9ms)
+2026-07-26 06:38:30 [32minfo[39m: [2026-07-26T03:38:30.531Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:30 [33mwarn[39m: [2026-07-26T03:38:30.532Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 12ms (next.js: 4ms, proxy.ts: 2ms, application-code: 6ms)
+2026-07-26 06:38:31 [32minfo[39m: [2026-07-26T03:38:31.561Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:31 [33mwarn[39m: [2026-07-26T03:38:31.564Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 29ms (next.js: 10ms, proxy.ts: 3ms, application-code: 16ms)
+2026-07-26 06:38:31 [32minfo[39m: [2026-07-26T03:38:31.593Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:31 [33mwarn[39m: [2026-07-26T03:38:31.596Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 16ms (next.js: 5ms, proxy.ts: 4ms, application-code: 7ms)
+2026-07-26 06:38:34 [32minfo[39m: [2026-07-26T03:38:34.572Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:34 [33mwarn[39m: [2026-07-26T03:38:34.575Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 21ms (next.js: 9ms, proxy.ts: 3ms, application-code: 9ms)
+2026-07-26 06:38:34 [32minfo[39m: [2026-07-26T03:38:34.596Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:34 [33mwarn[39m: [2026-07-26T03:38:34.598Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 13ms (next.js: 4ms, proxy.ts: 3ms, application-code: 6ms)
+2026-07-26 06:38:35 [32minfo[39m: [2026-07-26T03:38:35.618Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:35 [33mwarn[39m: [2026-07-26T03:38:35.622Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 20ms (next.js: 8ms, proxy.ts: 2ms, application-code: 9ms)
+2026-07-26 06:38:35 [32minfo[39m: [2026-07-26T03:38:35.641Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:35 [33mwarn[39m: [2026-07-26T03:38:35.643Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 12ms (next.js: 4ms, proxy.ts: 2ms, application-code: 6ms)
+2026-07-26 06:38:36 [32minfo[39m: [2026-07-26T03:38:36.661Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:36 [33mwarn[39m: [2026-07-26T03:38:36.662Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 17ms (next.js: 8ms, proxy.ts: 2ms, application-code: 6ms)
+2026-07-26 06:38:36 [32minfo[39m: [2026-07-26T03:38:36.681Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:36 [33mwarn[39m: [2026-07-26T03:38:36.684Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 12ms (next.js: 4ms, proxy.ts: 2ms, application-code: 6ms)
+2026-07-26 06:38:37 [32minfo[39m: [2026-07-26T03:38:37.701Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:37 [33mwarn[39m: [2026-07-26T03:38:37.704Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 18ms (next.js: 8ms, proxy.ts: 2ms, application-code: 8ms)
+2026-07-26 06:38:37 [32minfo[39m: [2026-07-26T03:38:37.722Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:37 [33mwarn[39m: [2026-07-26T03:38:37.726Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 13ms (next.js: 3ms, proxy.ts: 2ms, application-code: 8ms)
+2026-07-26 06:38:38 [32minfo[39m: [2026-07-26T03:38:38.744Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:38 [33mwarn[39m: [2026-07-26T03:38:38.746Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 18ms (next.js: 8ms, proxy.ts: 2ms, application-code: 7ms)
+2026-07-26 06:38:38 [32minfo[39m: [2026-07-26T03:38:38.765Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:38 [33mwarn[39m: [2026-07-26T03:38:38.770Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 16ms (next.js: 4ms, proxy.ts: 3ms, application-code: 9ms)
+2026-07-26 06:38:39 [32minfo[39m: [2026-07-26T03:38:39.787Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:39 [33mwarn[39m: [2026-07-26T03:38:39.789Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 17ms (next.js: 8ms, proxy.ts: 2ms, application-code: 7ms)
+2026-07-26 06:38:39 [32minfo[39m: [2026-07-26T03:38:39.807Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:39 [33mwarn[39m: [2026-07-26T03:38:39.809Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 12ms (next.js: 4ms, proxy.ts: 2ms, application-code: 6ms)
+2026-07-26 06:38:40 [32minfo[39m: [2026-07-26T03:38:40.826Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:40 [33mwarn[39m: [2026-07-26T03:38:40.829Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 17ms (next.js: 8ms, proxy.ts: 2ms, application-code: 7ms)
+2026-07-26 06:38:40 [32minfo[39m: [2026-07-26T03:38:40.847Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:40 [33mwarn[39m: [2026-07-26T03:38:40.851Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 14ms (next.js: 4ms, proxy.ts: 2ms, application-code: 8ms)
+ GET /admin/courses 200 in 22ms (next.js: 4ms, proxy.ts: 2ms, application-code: 16ms)
+ GET /api/admin/courses?offset=0&limit=12 200 in 49ms (next.js: 3ms, proxy.ts: 2ms, application-code: 43ms)
+ GET /uploads/uploads/7e493471-297b-42d6-a5cf-50d74f8ee06c.jpg 404 in 65ms (next.js: 9ms, application-code: 56ms)
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/edit 200 in 57ms (next.js: 10ms, proxy.ts: 2ms, application-code: 44ms)
+2026-07-26 06:38:43 [32minfo[39m: [2026-07-26T03:38:43.222Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:43 [33mwarn[39m: [2026-07-26T03:38:43.225Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 22ms (next.js: 9ms, proxy.ts: 4ms, application-code: 8ms)
+2026-07-26 06:38:44 [32minfo[39m: [2026-07-26T03:38:44.242Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:44 [33mwarn[39m: [2026-07-26T03:38:44.245Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 17ms (next.js: 8ms, proxy.ts: 2ms, application-code: 7ms)
+2026-07-26 06:38:44 [32minfo[39m: [2026-07-26T03:38:44.330Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 200 in 16ms (next.js: 4ms, proxy.ts: 2ms, application-code: 10ms)
+2026-07-26 06:38:44 [32minfo[39m: [2026-07-26T03:38:44.348Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 200 in 17ms (next.js: 5ms, proxy.ts: 2ms, application-code: 10ms)
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/general 200 in 1164ms (next.js: 1139ms, proxy.ts: 2ms, application-code: 23ms)
+2026-07-26 06:38:46 [32minfo[39m: [2026-07-26T03:38:46.867Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:46 [33mwarn[39m: [2026-07-26T03:38:46.871Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 28ms (next.js: 15ms, proxy.ts: 5ms, application-code: 8ms)
+2026-07-26 06:38:47 [32minfo[39m: [2026-07-26T03:38:47.921Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:47 [33mwarn[39m: [2026-07-26T03:38:47.924Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 51ms (next.js: 14ms, proxy.ts: 29ms, application-code: 8ms)
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 200 in 38ms (next.js: 10ms, proxy.ts: 5ms, application-code: 24ms)
+2026-07-26 06:38:50 [32minfo[39m: [2026-07-26T03:38:50.340Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:50 [33mwarn[39m: [2026-07-26T03:38:50.344Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 29ms (next.js: 13ms, proxy.ts: 5ms, application-code: 11ms)
+2026-07-26 06:38:51 [32minfo[39m: [2026-07-26T03:38:51.381Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:51 [33mwarn[39m: [2026-07-26T03:38:51.384Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 37ms (next.js: 8ms, proxy.ts: 20ms, application-code: 8ms)
+2026-07-26 06:38:51 [32minfo[39m: [2026-07-26T03:38:51.429Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:51 [33mwarn[39m: [2026-07-26T03:38:51.431Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 38ms (next.js: 4ms, proxy.ts: 2ms, application-code: 33ms)
+2026-07-26 06:38:52 [32minfo[39m: [2026-07-26T03:38:52.450Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:52 [33mwarn[39m: [2026-07-26T03:38:52.451Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 17ms (next.js: 8ms, proxy.ts: 3ms, application-code: 6ms)
+2026-07-26 06:38:52 [32minfo[39m: [2026-07-26T03:38:52.469Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:52 [33mwarn[39m: [2026-07-26T03:38:52.471Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 12ms (next.js: 4ms, proxy.ts: 2ms, application-code: 6ms)
+2026-07-26 06:38:53 [32minfo[39m: [2026-07-26T03:38:53.489Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:53 [33mwarn[39m: [2026-07-26T03:38:53.494Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 20ms (next.js: 8ms, proxy.ts: 2ms, application-code: 10ms)
+2026-07-26 06:38:53 [32minfo[39m: [2026-07-26T03:38:53.513Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:53 [33mwarn[39m: [2026-07-26T03:38:53.514Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 12ms (next.js: 4ms, proxy.ts: 2ms, application-code: 6ms)
+2026-07-26 06:38:54 [32minfo[39m: [2026-07-26T03:38:54.532Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:38:54 [33mwarn[39m: [2026-07-26T03:38:54.536Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 20ms (next.js: 8ms, proxy.ts: 2ms, application-code: 10ms)
+○ Compiling /admin/courses/[id]/teachers ...
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/teachers 200 in 5.3s (next.js: 5.2s, proxy.ts: 2ms, application-code: 60ms)
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/teachers 200 in 39ms (next.js: 13ms, proxy.ts: 3ms, application-code: 23ms)
+2026-07-26 06:39:00 [32minfo[39m: [2026-07-26T03:39:00.843Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/teachers"}
+2026-07-26 06:39:00 [33mwarn[39m: [2026-07-26T03:39:00.847Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/teachers 404 in 42ms (next.js: 19ms, proxy.ts: 13ms, application-code: 9ms)
+ GET /api/admin/teachers 200 in 39ms (next.js: 5ms, proxy.ts: 9ms, application-code: 25ms)
+2026-07-26 06:39:03 [32minfo[39m: [2026-07-26T03:39:02.999Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/teachers"}
+2026-07-26 06:39:03 [33mwarn[39m: [2026-07-26T03:39:03.014Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/teachers 404 in 89ms (next.js: 34ms, proxy.ts: 13ms, application-code: 41ms)
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/students 200 in 1919ms (next.js: 1889ms, proxy.ts: 3ms, application-code: 27ms)
+2026-07-26 06:39:11 [32minfo[39m: [2026-07-26T03:39:11.646Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/students"}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/students?offset=0&limit=20 200 in 53ms (next.js: 27ms, proxy.ts: 5ms, application-code: 21ms)
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/reviews 200 in 1896ms (next.js: 1857ms, proxy.ts: 2ms, application-code: 37ms)
+2026-07-26 06:39:16 [32minfo[39m: [2026-07-26T03:39:16.817Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/reviews"}
+2026-07-26 06:39:16 [33mwarn[39m: [2026-07-26T03:39:16.822Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/reviews?page=1&limit=20 404 in 41ms (next.js: 19ms, proxy.ts: 7ms, application-code: 14ms)
+2026-07-26 06:39:17 [32minfo[39m: [2026-07-26T03:39:17.861Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/reviews"}
+2026-07-26 06:39:17 [33mwarn[39m: [2026-07-26T03:39:17.864Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/reviews?page=1&limit=20 404 in 38ms (next.js: 27ms, proxy.ts: 2ms, application-code: 8ms)
+✓ Finished filesystem cache database compaction in 12.9s
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/analytics 200 in 1861ms (next.js: 1736ms, proxy.ts: 2ms, application-code: 122ms)
+2026-07-26 06:39:21 [32minfo[39m: [2026-07-26T03:39:21.196Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/analytics"}
+2026-07-26 06:39:21 [33mwarn[39m: [2026-07-26T03:39:21.200Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/analytics 404 in 31ms (next.js: 13ms, proxy.ts: 7ms, application-code: 11ms)
+2026-07-26 06:39:22 [32minfo[39m: [2026-07-26T03:39:22.218Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/analytics"}
+2026-07-26 06:39:22 [33mwarn[39m: [2026-07-26T03:39:22.221Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/analytics 404 in 19ms (next.js: 8ms, proxy.ts: 2ms, application-code: 8ms)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(1) or minHeight(1) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(1) or minHeight(1) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(1) or minHeight(1) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(1) or minHeight(1) or use aspect(undefined) to control the
+       height and width.
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 2ms, proxy.ts: 1810µs, application-code: 9ms)
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/pricing 200 in 1550ms (next.js: 1524ms, proxy.ts: 2ms, application-code: 23ms)
+2026-07-26 06:39:32 [32minfo[39m: [2026-07-26T03:39:32.620Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/pricing"}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/pricing 200 in 44ms (next.js: 18ms, proxy.ts: 5ms, application-code: 22ms)
+[browser] Switch is changing from controlled to uncontrolled. Components should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled value for the lifetime of the component.
+○ Compiling /admin/courses/[id]/certificates ...
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/certificates 200 in 4.5s (next.js: 4.5s, proxy.ts: 3ms, application-code: 23ms)
+2026-07-26 06:39:48 [32minfo[39m: [2026-07-26T03:39:48.743Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/certificates"}
+2026-07-26 06:39:48 [33mwarn[39m: [2026-07-26T03:39:48.746Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/certificates?offset=0&limit=20 404 in 33ms (next.js: 14ms, proxy.ts: 4ms, application-code: 16ms)
+2026-07-26 06:39:49 [32minfo[39m: [2026-07-26T03:39:49.764Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/certificates"}
+2026-07-26 06:39:49 [33mwarn[39m: [2026-07-26T03:39:49.768Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/certificates?offset=0&limit=20 404 in 19ms (next.js: 9ms, proxy.ts: 2ms, application-code: 9ms)
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/edit 200 in 59ms (next.js: 10ms, proxy.ts: 2ms, application-code: 46ms)
+2026-07-26 06:39:53 [32minfo[39m: [2026-07-26T03:39:53.029Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+✓ Finished filesystem cache database compaction in 11.9s
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 200 in 34ms (next.js: 16ms, proxy.ts: 3ms, application-code: 15ms)
+2026-07-26 06:39:53 [32minfo[39m: [2026-07-26T03:39:53.054Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 200 in 20ms (next.js: 5ms, proxy.ts: 5ms, application-code: 9ms)
+ GET /uploads/uploads/7e493471-297b-42d6-a5cf-50d74f8ee06c.jpg 404 in 99ms (next.js: 62ms, application-code: 37ms)
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/workflow 200 in 1308ms (next.js: 1281ms, proxy.ts: 2ms, application-code: 24ms)
+2026-07-26 06:40:03 [32minfo[39m: [2026-07-26T03:40:03.811Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/changelog"}
+2026-07-26 06:40:03 [32minfo[39m: [2026-07-26T03:40:03.818Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/review-comments"}
+2026-07-26 06:40:03 [32minfo[39m: [2026-07-26T03:40:03.827Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:40:03 [33mwarn[39m: [2026-07-26T03:40:03.830Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 47ms (next.js: 31ms, proxy.ts: 8ms, application-code: 9ms)
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/changelog 200 in 54ms (next.js: 18ms, proxy.ts: 9ms, application-code: 28ms)
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/review-comments 200 in 57ms (next.js: 23ms, proxy.ts: 10ms, application-code: 24ms)
+2026-07-26 06:40:04 [32minfo[39m: [2026-07-26T03:40:04.918Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:40:04 [33mwarn[39m: [2026-07-26T03:40:04.922Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 30ms (next.js: 19ms, proxy.ts: 3ms, application-code: 9ms)
+2026-07-26 06:40:04 [32minfo[39m: [2026-07-26T03:40:04.941Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:40:04 [33mwarn[39m: [2026-07-26T03:40:04.946Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 15ms (next.js: 4ms, proxy.ts: 2ms, application-code: 8ms)
+2026-07-26 06:40:08 [32minfo[39m: [2026-07-26T03:40:08.548Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:40:08 [33mwarn[39m: [2026-07-26T03:40:08.550Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 20ms (next.js: 10ms, proxy.ts: 3ms, application-code: 7ms)
+2026-07-26 06:40:08 [32minfo[39m: [2026-07-26T03:40:08.573Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:40:08 [33mwarn[39m: [2026-07-26T03:40:08.575Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 15ms (next.js: 5ms, proxy.ts: 2ms, application-code: 7ms)
+2026-07-26 06:40:09 [32minfo[39m: [2026-07-26T03:40:09.595Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:40:09 [33mwarn[39m: [2026-07-26T03:40:09.598Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 19ms (next.js: 9ms, proxy.ts: 3ms, application-code: 8ms)
+2026-07-26 06:40:09 [32minfo[39m: [2026-07-26T03:40:09.616Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:40:09 [33mwarn[39m: [2026-07-26T03:40:09.621Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 14ms (next.js: 4ms, proxy.ts: 2ms, application-code: 9ms)
+2026-07-26 06:40:10 [32minfo[39m: [2026-07-26T03:40:10.640Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:40:10 [33mwarn[39m: [2026-07-26T03:40:10.643Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 18ms (next.js: 8ms, proxy.ts: 2ms, application-code: 8ms)
+2026-07-26 06:40:10 [32minfo[39m: [2026-07-26T03:40:10.663Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:40:10 [33mwarn[39m: [2026-07-26T03:40:10.666Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 13ms (next.js: 4ms, proxy.ts: 2ms, application-code: 7ms)
+2026-07-26 06:40:14 [32minfo[39m: [2026-07-26T03:40:14.099Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:40:14 [33mwarn[39m: [2026-07-26T03:40:14.102Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 22ms (next.js: 10ms, proxy.ts: 2ms, application-code: 9ms)
+2026-07-26 06:40:14 [32minfo[39m: [2026-07-26T03:40:14.123Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:40:14 [33mwarn[39m: [2026-07-26T03:40:14.126Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 14ms (next.js: 4ms, proxy.ts: 2ms, application-code: 8ms)
+2026-07-26 06:40:15 [32minfo[39m: [2026-07-26T03:40:15.146Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:40:15 [33mwarn[39m: [2026-07-26T03:40:15.150Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 20ms (next.js: 9ms, proxy.ts: 3ms, application-code: 9ms)
+2026-07-26 06:40:15 [32minfo[39m: [2026-07-26T03:40:15.170Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:40:15 [33mwarn[39m: [2026-07-26T03:40:15.174Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 16ms (next.js: 3ms, proxy.ts: 2ms, application-code: 10ms)
+2026-07-26 06:40:16 [32minfo[39m: [2026-07-26T03:40:16.193Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:40:16 [33mwarn[39m: [2026-07-26T03:40:16.195Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 17ms (next.js: 8ms, proxy.ts: 2ms, application-code: 6ms)
+2026-07-26 06:40:16 [32minfo[39m: [2026-07-26T03:40:16.262Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 200 in 20ms (next.js: 4ms, proxy.ts: 3ms, application-code: 13ms)
+2026-07-26 06:40:16 [32minfo[39m: [2026-07-26T03:40:16.284Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum"}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/curriculum 200 in 17ms (next.js: 5ms, proxy.ts: 2ms, application-code: 10ms)
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/marketing 200 in 1771ms (next.js: 1744ms, proxy.ts: 2ms, application-code: 24ms)
+2026-07-26 06:40:23 [32minfo[39m: [2026-07-26T03:40:23.028Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/marketing"}
+2026-07-26 06:40:23 [33mwarn[39m: [2026-07-26T03:40:23.044Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/marketing 404 in 122ms (next.js: 61ms, proxy.ts: 5ms, application-code: 56ms)
+2026-07-26 06:40:24 [32minfo[39m: [2026-07-26T03:40:24.091Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/marketing"}
+2026-07-26 06:40:24 [33mwarn[39m: [2026-07-26T03:40:24.114Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/marketing 404 in 39ms (next.js: 9ms, proxy.ts: 2ms, application-code: 28ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 17ms (next.js: 3ms, proxy.ts: 3ms, application-code: 12ms)
+✓ Finished filesystem cache database compaction in 14.7s
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/content 200 in 1234ms (next.js: 1208ms, proxy.ts: 2ms, application-code: 24ms)
+2026-07-26 06:40:37 [32minfo[39m: [2026-07-26T03:40:37.667Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/faq"}
+2026-07-26 06:40:37 [32minfo[39m: [2026-07-26T03:40:37.676Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/guarantee"}
+2026-07-26 06:40:37 [32minfo[39m: [2026-07-26T03:40:37.683Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/projects"}
+2026-07-26 06:40:37 [33mwarn[39m: [2026-07-26T03:40:37.684Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/faq 404 in 49ms (next.js: 19ms, proxy.ts: 7ms, application-code: 23ms)
+2026-07-26 06:40:37 [33mwarn[39m: [2026-07-26T03:40:37.687Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/guarantee 404 in 48ms (next.js: 25ms, proxy.ts: 8ms, application-code: 16ms)
+2026-07-26 06:40:37 [33mwarn[39m: [2026-07-26T03:40:37.689Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/projects 404 in 48ms (next.js: 31ms, proxy.ts: 7ms, application-code: 10ms)
+2026-07-26 06:40:38 [32minfo[39m: [2026-07-26T03:40:38.775Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/faq"}
+2026-07-26 06:40:38 [33mwarn[39m: [2026-07-26T03:40:38.778Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/faq 404 in 90ms (next.js: 80ms, proxy.ts: 2ms, application-code: 8ms)
+2026-07-26 06:40:38 [32minfo[39m: [2026-07-26T03:40:38.786Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/guarantee"}
+2026-07-26 06:40:38 [32minfo[39m: [2026-07-26T03:40:38.791Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/projects"}
+2026-07-26 06:40:38 [33mwarn[39m: [2026-07-26T03:40:38.793Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/guarantee 404 in 33ms (next.js: 18ms, proxy.ts: 4ms, application-code: 11ms)
+2026-07-26 06:40:38 [33mwarn[39m: [2026-07-26T03:40:38.794Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/projects 404 in 34ms (next.js: 23ms, proxy.ts: 4ms, application-code: 7ms)
+2026-07-26 06:40:46 [32minfo[39m: [2026-07-26T03:40:46.948Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:40:46 [33mwarn[39m: [2026-07-26T03:40:46.952Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 25ms (next.js: 12ms, proxy.ts: 3ms, application-code: 11ms)
+2026-07-26 06:40:47 [32minfo[39m: [2026-07-26T03:40:47.972Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13"}
+2026-07-26 06:40:47 [33mwarn[39m: [2026-07-26T03:40:47.976Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13 404 in 19ms (next.js: 9ms, proxy.ts: 2ms, application-code: 8ms)
+2026-07-26 06:40:47 [32minfo[39m: [2026-07-26T03:40:47.997Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/marketing"}
+2026-07-26 06:40:48 [33mwarn[39m: [2026-07-26T03:40:48.000Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/marketing 404 in 16ms (next.js: 5ms, proxy.ts: 2ms, application-code: 8ms)
+2026-07-26 06:40:49 [32minfo[39m: [2026-07-26T03:40:49.018Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/marketing"}
+2026-07-26 06:40:49 [33mwarn[39m: [2026-07-26T03:40:49.020Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/marketing 404 in 18ms (next.js: 8ms, proxy.ts: 2ms, application-code: 7ms)
+ GET /admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/content 200 in 31ms (next.js: 10ms, proxy.ts: 2ms, application-code: 19ms)
+2026-07-26 06:40:52 [32minfo[39m: [2026-07-26T03:40:52.569Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/faq"}
+2026-07-26 06:40:52 [32minfo[39m: [2026-07-26T03:40:52.767Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/guarantee"}
+2026-07-26 06:40:52 [32minfo[39m: [2026-07-26T03:40:52.978Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/projects"}
+2026-07-26 06:40:53 [33mwarn[39m: [2026-07-26T03:40:53.004Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/faq 404 in 523ms (next.js: 14ms, proxy.ts: 6ms, application-code: 503ms)
+2026-07-26 06:40:53 [33mwarn[39m: [2026-07-26T03:40:53.069Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/guarantee 404 in 554ms (next.js: 212ms, proxy.ts: 6ms, application-code: 337ms)
+2026-07-26 06:40:53 [33mwarn[39m: [2026-07-26T03:40:53.315Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/projects 404 in 773ms (next.js: 351ms, proxy.ts: 5ms, application-code: 417ms)
+2026-07-26 06:40:54 [32minfo[39m: [2026-07-26T03:40:54.090Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/faq"}
+2026-07-26 06:40:54 [33mwarn[39m: [2026-07-26T03:40:54.114Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/faq 404 in 47ms (next.js: 8ms, proxy.ts: 2ms, application-code: 36ms)
+2026-07-26 06:40:54 [32minfo[39m: [2026-07-26T03:40:54.181Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/guarantee"}
+2026-07-26 06:40:54 [33mwarn[39m: [2026-07-26T03:40:54.216Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/guarantee 404 in 110ms (next.js: 4ms, proxy.ts: 61ms, application-code: 45ms)
+2026-07-26 06:40:54 [32minfo[39m: [2026-07-26T03:40:54.333Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/projects"}
+2026-07-26 06:40:54 [33mwarn[39m: [2026-07-26T03:40:54.335Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/7a2f967f-1c8a-4c59-a2c0-708cc32a3a13/projects 404 in 27ms (next.js: 4ms, proxy.ts: 2ms, application-code: 21ms)
+ GET /admin/users 200 in 1726ms (next.js: 1703ms, proxy.ts: 2ms, application-code: 20ms)
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+ GET /api/admin/users?page=1&limit=10&sortBy=createdAt&sortOrder=desc 200 in 1111ms (next.js: 1066ms, proxy.ts: 3ms, application-code: 42ms)
+ GET /api/admin/users/analytics 200 in 2.1s (next.js: 2.0s, proxy.ts: 4ms, application-code: 37ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 14ms (next.js: 3ms, proxy.ts: 2ms, application-code: 9ms)
+ GET /admin/users/a51dea09-4f04-4462-9b31-1a276b825bba 200 in 1859ms (next.js: 1718ms, proxy.ts: 2ms, application-code: 139ms)
+ GET /api/admin/users/a51dea09-4f04-4462-9b31-1a276b825bba 200 in 47ms (next.js: 9ms, proxy.ts: 3ms, application-code: 34ms)
+ GET /api/admin/users/a51dea09-4f04-4462-9b31-1a276b825bba 200 in 15ms (next.js: 4ms, proxy.ts: 2ms, application-code: 8ms)
+ GET /api/admin/users/a51dea09-4f04-4462-9b31-1a276b825bba/enrollments 200 in 28ms (next.js: 10ms, proxy.ts: 3ms, application-code: 15ms)
+ GET /api/admin/users/a51dea09-4f04-4462-9b31-1a276b825bba/login-attempts 200 in 49ms (next.js: 17ms, proxy.ts: 6ms, application-code: 27ms)
+ GET /api/admin/users/a51dea09-4f04-4462-9b31-1a276b825bba/video-engagement?limit=20 200 in 50ms (next.js: 23ms, proxy.ts: 5ms, application-code: 21ms)
+ GET /api/admin/users/a51dea09-4f04-4462-9b31-1a276b825bba/login-attempts?limit=50 200 in 50ms (next.js: 28ms, proxy.ts: 5ms, application-code: 18ms)
+ GET /api/admin/users/a51dea09-4f04-4462-9b31-1a276b825bba/video-engagement?limit=100 200 in 51ms (next.js: 34ms, proxy.ts: 4ms, application-code: 13ms)
+ GET /api/admin/users/a51dea09-4f04-4462-9b31-1a276b825bba/login-attempts?limit=50 200 in 24ms (next.js: 6ms, proxy.ts: 4ms, application-code: 14ms)
+ GET /api/admin/users/a51dea09-4f04-4462-9b31-1a276b825bba/video-engagement?limit=100 200 in 25ms (next.js: 11ms, proxy.ts: 4ms, application-code: 10ms)
+ GET /api/admin/users/a51dea09-4f04-4462-9b31-1a276b825bba/login-attempts?limit=50 200 in 29ms (next.js: 11ms, proxy.ts: 4ms, application-code: 13ms)
+ GET /api/admin/users/a51dea09-4f04-4462-9b31-1a276b825bba/video-engagement?limit=100 200 in 31ms (next.js: 17ms, proxy.ts: 4ms, application-code: 10ms)
+ GET /api/admin/users/a51dea09-4f04-4462-9b31-1a276b825bba/login-attempts?limit=50 200 in 22ms (next.js: 6ms, proxy.ts: 4ms, application-code: 13ms)
+ GET /api/admin/users/a51dea09-4f04-4462-9b31-1a276b825bba/video-engagement?limit=100 200 in 24ms (next.js: 11ms, proxy.ts: 3ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 12ms (next.js: 2ms, proxy.ts: 1759µs, application-code: 8ms)
+2026-07-26 06:43:09 [32minfo[39m: [2026-07-26T03:43:09.457Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/security/sessions/stats"}
+ GET /api/admin/security/sessions/stats 200 in 44ms (next.js: 16ms, proxy.ts: 5ms, application-code: 23ms)
+ GET /api/admin/security/sessions 200 in 228ms (next.js: 170ms, proxy.ts: 5ms, application-code: 54ms)
+2026-07-26 06:43:10 [32minfo[39m: [2026-07-26T03:43:10.311Z] [INFO] Admin user security logs requested {"source":"api/admin/security/logs/users"}
+2026-07-26 06:43:10 [32minfo[39m: [2026-07-26T03:43:10.337Z] [INFO] Admin user security logs request completed {"source":"api/admin/security/logs/users","statusCode":200}
+ GET /api/admin/security/logs/users/a51dea09-4f04-4462-9b31-1a276b825bba 200 in 910ms (next.js: 873ms, proxy.ts: 4ms, application-code: 33ms)
+2026-07-26 06:43:10 [32minfo[39m: [2026-07-26T03:43:10.357Z] [INFO] Admin user security logs requested {"source":"api/admin/security/logs/users"}
+2026-07-26 06:43:10 [32minfo[39m: [2026-07-26T03:43:10.361Z] [INFO] Admin user security logs request completed {"source":"api/admin/security/logs/users","statusCode":200}
+ GET /api/admin/security/logs/users/a51dea09-4f04-4462-9b31-1a276b825bba 200 in 22ms (next.js: 9ms, proxy.ts: 3ms, application-code: 10ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 3ms, proxy.ts: 1916µs, application-code: 9ms)
+2026-07-26 06:43:33 [31merror[39m: [2026-07-26T03:43:33.127Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":404}
+ GET /api/admin/users/a51dea09-4f04-4462-9b31-1a276b825bba/wallet/transactions 404 in 44ms (next.js: 11ms, proxy.ts: 3ms, application-code: 29ms)
+2026-07-26 06:43:33 [31merror[39m: [2026-07-26T03:43:33.148Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":404}
+ GET /api/admin/users/a51dea09-4f04-4462-9b31-1a276b825bba/wallet/transactions 404 in 18ms (next.js: 5ms, proxy.ts: 4ms, application-code: 9ms)
+2026-07-26 06:43:33 [31merror[39m: [2026-07-26T03:43:33.373Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":404}
+ GET /api/admin/payments?userId=a51dea09-4f04-4462-9b31-1a276b825bba&limit=100 404 in 292ms (next.js: 220ms, proxy.ts: 4ms, application-code: 67ms)
+2026-07-26 06:43:33 [31merror[39m: [2026-07-26T03:43:33.390Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":404}
+ GET /api/admin/payments?userId=a51dea09-4f04-4462-9b31-1a276b825bba&limit=100 404 in 15ms (next.js: 3ms, proxy.ts: 3ms, application-code: 10ms)
+ GET /api/admin/tickets?userId=a51dea09-4f04-4462-9b31-1a276b825bba&limit=50 200 in 201ms (next.js: 179ms, proxy.ts: 3ms, application-code: 19ms)
+ GET /api/admin/tickets?userId=a51dea09-4f04-4462-9b31-1a276b825bba&limit=50 200 in 29ms (next.js: 3ms, proxy.ts: 4ms, application-code: 22ms)
+ GET /admin/users/permissions 200 in 584ms (next.js: 555ms, proxy.ts: 4ms, application-code: 25ms)
+ GET /api/admin/users?role=MODERATOR&limit=100 200 in 48ms (next.js: 6ms, proxy.ts: 6ms, application-code: 36ms)
+ GET /api/admin/users?role=TEACHER&limit=100 200 in 48ms (next.js: 21ms, proxy.ts: 6ms, application-code: 21ms)
+ GET /api/admin/users?role=ADMIN&limit=100 200 in 56ms (next.js: 16ms, proxy.ts: 6ms, application-code: 34ms)
+ GET /admin/teachers 200 in 744ms (next.js: 711ms, proxy.ts: 3ms, application-code: 30ms)
+2026-07-26 06:43:56 [31merror[39m: [2026-07-26T03:43:56.264Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":500}
+ GET /api/admin/instructors?page=1&limit=10 500 in 257ms (next.js: 185ms, proxy.ts: 7ms, application-code: 65ms)
+2026-07-26 06:43:56 [31merror[39m: [2026-07-26T03:43:56.948Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":500}
+ GET /api/admin/instructors/statistics 500 in 939ms (next.js: 912ms, proxy.ts: 10ms, application-code: 17ms)
+2026-07-26 06:43:56 [31merror[39m: [2026-07-26T03:43:56.954Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":500}
+ GET /api/admin/instructors?page=1&limit=10 500 in 25ms (next.js: 3ms, proxy.ts: 10ms, application-code: 12ms)
+2026-07-26 06:43:57 [31merror[39m: [2026-07-26T03:43:57.480Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":500}
+ GET /api/admin/instructors/statistics 500 in 27ms (next.js: 10ms, proxy.ts: 3ms, application-code: 15ms)
+2026-07-26 06:43:58 [31merror[39m: [2026-07-26T03:43:58.952Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":500}
+ GET /api/admin/instructors?page=1&limit=10 500 in 33ms (next.js: 4ms, proxy.ts: 6ms, application-code: 24ms)
+2026-07-26 06:43:58 [31merror[39m: [2026-07-26T03:43:58.956Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":500}
+ GET /api/admin/instructors/statistics 500 in 35ms (next.js: 18ms, proxy.ts: 5ms, application-code: 13ms)
+2026-07-26 06:44:01 [31merror[39m: [2026-07-26T03:44:01.937Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":500}
+ GET /api/admin/instructors?page=1&limit=10 500 in 17ms (next.js: 2ms, proxy.ts: 3ms, application-code: 12ms)
+2026-07-26 06:44:02 [31merror[39m: [2026-07-26T03:44:02.943Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":500}
+ GET /api/admin/instructors/statistics 500 in 23ms (next.js: 10ms, proxy.ts: 2ms, application-code: 11ms)
+2026-07-26 06:44:05 [31merror[39m: [2026-07-26T03:44:05.226Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":500}
+ GET /api/admin/instructors?page=1&limit=10 500 in 30ms (next.js: 4ms, proxy.ts: 5ms, application-code: 21ms)
+2026-07-26 06:44:05 [31merror[39m: [2026-07-26T03:44:05.230Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":500}
+ GET /api/admin/instructors/statistics 500 in 36ms (next.js: 18ms, proxy.ts: 6ms, application-code: 12ms)
+2026-07-26 06:44:06 [31merror[39m: [2026-07-26T03:44:06.020Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":500}
+ GET /api/admin/instructors?page=1&limit=10 500 in 15ms (next.js: 2ms, proxy.ts: 2ms, application-code: 11ms)
+2026-07-26 06:44:06 [31merror[39m: [2026-07-26T03:44:06.942Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":500}
+ GET /api/admin/instructors/statistics 500 in 23ms (next.js: 8ms, proxy.ts: 2ms, application-code: 13ms)
+2026-07-26 06:44:07 [31merror[39m: [2026-07-26T03:44:07.935Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":500}
+ GET /api/admin/instructors?page=1&limit=10 500 in 15ms (next.js: 3ms, proxy.ts: 2ms, application-code: 10ms)
+2026-07-26 06:44:08 [31merror[39m: [2026-07-26T03:44:08.954Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":500}
+ GET /api/admin/instructors/statistics 500 in 34ms (next.js: 16ms, proxy.ts: 4ms, application-code: 14ms)
+2026-07-26 06:44:10 [31merror[39m: [2026-07-26T03:44:10.934Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":500}
+ GET /api/admin/instructors?page=1&limit=10 500 in 15ms (next.js: 2ms, proxy.ts: 2ms, application-code: 10ms)
+2026-07-26 06:44:12 [31merror[39m: [2026-07-26T03:44:12.940Z] [ERROR] Backend authentication request failed {"source":"api/auth/proxy","statusCode":500}
+ GET /api/admin/instructors/statistics 500 in 21ms (next.js: 8ms, proxy.ts: 2ms, application-code: 11ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 13ms (next.js: 2ms, proxy.ts: 1654µs, application-code: 9ms)
+✓ Finished filesystem cache database compaction in 15.2s
+ GET /admin/live 200 in 969ms (next.js: 946ms, proxy.ts: 3ms, application-code: 20ms)
+2026-07-26 06:44:45 [32minfo[39m: [2026-07-26T03:44:45.097Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/security/roles"}
+2026-07-26 06:44:45 [32minfo[39m: [2026-07-26T03:44:45.100Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/security/fingerprints"}
+2026-07-26 06:44:45 [32minfo[39m: [2026-07-26T03:44:45.109Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/security/logs"}
+2026-07-26 06:44:45 [33mwarn[39m: [2026-07-26T03:44:45.117Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/security/roles 404 in 88ms (next.js: 41ms, proxy.ts: 4ms, application-code: 44ms)
+2026-07-26 06:44:45 [33mwarn[39m: [2026-07-26T03:44:45.120Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/security/fingerprints 404 in 92ms (next.js: 33ms, proxy.ts: 4ms, application-code: 55ms)
+ GET /api/admin/security/sessions 200 in 83ms (next.js: 28ms, proxy.ts: 14ms, application-code: 40ms)
+2026-07-26 06:44:45 [33mwarn[39m: [2026-07-26T03:44:45.125Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/security/logs?limit=100 404 in 83ms (next.js: 49ms, proxy.ts: 13ms, application-code: 21ms)
+ GET /api/admin/security/ip-whitelist 200 in 268ms (next.js: 208ms, proxy.ts: 14ms, application-code: 46ms)
+ GET /api/admin/live?type=all&minutes=5 200 in 361ms (next.js: 308ms, proxy.ts: 3ms, application-code: 50ms)
+ GET /api/admin/live?type=all&minutes=5 200 in 15ms (next.js: 3ms, proxy.ts: 3ms, application-code: 10ms)
+2026-07-26 06:44:46 [32minfo[39m: [2026-07-26T03:44:46.138Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/security/roles"}
+2026-07-26 06:44:46 [33mwarn[39m: [2026-07-26T03:44:46.141Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/security/roles 404 in 21ms (next.js: 11ms, proxy.ts: 2ms, application-code: 7ms)
+2026-07-26 06:44:46 [32minfo[39m: [2026-07-26T03:44:46.152Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/security/fingerprints"}
+2026-07-26 06:44:46 [33mwarn[39m: [2026-07-26T03:44:46.156Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/security/fingerprints 404 in 32ms (next.js: 20ms, proxy.ts: 2ms, application-code: 10ms)
+2026-07-26 06:44:46 [32minfo[39m: [2026-07-26T03:44:46.163Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/security/logs"}
+2026-07-26 06:44:46 [33mwarn[39m: [2026-07-26T03:44:46.165Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/security/logs?limit=100 404 in 27ms (next.js: 16ms, proxy.ts: 4ms, application-code: 6ms)
+ GET /admin/analytics 200 in 1485ms (next.js: 1462ms, proxy.ts: 2ms, application-code: 21ms)
+ GET /api/admin/ai 200 in 952ms (next.js: 737ms, proxy.ts: 29ms, application-code: 186ms)
+ GET /api/admin/analytics/revenue?period=month 200 in 966ms (next.js: 791ms, proxy.ts: 30ms, application-code: 146ms)
+ GET /api/admin/analytics/metrics 200 in 969ms (next.js: 858ms, proxy.ts: 25ms, application-code: 86ms)
+ GET /api/admin/analytics?period=month 200 in 987ms (next.js: 896ms, proxy.ts: 30ms, application-code: 62ms)
+ GET /api/admin/analytics/journeys 200 in 991ms (next.js: 823ms, proxy.ts: 24ms, application-code: 143ms)
+ GET /admin/reports 200 in 1600ms (next.js: 1575ms, proxy.ts: 3ms, application-code: 22ms)
+✓ Finished writing to filesystem cache in 10.8s
+ GET /admin/courses 200 in 150ms (next.js: 92ms, proxy.ts: 2ms, application-code: 57ms)
+ GET /api/admin/courses?offset=0&limit=12 200 in 148ms (next.js: 12ms, proxy.ts: 7ms, application-code: 129ms)
+ GET /api/admin/course-categories 200 in 149ms (next.js: 20ms, proxy.ts: 9ms, application-code: 121ms)
+ GET /api/admin/teachers 200 in 146ms (next.js: 32ms, proxy.ts: 7ms, application-code: 107ms)
+ GET /uploads/uploads/7e493471-297b-42d6-a5cf-50d74f8ee06c.jpg 404 in 117ms (next.js: 51ms, application-code: 65ms)
+ GET /admin/courses/e5b8e3c6-fe62-43ca-ae2c-c144c8ba26ba/edit 200 in 139ms (next.js: 30ms, proxy.ts: 4ms, application-code: 105ms)
+2026-07-26 06:45:06 [32minfo[39m: [2026-07-26T03:45:06.213Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/e5b8e3c6-fe62-43ca-ae2c-c144c8ba26ba"}
+2026-07-26 06:45:06 [33mwarn[39m: [2026-07-26T03:45:06.217Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/e5b8e3c6-fe62-43ca-ae2c-c144c8ba26ba 404 in 26ms (next.js: 12ms, proxy.ts: 3ms, application-code: 11ms)
+2026-07-26 06:45:07 [32minfo[39m: [2026-07-26T03:45:07.238Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/e5b8e3c6-fe62-43ca-ae2c-c144c8ba26ba"}
+2026-07-26 06:45:07 [33mwarn[39m: [2026-07-26T03:45:07.240Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/courses/e5b8e3c6-fe62-43ca-ae2c-c144c8ba26ba 404 in 19ms (next.js: 10ms, proxy.ts: 2ms, application-code: 7ms)
+2026-07-26 06:45:07 [32minfo[39m: [2026-07-26T03:45:07.316Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/e5b8e3c6-fe62-43ca-ae2c-c144c8ba26ba/curriculum"}
+ GET /api/admin/courses/e5b8e3c6-fe62-43ca-ae2c-c144c8ba26ba/curriculum 200 in 17ms (next.js: 6ms, proxy.ts: 3ms, application-code: 9ms)
+2026-07-26 06:45:07 [32minfo[39m: [2026-07-26T03:45:07.334Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/courses/e5b8e3c6-fe62-43ca-ae2c-c144c8ba26ba/curriculum"}
+ GET /api/admin/courses/e5b8e3c6-fe62-43ca-ae2c-c144c8ba26ba/curriculum 200 in 53ms (next.js: 6ms, proxy.ts: 3ms, application-code: 44ms)
+ GET /admin/course-categories 200 in 1901ms (next.js: 1788ms, proxy.ts: 3ms, application-code: 110ms)
+ GET /api/admin/course-categories 200 in 28ms (next.js: 4ms, proxy.ts: 3ms, application-code: 22ms)
+ GET /admin/subjects 200 in 3.7s (next.js: 3.2s, proxy.ts: 2ms, application-code: 502ms)
+ GET /admin/subjects 200 in 28ms (next.js: 5ms, proxy.ts: 4ms, application-code: 19ms)
+ GET /api/admin/subjects?page=1&limit=10 200 in 3.3s (next.js: 3.2s, proxy.ts: 2ms, application-code: 22ms)
+✓ Finished filesystem cache database compaction in 11.7s
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 15ms (next.js: 3ms, proxy.ts: 1773µs, application-code: 10ms)
+[browser] [2026-07-26T03:45:25.978Z] [WARN] Slow Performance detected: API Request {"duration":"3256.20ms","context":"browser","endpoint":"/api/admin/subjects?page=1&limit=10","method":"GET"} (src/lib/logging/unified-logger.ts:267:17)
+✓ Finished filesystem cache database compaction in 13.0s
+ GET /admin/learning-paths 200 in 1299ms (next.js: 1191ms, proxy.ts: 3ms, application-code: 105ms)
+2026-07-26 06:46:00 [32minfo[39m: [2026-07-26T03:46:00.039Z] [INFO] API proxy request {"source":"api/catch-all","method":"GET","path":"admin/learning-paths"}
+2026-07-26 06:46:00 [33mwarn[39m: [2026-07-26T03:46:00.042Z] [WARN] API proxy backend returned an error {"source":"api/catch-all","method":"GET","statusCode":404}
+ GET /api/admin/learning-paths 404 in 52ms (next.js: 29ms, proxy.ts: 5ms, application-code: 18ms)
+[browser] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[browser] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 575ms (next.js: 24ms, proxy.ts: 2ms, application-code: 549ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 11ms (next.js: 2ms, proxy.ts: 1729µs, application-code: 7ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 10ms (next.js: 2ms, proxy.ts: 1744µs, application-code: 6ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+[API Proxy] Notifications upstream failed for http://127.0.0.1:8082: fetch failed
+[API Proxy] Error fetching notifications: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ GET /api/notifications?limit=20&offset=0 502 in 11ms (next.js: 2ms, proxy.ts: 1855µs, application-code: 7ms)
+[browser] [2026-07-26T03:46:34.770Z] [WARN] Error fetching notifications: {"error":{"message":"Failed to connect to backend","stack":"ApiError: Failed to connect to backend\n    at ApiClient.handleApiErrorResponse (http://localhost:3000/_next/static/chunks/src_1nri8e0._.js:2499:15)\n    at async ApiClient.request (http://localhost:3000/_next/static/chunks/src_1nri8e0._.js:2535:37)\n    at async NotificationsProvider.useCallback[fetchNotifications] (http://localhost:3000/_next/static/chunks/src_1nri8e0._.js:3984:34)","name":"ApiError"}} (src/lib/logging/unified-logger.ts:267:17)
+⨯ [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ POST /api/admin/learning-paths 500 in 42ms (next.js: 13ms, proxy.ts: 3ms, application-code: 25ms)
+⨯ [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ POST /api/admin/learning-paths 500 in 18ms (next.js: 8ms, proxy.ts: 2ms, application-code: 7ms)
+⨯ [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ POST /api/admin/learning-paths 500 in 13ms (next.js: 4ms, proxy.ts: 2ms, application-code: 6ms)
+⨯ [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ POST /api/admin/learning-paths 500 in 17ms (next.js: 8ms, proxy.ts: 2ms, application-code: 7ms)
+⨯ [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ POST /api/admin/learning-paths 500 in 12ms (next.js: 4ms, proxy.ts: 2ms, application-code: 6ms)
+⨯ [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ POST /api/admin/learning-paths 500 in 21ms (next.js: 9ms, proxy.ts: 2ms, application-code: 9ms)
+⨯ [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ POST /api/admin/learning-paths 500 in 19ms (next.js: 9ms, proxy.ts: 2ms, application-code: 7ms)
+⨯ [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ POST /api/admin/learning-paths 500 in 13ms (next.js: 4ms, proxy.ts: 2ms, application-code: 7ms)
+⨯ [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ POST /api/admin/learning-paths 500 in 23ms (next.js: 12ms, proxy.ts: 4ms, application-code: 7ms)
+⨯ [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ POST /api/admin/learning-paths 500 in 13ms (next.js: 4ms, proxy.ts: 3ms, application-code: 6ms)
+✓ Finished filesystem cache database compaction in 13.0s
+⨯ [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ POST /api/admin/learning-paths 500 in 18ms (next.js: 8ms, proxy.ts: 2ms, application-code: 8ms)
+⨯ [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ POST /api/admin/learning-paths 500 in 17ms (next.js: 8ms, proxy.ts: 3ms, application-code: 7ms)
+ GET /admin/books 200 in 855ms (next.js: 807ms, proxy.ts: 2ms, application-code: 46ms)
+Admin subjects GET error: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ GET /api/admin/subjects?limit=100 500 in 367ms (next.js: 4ms, proxy.ts: 3ms, application-code: 359ms)
+Admin books GET error: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ GET /api/admin/books?page=1&limit=10 500 in 372ms (next.js: 352ms, proxy.ts: 4ms, application-code: 16ms)
+Admin books GET error: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ GET /api/admin/books?page=1&limit=10 500 in 13ms (next.js: 3ms, proxy.ts: 2ms, application-code: 8ms)
+Admin subjects GET error: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ GET /api/admin/subjects?limit=100 500 in 12ms (next.js: 3ms, proxy.ts: 3ms, application-code: 7ms)
+Admin books GET error: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ GET /api/admin/books?page=1&limit=10 500 in 46ms (next.js: 38ms, proxy.ts: 2ms, application-code: 6ms)
+Admin subjects GET error: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ GET /api/admin/subjects?limit=100 500 in 51ms (next.js: 42ms, proxy.ts: 3ms, application-code: 6ms)
+○ Compiling /admin/exams ...
+Admin books GET error: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ GET /api/admin/books?page=1&limit=10 500 in 61ms (next.js: 53ms, proxy.ts: 2ms, application-code: 6ms)
+ GET /admin/exams 200 in 4.9s (next.js: 4.8s, proxy.ts: 3ms, application-code: 51ms)
+Admin exams GET error: [TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8082
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8082) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8082
+  }
+}
+ GET /api/admin/exams?page=1&limit=10 500 in 29ms (next.js: 15ms, proxy.ts: 4ms, application-code: 10ms)
+ GET /api/admin/exams?page=1&limit=10 200 in 48ms (next.js: 11ms, proxy.ts: 4ms, application-code: 32ms)
+ GET /api/admin/subjects?limit=100 200 in 62ms (next.js: 4ms, proxy.ts: 5ms, application-code: 53ms)
+ GET /admin/learning-paths 200 in 33ms (next.js: 5ms, proxy.ts: 5ms, application-code: 24ms)
+[browser] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[browser] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 18ms (next.js: 2ms, proxy.ts: 1783µs, application-code: 14ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 15ms (next.js: 4ms, proxy.ts: 3ms, application-code: 9ms)
+[API Proxy] GET /api/notifications -> http://127.0.0.1:8082/api/notifications?limit=20&offset=0
+ GET /api/notifications?limit=20&offset=0 200 in 15ms (next.js: 3ms, proxy.ts: 1889µs, application-code: 10ms)

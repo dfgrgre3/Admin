@@ -1,14 +1,60 @@
+export interface DashboardStatsInput {
+  totalUsers?: number;
+  activeStudents?: number;
+  totalTeachers?: number;
+  newUsersToday?: number;
+  newUsersThisWeek?: number;
+  totalSubjects?: number;
+  publishedCourses?: number;
+  reviewCourses?: number;
+  draftCourses?: number;
+  totalExams?: number;
+  totalResources?: number;
+  activeChallenges?: number;
+  completionRate?: number;
+  dailyRevenue?: number;
+  monthlyRevenue?: number;
+  newSubscriptions?: number;
+  cancelledSubscriptions?: number;
+  pendingOrders?: number;
+  openTickets?: number;
+  moderationQueue?: number;
+  pendingApprovals?: number;
+}
+
+export interface DashboardActivityInput {
+  tasksCompleted?: number;
+  studyMinutes?: number;
+  examsTaken?: number;
+  achievementsEarned?: number;
+}
+
+export interface DashboardKPIInput {
+  name?: string;
+  value?: number;
+  target?: number;
+  unit?: string;
+}
+
+export interface DashboardAlertInput {
+  id?: string | number;
+  type?: string;
+  message?: string;
+  severity?: string;
+  createdAt?: string;
+}
+
 export interface DashboardPayload {
-  stats?: Record<string, any>;
-  activity?: Record<string, any>;
+  stats?: DashboardStatsInput;
+  activity?: DashboardActivityInput;
   topSellingCourses?: Array<{
     id: string;
     title: string;
     sales: number;
     revenue: number;
   }>;
-  criticalKPIs?: Array<Record<string, any>>;
-  systemAlerts?: Array<Record<string, any>>;
+  criticalKPIs?: DashboardKPIInput[];
+  systemAlerts?: DashboardAlertInput[];
 }
 
 export function buildComprehensiveStats(payload: DashboardPayload = {}) {
@@ -49,12 +95,12 @@ export function buildComprehensiveStats(payload: DashboardPayload = {}) {
     pendingApprovals: Number(stats.pendingApprovals ?? 0),
     topSellingCourses: Array.isArray(payload.topSellingCourses) ? payload.topSellingCourses : [],
     criticalKPIs: Array.isArray(payload.criticalKPIs) ? payload.criticalKPIs.map(kpi => ({
-      name: (kpi as any).name || '',
-      value: Number((kpi as any).value ?? 0),
-      target: Number((kpi as any).target ?? 0),
-      unit: (kpi as any).unit || '',
+      name: kpi.name || '',
+      value: Number(kpi.value ?? 0),
+      target: Number(kpi.target ?? 0),
+      unit: kpi.unit || '',
     })) : [],
-    systemAlerts: Array.isArray(payload.systemAlerts) ? payload.systemAlerts.map((alert: any) => ({
+    systemAlerts: Array.isArray(payload.systemAlerts) ? payload.systemAlerts.map(alert => ({
       id: String(alert.id ?? ''),
       type: String(alert.type ?? ''),
       message: String(alert.message ?? ''),

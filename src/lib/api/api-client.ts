@@ -3,7 +3,7 @@
  * This replaces all custom apiFetch instances across the app to reduce over-engineering.
  */
 import { performanceMonitor } from '../metrics/performance';
-import { buildRuntimeApiUrl, DEFAULT_BACKEND_ORIGIN } from './config';
+import { buildRuntimeApiUrl } from './config';
 
 // NOTE: ErrorManager is intentionally NOT imported at the top level.
 // Doing so creates a circular dependency:
@@ -29,6 +29,22 @@ const AUTH_REFRESH_ENDPOINT = '/api/auth/refresh';
 const API_TIMEOUT = 30000; // 30 seconds
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
+const MAX_RETRY_DELAY = 10_000;
+const CLIENT_RATE_WINDOW_MS = 10_000;
+const CLIENT_RATE_LIMIT = 60;
+
+const requestTimestamps: number[] = [];
+
+function enforceClientRequestLimit(): void {
+    const now = Date.now();
+    while (requestTimestamps[0] != null && now - requestTimestamps[0] >= CLIENT_RATE_WINDOW_MS) {
+        requestTimestamps.shift();
+    }
+    if (requestTimestamps.length >= CLIENT_RATE_LIMIT) {
+        throw new Error('Too many API requests. Please try again shortly.');
+    }
+    requestTimestamps.push(now);
+}
 
 class ApiError extends Error {
     public status: number;
@@ -46,7 +62,11 @@ class ApiError extends Error {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const DEFAULT_API_URL = `${DEFAULT_BACKEND_ORIGIN}/api`;
+/** Exponential backoff with jitter prevents synchronized clients from retrying together. */
+function retryDelay(retryCount: number): number {
+    const exponential = Math.min(MAX_RETRY_DELAY, RETRY_DELAY * Math.pow(2, retryCount));
+    return Math.floor(exponential * (0.5 + Math.random() * 0.5));
+}
 
 function normalizeEndpoint(endpoint: string): string {
     if (!endpoint) return '';
@@ -143,7 +163,9 @@ class ApiClient {
     private isRetryableError(error: unknown, retryCount: number, retries: number): boolean {
         const errName = (error as { name?: string })?.name;
         const errMsg = (error as { message?: string })?.message;
-        return !!((errName === 'AbortError' || errMsg?.includes('fetch')) && retryCount < retries);
+        const isNetworkError = errName === 'TypeError' &&
+            typeof errMsg === 'string' && /network|failed to fetch|load failed/i.test(errMsg);
+        return !!((errName === 'AbortError' || isNetworkError) && retryCount < retries);
     }
 
     private async isCsrfValidationFailure(response: Response): Promise<boolean> {
@@ -154,6 +176,7 @@ class ApiClient {
     }
 
     public async fetch(endpoint: string, options: FetchOptions = {}, retryCount = 0): Promise<Response> {
+        if (retryCount === 0) enforceClientRequestLimit();
         const { timeout = API_TIMEOUT, retries = MAX_RETRIES, ...customOptions } = options;
 
         const controller = new AbortController();
@@ -189,7 +212,7 @@ class ApiClient {
 
             const shouldRetry = [408, 429, 500, 502, 503, 504].includes(response.status) && retryCount < retries;
             if (shouldRetry) {
-                await sleep(RETRY_DELAY * Math.pow(2, retryCount));
+                await sleep(retryDelay(retryCount));
                 return this.fetch(endpoint, options, retryCount + 1);
             }
 
@@ -198,7 +221,7 @@ class ApiClient {
             clearTimeout(id);
 
             if (this.isRetryableError(error, retryCount, retries)) {
-                await sleep(RETRY_DELAY * Math.pow(2, retryCount));
+                await sleep(retryDelay(retryCount));
                 return this.fetch(endpoint, options, retryCount + 1);
             }
 
@@ -228,6 +251,7 @@ class ApiClient {
     }
 
     private async request<T>(endpoint: string, options: FetchOptions = {}, retryCount = 0): Promise<T> {
+        if (retryCount === 0) enforceClientRequestLimit();
         const { timeout = API_TIMEOUT, retries = MAX_RETRIES, ...customOptions } = options;
 
         const controller = new AbortController();
@@ -268,7 +292,7 @@ class ApiClient {
             if (!response.ok) {
                 const shouldRetry = await this.handleApiErrorResponse(response, retryCount, retries);
                 if (shouldRetry) {
-                    await sleep(RETRY_DELAY * Math.pow(2, retryCount));
+                    await sleep(retryDelay(retryCount));
                     return this.request<T>(endpoint, options, retryCount + 1);
                 }
             }
@@ -287,7 +311,7 @@ class ApiClient {
             if (error instanceof ApiError) throw error;
 
             if (this.isRetryableError(error, retryCount, retries)) {
-                await sleep(RETRY_DELAY * Math.pow(2, retryCount));
+                await sleep(retryDelay(retryCount));
                 return this.request<T>(endpoint, options, retryCount + 1);
             }
 

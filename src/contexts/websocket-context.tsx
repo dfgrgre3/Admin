@@ -47,10 +47,8 @@ class WebSocketErrorBoundary extends React.Component<
   }
 }
 
-// WebSocket is disabled by default to preserve bfcache and reduce initial JS execution.
-// Enable only when deploying to edge runtime (Cloudflare Workers) or when real-time
-// features are explicitly required.
-const WEBSOCKET_ENABLED = false;
+// WebSocket is enabled: the Go backend serves the realtime endpoint at /api/ws.
+const WEBSOCKET_ENABLED = true;
 
 export function WebSocketProvider({ children, userId }: {children: React.ReactNode;userId?: string;}) {
   const { user } = useAuth();
@@ -75,7 +73,7 @@ export function WebSocketProvider({ children, userId }: {children: React.ReactNo
   }, []);
 
   useEffect(() => {
-    // CRITICAL: WebSocket is disabled - exit immediately before any operations
+    // Wait until a user id is available before connecting
     if (!WEBSOCKET_ENABLED || !currentUserId) {
       setSocket(null);
       setIsConnected(false);

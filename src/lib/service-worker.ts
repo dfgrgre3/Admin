@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { logger } from '@/lib/logger';
 
@@ -137,9 +137,5 @@ export async function preCacheSearch(query: string, scope: string = "all"): Prom
 			resolve(false);
 		}
 	});
-}
-
-function isServiceWorkerSupported(): boolean {
-	return typeof window !== "undefined" && "serviceWorker" in navigator;
 }
 
