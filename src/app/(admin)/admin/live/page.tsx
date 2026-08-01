@@ -37,8 +37,11 @@ import {
 
 type ActivityFilter = "all" | "exam" | "study" | "online";
 
+import { useAdminSocket } from "@/hooks/use-admin-socket";
+
 export default function LiveMonitoringPage() {
    const queryClient = useQueryClient();
+   const { isConnected } = useAdminSocket();
    const [activeUsers, setActiveUsers] = React.useState<ActiveUser[]>([]);
    const [stats, setStats] = React.useState<LiveStats | null>(null);
    const [loading, setLoading] = React.useState(true);

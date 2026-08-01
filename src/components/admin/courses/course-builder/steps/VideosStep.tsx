@@ -441,5 +441,3 @@ const VideoLessonCard: React.FC<VideoLessonCardProps> = ({
     </Card>
   );
 };
-
-export default VideosStep;

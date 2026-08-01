@@ -27,7 +27,7 @@ interface AdminAuthUser {
 // access_token value eliminates that overhead for burst requests from the
 // same session while keeping permissions reasonably fresh.
 // ---------------------------------------------------------------------------
-const USER_CACHE_TTL_MS = 30_000; // 30 seconds
+const USER_CACHE_TTL_MS = 60_000; // 60 seconds (was 30s - longer TTL reduces redundant /api/auth/me calls)
 const USER_CACHE_MAX_ENTRIES = 250;
 
 interface CacheEntry {

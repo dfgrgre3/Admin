@@ -31,9 +31,9 @@ export interface SystemHealth {
 
 export interface ExamHealth {
   totalExams: number;
-  activeExams: number;
-  completedExams: number;
-  failedExams: number;
+  enabledExams: number;
+  passedAttempts: number;
+  failedAttempts: number;
   averageDuration: number;
   successRate: number;
   recentIssues: Array<{
@@ -58,15 +58,92 @@ export interface SecurityHealth {
   }>;
 }
 
+export interface SecuritySession {
+  id: string;
+  userId: string;
+  ip?: string;
+  ipAddress?: string;
+  location?: string | null;
+  country?: string;
+  browser?: string;
+  os?: string;
+  deviceType?: string;
+  userAgent?: string;
+  status: string;
+  isActive: boolean;
+  lastActive?: string;
+  lastActivity?: string;
+  expiresAt?: string;
+  createdAt?: string;
+}
+
+export interface SecuritySessionStats {
+  totalActive: number;
+  totalExpired: number;
+  uniqueDevices: number;
+}
+
+export interface IPWhitelistEntry {
+  id: string;
+  ipAddress: string;
+  cidr?: string;
+  description?: string;
+  type: "admin" | "api" | "webhook" | string;
+  status: "active" | "disabled" | string;
+  isTemporary?: boolean;
+  expiresAt?: string | null;
+  lastUsedAt?: string | null;
+  createdAt?: string;
+  country?: string;
+  city?: string;
+}
+
+export interface IPWhitelistSettings {
+  isEnabled: boolean;
+  enforceForAdmins: boolean;
+  enforceForAPI: boolean;
+  defaultAction: "allow" | "deny" | string;
+  allowInternalIPs: boolean;
+  internalIPRanges?: string[];
+  logBlockedAttempts: boolean;
+  notifyOnViolation: boolean;
+  notifyEmail?: string;
+}
+
+export type IPWhitelistSettingsUpdate = Pick<
+  IPWhitelistSettings,
+  | "isEnabled"
+  | "enforceForAdmins"
+  | "enforceForAPI"
+  | "defaultAction"
+  | "allowInternalIPs"
+  | "internalIPRanges"
+  | "logBlockedAttempts"
+  | "notifyOnViolation"
+  | "notifyEmail"
+>;
+
+export interface BlockedIPAttempt {
+  id: string;
+  ipAddress: string;
+  endpoint?: string;
+  method?: string;
+  location?: string;
+  reason?: string;
+  count?: number;
+  attemptedAt: string;
+}
+
 export interface PerformanceMetrics {
+  requestCount: number;
   avgResponseTime: number;
   p95ResponseTime: number;
   p99ResponseTime: number;
   requestsPerMinute: number;
   errorRate: number;
-  cpuUsage: number;
-  memoryUsage: number;
-  databaseConnections: number;
+  cpuUsage?: number | null;
+  memoryUsage?: number | null;
+  databaseConnections?: number | null;
   responseTimeHistory?: Array<{ time: string; value: number }>;
   errorRateHistory?: Array<{ time: string; value: number }>;
   requestsHistory?: Array<{ time: string; value: number }>;

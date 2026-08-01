@@ -267,5 +267,3 @@ export const PricingStep: React.FC<PricingStepProps> = ({
     </div>
   );
 };
-
-export default PricingStep;

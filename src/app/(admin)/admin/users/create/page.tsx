@@ -1,5 +1,6 @@
-﻿"use client";
-import { adminFetch } from "@/lib/api/admin-api";
+"use client";
+
+import { adminFetch } from "@/lib/api/admin-api";
 import { apiRoutes } from "@/lib/api/routes";
 
 import * as React from "react";
@@ -36,7 +37,7 @@ const createUserSchema = z.object({
   username: z.string().min(3, "اسم المستخدم يجب أن يكون 3 أحرف على الأقل").optional().or(z.literal("")),
   email: z.string().email("البريد الإلكتروني غير صالح"),
   password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
-  role: z.enum(["STUDENT", "TEACHER", "ADMIN", "MODERATOR", "USER"]),
+  role: z.enum(["STUDENT", "TEACHER", "ADMIN", "MODERATOR"]),
 });
 
 type CreateUserValues = z.infer<typeof createUserSchema>;
@@ -46,7 +47,6 @@ const roleOptions = [
   { value: "TEACHER", label: "معلم" },
   { value: "MODERATOR", label: "مشرف" },
   { value: "ADMIN", label: "مدير" },
-  { value: "USER", label: "مستخدم" },
 ] as const;
 
 export default function CreateUserPage() {

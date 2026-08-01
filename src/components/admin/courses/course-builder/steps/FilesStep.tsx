@@ -325,7 +325,7 @@ const FileLessonCard: React.FC<FileLessonCardProps> = ({
         </div>
         
         {/* Attachments List */}
-        {lesson.attachments?.length > 0 && (
+        {lesson.attachments && lesson.attachments.length > 0 && (
           <div className="space-y-2">
             <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300">المرفقات ({lesson.attachments.length})</h5>
             <ul className="space-y-2" role="list">
@@ -372,5 +372,3 @@ const FileLessonCard: React.FC<FileLessonCardProps> = ({
     </Card>
   );
 };
-
-export default FilesStep;

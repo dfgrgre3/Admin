@@ -59,8 +59,8 @@ export function ChartLine({
   curve = "monotone",
 }: LineChartProps) {
   return (
-    <div className={cn("w-full", className)} style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">
+    <div className={cn("w-full min-h-[200px]", className)} style={{ height, minHeight: height }}>
+      <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
         <LineChart data={data}>
           {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />}
           <XAxis
@@ -120,8 +120,8 @@ export function ChartBar({
   horizontal = false,
 }: BarChartProps) {
   return (
-    <div className={cn("w-full", className)} style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">
+    <div className={cn("w-full min-h-[200px]", className)} style={{ height, minHeight: height }}>
+      <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
         <BarChart data={data} layout={horizontal ? "horizontal" : "vertical"}>
           {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />}
           <XAxis
@@ -175,8 +175,8 @@ export function ChartDonut({
   outerRadius = 80,
 }: PieChartProps) {
   return (
-    <div className={cn("w-full", className)} style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">
+    <div className={cn("w-full min-h-[200px]", className)} style={{ height, minHeight: height }}>
+      <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
         <PieChart>
           <Pie
             data={data}
@@ -236,8 +236,8 @@ export function ChartMultiLine({
   curve = "monotone",
 }: MultiLineChartProps) {
   return (
-    <div className={cn("w-full", className)} style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">
+    <div className={cn("w-full min-h-[200px]", className)} style={{ height, minHeight: height }}>
+      <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
         <LineChart data={data}>
           {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />}
           <XAxis
@@ -301,8 +301,8 @@ export function ChartMultiBar({
   showLegend = true,
 }: MultiBarChartProps) {
   return (
-    <div className={cn("w-full", className)} style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">
+    <div className={cn("w-full min-h-[200px]", className)} style={{ height, minHeight: height }}>
+      <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
         <BarChart data={data}>
           {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />}
           <XAxis

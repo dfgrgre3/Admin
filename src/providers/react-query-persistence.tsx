@@ -8,9 +8,10 @@ import {
   persistQueryClientSave,
 } from '@tanstack/query-persist-client-core';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import { PERFORMANCE_DEFAULTS } from '@/lib/performance-config';
 
 const CACHE_KEY = 'tolo-react-query-v1';
-const MAX_AGE_MS = 1000 * 60 * 60 * 24 * 7;
+const MAX_AGE_MS = PERFORMANCE_DEFAULTS.persistedQueryMaxAgeMs;
 
 function shouldPersistQuery(query: Parameters<typeof defaultShouldDehydrateQuery>[0]) {
   if ((query.meta as { persist?: boolean } | undefined)?.persist === false) {

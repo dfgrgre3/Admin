@@ -29,6 +29,14 @@ export function LazyLoadWrapper({
     const element = ref.current;
     if (!element || hasLoaded) return;
 
+    if (typeof IntersectionObserver === "undefined") {
+      const fallback = window.setTimeout(() => {
+        setIsVisible(true);
+        setHasLoaded(true);
+      }, 0);
+      return () => window.clearTimeout(fallback);
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry!.isIntersecting) {
@@ -214,6 +222,11 @@ export function ImageWithPlaceholder({
     const element = imgRef.current;
     if (!element) return;
 
+    if (typeof IntersectionObserver === "undefined") {
+      const fallback = window.setTimeout(() => setIsInView(true), 0);
+      return () => window.clearTimeout(fallback);
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry!.isIntersecting) {
@@ -235,6 +248,8 @@ export function ImageWithPlaceholder({
         <img
           src={placeholder}
           alt=""
+          loading="lazy"
+          decoding="async"
           className={cn("absolute inset-0 w-full h-full object-cover blur-sm", imageClassName)}
         />
       )}
@@ -242,6 +257,8 @@ export function ImageWithPlaceholder({
         <img
           src={src}
           alt={alt}
+          loading="lazy"
+          decoding="async"
           onLoad={() => setIsLoaded(true)}
           className={cn(
             "w-full h-full object-cover transition-opacity duration-300",
@@ -274,6 +291,8 @@ export function DebouncedInput({
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   React.useEffect(() => {
+    // Synchronize the internal debounced value when a parent resets the field.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalValue(value);
   }, [value]);
 

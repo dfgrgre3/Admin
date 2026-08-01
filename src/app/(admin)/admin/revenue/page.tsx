@@ -77,7 +77,12 @@ export default function AdminRevenuePage() {
 
   // Show toast notification when no data is available for the selected period
   React.useEffect(() => {
-    if (stats && !isLoading && stats.chartData.length === 0 && stats.topPlans.length === 0) {
+    if (
+      stats &&
+      !isLoading &&
+      (stats.chartData?.length ?? 0) === 0 &&
+      (stats.topPlans?.length ?? 0) === 0
+    ) {
       toast.info(`لا توجد بيانات متاحة للفترة: ${periodLabels[period]}`);
     }
   }, [stats, isLoading, period]);
@@ -257,9 +262,8 @@ export default function AdminRevenuePage() {
               <div className="p-3 rounded-2xl bg-orange-500/10 text-orange-500 border border-orange-500/20">
                 <Users className="w-5 h-5" />
               </div>
-              <div className={`flex items-center gap-1 text-xs font-black ${
-                parseFloat(safeStats.summary.conversionRate) > 5 ? "text-emerald-500" : "text-amber-500"
-              }`}>
+              <div className={`flex items-center gap-1 text-xs font-black ${parseFloat(safeStats.summary.conversionRate) > 5 ? "text-emerald-500" : "text-amber-500"
+                }`}>
                 {parseFloat(safeStats.summary.conversionRate) > 5 ? (
                   <ArrowUpRight className="w-3 h-3" />
                 ) : (

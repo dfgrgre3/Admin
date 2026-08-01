@@ -6,15 +6,15 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 const cardVariants = cva(
-  "rounded-xl border transition-all duration-300",
+  "rounded-xl border",
   {
     variants: {
       variant: {
         default: "bg-card border-border shadow-lg shadow-black/5 dark:shadow-black/30",
         gradient: "bg-gradient-to-br from-card to-muted",
         glass: "bg-card backdrop-blur-xl border-border shadow-xl shadow-black/10 dark:shadow-black/40",
-        outline: "bg-transparent hover:bg-muted/50 border-border",
-        flat: "border-0 bg-muted/50 hover:bg-muted",
+        outline: "bg-transparent border-border",
+        flat: "border-0 bg-muted/50",
       },
       size: {
         sm: "p-4",
@@ -47,7 +47,7 @@ export function AdminCard({
     <div
       className={cn(
         cardVariants({ variant, size }),
-        interactive && "cursor-pointer hover:border-primary/50",
+        interactive && "cursor-pointer",
         className
       )}
       {...props}

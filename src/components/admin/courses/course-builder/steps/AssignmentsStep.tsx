@@ -240,5 +240,3 @@ const lessonTypeLabels: Record<string, string> = {
   EXTERNAL_LINK: "رابط خارجي",
   INTERACTIVE_QUIZ: "اختبار تفاعلي",
 };
-
-export default AssignmentsStep;

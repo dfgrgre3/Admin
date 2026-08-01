@@ -8,6 +8,8 @@ import {
   Loader2, 
   Send, 
   Save,
+  Info,
+  FileText,
   RotateCcw,
   BookOpen,
   Users,
@@ -424,7 +426,5 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ icon, title, descriptio
     </div>
   </Card>
 );
-
-import { Info, FileText } from "lucide-react";
 
 export default PublishStep;

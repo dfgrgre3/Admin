@@ -67,7 +67,7 @@ export default function MediaLibraryPage() {
             <div key={a.id} className="rounded-lg border overflow-hidden">
               <div className="aspect-video bg-muted flex items-center justify-center">
                 {a.thumbnailUrl ? (
-                  <img src={a.thumbnailUrl} alt={a.title} className="h-full w-full object-cover" />
+                  <img src={a.thumbnailUrl} alt={a.title} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                 ) : (
                   <ImageIcon className="h-8 w-8 text-muted-foreground" />
                 )}
@@ -98,16 +98,32 @@ export default function MediaLibraryPage() {
   );
 }
 
+import { FileDropzone } from "@/components/ui/file-dropzone";
+
 function NewMediaForm({ onSubmit, loading }: { onSubmit: (b: Partial<MediaAsset>) => void; loading: boolean }) {
   const [title, setTitle] = React.useState("");
   const [url, setUrl] = React.useState("");
   const [type, setType] = React.useState("IMAGE");
   const [desc, setDesc] = React.useState("");
 
+  const handleFilesSelected = (files: File[]) => {
+    const file = files[0];
+    if (file) {
+      if (!title) setTitle(file.name);
+      // Generate object URL for preview or upload trigger
+      const objectUrl = URL.createObjectURL(file);
+      setUrl(objectUrl);
+    }
+  };
+
   return (
-    <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+    <div className="rounded-lg border bg-muted/20 p-4 space-y-4">
+      <FileDropzone
+        onFilesSelected={handleFilesSelected}
+        label="اسحب وأسقط ملفات الصور أو الفيديوهات هنا لرفعها إلى مكتبة الوسائط"
+      />
       <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="العنوان" className="w-full rounded-lg border px-3 py-2 text-sm" />
-      <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="رابط الملف (S3/R2)" className="w-full rounded-lg border px-3 py-2 text-sm" />
+      <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="رابط الملف أو المسار" className="w-full rounded-lg border px-3 py-2 text-sm" />
       <div className="grid grid-cols-2 gap-3">
         <select value={type} onChange={(e) => setType(e.target.value)} className="rounded-lg border px-3 py-2 text-sm">
           {MEDIA_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}

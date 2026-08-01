@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { X, ChevronDown, Loader2, AlertCircle, CheckCircle, XCircle, Info } from "lucide-react";
+import { X, Loader2, AlertCircle, CheckCircle, XCircle, Info } from "lucide-react";
 
 // ─── Section ───────────────────────────────────────────────────────────────────
 
@@ -323,7 +323,7 @@ export const Avatar: React.FC<AvatarProps> = ({ className, src, fallback, size =
   return (
     <div className={cn("relative inline-flex shrink-0 overflow-hidden rounded-full", sizes[size], className)} {...props}>
       {src ? (
-        <img src={src} alt="" className="aspect-square h-full w-full object-cover" />
+        <img src={src} alt="" loading="lazy" decoding="async" className="aspect-square h-full w-full object-cover" />
       ) : (
         <div className="flex h-full w-full items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
           {fallback ? (

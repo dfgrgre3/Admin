@@ -47,6 +47,7 @@ import { logger } from '@/lib/logger';
 import {
   gradeLevelOptions,
   educationTypeOptions,
+  genderOptions,
   roleOptions,
 } from "../_components/types";
 
@@ -94,13 +95,7 @@ interface UserData {
   lastLogin: string | null;
 }
 
-const _roleLabels: Record<string, string> = {
-  ADMIN: "مدير",
-  TEACHER: "معلم",
-  STUDENT: "طالب",
-  MODERATOR: "مشرف",
-  USER: "مستخدم",
-};
+// roleLabels are defined and exported from ../_components/types — no duplication needed here.
 
 export default function UserEditPage() {
   const params = useParams();
@@ -133,12 +128,16 @@ export default function UserEditPage() {
     },
   });
 
+  // Capture a stable ref to form.reset so it is safe to include in the
+  // dependency array without triggering an infinite re-render loop.
+  const formReset = form.reset;
+
   React.useEffect(() => {
     const fetchUser = async () => {
       try {
         const data = await adminUsersApi.get(userId);
         setUser(data);
-        form.reset({
+        formReset({
           name: data.name || "",
           username: data.username || "",
           email: data.email || "",
@@ -166,7 +165,8 @@ export default function UserEditPage() {
     };
 
     fetchUser();
-  }, [userId, router, form]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, router, formReset]);
 
   const handleSubmit = async (values: UserEditFormValues) => {
     setSaving(true);
@@ -181,8 +181,15 @@ export default function UserEditPage() {
         toast.success("تم تحديث بيانات المستخدم بنجاح");
         router.push(`/admin/users/${userId}`);
       } else {
-        const error = await response.json();
-        toast.error(error.error || "حدث خطأ أثناء تحديث بيانات المستخدم");
+        // Safely parse the error body — some error responses have no JSON body.
+        let errorMessage = "حدث خطأ أثناء تحديث بيانات المستخدم";
+        try {
+          const errorBody = await response.json();
+          if (errorBody?.error) errorMessage = errorBody.error;
+        } catch {
+          // Response body is not JSON — keep the default message.
+        }
+        toast.error(errorMessage);
       }
     } catch (error) {
       logger.error("Error updating user:", error);
@@ -239,6 +246,8 @@ export default function UserEditPage() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          {/* Disable all inputs while saving to prevent double-submit */}
+          <fieldset disabled={saving} style={{ all: "unset", display: "contents" }}>
           <div className="grid gap-6 lg:grid-cols-3">
             {/* User Avatar Card */}
             <Card className="lg:col-span-1">
@@ -445,7 +454,7 @@ export default function UserEditPage() {
                       )}
                     />
                   </div>
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4 md:grid-cols-3">
                     <FormField
                       control={form.control}
                       name="school"
@@ -471,6 +480,31 @@ export default function UserEditPage() {
                               <Input {...field} className="pr-9" />
                             </div>
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {/* Gender field — was present in schema & zod but missing from UI */}
+                    <FormField
+                      control={form.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>الجنس</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="اختر الجنس" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {genderOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -572,13 +606,19 @@ export default function UserEditPage() {
                 >
                   إلغاء
                 </Button>
-                <Button type="submit" disabled={saving}>
+                <Button
+                  type="submit"
+                  disabled={saving}
+                  aria-busy={saving}
+                  aria-label={saving ? "جاري حفظ التغييرات" : "حفظ التغييرات"}
+                >
                   <Save className="ml-2 h-4 w-4" />
                   {saving ? "جاري الحفظ..." : "حفظ التغييرات"}
                 </Button>
               </div>
             </div>
           </div>
+        </fieldset>
         </form>
       </Form>
     </div>

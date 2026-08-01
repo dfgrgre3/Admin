@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import {
   Award,
   BarChart3,

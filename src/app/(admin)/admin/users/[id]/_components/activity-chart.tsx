@@ -85,7 +85,7 @@ export function ActivityChart({ user }: ActivityChartProps) {
         <CardContent>
           {xpDistribution.length > 0 ? (
             <div className="h-[250px]">
-              <ResponsiveContainer width="100%" height={250} minWidth={1} minHeight={1}>
+              <ResponsiveContainer width="100%" height={250} minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
                 <PieChart>
                   <Pie
                     data={xpDistribution}
@@ -135,7 +135,7 @@ export function ActivityChart({ user }: ActivityChartProps) {
         <CardContent>
           {weeklyData.some(d => d.minutes > 0) ? (
             <div className="h-[250px]">
-              <ResponsiveContainer width="100%" height={250} minWidth={1} minHeight={1}>
+              <ResponsiveContainer width="100%" height={250} minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
                 <BarChart data={weeklyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                   <XAxis 
@@ -176,7 +176,7 @@ export function ActivityChart({ user }: ActivityChartProps) {
         <CardContent>
           {weeklyData.some(d => d.focus > 0) ? (
             <div className="h-[200px]">
-              <ResponsiveContainer width="100%" height={200} minWidth={1} minHeight={1}>
+              <ResponsiveContainer width="100%" height={200} minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
                 <LineChart data={weeklyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                   <XAxis 

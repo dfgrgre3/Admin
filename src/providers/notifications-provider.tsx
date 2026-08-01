@@ -88,7 +88,6 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [offset, setOffset] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const lastNotifiedId = useRef<string | null>(null);
   const isFirstFetch = useRef(true);
@@ -116,14 +115,12 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
       if (reset) {
         setNotifications(nextNotifications);
         offsetRef.current = nextNotifications.length;
-        setOffset(nextNotifications.length);
 
         handleNewNotificationToast(nextNotifications, isFirstFetch.current, lastNotifiedId);
         isFirstFetch.current = false;
       } else {
         setNotifications((prev) => [...prev, ...nextNotifications]);
         offsetRef.current = currentOffset + nextNotifications.length;
-        setOffset(offsetRef.current);
       }
 
       setUnreadCount(nextUnreadCount);
@@ -136,7 +133,7 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
     }
   }, [limit]); // Stable dependency
 
-  const markAsRead = async (notificationIds?: string[], all = false) => {
+  const markAsRead = useCallback(async (notificationIds?: string[], all = false) => {
     try {
       const response = await apiClient.post<MarkReadResponse>('/notifications/mark-read', { 
         id: notificationIds ? notificationIds[0] : "", // Go backend handles 'id'
@@ -151,12 +148,14 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
         );
       }
 
-      setUnreadCount(response.unreadCount ?? (all ? 0 : Math.max(0, unreadCount - (notificationIds?.length || 0))));
+      setUnreadCount((currentUnreadCount) => (
+        response.unreadCount ?? (all ? 0 : Math.max(0, currentUnreadCount - (notificationIds?.length || 0)))
+      ));
 
     } catch (error) {
       logger.error('Error marking notifications as read:', error);
     }
-  };
+  }, []);
 
   const loadMore = useCallback(() => {
     if (!isLoading && hasMore) {

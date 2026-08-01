@@ -123,8 +123,12 @@ export async function backendJsonResponse(response: Response): Promise<NextRespo
     const logContext = { source: 'api/auth/proxy', statusCode: response.status };
     if (response.status === 401) {
       logger.warn('Backend authentication request rejected', logContext);
+    } else if (response.status === 403) {
+      logger.warn('Backend permission denied', logContext);
+    } else if (response.status === 409) {
+      logger.warn('Backend request conflict', logContext);
     } else {
-      logger.error('Backend authentication request failed', undefined, logContext);
+      logger.error('Backend request failed', undefined, logContext);
     }
   }
 

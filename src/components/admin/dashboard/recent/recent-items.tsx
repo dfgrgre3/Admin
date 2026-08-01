@@ -31,7 +31,7 @@ const statusConfig = {
   active: { icon: CheckCircle, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20" },
 };
 
-export function RecentItems({ title, icon: Icon, items, viewAllHref, className }: RecentItemsProps) {
+export const RecentItems = React.memo(function RecentItems({ title, icon: Icon, items, viewAllHref, className }: RecentItemsProps) {
   return (
     <AdminCard variant="glass" className={cn("border-primary/20", className)}>
       <div className="flex items-center justify-between mb-6">
@@ -112,7 +112,7 @@ export function RecentItems({ title, icon: Icon, items, viewAllHref, className }
       </div>
     </AdminCard>
   );
-}
+});
 
 interface RecentSectionProps {
   recentOrders: RecentItem[];
@@ -123,7 +123,7 @@ interface RecentSectionProps {
   className?: string;
 }
 
-export function RecentSection({
+export const RecentSection = React.memo(function RecentSection({
   recentOrders,
   recentPayments,
   recentStudents,
@@ -170,4 +170,4 @@ export function RecentSection({
       </div>
     </div>
   );
-}
+});

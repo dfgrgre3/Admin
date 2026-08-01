@@ -62,7 +62,6 @@ export async function GET(request: NextRequest) {
 
   for (const origin of backendOriginCandidates()) {
     const targetUrl = `${origin}/api/notifications${search}`;
-    console.log(`[API Proxy] GET /api/notifications -> ${targetUrl}`);
 
     try {
       const response = await fetch(targetUrl, {

@@ -1,13 +1,15 @@
 import 'server-only';
 import Redis from 'ioredis';
 import { logger } from './logger';
+import { PERFORMANCE_DEFAULTS } from './performance-config';
 
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+const inFlightCacheLoads = new Map<string, Promise<unknown>>();
 
 // Production guards: never fall back to an unsecured local instance silently.
 if (process.env.NODE_ENV === 'production') {
     if (!process.env.REDIS_URL) {
-        throw new Error('[Redis] REDIS_URL must be set in production; refusing insecure localhost fallback.');
+         throw new Error('[Redis] REDIS_URL must be set in production; refusing insecure localhost fallback.');
     }
     const parsed = new URL(redisUrl);
     if (parsed.protocol !== 'rediss:' && !parsed.password) {
@@ -71,18 +73,18 @@ async function getConnectedRedisClient(): Promise<Redis> {
 
 // Cache service wrapper for compatibility
 export const CacheService = {
-    async get<T = any>(key: string): Promise<T | null> {
+    async get<T = unknown>(key: string): Promise<T | null> {
         try {
             const client = await getConnectedRedisClient();
             const value = await client.get(key);
-            return value ? JSON.parse(value) : null;
+            return value ? JSON.parse(value) as T : null;
         } catch (error) {
             logger.error(`[CacheService] Get error for key ${key}:`, error);
             return null;
         }
     },
 
-    async set(key: string, value: any, ttlSeconds?: number): Promise<void> {
+    async set(key: string, value: unknown, ttlSeconds?: number): Promise<void> {
         try {
             const client = await getConnectedRedisClient();
             const stringValue = JSON.stringify(value);
@@ -155,13 +157,33 @@ export const CacheService = {
         throw new Error('CacheService.flushAll is disabled; invalidate a scoped namespace instead');
     },
 
-    async getOrSet<T = any>(key: string, fetchFn: () => Promise<T>, ttlSeconds?: number): Promise<T> {
+    async getOrSet<T = unknown>(
+        key: string,
+        fetchFn: () => Promise<T>,
+        ttlSeconds = PERFORMANCE_DEFAULTS.serverCacheTtlSeconds,
+    ): Promise<T> {
+        const activeLoad = inFlightCacheLoads.get(key) as Promise<T> | undefined;
+        if (activeLoad) return activeLoad;
+
         const cached = await CacheService.get<T>(key);
         if (cached !== null) {
             return cached;
         }
-        const value = await fetchFn();
-        await CacheService.set(key, value, ttlSeconds);
-        return value;
+
+        // Coalesce concurrent misses in this process so an expired popular key
+        // triggers one upstream request instead of a cache stampede.
+        const existingLoad = inFlightCacheLoads.get(key) as Promise<T> | undefined;
+        if (existingLoad) return existingLoad;
+
+        const load = (async () => {
+            const value = await fetchFn();
+            await CacheService.set(key, value, ttlSeconds);
+            return value;
+        })().finally(() => {
+            inFlightCacheLoads.delete(key);
+        });
+
+        inFlightCacheLoads.set(key, load);
+        return load;
     },
 };

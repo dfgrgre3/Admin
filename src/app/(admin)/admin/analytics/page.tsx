@@ -520,22 +520,30 @@ export default function AdminAnalyticsPage() {
                         </div>
                      )}
 
-                    {widgetBlock === "activity" && (
-                       <div className="grid gap-4 lg:grid-cols-2 mt-4">
-                         <AdminGridCard title="المستخدمين النشطين يومياً" subtitle="عدد المستخدمين الذين سجلوا دخول" noPadding>
-                           <DailyActiveUsersChart data={data?.charts?.dailyActiveUsers ?? []} />
-                         </AdminGridCard>
-                         <AdminGridCard title="التسجيلات الجديدة" subtitle="معدل النمو اليومي" noPadding>
-                           <DailyRegistrationsChart data={data?.charts?.dailyRegistrations ?? []} />
-                         </AdminGridCard>
-                       </div>
-                    )}
+                     {widgetBlock === "activity" && (
+                        <div className="grid gap-4 lg:grid-cols-2 mt-4">
+                          <AdminGridCard title="المستخدمين النشطين يومياً" subtitle="عدد المستخدمين الذين سجلوا دخول" noPadding>
+                            <div className="h-[300px] w-full" style={{ minWidth: 0 }}>
+                              <DailyActiveUsersChart data={data?.charts?.dailyActiveUsers ?? []} />
+                            </div>
+                          </AdminGridCard>
+                          <AdminGridCard title="التسجيلات الجديدة" subtitle="معدل النمو اليومي" noPadding>
+                            <div className="h-[300px] w-full" style={{ minWidth: 0 }}>
+                              <DailyRegistrationsChart data={data?.charts?.dailyRegistrations ?? []} />
+                            </div>
+                          </AdminGridCard>
+                        </div>
+                     )}
 
-                    {widgetBlock === "content" && (
-                       <div className="grid gap-4 lg:grid-cols-3 mt-4">
-                         <AdminGridCard title="التوزيع الطلابي" noPadding>
-                           <div className="p-4"><RoleDistributionChart data={roleChartData} /></div>
-                         </AdminGridCard>
+                     {widgetBlock === "content" && (
+                        <div className="grid gap-4 lg:grid-cols-3 mt-4">
+                          <AdminGridCard title="التوزيع الطلابي" noPadding>
+                            <div className="p-4">
+                              <div className="h-[200px] w-full" style={{ minWidth: 0 }}>
+                                <RoleDistributionChart data={roleChartData} />
+                              </div>
+                            </div>
+                          </AdminGridCard>
                          <AdminGridCard title="إحصائيات المحتوى">
                            <div className="space-y-4">
                              {[

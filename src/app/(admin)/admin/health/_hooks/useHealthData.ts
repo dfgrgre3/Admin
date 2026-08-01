@@ -1,71 +1,68 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { HealthData, TimeRange } from "../_types/health";
 import { adminFetch } from "@/lib/api/admin-api";
+
+export interface ExportedHealthReport {
+  blob: Blob;
+  filename: string;
+  contentType: string;
+}
 
 export function useHealthData(timeRange: TimeRange, autoRefresh: boolean) {
   return useQuery<HealthData>({
     queryKey: ["admin", "health", timeRange],
     queryFn: async () => {
-      const response = await adminFetch(`/api/admin/health/detailed?range=${timeRange}`);
+      const response = await adminFetch(
+        `/api/admin/health/detailed?range=${encodeURIComponent(timeRange)}`
+      );
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Health API Error:", response.status, errorText);
-        throw new Error(`فشل في جلب بيانات الصحة: ${response.status}`);
+        throw new Error(`فشل في جلب بيانات الصحة (${response.status})`);
       }
-      return response.json();
+      return response.json() as Promise<HealthData>;
     },
     refetchInterval: autoRefresh ? 30000 : false,
     staleTime: 5000,
   });
 }
 
+function parseFilename(header: string | null): string {
+  if (!header) return `health-report-${new Date().toISOString().split("T")[0]}.csv`;
+
+  const utf8Match = header.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) return decodeURIComponent(utf8Match[1]);
+
+  const filenameMatch = header.match(/filename="?([^";]+)"?/i);
+  return filenameMatch?.[1] ?? `health-report-${new Date().toISOString().split("T")[0]}.csv`;
+}
+
 export function useExportHealthReport() {
-  const queryClient = useQueryClient();
+  return useMutation<ExportedHealthReport, Error, TimeRange>({
+    mutationFn: async (timeRange) => {
+      const response = await adminFetch(
+        `/api/admin/health/export?range=${encodeURIComponent(timeRange)}`,
+        { method: "GET" }
+      );
 
-  return useMutation({
-    mutationFn: async () => {
-      const response = await adminFetch("/api/admin/health/export", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ timestamp: new Date().toISOString() }),
-      });
+      if (!response.ok) throw new Error("فشل في تصدير التقرير");
 
-      if (!response.ok) {
-        throw new Error("فشل في تصدير التقرير");
-      }
-
-      return response.blob();
+      return {
+        blob: await response.blob(),
+        filename: parseFilename(response.headers.get("content-disposition")),
+        contentType: response.headers.get("content-type") ?? "text/csv",
+      };
     },
-    onSuccess: (blob) => {
-      const url = window.URL.createObjectURL(blob);
+    onSuccess: ({ blob, filename, contentType }) => {
+      const url = window.URL.createObjectURL(new Blob([blob], { type: contentType }));
       const link = document.createElement("a");
       link.href = url;
-      link.download = `health-report-${new Date().toISOString().split("T")[0]}.pdf`;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
       window.URL.revokeObjectURL(url);
       toast.success("تم تصدير تقرير الصحة بنجاح");
     },
-    onError: () => {
-      toast.error("فشل في تصدير التقرير");
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "health"] });
-    },
+    onError: () => toast.error("فشل في تصدير التقرير"),
   });
-}
-
-export function useHistoricalData(baseValue: number, variance: number, points: number = 20) {
-  return () => {
-    const now = new Date();
-    return Array.from({ length: points }, (_, i) => {
-      const time = new Date(now.getTime() - (points - 1 - i) * 60000);
-      return {
-        time: time.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" }),
-        value: Math.max(0, baseValue + (Math.random() - 0.5) * variance),
-      };
-    });
-  };
 }

@@ -6,7 +6,7 @@
 import { logger } from './logger';
 
 const REQUIRED_ENV_VARS = {
-  production: ['DATABASE_URL']
+  production: [] // Frontend does not require database credentials
 } as const;
 
 const MIN_JWT_SECRET_LENGTH = 32;
@@ -92,7 +92,11 @@ function checkProductionVars(errors: string[], isProduction: boolean) {
       try {
         const url = new URL(/^https?:\/\//i.test(internalApiUrl) ? internalApiUrl : `https://${internalApiUrl}`);
         if (url.protocol !== 'https:') {
-          errors.push('INTERNAL_API_URL must use HTTPS in production');
+          // Allow HTTP for localhost/127.0.0.1 in production (for local development)
+          const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+          if (!isLocalhost) {
+            errors.push('INTERNAL_API_URL must use HTTPS in production');
+          }
         }
       } catch {
         errors.push('INTERNAL_API_URL is not a valid URL format');
@@ -101,17 +105,7 @@ function checkProductionVars(errors: string[], isProduction: boolean) {
   }
 }
 
-function checkDatabaseUrl(errors: string[], isProduction: boolean) {
-  if (process.env.DATABASE_URL) {
-    try {
-      new URL(process.env.DATABASE_URL);
-    } catch {
-      errors.push('DATABASE_URL is not a valid URL format');
-    }
-  } else if (isProduction) {
-    errors.push('DATABASE_URL is required in production');
-  }
-}
+// checkDatabaseUrl removed - frontend should not have database credentials
 
 function checkSessionDuration(warnings: string[]) {
   if (process.env.SESSION_DURATION) {
@@ -142,7 +136,6 @@ function validateEnvironment(): EnvValidationResult {
 
   checkJwtValidation(errors, warnings, isProduction);
   checkProductionVars(errors, isProduction);
-  checkDatabaseUrl(errors, isProduction);
   checkSessionDuration(warnings);
   checkBaseUrl(warnings);
 

@@ -95,7 +95,7 @@ export function OverallStatusBanner({ health }: OverallStatusBannerProps) {
           
           <div className="text-left">
             <p className="text-xs text-muted-foreground mb-1">الإصدار</p>
-            <p className="text-lg font-black font-mono">{health.version}</p>
+            <p className="text-lg font-black font-mono">{health.version === "unknown" ? "غير متاح" : health.version}</p>
           </div>
 
           <HealthStatusBadge status={health.status} size="lg" />

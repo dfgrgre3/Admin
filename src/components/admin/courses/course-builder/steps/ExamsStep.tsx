@@ -74,7 +74,7 @@ export const ExamsStep: React.FC<ExamsStepProps> = ({
   }, [unlinkExam, draft, onChange]);
   
   // Find which lessons have exams linked
-  const lessonsWithExams = lessons.filter(l => l.quizzes?.length > 0);
+  const lessonsWithExams = lessons.filter(l => (l.quizzes?.length ?? 0) > 0);
   
   return (
     <div className="space-y-6">
@@ -250,5 +250,3 @@ const lessonTypeLabels: Record<string, string> = {
   EXTERNAL_LINK: "رابط خارجي",
   INTERACTIVE_QUIZ: "اختبار تفاعلي",
 };
-
-export default ExamsStep;

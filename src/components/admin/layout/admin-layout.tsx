@@ -7,7 +7,6 @@ import { AdminHeader } from "@/components/admin/layout/admin-header";
 import { CommandPalette } from "@/components/admin/ui/command-palette";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { PageSkeleton } from "@/components/lazy/LazyComponents";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -177,7 +176,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </div>
             </div>
           )}
-          <main className="flex-1 overflow-y-auto">
+          <main className="admin-performance-scope flex-1 overflow-y-auto">
             <div className="mx-auto w-full max-w-[1680px] p-4 lg:p-6">
               <AdminPageAccessGate>{children}</AdminPageAccessGate>
             </div>

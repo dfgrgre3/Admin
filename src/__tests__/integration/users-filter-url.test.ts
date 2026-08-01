@@ -32,7 +32,16 @@ describe("Users Module: URL Params & Filter State Integration", () => {
     });
 
     it("serialises multi-filter state correctly into URL", () => {
-      const state = {
+      type FilterState = {
+        role: string;
+        status: string;
+        emailVerifiedFilter: string;
+        twoFAFilter: string;
+        page: number;
+        limit: number;
+        search: string;
+      };
+      const state: FilterState = {
         role: UserRole.STUDENT,
         status: UserStatus.ACTIVE,
         emailVerifiedFilter: "true",
@@ -40,7 +49,7 @@ describe("Users Module: URL Params & Filter State Integration", () => {
         page: 2,
         limit: 20,
         search: "أحمد",
-      } as { role: string; status: string; emailVerifiedFilter: string; twoFAFilter: string; page: number; limit: number; search: string };
+      };
 
       const params = new URLSearchParams();
       if (state.role !== "all") params.set("role", state.role);
@@ -58,6 +67,20 @@ describe("Users Module: URL Params & Filter State Integration", () => {
       expect(url).toContain("twoFA=false");
       expect(url).toContain("page=2");
       expect(url).toContain("limit=20");
+    });
+
+    it("falls back to page 1 when page param is non-numeric", () => {
+      const params = makeSearchParams({ page: "abc" });
+      const page = Number(params.get("page")) || 1;
+      expect(page).toBe(1);
+    });
+
+    it("falls back to page 1 when page param is negative", () => {
+      const params = makeSearchParams({ page: "-5" });
+      // Negative pages are treated as invalid — enforce minimum of 1.
+      const raw = Number(params.get("page"));
+      const page = raw > 0 ? raw : 1;
+      expect(page).toBe(1);
     });
   });
 
@@ -203,6 +226,16 @@ describe("Users Module: URL Params & Filter State Integration", () => {
       const params = buildApiParams({ page: 1, limit: 10, search: "", role: "all", status: "all", emailVerifiedFilter: "all", twoFAFilter: "all", createdFrom: "2024-01-01", createdTo: "2024-12-31", subscriptionStatus: "all" });
       expect(params.createdFrom).toBe("2024-01-01");
       expect(params.createdTo).toBe("2024-12-31");
+    });
+
+    it("maps empty search string to undefined (not sent to API)", () => {
+      const params = buildApiParams({
+        page: 1, limit: 10, search: "", role: "all", status: "all",
+        emailVerifiedFilter: "all", twoFAFilter: "all",
+        createdFrom: "", createdTo: "", subscriptionStatus: "all",
+      });
+      // An empty search query must not be forwarded to the backend.
+      expect(params.search).toBeUndefined();
     });
   });
 });

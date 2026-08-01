@@ -3,12 +3,45 @@
 import * as React from "react";
 import { AdminCard } from "@/components/admin/ui/admin-card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Clock, User, Shield, Edit2, Trash2, Eye, Settings, Plus, LogIn, LogOut, AlertTriangle } from "lucide-react";
+import {
+  FileText,
+  Clock,
+  User,
+  Shield,
+  Edit2,
+  Trash2,
+  Eye,
+  Settings,
+  Plus,
+  LogIn,
+  LogOut,
+  AlertTriangle,
+  ServerCrash,
+  RefreshCw,
+} from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { adminFetch } from "@/lib/api/admin-api";
+import { logger } from "@/lib/logger";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type AuditAction =
+  | "create"
+  | "update"
+  | "delete"
+  | "view"
+  | "login"
+  | "logout"
+  | "impersonate"
+  | "permission_change"
+  | "status_change";
+
+type AuditSeverity = "info" | "warning" | "critical";
+type SeverityVariant = "outline" | "secondary" | "destructive";
 
 interface AuditLog {
   id: string;
-  action: "create" | "update" | "delete" | "view" | "login" | "logout" | "impersonate" | "permission_change" | "status_change";
+  action: AuditAction;
   entity: "user" | "payment" | "course" | "certificate" | "ticket" | "note" | "settings";
   description: string;
   oldValue?: string;
@@ -17,72 +50,99 @@ interface AuditLog {
   userAgent: string;
   createdAt: string;
   performedBy: string;
-  severity: "info" | "warning" | "critical";
+  severity: AuditSeverity;
 }
 
 interface UserAuditLogTabProps {
   userId: string;
 }
 
-export function UserAuditLogTab({ userId }: UserAuditLogTabProps) {
-  const [logs] = React.useState<AuditLog[]>([]);
-  const [loading, setLoading] = React.useState(true);
+// ─── Pure helpers (lifted out to avoid re-creation on every render) ───────────
 
-  React.useEffect(() => {
-    // TODO: Fetch audit logs from API
-    setLoading(false);
+function getActionIcon(action: AuditAction) {
+  switch (action) {
+    case "create":
+      return <Plus className="h-4 w-4 text-green-500" />;
+    case "update":
+      return <Edit2 className="h-4 w-4 text-blue-500" />;
+    case "delete":
+      return <Trash2 className="h-4 w-4 text-red-500" />;
+    case "view":
+      return <Eye className="h-4 w-4 text-gray-500" />;
+    case "login":
+      return <LogIn className="h-4 w-4 text-green-500" />;
+    case "logout":
+      return <LogOut className="h-4 w-4 text-gray-500" />;
+    case "impersonate":
+      return <User className="h-4 w-4 text-purple-500" />;
+    case "permission_change":
+      return <Shield className="h-4 w-4 text-yellow-500" />;
+    case "status_change":
+      return <Settings className="h-4 w-4 text-orange-500" />;
+    default:
+      return <FileText className="h-4 w-4 text-gray-500" />;
+  }
+}
+
+const SEVERITY_CONFIG: Record<AuditSeverity, { label: string; variant: SeverityVariant }> = {
+  info:     { label: "معلومات", variant: "outline" },
+  warning:  { label: "تحذير",   variant: "secondary" },
+  critical: { label: "حرج",     variant: "destructive" },
+};
+
+function getSeverityBadge(severity: AuditSeverity) {
+  const config = SEVERITY_CONFIG[severity] ?? SEVERITY_CONFIG.info;
+  return <Badge variant={config.variant}>{config.label}</Badge>;
+}
+
+const ACTION_LABELS: Record<string, string> = {
+  create:           "إنشاء",
+  update:           "تعديل",
+  delete:           "حذف",
+  view:             "عرض",
+  login:            "تسجيل دخول",
+  logout:           "تسجيل خروج",
+  impersonate:      "تبديل هوية",
+  permission_change:"تغيير صلاحيات",
+  status_change:    "تغيير حالة",
+};
+
+function getActionBadge(action: string) {
+  return <Badge variant="outline">{ACTION_LABELS[action] ?? action}</Badge>;
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export function UserAuditLogTab({ userId }: UserAuditLogTabProps) {
+  const [logs, setLogs] = React.useState<AuditLog[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const fetchLogs = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // TODO: replace with the actual audit-log endpoint once available,
+      // e.g. /admin/users/:userId/audit-logs
+      const response = await adminFetch(`/admin/users/${userId}/audit-logs`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const data: AuditLog[] = await response.json();
+      setLogs(data);
+    } catch (err) {
+      logger.error("Error fetching audit logs:", err);
+      setError("تعذّر تحميل سجل التدقيق. يُرجى المحاولة مرة أخرى.");
+    } finally {
+      setLoading(false);
+    }
   }, [userId]);
 
-  const getActionIcon = (action: string) => {
-    switch (action) {
-      case "create":
-        return <Plus className="h-4 w-4 text-green-500" />;
-      case "update":
-        return <Edit2 className="h-4 w-4 text-blue-500" />;
-      case "delete":
-        return <Trash2 className="h-4 w-4 text-red-500" />;
-      case "view":
-        return <Eye className="h-4 w-4 text-gray-500" />;
-      case "login":
-        return <LogIn className="h-4 w-4 text-green-500" />;
-      case "logout":
-        return <LogOut className="h-4 w-4 text-gray-500" />;
-      case "impersonate":
-        return <User className="h-4 w-4 text-purple-500" />;
-      case "permission_change":
-        return <Shield className="h-4 w-4 text-yellow-500" />;
-      case "status_change":
-        return <Settings className="h-4 w-4 text-orange-500" />;
-      default:
-        return <FileText className="h-4 w-4 text-gray-500" />;
-    }
-  };
+  React.useEffect(() => {
+    fetchLogs();
+  }, [fetchLogs]);
 
-  const getSeverityBadge = (severity: string) => {
-    const severityConfig: Record<string, { label: string; variant: any }> = {
-      info: { label: "معلومات", variant: "outline" },
-      warning: { label: "تحذير", variant: "secondary" },
-      critical: { label: "حرج", variant: "destructive" },
-    };
-    const config = severityConfig[severity] ?? severityConfig.info!;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-
-  };
-
-  const getActionBadge = (action: string) => {
-    const actionLabels: Record<string, string> = {
-      create: "إنشاء",
-      update: "تعديل",
-      delete: "حذف",
-      view: "عرض",
-      login: "تسجيل دخول",
-      logout: "تسجيل خروج",
-      impersonate: "تبديل هوية",
-      permission_change: "تغيير صلاحيات",
-      status_change: "تغيير حالة",
-    };
-    return <Badge variant="outline">{actionLabels[action] || action}</Badge>;
-  };
+  // ── Loading skeleton ──────────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -98,6 +158,37 @@ export function UserAuditLogTab({ userId }: UserAuditLogTabProps) {
       </AdminCard>
     );
   }
+
+  // ── Error state ───────────────────────────────────────────────────────────
+
+  if (error) {
+    return (
+      <AdminCard variant="glass" className="p-6">
+        <div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
+          <div className="p-4 rounded-full bg-red-500/10 text-red-500">
+            <ServerCrash className="h-8 w-8" />
+          </div>
+          <div>
+            <p className="font-bold text-red-500">{error}</p>
+            <p className="text-sm text-muted-foreground mt-1">تحقق من الاتصال بالشبكة أو حاول لاحقاً.</p>
+          </div>
+          <button
+            onClick={fetchLogs}
+            className="flex items-center gap-2 text-sm text-primary hover:underline"
+          >
+            <RefreshCw className="h-4 w-4" />
+            إعادة المحاولة
+          </button>
+        </div>
+      </AdminCard>
+    );
+  }
+
+  // ── Stats ─────────────────────────────────────────────────────────────────
+
+  const criticalCount        = logs.filter((l) => l.severity === "critical").length;
+  const permissionChangeCount = logs.filter((l) => l.action === "permission_change").length;
+  const impersonateCount     = logs.filter((l) => l.action === "impersonate").length;
 
   return (
     <div className="space-y-4">
@@ -121,9 +212,7 @@ export function UserAuditLogTab({ userId }: UserAuditLogTabProps) {
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-bold">حرجة</p>
-              <p className="text-2xl font-black">
-              {logs.filter((log: AuditLog) => log.severity === "critical").length}
-              </p>
+              <p className="text-2xl font-black">{criticalCount}</p>
             </div>
           </div>
         </AdminCard>
@@ -134,9 +223,7 @@ export function UserAuditLogTab({ userId }: UserAuditLogTabProps) {
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-bold">تغييرات صلاحيات</p>
-              <p className="text-2xl font-black">
-              {logs.filter((log: AuditLog) => log.action === "permission_change").length}
-              </p>
+              <p className="text-2xl font-black">{permissionChangeCount}</p>
             </div>
           </div>
         </AdminCard>
@@ -147,9 +234,7 @@ export function UserAuditLogTab({ userId }: UserAuditLogTabProps) {
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-bold">تبديل هوية</p>
-              <p className="text-2xl font-black">
-              {logs.filter((log: AuditLog) => log.action === "impersonate").length}
-              </p>
+              <p className="text-2xl font-black">{impersonateCount}</p>
             </div>
           </div>
         </AdminCard>
@@ -159,7 +244,12 @@ export function UserAuditLogTab({ userId }: UserAuditLogTabProps) {
       <AdminCard variant="glass" className="p-6">
         <h3 className="text-xl font-black mb-4">سجل التدقيق</h3>
         {logs.length === 0 ? (
-          <p className="text-muted-foreground text-center py-8">لا يوجد سجل تدقيق</p>
+          <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+            <div className="p-4 rounded-full bg-muted/30 text-muted-foreground">
+              <FileText className="h-8 w-8" />
+            </div>
+            <p className="text-muted-foreground">لا يوجد سجل تدقيق لهذا المستخدم حتى الآن.</p>
+          </div>
         ) : (
           <div className="space-y-3">
             {logs.map((log) => (

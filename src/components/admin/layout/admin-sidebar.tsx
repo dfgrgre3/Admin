@@ -652,6 +652,27 @@ export function AdminSidebar() {
   const { user } = useAuth();
   const { hasPermission } = usePermission();
 
+  const allNavItems = React.useMemo(
+    () => [
+      ...mainNavItems,
+      ...contentNavItems,
+      ...engagementNavItems,
+      ...communityNavItems,
+      ...financialNavItems,
+      ...infrastructureNavItems,
+    ],
+    []
+  );
+
+  const currentPageTitle = React.useMemo(() => {
+    if (!pathname) return "";
+    if (pathname === "/admin") return "لوحة المعلومات";
+    const found = allNavItems.find(
+      (item) => item.href !== "/admin" && (pathname === item.href || pathname.startsWith(`${item.href}/`))
+    );
+    return found ? found.title : "";
+  }, [pathname, allNavItems]);
+
   const toggleSection = (title: string) => {
     setCollapsedSections((prev) => ({ ...prev, [title]: !prev[title] }));
   };
@@ -778,8 +799,11 @@ export function AdminSidebar() {
               />
             </div>
             <div>
-              <span className="font-bold text-sm tracking-tight text-foreground">لوحة التحكم</span>
-              <p className="text-[10px] text-muted-foreground font-medium mt-0.5">إدارة الموقع</p>
+              <span className="font-bold text-sm tracking-tight text-foreground">{currentPageTitle || "لوحة التحكم"}</span>
+              <p className="text-[10px] text-primary font-bold mt-0.5 flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                {currentPageTitle ? `الفيصل: ${currentPageTitle}` : "إدارة الموقع"}
+              </p>
             </div>
           </div>
         )}

@@ -237,5 +237,3 @@ export const SEOStep: React.FC<SEOStepProps> = ({
     </form>
   );
 };
-
-export default SEOStep;

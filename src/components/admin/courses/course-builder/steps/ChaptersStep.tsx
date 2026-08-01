@@ -252,5 +252,3 @@ export const ChaptersStep: React.FC<ChaptersStepProps> = ({ draft, onChange }) =
     </div>
   );
 };
-
-export default ChaptersStep;

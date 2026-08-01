@@ -48,6 +48,11 @@ export function OptimizedImage({
   React.useEffect(() => {
     if (priority) return;
 
+    if (typeof IntersectionObserver === "undefined") {
+      const fallback = window.setTimeout(() => setIsInView(true), 0);
+      return () => window.clearTimeout(fallback);
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry!.isIntersecting) {
@@ -136,7 +141,9 @@ export function OptimizedImage({
           height={fill ? undefined : height}
           fill={fill}
           priority={priority}
+          loading={priority ? "eager" : "lazy"}
           quality={quality}
+          decoding="async"
           placeholder={placeholder}
           blurDataURL={blurDataURL}
           sizes={sizes}

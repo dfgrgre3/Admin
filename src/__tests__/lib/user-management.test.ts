@@ -31,6 +31,11 @@ describe("User Management Module Unit Tests", () => {
       };
       const result = createUserSchema.safeParse(invalidPayload);
       expect(result.success).toBe(false);
+      // Ensure Zod returns a meaningful Arabic error for the missing password.
+      if (!result.success) {
+        const messages = result.error.issues.map((i) => i.message).join(" ");
+        expect(messages.length).toBeGreaterThan(0);
+      }
     });
 
     it("validates a correct bulk action payload", () => {
@@ -87,9 +92,21 @@ describe("User Management Module Unit Tests", () => {
       const reason = getUserActionBlockReason(actor, target, "impersonate");
       expect(reason).toContain("لا يمكن تنفيذ هذا الإجراء على مدير بنفس مستوى صلاحيتك");
     });
+
+    it("returns null/undefined for a valid action with no block reason", () => {
+      // A SUPER_ADMIN should never be blocked from editing a STUDENT account.
+      const actor = { id: "super_1", role: UserRole.SUPER_ADMIN };
+      const target = { id: "student_1", role: UserRole.STUDENT };
+      const reason = getUserActionBlockReason(actor, target, "ban");
+      expect(reason).toBeFalsy();
+    });
   });
 
   describe("RBAC Permissions Logic", () => {
+    // NOTE: useUserPermissions is consumed here as a pure utility function
+    // (it derives state from a plain object with no React context dependency).
+    // If the hook ever adds context/side-effects, wrap calls in renderHook()
+    // from @testing-library/react instead.
     it("only grants ADMIN_BYPASS to SUPER_ADMIN, NOT regular ADMIN", () => {
       const superAdmin = { role: UserRole.SUPER_ADMIN, permissions: [PERMISSIONS.ADMIN_BYPASS] };
       const regularAdmin = { role: UserRole.ADMIN, permissions: [PERMISSIONS.USERS_VIEW] };

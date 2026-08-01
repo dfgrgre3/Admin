@@ -2,15 +2,15 @@ services:
   database:
     image: postgres:18-alpine
     ports:
-      - "5432:5432"
+      - "5433:5433"
     environment:
       POSTGRES_DB: thanawy
-      POSTGRES_USER: thanawy
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your local .env file}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Khaled@2008
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U thanawy -d thanawy"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d thanawy -h 127.0.0.1"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -41,9 +41,9 @@ services:
       GIN_MODE: release
       PORT: 8082
       BACKEND_PORT: 8082
-      DATABASE_URL: postgresql://thanawy:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your local .env file}@database:5432/thanawy?sslmode=disable
-      DATABASE_URL_DIRECT: postgresql://thanawy:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your local .env file}@database:5432/thanawy?sslmode=disable
-      DATABASE_WRITE_DSN: postgresql://thanawy:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your local .env file}@database:5432/thanawy?sslmode=disable
+      DATABASE_URL: postgresql://postgres:Khaled@2008@database:5433/thanawy?sslmode=disable
+      DATABASE_URL_DIRECT: postgresql://postgres:Khaled@2008@database:5433/thanawy?sslmode=disable
+      DATABASE_WRITE_DSN: postgresql://postgres:Khaled@2008@database:5433/thanawy?sslmode=disable
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your local .env file}
       JWT_ISSUER_URL: http://localhost:8082

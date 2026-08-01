@@ -21,7 +21,7 @@ interface EnrollmentChartData {
 
 export function EnrollmentAreaChart({ data }: { data: EnrollmentChartData[] }) {
   return (
-    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
       <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="gradEnroll" x1="0" y1="0" x2="0" y2="1">
@@ -65,7 +65,7 @@ export function ReadinessGauge({ score }: { score: number }) {
 
   return (
     <div className="relative flex items-center justify-center" style={{ height: 120 }}>
-      <ResponsiveContainer width="100%" height={120} minWidth={1} minHeight={1}>
+      <ResponsiveContainer width="100%" height={120} minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
         <RadialBarChart
           cx="50%"
           cy="100%"

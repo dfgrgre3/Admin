@@ -419,7 +419,7 @@ export default function AdminTeachersPage() {
           onPageSizeChange={setLimit}
           selectable
           onSelectionChange={(selectedRows) => {
-            console.log('Selected teachers:', selectedRows);
+            // Handle selection
           }}
           bulkActions={[
             {

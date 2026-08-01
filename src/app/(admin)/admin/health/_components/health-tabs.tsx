@@ -1,10 +1,10 @@
 "use client";
 
-import { Server, Database, Activity } from "lucide-react";
+import { Server, Database, ShieldCheck } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SystemHealthChecks } from "./system-health-checks";
 import { ExamStatsCards, ExamSuccessRate, RecentIssuesList } from "./exam-health-content.tsx";
-import { SecurityStatsCards, TwoFactorAuth, RecentIncidentsList } from "./security-health-content.tsx";
+import { SecurityStatsCards, TwoFactorAuth, RecentIncidentsList, SecurityOperations } from "./security-health-content.tsx";
 import { PerformanceMetricsGrid } from "./performance-metrics-grid.tsx";
 import type { SystemHealth, ExamHealth, SecurityHealth, PerformanceMetrics } from "../_types/health";
 
@@ -28,7 +28,7 @@ export function HealthTabs({ system, exams, security, performance }: HealthTabsP
           الامتحانات
         </TabsTrigger>
         <TabsTrigger value="security" className="w-full h-full text-base font-bold rounded-lg">
-          <Activity className="w-4 h-4 ml-2" />
+          <ShieldCheck className="w-4 h-4 ml-2" />
           الأمان
         </TabsTrigger>
         <TabsTrigger value="performance" className="w-full h-full text-base font-bold rounded-lg">
@@ -51,6 +51,7 @@ export function HealthTabs({ system, exams, security, performance }: HealthTabsP
         <SecurityStatsCards security={security} />
         <TwoFactorAuth security={security} />
         <RecentIncidentsList security={security} />
+        <SecurityOperations />
       </TabsContent>
 
       <TabsContent value="performance" className="space-y-6">

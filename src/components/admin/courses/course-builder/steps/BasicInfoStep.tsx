@@ -4,31 +4,26 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { 
-  Upload, 
   Image, 
   Video,
-  Loader2,
   AlertCircle,
   XCircle,
   BookOpen,
   Layers,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useCourseBuilder } from "../hooks";
-import type { CourseCategory, CourseLevelOption, LanguageOption } from "../types";
+import type { CourseCategory, CourseDraft, CourseLevelOption, LanguageOption } from "../types";
 import { basicInfoSchema, type BasicInfoFormData } from "../types";
 import { apiRoutes } from "@/lib/api/routes";
 import { apiClient } from "@/lib/api/api-client";
 
 export const BasicInfoStep: React.FC<{ 
-  draft: any; 
-  onChange: (data: Partial<any>) => void;
+  draft: CourseDraft | null;
+  onChange: (data: Partial<CourseDraft>) => void;
   isDirty: boolean;
-}> = ({ draft, onChange, isDirty }) => {
+}> = ({ draft, onChange, isDirty: _isDirty }) => {
   const { categories, levels, languages, loadCategories, loadLevels, loadLanguages, error, clearError } = useCourseBuilder();
-  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(draft?.coverImageUrl || null);
   const [coverUploading, setCoverUploading] = useState(false);
-  const [promoVideoUrl, setPromoVideoUrl] = useState<string | null>(draft?.promoVideoUrl || null);
   const [promoUploading, setPromoUploading] = useState(false);
   
   const form = useForm<BasicInfoFormData>({
@@ -68,18 +63,14 @@ export const BasicInfoStep: React.FC<{
         coverImageUrl: draft.coverImageUrl || "",
         promoVideoUrl: draft.promoVideoUrl || "",
       });
-      setCoverImageUrl(draft.coverImageUrl || null);
-      setPromoVideoUrl(draft.promoVideoUrl || null);
     }
   }, [draft, form]);
+
+  const coverImageUrl = form.watch("coverImageUrl");
+  const promoVideoUrl = form.watch("promoVideoUrl");
   
   const onSubmit = (data: BasicInfoFormData) => {
-    const updateData = {
-      ...data,
-      coverImageUrl: coverImageUrl || data.coverImageUrl,
-      promoVideoUrl: promoVideoUrl || data.promoVideoUrl,
-    };
-    onChange(updateData);
+    onChange(data);
   };
   
   const handleCoverUpload = async (file: File) => {
@@ -97,7 +88,6 @@ export const BasicInfoStep: React.FC<{
       const result = await response.json();
       if (result.error) throw new Error(result.error);
       
-      setCoverImageUrl(result.data.url);
       form.setValue("coverImageUrl", result.data.url);
       onChange({ coverImageUrl: result.data.url });
     } catch (err) {
@@ -123,7 +113,6 @@ export const BasicInfoStep: React.FC<{
       const result = await response.json();
       if (result.error) throw new Error(result.error);
       
-      setPromoVideoUrl(result.data.url);
       form.setValue("promoVideoUrl", result.data.url);
       onChange({ promoVideoUrl: result.data.url });
     } catch (err) {
@@ -254,8 +243,8 @@ export const BasicInfoStep: React.FC<{
                 multiple
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               >
-                {categories.map((opt: any) => (
-                  <option key={opt.id} value={opt.id}>{opt.name || opt.label}</option>
+                {categories.map((opt: CourseCategory) => (
+                  <option key={opt.id} value={opt.id}>{opt.name}</option>
                 ))}
               </select>
             </div>
@@ -269,7 +258,7 @@ export const BasicInfoStep: React.FC<{
                 id="level"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               >
-                {levels.map((l: any) => (
+                {levels.map((l: CourseLevelOption) => (
                   <option key={l.value} value={l.value}>{l.label}</option>
                 ))}
               </select>
@@ -324,10 +313,10 @@ export const BasicInfoStep: React.FC<{
              >
                {coverImageUrl ? (
                  <div className="relative inline-block">
-                   <img src={coverImageUrl} alt="Cover" className="max-h-48 rounded-lg" />
+                   <img src={coverImageUrl} alt="Cover" loading="lazy" decoding="async" className="max-h-48 rounded-lg" />
                    <button
                      type="button"
-                     onClick={() => { setCoverImageUrl(null); form.setValue("coverImageUrl", ""); }}
+                     onClick={() => form.setValue("coverImageUrl", "")}
                      className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
                    >
                      <XCircle className="w-4 h-4" />
@@ -364,7 +353,7 @@ export const BasicInfoStep: React.FC<{
                    <video src={promoVideoUrl} controls className="max-h-48 rounded-lg" />
                    <button
                      type="button"
-                     onClick={() => { setPromoVideoUrl(null); form.setValue("promoVideoUrl", ""); }}
+                     onClick={() => form.setValue("promoVideoUrl", "")}
                      className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
                    >
                      <XCircle className="w-4 h-4" />

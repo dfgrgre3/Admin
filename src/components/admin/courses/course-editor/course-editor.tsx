@@ -402,8 +402,6 @@ ${Object.entries(courseData)
       const result = await response.json();
       if (result.reply) {
         toast.success("تم التحليل بنجاح", { id: toastId });
-        // Show analysis in a modal or console for now
-        console.log("Course Analysis:", result.reply);
         alert(result.reply); // You can replace this with a proper modal
       } else if (!response.ok) {
         toast.error(result.error || "فشل في التحليل", { id: toastId });

@@ -41,7 +41,7 @@ import { usePermission } from "@/components/auth/PermissionGuard";
 import dynamic from "next/dynamic";
 import { logAdminAction } from "@/lib/admin-audit";
 
-const MarkdownEditor = dynamic(() => import("@/components/admin/ui/markdown-editor").then(mod => ({ default: mod.MarkdownEditor })), {
+const TipTapEditor = dynamic(() => import("@/components/ui/tiptap-editor").then(mod => mod.TipTapEditor), {
   ssr: false,
   loading: () => <div className="h-40 w-full animate-pulse rounded-xl bg-muted" />
 });
@@ -509,23 +509,10 @@ export default function AdminAnnouncementsPage() {
                     <FormItem>
                       <FormLabel className="font-black text-[10px] uppercase tracking-widest opacity-60">محتوى الإعلان</FormLabel>
                       <FormControl>
-                        <MarkdownEditor
-                          value={field.value}
+                        <TipTapEditor
+                          content={field.value}
                           onChange={field.onChange}
                           placeholder="أعزائي الطلاب والمستخدمين..."
-                          minHeight={150}
-                          onImageUpload={async (file) => {
-                            const formData = new FormData();
-                            formData.append("file", file);
-                            // Use adminFetch so X-CSRF-Token is automatically injected
-                            const response = await adminFetch("/api/upload", {
-                              method: "POST",
-                              body: formData,
-                            });
-                            if (!response.ok) throw new Error("فشل رفع الصورة");
-                            const data = await response.json();
-                            return data.fileUrl;
-                          }}
                         />
                       </FormControl>
                       <FormMessage />

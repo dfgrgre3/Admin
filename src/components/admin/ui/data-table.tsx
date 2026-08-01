@@ -39,11 +39,13 @@ import {
 } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search, SlidersHorizontal, FileX } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
+import { getPageSizeOptions, normalizePageSize } from "@/lib/performance-config";
+import { useLazyVisibility } from "@/hooks/use-lazy-visibility";
 
-interface BulkAction {
+interface BulkAction<TData> {
   label: string;
   icon?: React.ElementType;
-  onClick: (selectedRows: any[]) => void;
+  onClick: (selectedRows: TData[]) => void;
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost";
 }
 
@@ -53,17 +55,40 @@ interface DataTableProps<TData, TValue> {
   searchKey?: string;
   searchPlaceholder?: string;
   pageSize?: number;
-  bulkActions?: BulkAction[];
+  lazyLoad?: boolean;
+  bulkActions?: BulkAction<TData>[];
 }
 
 export function DataTable<TData, TValue>({
+  lazyLoad = true,
+  ...props
+}: DataTableProps<TData, TValue>) {
+  const { ref, isVisible } = useLazyVisibility({ enabled: lazyLoad });
+
+  return (
+    <div ref={ref} className="min-h-24 w-full">
+      {isVisible ? (
+        <DataTableContent {...props} />
+      ) : (
+        <div
+          className="h-64 w-full animate-pulse rounded-xl border bg-muted/20"
+          aria-label="جاري تجهيز الجدول"
+        />
+      )}
+    </div>
+  );
+}
+
+function DataTableContent<TData, TValue>({
   columns,
   data,
   searchKey,
   searchPlaceholder = "بحث...",
-  pageSize = 10,
+  pageSize: requestedPageSize,
   bulkActions,
-}: DataTableProps<TData, TValue>) {
+}: Omit<DataTableProps<TData, TValue>, "lazyLoad">) {
+  const pageSize = normalizePageSize(requestedPageSize);
+  const pageSizeOptions = React.useMemo(() => getPageSizeOptions(pageSize), [pageSize]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -293,7 +318,7 @@ export function DataTable<TData, TValue>({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
-                  {[5, 10, 20, 30, 50].map((size) => (
+                  {pageSizeOptions.map((size) => (
                     <SelectItem key={size} value={String(size)}>
                       {size}
                     </SelectItem>

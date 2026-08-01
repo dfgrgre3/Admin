@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
     }
 
     const targetUrl = `${BACKEND_URL}/api/auth/mfa/verify`;
-    console.log(`[API Proxy] POST 2FA verify to: ${targetUrl}`);
 
     const headers = new Headers({
       'Content-Type': 'application/json',
@@ -31,7 +30,6 @@ export async function POST(request: NextRequest) {
       credentials: 'include',
     });
 
-    console.log(`[API Proxy] 2FA verify backend status: ${response.status}`);
     return backendJsonResponse(response);
   } catch (error) {
     console.error(`[API Proxy] 2FA verify error connecting to ${BACKEND_URL}:`, error);

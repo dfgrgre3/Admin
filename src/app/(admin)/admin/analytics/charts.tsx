@@ -20,7 +20,7 @@ import { AdminBadge } from "@/components/admin/ui/admin-badge";
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
 export const DailyActiveUsersChart = ({ data }: { data: Array<{ date: string; count: number }> }) => (
-  <ResponsiveContainer width="100%" height={300} minWidth={1} minHeight={1}>
+  <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
     <RechartsAreaChart data={data}>
       <defs>
         <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
@@ -56,7 +56,7 @@ export const DailyActiveUsersChart = ({ data }: { data: Array<{ date: string; co
 );
 
 export const DailyRegistrationsChart = ({ data }: { data: Array<{ date: string; count: number }> }) => (
-  <ResponsiveContainer width="100%" height={300} minWidth={1} minHeight={1}>
+  <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
     <RechartsBarChart data={data}>
       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
       <XAxis
@@ -80,7 +80,7 @@ export const DailyRegistrationsChart = ({ data }: { data: Array<{ date: string; 
 
 export const RoleDistributionChart = ({ data }: { data: Array<{ name: string; value: number }> }) => (
   <>
-    <ResponsiveContainer width="100%" height={200} minWidth={1} minHeight={1}>
+    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
       <RechartsPieChart>
         <Pie
           data={data}

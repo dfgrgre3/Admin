@@ -28,7 +28,7 @@ export default function QuestionBankPage() {
     onError: () => toast.error("فشل الإضافة"),
   });
 
-  const questions = data ?? [];
+  const questions: BankQuestion[] = Array.isArray(data) ? data : (data as any)?.questions ?? [];
   const typeLabel = (t: string) => QUESTION_TYPES.find((x) => x.value === t)?.label ?? t;
 
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
+import DOMPurify from "dompurify";
 import { 
   Award, 
   Link2, 
@@ -183,7 +184,7 @@ export const CertificatesStep: React.FC<CertificatesStepProps> = ({
           <div className="bg-white dark:bg-gray-900 rounded-lg p-6 min-h-[500px] max-h-[70vh] overflow-auto border border-gray-200 dark:border-gray-700">
             <div 
               className="prose prose-lg dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: currentTemplate.templateHtml }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(currentTemplate.templateHtml) }}
             />
           </div>
         </Modal>
@@ -260,5 +261,3 @@ const CertificateTemplateCard: React.FC<CertificateTemplateCardProps> = ({
     </div>
   </Card>
 );
-
-export default CertificatesStep;

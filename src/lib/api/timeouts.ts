@@ -8,6 +8,8 @@ const HEAVY_PATH_PATTERNS = [
   /\/backups(?:\/|$)/,
   /\/infrastructure(?:\/|$)/,
   /\/ai(?:\/|$)/,
+  /\/auth\/me(?:\/|$)/,
+  /\/settings(?:\/|$)/,
   /export/i,
   /bulk/i,
 ];

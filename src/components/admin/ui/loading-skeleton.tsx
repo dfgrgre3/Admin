@@ -260,5 +260,3 @@ export function LoadingSkeleton({ type = 'dashboard' }: { type?: 'dashboard' | '
       return <DashboardSkeleton />;
   }
 }
-
-export default LoadingSkeleton;

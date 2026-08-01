@@ -1,5 +1,5 @@
 import { UserProgress, Achievement, LeaderboardEntry, CustomGoal } from '@/types/gamification';
-import apiClient from './api-client';
+import { apiClient } from './api-client';
 import { apiRoutes } from './routes';
 
 export async function fetchUserProgress(userId: string): Promise<UserProgress | null> {

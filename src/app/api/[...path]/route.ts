@@ -50,10 +50,24 @@ function buildProxyRequestOptions(request: NextRequest, authHeaders: Record<stri
   };
 }
 
-function handleErrorResponse(response: Response) {
+async function handleErrorResponse(response: Response) {
+  let errorMessage = response.status === 404 ? 'Resource not found on backend' : 'Backend request failed';
+  
+  // Try to extract the actual error message from the backend response
+  try {
+    const body = await response.clone().json();
+    if (body.error) {
+      errorMessage = body.error;
+    } else if (body.message) {
+      errorMessage = body.message;
+    }
+  } catch {
+    // If we can't parse the body, use the default message
+  }
+
   return NextResponse.json(
     {
-      error: response.status === 404 ? 'Resource not found on backend' : 'Backend request failed',
+      error: errorMessage,
       status: response.status,
     },
     { status: response.status },
@@ -104,9 +118,8 @@ async function handleProxy(
       });
 
       if (!response.ok) {
-        await response.body?.cancel();
         logger.warn('API proxy backend returned an error', {
-          source: 'api/catch-all',
+          source: 'api-catch-all',
           method: request.method,
           statusCode: response.status,
         });
@@ -115,7 +128,9 @@ async function handleProxy(
         // application-level answer from a reachable backend — return it as-is
         // instead of failing over to a secondary origin. Failover only happens
         // for connection-level failures (handled in the catch below).
-        return handleErrorResponse(response);
+        const errorResponse = await handleErrorResponse(response);
+        await response.body?.cancel();
+        return errorResponse;
       }
 
       // Success! Return the response

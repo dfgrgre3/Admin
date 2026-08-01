@@ -380,4 +380,3 @@ class UnifiedAIClient {
 // ─── تصدير المثيل الوحيد (Singleton) ───────────────────────
 
 export const aiClient = new UnifiedAIClient();
-export default aiClient;

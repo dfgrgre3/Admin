@@ -8,13 +8,21 @@ import { AdminButton } from "@/components/admin/ui/admin-button";
 import { RoleBadge, StatusBadge } from "@/components/admin/ui/admin-badge";
 import { AdminStatsCard } from "@/components/admin/ui/admin-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserPlus, Download, Mail, Shield, Users, Zap, Search, Send, LogIn, Upload, AlertTriangle, RefreshCw } from "lucide-react";
+import { UserPlus, Download, Mail, Shield, Users, Zap, Search, Send, LogIn, Upload, AlertTriangle, RefreshCw, Filter, MoreHorizontal, Eye, Edit, Trash2, Ban, CheckCircle } from "lucide-react";
 import { useExport, ExportColumn } from '@/lib/export-utils';
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { AdminConfirm } from "@/components/admin/ui/admin-confirm";
 import dynamic from "next/dynamic";
 import { CsvImportDialog } from "@/components/admin/ui/csv-import-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const MessageModal = dynamic(() => import("@/components/admin/broadcast/broadcast-modal").then(mod => ({ default: mod.BroadcastModal })), {
   ssr: false,
@@ -67,6 +75,7 @@ export default function AdminUsersPage() {
   const [impersonating, setImpersonating] = React.useState(false);
   const [importDialogOpen, setImportDialogOpen] = React.useState(false);
   const [exporting, setExporting] = React.useState(false);
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = React.useState(false);
   const { debouncedCallback: updateQuerySearch } = useAdaptiveDebounce(
     (value: unknown) => setQuerySearch(String(value)),
     { minDelay: 300, maxDelay: 500, initialDelay: 350 },
@@ -77,6 +86,9 @@ export default function AdminUsersPage() {
   const queryAbortControllerRef = React.useRef<AbortController | null>(null);
 
   React.useEffect(() => {
+    // Create abort controller for queries
+    queryAbortControllerRef.current = new AbortController();
+
     return () => {
       if (exportAbortControllerRef.current) {
         exportAbortControllerRef.current.abort();
@@ -124,6 +136,7 @@ export default function AdminUsersPage() {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin", "users", page, limit, querySearch, role, status, sortBy, sortOrder],
     queryFn: async () => {
+      const signal = queryAbortControllerRef.current?.signal;
       return adminUsersApi.list({
         page,
         limit,
@@ -132,10 +145,11 @@ export default function AdminUsersPage() {
         status: status === "all" ? undefined : status as UserStatus,
         sortBy: sortBy as "name" | "createdAt" | "lastLogin" | "totalXP" | "status",
         sortOrder: sortOrder as "asc" | "desc",
-      });
+      }, { signal });
     },
     placeholderData: keepPreviousData,
     retry: 1,
+    staleTime: 30000, // 30 seconds
   });
 
   const runBulkUpdate = async (rows: AdminUserListItem[], changes: Partial<Pick<AdminUserListItem, "role" | "status">>) => {
@@ -381,21 +395,56 @@ export default function AdminUsersPage() {
           const deleteBlock = getUserActionBlockReason(currentUser, row.original, "delete");
           const impersonateBlock = getUserActionBlockReason(currentUser, row.original, "impersonate");
           return (
-            <RowActions
-              row={row.original}
-              onView={(u) => router.push(`/admin/users/${u.id}`)}
-              onEdit={canManageUsers ? (u) => router.push(`/admin/users/${u.id}/edit`) : undefined}
-              onDelete={canManageUsers && !deleteBlock ? (u) => setDeleteDialog({ open: true, ids: [u.id] }) : undefined}
-              extraActions={[
-                { icon: Mail, label: "إرسال رسالة", onClick: (u) => setMessageDialog({ open: true, users: [u] }) },
-                ...(canManageUsers ? [{ icon: Shield, label: "إدارة الصلاحيات", onClick: (u: AdminUserListItem) => router.push(`/admin/users/${u.id}/permissions`) }] : []),
-                {
-                  icon: LogIn, label: "تسجيل الدخول كـ", onClick: (u) => setImpersonateDialog({ open: true, user: u }),
-                  disabled: !canManageUsers || !!impersonateBlock,
-                  disabledReason: impersonateBlock || undefined,
-                },
-              ]}
-            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <AdminButton variant="ghost" size="icon-sm" className="h-8 w-8">
+                  <MoreHorizontal className="h-4 w-4" />
+                </AdminButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>الإجراءات</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push(`/admin/users/${row.original.id}`)}>
+                  <Eye className="ml-2 h-4 w-4" />
+                  عرض التفاصيل
+                </DropdownMenuItem>
+                {canManageUsers && (
+                  <DropdownMenuItem onClick={() => router.push(`/admin/users/${row.original.id}/edit`)}>
+                    <Edit className="ml-2 h-4 w-4" />
+                    تعديل
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={() => setMessageDialog({ open: true, users: [row.original] })}>
+                  <Mail className="ml-2 h-4 w-4" />
+                  إرسال رسالة
+                </DropdownMenuItem>
+                {canManageUsers && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.push(`/admin/users/${row.original.id}/permissions`)}>
+                      <Shield className="ml-2 h-4 w-4" />
+                      إدارة الصلاحيات
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setImpersonateDialog({ open: true, user: row.original })}
+                      disabled={!!impersonateBlock}
+                    >
+                      <LogIn className="ml-2 h-4 w-4" />
+                      تسجيل الدخول كـ
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => setDeleteDialog({ open: true, ids: [row.original.id] })}
+                      disabled={!!deleteBlock}
+                      className="text-destructive"
+                    >
+                      <Trash2 className="ml-2 h-4 w-4" />
+                      حذف
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           );
         })()
       ),
@@ -421,13 +470,18 @@ export default function AdminUsersPage() {
         </div>
       </PageHeader>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <AdminStatsCard
           title="إجمالي المستخدمين"
           value={data?.summary?.totalUsers || 0}
           icon={Users}
           color="blue"
           description="مستخدم في المنصة"
+          trend={{
+            value: 12,
+            isPositive: true,
+            label: "هذا الشهر"
+          }}
         />
         <AdminStatsCard
           title="حسابات المسؤولين"
@@ -435,6 +489,11 @@ export default function AdminUsersPage() {
           icon={Shield}
           color="yellow"
           description="حساب إداري فعال"
+          trend={{
+            value: 5,
+            isPositive: true,
+            label: "هذا الأسبوع"
+          }}
         />
         <AdminStatsCard
           title="المستخدمين النشطين"
@@ -442,6 +501,23 @@ export default function AdminUsersPage() {
           icon={Zap}
           color="green"
           description="تفاعل عالي هذا الأسبوع"
+          trend={{
+            value: 8,
+            isPositive: true,
+            label: "اليوم"
+          }}
+        />
+        <AdminStatsCard
+          title="معدل التفاعل"
+          value={data?.summary?.powerUsers || 0}
+          icon={Zap}
+          color="fuchsia"
+          description="نشاط يومي"
+          trend={{
+            value: 3,
+            isPositive: true,
+            label: "هذا الأسبوع"
+          }}
         />
       </div>
 
@@ -525,6 +601,24 @@ export default function AdminUsersPage() {
                   }}
                 />
               </div>
+              <AdminButton
+                variant="outline"
+                size="icon-sm"
+                onClick={() => setAdvancedFiltersOpen(!advancedFiltersOpen)}
+                className={advancedFiltersOpen ? "bg-primary text-primary-foreground" : ""}
+              >
+                <Filter className="h-4 w-4" />
+              </AdminButton>
+              {(role !== "all" || status !== "all" || search) && (
+                <AdminButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="text-xs"
+                >
+                  مسح الفلاتر
+                </AdminButton>
+              )}
             </div>
           }
         />

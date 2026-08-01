@@ -49,17 +49,37 @@ export interface Lesson {
   sectionId: string;
   title: string;
   type: 'VIDEO' | 'TEXT' | 'AUDIO' | 'FILE' | 'EXTERNAL_LINK' | 'INTERACTIVE_QUIZ';
-  content?: string;
-  mediaUrl?: string;
+  content?: string | null;
+  mediaUrl?: string | null;
   durationSeconds: number;
   isFreePreview: boolean;
   orderIndex: number;
   availabilityType: 'CALENDAR_DATE' | 'ENROLLMENT_RELATIVE';
-  availableFrom?: number;
-  dripDelayDays?: number;
+  availableFrom?: string | null;
+  dripDelayDays?: number | null;
   createdAt: string;
   updatedAt: string;
   attachments?: Attachment[];
+  subtitles?: Subtitle[];
+  quizzes?: InteractiveQuiz[];
+}
+
+export interface Subtitle {
+  id: string;
+  lessonId: string;
+  language: string;
+  vttUrl: string;
+  createdAt: string;
+}
+
+export interface InteractiveQuiz {
+  id: string;
+  lessonId: string;
+  timestampSec: number;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  createdAt: string;
 }
 
 export interface Attachment {
@@ -67,18 +87,18 @@ export interface Attachment {
   lessonId: string;
   title: string;
   fileUrl: string;
-  fileType: string;
-  fileSize?: number;
+  fileType?: string | null;
+  fileSize?: number | null;
   createdAt: string;
 }
 
 export interface Pricing {
   id: string;
   courseId: string;
-  type: 'FREE' | 'ONE_TIME' | 'SUBSCRIPTION' | 'BUNDLE';
+  type: 'FREE' | 'PAID' | 'SUBSCRIPTION' | 'BUNDLE' | 'ONE_TIME';
   amount: number;
   currencyCode: string;
-  subscriptionDurationDays?: number;
+  subscriptionDurationDays?: number | null;
   discountPrice?: number;
   discountStartAt?: number;
   discountEndAt?: number;

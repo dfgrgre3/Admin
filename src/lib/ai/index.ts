@@ -16,7 +16,7 @@
  */
 
 // ─── العميل الموحد ────────────────────────────────────────
-export { aiClient, default as defaultAIClient } from './ai-client';
+export { aiClient } from './ai-client';
 
 // ─── Hooks الموحدة ────────────────────────────────────────
 export {

@@ -27,13 +27,17 @@ export function LazyImage({
   quality = 75,
 }: LazyImageProps) {
   const [isLoaded, setIsLoaded] = React.useState(false);
-  const [isInView, setIsInView] = React.useState(false);
+  const [isInView, setIsInView] = React.useState(priority);
   const imgRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (priority) {
-      setIsInView(true);
       return;
+    }
+
+    if (typeof IntersectionObserver === "undefined") {
+      const fallback = window.setTimeout(() => setIsInView(true), 0);
+      return () => window.clearTimeout(fallback);
     }
 
     const observer = new IntersectionObserver(
@@ -74,6 +78,8 @@ export function LazyImage({
             height={height}
             quality={quality}
             priority={priority}
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
             placeholder={placeholder}
             blurDataURL={blurDataURL}
             onLoad={() => setIsLoaded(true)}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useCallback, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore, type AuthUser } from '@/lib/auth/auth-store';
 import { logger } from '@/lib/logger';
@@ -37,7 +37,6 @@ export function AuthProvider({
 }: {children: React.ReactNode; initialAuthHint?: boolean;}) {
   const { setUser, reset: resetStore, setIsLoading } = useAuthStore();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const lastSyncedId = useRef<string | null>(null);
   const router = useRouter();
 
   // Fetch user profile on mount
@@ -173,7 +172,7 @@ export function AuthProvider({
   const resendVerification = useCallback(async (email: string) => authApiService.resendVerification(email), []);
   const requestMagicLink = useCallback(async (email: string) => authApiService.requestMagicLink(email), []);
 
-  const value: AuthContextType = {
+  const value = useMemo<AuthContextType>(() => ({
     user,
     isLoading,
     isAuthenticated,
@@ -187,7 +186,21 @@ export function AuthProvider({
     verifyEmail,
     resendVerification,
     requestMagicLink,
-  };
+  }), [
+    user,
+    isLoading,
+    isAuthenticated,
+    login,
+    register,
+    logout,
+    verify2FA,
+    refreshUser,
+    forgotPassword,
+    resetPassword,
+    verifyEmail,
+    resendVerification,
+    requestMagicLink,
+  ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

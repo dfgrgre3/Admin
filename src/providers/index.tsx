@@ -13,6 +13,7 @@ import { HydrationFix } from '@/components/hydration-fix';
 import { LazyMotion, domAnimation } from 'framer-motion';
 import { PerformanceProvider } from '@/components/providers/PerformanceProvider';
 import { ReactQueryPersistence } from '@/providers/react-query-persistence';
+import { PERFORMANCE_DEFAULTS } from '@/lib/performance-config';
 
 // Lazy load WebSocket provider to reduce initial JS bundle size
 // WebSocket is disabled by default, so we defer loading it completely
@@ -24,12 +25,14 @@ function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 1000 * 60 * 5,
-        gcTime: 1000 * 60 * 60 * 24,
+        staleTime: PERFORMANCE_DEFAULTS.queryStaleTimeMs,
+        gcTime: PERFORMANCE_DEFAULTS.queryGcTimeMs,
         retry: 1,
         refetchOnWindowFocus: false,
         refetchOnReconnect: true,
+        // Fresh cached data renders immediately; stale data revalidates in the background.
         refetchOnMount: true,
+        placeholderData: (previousData: unknown) => previousData,
         networkMode: 'online',
       },
       mutations: {

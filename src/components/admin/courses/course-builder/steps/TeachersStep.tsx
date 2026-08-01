@@ -250,5 +250,3 @@ export const TeachersStep: React.FC<TeachersStepProps> = ({ courseId }) => {
     </div>
   );
 };
-
-export default TeachersStep;

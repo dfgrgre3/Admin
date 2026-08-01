@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1.5 rounded-full font-medium transition-all duration-200",
+  "inline-flex items-center gap-1.5 rounded-full font-medium",
   {
     variants: {
       variant: {
@@ -92,8 +92,7 @@ export function AdminBadge({
             status === "warning" && "bg-yellow-500",
             status === "error" && "bg-red-500",
             status === "info" && "bg-blue-500",
-            !status && "bg-current",
-            pulse && "animate-pulse"
+            !status && "bg-current"
           )}
         />
       )}
@@ -174,7 +173,7 @@ interface CountBadgeProps {
   pulse?: boolean;
 }
 
-export function CountBadge({ count, max = 99, className, pulse }: CountBadgeProps) {
+export function CountBadge({ count, max = 99, className }: CountBadgeProps) {
   if (count === 0) return null;
   
   const displayCount = count > max ? `${max}+` : count;
@@ -183,7 +182,6 @@ export function CountBadge({ count, max = 99, className, pulse }: CountBadgeProp
     <span
       className={cn(
         "inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full text-[10px] font-bold bg-destructive text-destructive-foreground",
-        pulse && "animate-pulse",
         className
       )}
     >

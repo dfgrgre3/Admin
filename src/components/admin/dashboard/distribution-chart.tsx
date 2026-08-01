@@ -131,7 +131,7 @@ export function DistributionChart({
       </div>
 
       <div style={{ height: `${height}px`, width: "100%" }}>
-        <ResponsiveContainer width="100%" height={height} minWidth={1} minHeight={1}>
+        <ResponsiveContainer width="100%" height={height} minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
           <PieChart>
             <Pie
               data={dataWithColors}
@@ -186,7 +186,7 @@ export function DistributionMini({ data, size = 60, className }: DistributionMin
 
   return (
     <div className={cn("relative inline-flex", className)} style={{ width: size, height: size }}>
-      <ResponsiveContainer width="100%" height={size} minWidth={1} minHeight={1}>
+      <ResponsiveContainer width="100%" height={size} minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
         <PieChart>
           <Pie
             data={dataWithColors}

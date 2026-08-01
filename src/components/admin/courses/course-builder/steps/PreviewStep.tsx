@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
+import DOMPurify from "dompurify";
 import { 
-  Loader2, 
   AlertCircle, 
   CheckCircle, 
   Eye, 
-  EyeOff,
   ExternalLink,
   RefreshCw,
   BookOpen,
@@ -18,10 +17,13 @@ import {
   FileText,
   Info,
   HelpCircle,
+  Music,
+  File,
+  XCircle,
 } from "lucide-react";
 import { useCourseBuilder } from "../hooks";
-import type { CourseDraft, Chapter, Lesson } from "../types";
-import { Section, Card, Badge, Button, Skeleton, EmptyState, Tabs, TabsList, Tab, TabPanels, TabPanel } from "../ui";
+import type { CourseDraft, Chapter, Lesson, Pricing } from "../types";
+import { Section, Card, Badge, Button, EmptyState, Tabs, TabsList, Tab, TabPanels, TabPanel } from "../ui";
 
 interface PreviewStepProps {
   draft: CourseDraft | null;
@@ -29,7 +31,7 @@ interface PreviewStepProps {
 }
 
 export const PreviewStep: React.FC<PreviewStepProps> = ({ draft, onRefresh }) => {
-  const { loadPreview, isLoading, error, clearError } = useCourseBuilder({ courseId: draft?.id });
+  const { loadPreview, error, clearError } = useCourseBuilder({ courseId: draft?.id });
   const [previewData, setPreviewData] = useState<CourseDraft | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "curriculum" | "details">("overview");
   
@@ -41,14 +43,14 @@ export const PreviewStep: React.FC<PreviewStepProps> = ({ draft, onRefresh }) =>
     }
   }, [draft?.id, loadPreview]);
   
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = () => {
     if (draft?.id) {
       loadPreview(draft.id).then(data => {
         if (data) setPreviewData(data);
       });
     }
     onRefresh();
-  }, [draft?.id, loadPreview, onRefresh]);
+  };
   
   const course = previewData || draft;
   
@@ -101,6 +103,8 @@ export const PreviewStep: React.FC<PreviewStepProps> = ({ draft, onRefresh }) =>
           {course.coverImageUrl && (
             <img 
               src={course.coverImageUrl} 
+              loading="lazy"
+              decoding="async"
               alt={course.title} 
               className="w-full h-full object-cover opacity-30"
             />
@@ -156,7 +160,7 @@ export const PreviewStep: React.FC<PreviewStepProps> = ({ draft, onRefresh }) =>
                 <Section title="الوصف الكامل" icon={<FileText className="w-5 h-5" />}>
                   <div className="prose prose-lg dark:prose-invert max-w-none">
                     {course.longDescription ? (
-                      <div dangerouslySetInnerHTML={{ __html: course.longDescription }} />
+                      <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(course.longDescription) }} />
                     ) : (
                       <p className="text-gray-500 dark:text-gray-400">لا يوجد وصف مفصل</p>
                     )}
@@ -222,7 +226,7 @@ export const PreviewStep: React.FC<PreviewStepProps> = ({ draft, onRefresh }) =>
                     <div className="p-4">
                       <h4 className="font-medium text-gray-900 dark:text-white mb-3">التسعير</h4>
                       <div className="space-y-2">
-                        {course.pricings.map((p: any, i: number) => (
+                        {course.pricings.map((p: Pricing, i: number) => (
                           <div key={i} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
                             <span className="capitalize">{p.type.toLowerCase()}</span>
                             <span className="font-bold text-lg">
@@ -389,7 +393,5 @@ const lessonTypeLabels: Record<string, string> = {
   EXTERNAL_LINK: "رابط",
   INTERACTIVE_QUIZ: "اختبار",
 };
-
-import { Music, File, XCircle } from "lucide-react";
 
 export default PreviewStep;

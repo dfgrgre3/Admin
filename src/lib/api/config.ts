@@ -10,7 +10,11 @@ function ensureProtocol(url: string): string {
 
 function assertSecureProductionOrigin(url: string): void {
   if (process.env.NODE_ENV === "production" && !url.toLowerCase().startsWith("https://")) {
-    throw new Error("INTERNAL_API_URL must use HTTPS in production");
+    // Allow HTTP for localhost/127.0.0.1 in production (for local development)
+    const isLocalhost = url.includes("localhost") || url.includes("127.0.0.1");
+    if (!isLocalhost) {
+      throw new Error("INTERNAL_API_URL must use HTTPS in production");
+    }
   }
 }
 

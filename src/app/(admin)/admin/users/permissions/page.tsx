@@ -80,10 +80,10 @@ export default function PermissionsPage() {
 
   const updatePermissionsMutation = useMutation({
     mutationFn: async ({ userId, permissions }: { userId: string; permissions: string[] }) => {
-      const res = await adminFetch(apiRoutes.admin.users, {
+      const res = await adminFetch(apiRoutes.admin.userById(userId), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, permissions }),
+        body: JSON.stringify({ permissions }),
       });
       if (!res.ok) throw new Error("Failed to update permissions");
       return res.json();

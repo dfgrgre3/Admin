@@ -293,6 +293,7 @@ export const apiRoutes = {
 
     // Payments
     payments: '/api/admin/payments',
+    dunning: '/api/admin/dunning',
 
     // Coupons
     coupons: '/api/admin/coupons',

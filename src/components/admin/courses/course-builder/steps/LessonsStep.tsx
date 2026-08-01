@@ -128,7 +128,7 @@ const LessonCard: React.FC<{
               </a>
             </div>
           )}
-          {lesson.attachments?.length > 0 && (
+          {lesson.attachments && lesson.attachments.length > 0 && (
             <div>
               <span className="font-medium text-sm text-gray-700 dark:text-gray-300">المرفقات ({lesson.attachments.length}):</span>
               <ul className="mt-1 space-y-1">
@@ -509,5 +509,3 @@ export const LessonsStep: React.FC<{
     </div>
   );
 };
-
-export default LessonsStep;

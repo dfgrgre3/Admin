@@ -4,8 +4,6 @@ import { BACKEND_URL, backendJsonResponse, upstreamAuthHeaders } from '@/app/api
 export async function GET(request: NextRequest) {
   const targetUrl = `${BACKEND_URL}/api/settings/preferences`;
   
-  console.log(`[API Proxy] GET /api/settings/preferences -> ${targetUrl}`);
-  
   try {
     const response = await fetch(targetUrl, {
       method: 'GET',

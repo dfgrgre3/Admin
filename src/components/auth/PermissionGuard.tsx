@@ -7,6 +7,8 @@ import { UserRole } from "@/types/enums";
 
 interface PermissionGuardProps {
   permission?: Permission | string;
+  permissions?: (Permission | string)[];
+  requireAll?: boolean;
   role?: UserRole | UserRole[];
   children: React.ReactNode;
   fallback?: React.ReactNode;
@@ -14,6 +16,8 @@ interface PermissionGuardProps {
 
 export function PermissionGuard({
   permission,
+  permissions,
+  requireAll = false,
   role,
   children,
   fallback = null,
@@ -35,6 +39,20 @@ export function PermissionGuard({
     hasAccess = resolved
       ? hasPermission(user as Parameters<typeof hasPermission>[0], resolved)
       : false;
+  }
+
+  if (hasAccess && permissions && permissions.length > 0) {
+    if (requireAll) {
+      hasAccess = permissions.every((p) => {
+        const resolved = resolvePermissionInput(p);
+        return resolved ? hasPermission(user as Parameters<typeof hasPermission>[0], resolved) : false;
+      });
+    } else {
+      hasAccess = permissions.some((p) => {
+        const resolved = resolvePermissionInput(p);
+        return resolved ? hasPermission(user as Parameters<typeof hasPermission>[0], resolved) : false;
+      });
+    }
   }
 
   if (!hasAccess) {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ErrorInfo } from 'react';
 import { logger } from '@/lib/logger';
 import { buildAppUserWebSocketUrl } from '@/lib/realtime/build-ws-url';
@@ -63,7 +63,9 @@ export function WebSocketProvider({ children, userId }: {children: React.ReactNo
 
   useEffect(() => {
     // Handle bfcache restoration
-    const handleBfcacheRestore = () => {
+    const handleBfcacheRestore = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+
       setIsBfcacheRestored(true);
       // Reset connection state on restore
       setSocket(null);
@@ -77,14 +79,12 @@ export function WebSocketProvider({ children, userId }: {children: React.ReactNo
   useEffect(() => {
     // Wait until a user id is available before connecting
     if (!WEBSOCKET_ENABLED || !currentUserId) {
-      setSocket(null);
-      setIsConnected(false);
       return;
     }
 
     // Skip connection if page was just restored from bfcache
     if (isBfcacheRestored) {
-      setIsBfcacheRestored(false);
+      queueMicrotask(() => setIsBfcacheRestored(false));
       return;
     }
 
@@ -97,7 +97,6 @@ export function WebSocketProvider({ children, userId }: {children: React.ReactNo
 
     let ws: WebSocket | null = null;
     let reconnectAttempts = 0;
-    const maxReconnectAttempts = 3;
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const connect = () => {
@@ -142,9 +141,10 @@ export function WebSocketProvider({ children, userId }: {children: React.ReactNo
           clearTimeout(connectionTimeout);
           setIsConnected(false);
           setSocket(null);
-          if (WEBSOCKET_ENABLED && reconnectAttempts < maxReconnectAttempts && event.code !== 1000) {
+          if (WEBSOCKET_ENABLED && event.code !== 1000) {
             reconnectAttempts++;
-            const delay = Math.min(3000 * Math.pow(2, reconnectAttempts - 1), 15000);
+            const delay = Math.min(3000 * Math.pow(2, reconnectAttempts - 1), 30000);
+            logger.info(`WebSocket disconnected, attempting reconnection #${reconnectAttempts} in ${delay}ms`);
             reconnectTimeout = setTimeout(connect, delay);
           }
         };
@@ -175,16 +175,16 @@ export function WebSocketProvider({ children, userId }: {children: React.ReactNo
           return;
         }
       }
-      setSocket(null);
-      setIsConnected(false);
+      setSocket((current) => current === null ? current : null);
+      setIsConnected((current) => current ? false : current);
     };
   }, [currentUserId, isBfcacheRestored]); // Use currentUserId as dependency
 
   // Always provide safe default values
-  const contextValue = {
+  const contextValue = useMemo<WebSocketContextType>(() => ({
     socket: WEBSOCKET_ENABLED ? socket : null,
     isConnected: WEBSOCKET_ENABLED ? isConnected : false
-  };
+  }), [socket, isConnected]);
 
   // Wrap in error boundary to catch any unexpected errors
   return (

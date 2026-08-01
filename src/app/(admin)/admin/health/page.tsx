@@ -2,49 +2,55 @@
 
 import * as React from "react";
 import dynamic from "next/dynamic";
-import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { Download, RefreshCw, Filter } from "lucide-react";
+import { AlertCircle, Download, RefreshCw, Wifi, WifiOff } from "lucide-react";
 
 import { PageHeader } from "@/components/admin/ui/page-header";
 import { AdminButton } from "@/components/admin/ui/admin-button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
-
-// Components
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
 import { OverallStatusBanner } from "./_components/overall-status-banner";
 import { HealthStatsCards } from "./_components/health-stats-cards";
 import { HealthTabs } from "./_components/health-tabs";
-
-const PerformanceCharts = dynamic(() => import("./_components/performance-charts").then(mod => mod.PerformanceCharts), { ssr: false, loading: () => <div className="h-[400px] w-full animate-pulse bg-muted/30 rounded-3xl" /> });
-
-// Hooks
-import { useHealthData, useExportHealthReport } from "./_hooks/useHealthData";
-
-// Types
+import { useExportHealthReport, useHealthData } from "./_hooks/useHealthData";
 import type { TimeRange } from "./_types/health";
+
+const PerformanceCharts = dynamic(
+  () => import("./_components/performance-charts").then((mod) => mod.PerformanceCharts),
+  {
+    ssr: false,
+    loading: () => <div className="h-[360px] w-full animate-pulse rounded-2xl bg-muted/30" />,
+  }
+);
+
+const timeRanges: Array<{ value: TimeRange; label: string }> = [
+  { value: "15m", label: "آخر 15 دقيقة" },
+  { value: "1h", label: "آخر ساعة" },
+  { value: "6h", label: "آخر 6 ساعات" },
+  { value: "24h", label: "آخر 24 ساعة" },
+  { value: "7d", label: "آخر 7 أيام" },
+];
 
 export default function KingdomHealthPage() {
   const [autoRefresh, setAutoRefresh] = React.useState(true);
   const [selectedTimeRange, setSelectedTimeRange] = React.useState<TimeRange>("1h");
-
-  const { data: healthData, isLoading, refetch } = useHealthData(selectedTimeRange, autoRefresh);
+  const {
+    data: healthData,
+    dataUpdatedAt,
+    error,
+    isError,
+    isFetching,
+    isLoading,
+    refetch,
+  } = useHealthData(selectedTimeRange, autoRefresh);
   const exportReportMutation = useExportHealthReport();
-
-  const handleExport = async () => {
-    await exportReportMutation.mutateAsync();
-  };
 
   if (isLoading) {
     return (
       <div className="space-y-6 pb-20" dir="rtl">
-        <PageHeader
-          title="صحة خفايا المملكة ⚔️"
-          description="مراقبة شاملة لصحة النظام والامتحانات والأمان"
-        />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-32 animate-pulse rounded-2xl bg-white/5 border border-white/10" />
+        <PageHeader title="صحة خفايا المملكة" description="مراقبة شاملة لصحة النظام والامتحانات والأمان" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="h-32 animate-pulse rounded-2xl border border-border bg-muted/30" />
           ))}
         </div>
       </div>
@@ -52,61 +58,84 @@ export default function KingdomHealthPage() {
   }
 
   const system = healthData?.system;
-  const exams = healthData?.exams;
-  const security = healthData?.security;
   const performance = healthData?.performance;
+  const updatedAt = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
 
   return (
     <div className="space-y-6 pb-20" dir="rtl">
       <PageHeader
-        title="صحة خفايا المملكة ⚔️"
-        description="مراقبة شاملة لصحة النظام والامتحانات والأمان والأداء"
+        title="صحة خفايا المملكة"
+        description="لوحة لحظية لمراقبة جاهزية الخدمات والأداء والأمان والامتحانات"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto">
           <select
+            aria-label="النطاق الزمني"
             value={selectedTimeRange}
-            onChange={(e) => setSelectedTimeRange(e.target.value as TimeRange)}
-            className="h-10 rounded-xl border border-border bg-background px-3 text-sm font-medium"
+            onChange={(event) => setSelectedTimeRange(event.target.value as TimeRange)}
+            className="h-10 min-w-40 flex-1 rounded-xl border border-border bg-background px-3 text-sm font-medium sm:flex-none"
           >
-            <option value="15m">آخر 15 دقيقة</option>
-            <option value="1h">آخر ساعة</option>
-            <option value="6h">آخر 6 ساعات</option>
-            <option value="24h">آخر 24 ساعة</option>
-            <option value="7d">آخر 7 أيام</option>
+            {timeRanges.map((range) => (
+              <option key={range.value} value={range.value}>{range.label}</option>
+            ))}
           </select>
           <AdminButton
             variant="outline"
-            size="sm"
             icon={Download}
-            onClick={handleExport}
+            onClick={() => exportReportMutation.mutate(selectedTimeRange)}
             loading={exportReportMutation.isPending}
-            className="hidden md:flex"
           >
-            تصدير تقرير
+            تصدير CSV
           </AdminButton>
           <AdminButton
             variant="outline"
-            size="sm"
             icon={RefreshCw}
             onClick={() => refetch()}
-            loading={isLoading}
+            loading={isFetching}
           >
             تحديث
           </AdminButton>
         </div>
       </PageHeader>
 
-      {/* Overall Status Banner */}
-      {system?.overall && <OverallStatusBanner health={system.overall} />}
+      <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          {isError ? <WifiOff className="h-5 w-5 text-destructive" /> : <Wifi className="h-5 w-5 text-emerald-500" />}
+          <div>
+            <p className="text-sm font-bold">{isError ? "الاتصال متعذر" : isFetching ? "جارٍ مزامنة البيانات" : "الاتصال مستقر"}</p>
+            <p className="text-xs text-muted-foreground">
+              {updatedAt ? `آخر تحديث: ${updatedAt.toLocaleString("ar-EG")}` : "لم يكتمل أي تحديث بعد"}
+            </p>
+          </div>
+        </div>
+        <label htmlFor="health-auto-refresh" className="flex cursor-pointer items-center gap-3 text-sm font-medium">
+          تحديث تلقائي كل 30 ثانية
+          <Switch id="health-auto-refresh" checked={autoRefresh} onCheckedChange={setAutoRefresh} />
+        </label>
+      </div>
 
-      {/* Quick Stats */}
-      <HealthStatsCards exams={exams} security={security} performance={performance} />
+      {isError && (
+        <Alert variant="destructive" className="flex items-center gap-3 pr-4 [&>svg]:static [&>svg]:translate-y-0">
+          <AlertCircle className="h-5 w-5 shrink-0" />
+          <AlertDescription className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <span>{error instanceof Error ? error.message : "تعذر تحميل بيانات المراقبة."}</span>
+            <AdminButton variant="outline" size="sm" onClick={() => refetch()} loading={isFetching}>إعادة المحاولة</AdminButton>
+          </AlertDescription>
+        </Alert>
+      )}
 
-      {/* Performance Charts */}
-      <PerformanceCharts performance={performance} />
-
-      {/* Tabs */}
-      <HealthTabs system={system} exams={exams} security={security} performance={performance} />
+      {healthData && (
+        <>
+          {system?.overall && <OverallStatusBanner health={system.overall} />}
+          <HealthStatsCards exams={healthData.exams} security={healthData.security} performance={performance} />
+          <PerformanceCharts performance={performance} autoRefresh={autoRefresh} />
+          <HealthTabs
+            system={system}
+            exams={healthData.exams}
+            security={healthData.security}
+            performance={performance}
+          />
+        </>
+      )}
     </div>
   );
 }

@@ -66,12 +66,12 @@ export interface Lesson {
   durationSeconds: number;
   isFreePreview: boolean;
   orderIndex: number;
-  availabilityType: string;
+  availabilityType: 'CALENDAR_DATE' | 'ENROLLMENT_RELATIVE';
   availableFrom?: string | null;
   dripDelayDays?: number | null;
-  attachments: Attachment[];
-  subtitles: Subtitle[];
-  quizzes: InteractiveQuiz[];
+  attachments?: Attachment[];
+  subtitles?: Subtitle[];
+  quizzes?: InteractiveQuiz[];
   createdAt: string;
   updatedAt: string;
 }

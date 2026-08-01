@@ -7,6 +7,14 @@ html { font-family: var(--font-alexandria), var(--font-sans), system-ui, sans-se
 body { min-height: 100vh; margin: 0; }
 h1, h2, h3, h4, h5, h6 { font-weight: 700; color: hsl(var(--foreground)); }
 
+/* Defer paint/layout work for raw admin tables that are outside TanStack tables. */
+@supports (content-visibility: auto) {
+  .admin-performance-scope table {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 360px;
+  }
+}
+
 
 /* Design tokens migrated from the legacy tailwind.config.js to Tailwind CSS v4.
    NOTE: `@theme` makes the generated utilities reference the CSS

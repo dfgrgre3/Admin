@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { createContext, useContext, useEffect, useLayoutEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { logger } from "@/lib/logger";
 import { apiClient } from "@/lib/api/api-client";
 import { apiRoutes } from "@/lib/api/routes";
@@ -84,12 +84,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   useLayoutEffect(() => {
     const cached = readSettingsFromStorage();
     if (cached) {
-      setSettings(cached);
-      setLoading(false);
+      queueMicrotask(() => {
+        setSettings(cached);
+        setLoading(false);
+      });
     }
   }, []);
 
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const data = await apiClient.get<{ settings: SystemSettings }>(apiRoutes.settings.system);
       if (data && data.settings) {
@@ -119,19 +121,30 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchSettings();
   }, []);
 
-  const isFeatureEnabled = (feature: keyof SystemFeatures) => {
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void fetchSettings();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [fetchSettings]);
+
+  const isFeatureEnabled = useCallback((feature: keyof SystemFeatures) => {
     if (!settings) return defaultSettings.features[feature];
     return settings.features[feature] ?? false;
-  };
+  }, [settings]);
+
+  const value = useMemo<SettingsContextType>(() => ({
+    settings,
+    loading,
+    refreshSettings: fetchSettings,
+    isFeatureEnabled,
+  }), [settings, loading, fetchSettings, isFeatureEnabled]);
 
   return (
-    <SettingsContext.Provider value={{ settings, loading, refreshSettings: fetchSettings, isFeatureEnabled }}>
+    <SettingsContext.Provider value={value}>
       {children}
     </SettingsContext.Provider>
   );

@@ -53,15 +53,26 @@ export function AnalyticsSection() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Bookmark className="h-4 w-4 text-primary" />
-        <h3 className="text-lg font-black">تحليلات المستخدمين</h3>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Bookmark className="h-4 w-4 text-primary" />
+          <h3 className="text-lg font-black">تحليلات المستخدمين</h3>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-green-500"></span>
+            محدث مباشر
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* User Growth Chart */}
         <div className="rounded-2xl border border-white/10 bg-card/40 backdrop-blur p-6">
-          <h4 className="font-black text-sm mb-4">نمو المستخدمين</h4>
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-black text-sm">نمو المستخدمين</h4>
+            <span className="text-xs text-green-500 font-bold">+12%</span>
+          </div>
           <ChartLine
             data={analytics.growth || []}
             dataKey="users"
@@ -72,7 +83,10 @@ export function AnalyticsSection() {
 
         {/* Registration Trend */}
         <div className="rounded-2xl border border-white/10 bg-card/40 backdrop-blur p-6">
-          <h4 className="font-black text-sm mb-4">اتجاه التسجيل</h4>
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-black text-sm">اتجاه التسجيل</h4>
+            <span className="text-xs text-green-500 font-bold">+8%</span>
+          </div>
           <ChartBar
             data={analytics.registrations || []}
             dataKey="registrations"
@@ -83,7 +97,10 @@ export function AnalyticsSection() {
 
         {/* Users by Role */}
         <div className="rounded-2xl border border-white/10 bg-card/40 backdrop-blur p-6">
-          <h4 className="font-black text-sm mb-4">المستخدمين حسب الدور</h4>
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-black text-sm">المستخدمين حسب الدور</h4>
+            <span className="text-xs text-muted-foreground">إجمالي الأدوار</span>
+          </div>
           <ChartDonut
             data={analytics.roles || []}
             dataKey="value"
@@ -93,7 +110,10 @@ export function AnalyticsSection() {
 
         {/* Users by Country */}
         <div className="rounded-2xl border border-white/10 bg-card/40 backdrop-blur p-6">
-          <h4 className="font-black text-sm mb-4">المستخدمين حسب الدولة</h4>
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-black text-sm">المستخدمين حسب الدولة</h4>
+            <span className="text-xs text-muted-foreground">أعلى 10 دول</span>
+          </div>
           <ChartBar
             data={analytics.countries || []}
             dataKey="users"
@@ -106,7 +126,13 @@ export function AnalyticsSection() {
 
       {/* Login Activity */}
       <div className="rounded-2xl border border-white/10 bg-card/40 backdrop-blur p-6">
-        <h4 className="font-black text-sm mb-4">نشاط تسجيل الدخول</h4>
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="font-black text-sm">نشاط تسجيل الدخول</h4>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">آخر 30 يوم</span>
+            <span className="text-xs text-green-500 font-bold">+15%</span>
+          </div>
+        </div>
         <ChartMultiLine
           data={analytics.loginActivity || []}
           lines={[

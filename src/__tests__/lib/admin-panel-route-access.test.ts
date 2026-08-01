@@ -20,4 +20,10 @@ describe("admin panel route access", () => {
       PERMISSIONS.SUBJECTS_VIEW,
     );
   });
+
+  it("requires analytics access for the dunning API", () => {
+    expect(getRequiredPermissionForAdminApiRequest("/api/admin/dunning", "GET")).toBe(
+      PERMISSIONS.ANALYTICS_VIEW,
+    );
+  });
 });

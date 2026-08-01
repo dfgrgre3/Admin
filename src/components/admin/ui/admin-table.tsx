@@ -56,6 +56,8 @@ import {
 "lucide-react";
 import { ButtonGroup } from "./admin-button";
 import { CheckSquare, X } from "lucide-react";
+import { getPageSizeOptions, normalizePageSize } from "@/lib/performance-config";
+import { useLazyVisibility } from "@/hooks/use-lazy-visibility";
 
 interface AdminDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -78,6 +80,7 @@ interface AdminDataTableProps<TData, TValue> {
   };
   className?: string;
   virtualized?: boolean;
+  lazyLoad?: boolean;
   // Server-side pagination
   serverSide?: boolean;
   pageCount?: number;
@@ -96,11 +99,31 @@ interface AdminDataTableProps<TData, TValue> {
 }
 
 export function AdminDataTable<TData, TValue>({
+  lazyLoad = true,
+  ...props
+}: AdminDataTableProps<TData, TValue>) {
+  const { ref, isVisible } = useLazyVisibility({ enabled: lazyLoad });
+
+  return (
+    <div ref={ref} className="min-h-24 w-full">
+      {isVisible ? (
+        <AdminDataTableContent {...props} />
+      ) : (
+        <div
+          className="h-64 w-full animate-pulse rounded-xl border bg-muted/20"
+          aria-label="جاري تجهيز الجدول"
+        />
+      )}
+    </div>
+  );
+}
+
+function AdminDataTableContent<TData, TValue>({
   columns,
   data,
   searchKey,
   searchPlaceholder = "بحث...",
-  pageSize = 10,
+  pageSize: requestedPageSize,
   loading = false,
   toolbar,
   selectable = false,
@@ -118,7 +141,9 @@ export function AdminDataTable<TData, TValue>({
   onPageSizeChange,
   // Bulk actions
   bulkActions
-}: AdminDataTableProps<TData, TValue>) {
+}: Omit<AdminDataTableProps<TData, TValue>, "lazyLoad">) {
+  const pageSize = normalizePageSize(requestedPageSize);
+  const pageSizeOptions = React.useMemo(() => getPageSizeOptions(pageSize), [pageSize]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -458,7 +483,7 @@ export function AdminDataTable<TData, TValue>({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
-                  {[5, 10, 20, 30, 50].map((size) =>
+                  {pageSizeOptions.map((size) =>
                 <SelectItem key={size} value={String(size)}>
                       {size}
                     </SelectItem>

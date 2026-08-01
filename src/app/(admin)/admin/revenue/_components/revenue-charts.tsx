@@ -22,7 +22,7 @@ export function RevenueAreaChart({
   height = 350,
 }: RevenueChartProps) {
   return (
-    <ResponsiveContainer width="100%" height={height} minWidth={1}>
+    <ResponsiveContainer width="100%" height={height} minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
       <AreaChart data={data}>
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -77,7 +77,7 @@ interface MrrChartProps {
 
 export function MrrAreaChart({ data, height = 300 }: MrrChartProps) {
   return (
-    <ResponsiveContainer width="100%" height={height} minWidth={1}>
+    <ResponsiveContainer width="100%" height={height} minWidth={1} minHeight={1} initialDimension={{ width: 1, height: 1 }}>
       <AreaChart data={data}>
         <defs>
           <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">

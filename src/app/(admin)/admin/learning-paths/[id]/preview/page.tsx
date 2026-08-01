@@ -119,6 +119,8 @@ export default function LearningPathPreviewPage() {
                 <img
                   src={path.thumbnailUrl}
                   alt={path.name}
+                  loading="lazy"
+                  decoding="async"
                   className="h-40 w-64 rounded-2xl object-cover shadow-xl"
                 />
               )}

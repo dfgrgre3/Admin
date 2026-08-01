@@ -6,21 +6,21 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { Loader2 } from "lucide-react";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",
-        outline: "border bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        gradient: "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md hover:shadow-lg",
-        success: "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm shadow-emerald-500/20",
-        warning: "bg-amber-500 text-white hover:bg-amber-600 shadow-sm shadow-amber-500/20",
-        premium: "bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-white shadow-[0_0_20px_rgba(251,191,36,0.4)] hover:shadow-[0_0_30px_rgba(251,191,36,0.6)] border border-amber-300/50 font-black uppercase tracking-widest",
-        neon: "bg-black text-primary border border-primary/50 shadow-[0_0_15px_rgba(var(--primary),0.3)] hover:shadow-[0_0_25px_rgba(var(--primary),0.5)] hover:bg-primary hover:text-white transition-all duration-300",
+        default: "bg-primary text-primary-foreground shadow-sm",
+        destructive: "bg-destructive text-destructive-foreground shadow-sm",
+        outline: "border bg-background",
+        secondary: "bg-secondary text-secondary-foreground",
+        ghost: "",
+        link: "text-primary underline-offset-4",
+        gradient: "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md",
+        success: "bg-emerald-500 text-white shadow-sm shadow-emerald-500/20",
+        warning: "bg-amber-500 text-white shadow-sm shadow-amber-500/20",
+        premium: "bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-white shadow-[0_0_20px_rgba(251,191,36,0.4)] border border-amber-300/50 font-black uppercase tracking-widest",
+        neon: "bg-black text-primary border border-primary/50 shadow-[0_0_15px_rgba(var(--primary),0.3)]",
       },
       size: {
         sm: "h-8 px-3 text-xs",
