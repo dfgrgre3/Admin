@@ -343,6 +343,191 @@ export const adminUsersApi = {
     const result = await adminApi.post<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}/activate`, {});
     return unwrapData(result);
   },
+
+  // ── Extended Users Management Hub API ──
+
+  // POST /api/admin/users/{id}/restore — soft-deleted user restore
+  async restore(userId: string): Promise<UserDetails> {
+    const result = await adminApi.post<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}/restore`, {});
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/{id}/verify-email
+  async verifyEmail(userId: string): Promise<UserDetails> {
+    const result = await adminApi.post<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}/verify-email`, {});
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/{id}/verify-phone
+  async verifyPhone(userId: string): Promise<UserDetails> {
+    const result = await adminApi.post<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}/verify-phone`, {});
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/{id}/send-verification — send activation link
+  async sendActivationLink(userId: string): Promise<void> {
+    await adminApi.post<void>(`users/${userId}/send-verification`, {});
+  },
+
+  // POST /api/admin/users/{id}/notifications — send notification to a single user
+  async sendNotification(userId: string, payload: {
+    title: string;
+    body: string;
+    channels?: Array<"EMAIL" | "SMS" | "PUSH" | "IN_APP">;
+    data?: Record<string, unknown>;
+  }): Promise<void> {
+    await adminApi.post<void>(`users/${userId}/notifications`, payload);
+  },
+
+  // POST /api/admin/users/{id}/assign-role
+  async assignRole(userId: string, role: string, reason?: string): Promise<UserDetails> {
+    const result = await adminApi.post<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}/assign-role`, { role, reason });
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/{id}/permissions — add a permission
+  async addPermission(userId: string, permission: string): Promise<UserDetails> {
+    const result = await adminApi.post<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}/permissions`, { permission });
+    return unwrapData(result);
+  },
+
+  // DELETE /api/admin/users/{id}/permissions — remove a permission
+  async removePermission(userId: string, permission: string): Promise<UserDetails> {
+    const result = await adminApi.delete<UserDetails | DataEnvelope<UserDetails>>(`users/${userId}/permissions`, {
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ permission }),
+    });
+    return unwrapData(result);
+  },
+
+  // GET /api/admin/users/{id}/sessions
+  async getSessions(userId: string): Promise<UserSession[]> {
+    const result = await adminApi.get<UserSession[] | DataEnvelope<UserSession[]>>(`users/${userId}/sessions`);
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/{id}/sessions/{sessionId}/terminate
+  async terminateSession(userId: string, sessionId: string): Promise<void> {
+    await adminApi.post<void>(`users/${userId}/sessions/${sessionId}/terminate`, {});
+  },
+
+  // POST /api/admin/users/{id}/sessions/terminate-all
+  async terminateAllSessions(userId: string): Promise<void> {
+    await adminApi.post<void>(`users/${userId}/sessions/terminate-all`, {});
+  },
+
+  // GET /api/admin/users/{id}/devices
+  async getDevices(userId: string): Promise<UserDevice[]> {
+    const result = await adminApi.get<UserDevice[] | DataEnvelope<UserDevice[]>>(`users/${userId}/devices`);
+    return unwrapData(result);
+  },
+
+  // GET /api/admin/users/{id}/login-history
+  async getLoginHistory(userId: string, options?: { limit?: number; page?: number }): Promise<{ total: number; items: UserLoginHistoryItem[] }> {
+    const result = await adminApi.get<{ total: number; items: UserLoginHistoryItem[] } | DataEnvelope<{ total: number; items: UserLoginHistoryItem[] }>>(`users/${userId}/login-history`, options);
+    return unwrapData(result);
+  },
+
+  // GET /api/admin/users/{id}/notifications
+  async getUserNotifications(userId: string, options?: { limit?: number; page?: number }): Promise<{ total: number; items: UserNotificationItem[] }> {
+    const result = await adminApi.get<{ total: number; items: UserNotificationItem[] } | DataEnvelope<{ total: number; items: UserNotificationItem[] }>>(`users/${userId}/notifications`, options);
+    return unwrapData(result);
+  },
+
+  // GET /api/admin/users/{id}/orders
+  async getOrders(userId: string, options?: { limit?: number; page?: number }): Promise<{ total: number; items: UserOrderItem[] }> {
+    const result = await adminApi.get<{ total: number; items: UserOrderItem[] } | DataEnvelope<{ total: number; items: UserOrderItem[] }>>(`users/${userId}/orders`, options);
+    return unwrapData(result);
+  },
+
+  // GET /api/admin/users/{id}/certificates
+  async getCertificates(userId: string, options?: { limit?: number; page?: number }): Promise<{ total: number; items: UserCertificateItem[] }> {
+    const result = await adminApi.get<{ total: number; items: UserCertificateItem[] } | DataEnvelope<{ total: number; items: UserCertificateItem[] }>>(`users/${userId}/certificates`, options);
+    return unwrapData(result);
+  },
+
+  // GET /api/admin/users/{id}/wallet/transactions
+  async getWalletTransactions(userId: string, options?: { limit?: number; page?: number }): Promise<{ total: number; balance: number; items: UserWalletTransaction[] }> {
+    const result = await adminApi.get<{ total: number; balance: number; items: UserWalletTransaction[] } | DataEnvelope<{ total: number; balance: number; items: UserWalletTransaction[] }>>(`users/${userId}/wallet/transactions`, options);
+    return unwrapData(result);
+  },
+
+  // GET /api/admin/users/{id}/tickets
+  async getSupportTickets(userId: string, options?: { limit?: number; page?: number }): Promise<{ total: number; items: UserSupportTicket[] }> {
+    const result = await adminApi.get<{ total: number; items: UserSupportTicket[] } | DataEnvelope<{ total: number; items: UserSupportTicket[] }>>(`users/${userId}/tickets`, options);
+    return unwrapData(result);
+  },
+
+  // GET /api/admin/users/{id}/audit-logs
+  async getAuditLogs(userId: string, options?: { limit?: number; page?: number }): Promise<{ total: number; items: UserAuditLogItem[] }> {
+    const result = await adminApi.get<{ total: number; items: UserAuditLogItem[] } | DataEnvelope<{ total: number; items: UserAuditLogItem[] }>>(`users/${userId}/audit-logs`, options);
+    return unwrapData(result);
+  },
+
+  // GET /api/admin/users/{id}/permissions
+  async getUserPermissions(userId: string): Promise<UserPermissionsResponse> {
+    const result = await adminApi.get<UserPermissionsResponse | DataEnvelope<UserPermissionsResponse>>(`users/${userId}/permissions`);
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/bulk-suspend
+  async bulkSuspend(userIds: string[], reason?: string): Promise<BulkOperationResult> {
+    const result = await adminApi.post<BulkOperationResult | DataEnvelope<BulkOperationResult>>("users/bulk-suspend", { userIds, reason });
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/bulk-activate
+  async bulkActivate(userIds: string[]): Promise<BulkOperationResult> {
+    const result = await adminApi.post<BulkOperationResult | DataEnvelope<BulkOperationResult>>("users/bulk-activate", { userIds });
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/bulk-restore
+  async bulkRestore(userIds: string[]): Promise<BulkOperationResult> {
+    const result = await adminApi.post<BulkOperationResult | DataEnvelope<BulkOperationResult>>("users/bulk-restore", { userIds });
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/bulk-assign-role
+  async bulkAssignRole(userIds: string[], role: string): Promise<BulkOperationResult> {
+    const result = await adminApi.post<BulkOperationResult | DataEnvelope<BulkOperationResult>>("users/bulk-assign-role", { userIds, role });
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/bulk-notify
+  async bulkNotify(userIds: string[], payload: { title: string; body: string; channels?: Array<"EMAIL" | "SMS" | "PUSH" | "IN_APP"> }): Promise<BulkOperationResult> {
+    const result = await adminApi.post<BulkOperationResult | DataEnvelope<BulkOperationResult>>("users/bulk-notify", { userIds, ...payload });
+    return unwrapData(result);
+  },
+
+  // POST /api/admin/users/bulk-export
+  async bulkExport(userIds: string[], format: "csv" | "excel" | "json" | "pdf"): Promise<Blob> {
+    const response = await adminApi.fetch(`/admin/users/bulk-export`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userIds, format }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      throw new Error(err?.error || "فشل تصدير المستخدمين");
+    }
+    return response.blob();
+  },
+
+  // POST /api/admin/users/{id}/avatar — upload avatar image
+  async uploadAvatar(userId: string, file: File): Promise<UserDetails> {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    const response = await adminApi.fetch(`/admin/users/${userId}/avatar`, {
+      method: "POST",
+      body: formData,
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.error || "فشل رفع الصورة");
+    }
+    return unwrapData(payload);
+  },
 };
 
 export interface UserEnrollment {
@@ -354,4 +539,113 @@ export interface UserEnrollment {
   progress: number;
   status: string;
   enrolledAt: string;
+}
+
+// ── Extended sub-resource types (Users Management Hub) ──
+
+export interface UserSession {
+  id: string;
+  device: string;
+  browser: string;
+  os: string;
+  ip: string;
+  country: string | null;
+  lastActivity: string | null;
+  loginTime: string;
+  logoutTime: string | null;
+  isCurrent: boolean;
+}
+
+export interface UserDevice {
+  id: string;
+  name: string;
+  browser: string;
+  os: string;
+  ip: string;
+  country: string | null;
+  lastUsedAt: string | null;
+  trusted: boolean;
+}
+
+export interface UserLoginHistoryItem {
+  id: string;
+  date: string;
+  ip: string;
+  browser: string;
+  os: string;
+  device: string;
+  country: string | null;
+  result: "SUCCESS" | "FAILED" | "BLOCKED";
+  reason: string | null;
+}
+
+export interface UserNotificationItem {
+  id: string;
+  type: "EMAIL" | "SMS" | "PUSH" | "IN_APP";
+  title: string;
+  body: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface UserOrderItem {
+  id: string;
+  orderNumber: string;
+  amount: number;
+  currency: string;
+  status: string;
+  itemsCount: number;
+  createdAt: string;
+}
+
+export interface UserCertificateItem {
+  id: string;
+  title: string;
+  courseName: string;
+  issuedAt: string;
+  grade: number | null;
+  url: string | null;
+}
+
+export interface UserWalletTransaction {
+  id: string;
+  type: "CREDIT" | "DEBIT" | "REFUND";
+  amount: number;
+  currency: string;
+  balanceAfter: number;
+  description: string | null;
+  createdAt: string;
+}
+
+export interface UserSupportTicket {
+  id: string;
+  subject: string;
+  status: string;
+  priority: string;
+  category: string | null;
+  lastMessageAt: string | null;
+  createdAt: string;
+}
+
+export interface UserAuditLogItem {
+  id: string;
+  action: string;
+  performedBy: string;
+  performedByName: string | null;
+  oldValue: unknown;
+  newValue: unknown;
+  ip: string | null;
+  createdAt: string;
+}
+
+export interface UserPermissionsResponse {
+  role: UserRole;
+  roles: string[];
+  permissions: string[];
+}
+
+export interface BulkOperationResult {
+  success: number;
+  failed: number;
+  errors?: Array<{ id: string; error: string }>;
 }

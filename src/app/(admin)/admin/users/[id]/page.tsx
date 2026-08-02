@@ -18,7 +18,8 @@ import {
   Shield,
   CreditCard,
   LifeBuoy,
-  LogIn
+  LogIn,
+  Bell
 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminConfirm } from "@/components/admin/ui/admin-confirm";
@@ -51,6 +52,7 @@ import { SecurityTab } from "./_components/security-tab";
 import { BillingTab } from "./_components/billing-tab";
 import { SupportNotesTab } from "./_components/support-notes-tab";
 import { SecurityActivitySection } from "./_components/security-activity";
+import { UserNotificationsTab } from "./_components/user-notifications-tab";
 import { usePermission } from "@/components/auth/PermissionGuard";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getUserActionBlockReason } from "@/lib/user-action-guards";
@@ -334,6 +336,10 @@ export default function UserDetailPage() {
                   <Shield className="h-4 w-4" />
                   الأمان
                 </TabsTrigger>
+                <TabsTrigger value="notifications" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center gap-2 px-6">
+                  <Bell className="h-4 w-4" />
+                  الإشعارات
+                </TabsTrigger>
                 <TabsTrigger value="billing" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg flex items-center gap-2 px-6">
                   <CreditCard className="h-4 w-4" />
                   المالية
@@ -382,6 +388,9 @@ export default function UserDetailPage() {
                   queryClient.invalidateQueries({ queryKey: ["admin", "user", userId] });
                 }}
               />
+            </TabsContent>
+            <TabsContent value="notifications">
+              <UserNotificationsTab user={user} />
             </TabsContent>
             <TabsContent value="billing">
               <BillingTab user={user} canManage={canManageUsers} />

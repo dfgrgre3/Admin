@@ -28,6 +28,13 @@ export interface HeatmapPoint {
  * This maps each entry to a YYYY-MM-DD key and fills the remaining days
  * with zero so the heatmap always renders a full grid.
  */
+function formatDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export function buildHeatmapData(
   activity: ActivityDay[] | undefined | null,
   days = 84,
@@ -43,9 +50,18 @@ export function buildHeatmapData(
         const dayStr = parts[0];
         const monthStr = parts[1];
         if (!dayStr || !monthStr) continue;
-        const year = today.getFullYear();
-        const d = new Date(year, parseInt(monthStr, 10) - 1, parseInt(dayStr, 10));
-        const dateKey = d.toISOString().split("T")[0];
+
+        const parsedDay = Number.parseInt(dayStr, 10);
+        const parsedMonth = Number.parseInt(monthStr, 10) - 1;
+        if (Number.isNaN(parsedDay) || Number.isNaN(parsedMonth)) continue;
+
+        let year = today.getFullYear();
+        if (parsedMonth > today.getMonth()) {
+          year -= 1;
+        }
+
+        const d = new Date(year, parsedMonth, parsedDay);
+        const dateKey = formatDateKey(d);
         if (dateKey) {
           activityMap.set(dateKey, act.sessions || 0);
         }
@@ -56,7 +72,7 @@ export function buildHeatmapData(
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
-    const dateStr = d.toISOString().split("T")[0]!;
+    const dateStr = formatDateKey(d);
     result.push({ date: dateStr, count: activityMap.get(dateStr) || 0 });
   }
 

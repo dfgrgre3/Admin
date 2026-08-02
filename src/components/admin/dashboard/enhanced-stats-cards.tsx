@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cn, formatNumber } from "@/lib/utils";
+import { dashboardColorConfig, type DashboardColor } from "@/lib/constants/colors";
 import { AdminCard } from "../ui/admin-card";
 import {
   Minus,
@@ -19,7 +20,7 @@ interface StatItem {
     isPositive: boolean;
     label?: string;
   };
-  color?: "blue" | "green" | "yellow" | "red" | "purple" | "cyan" | "orange" | "pink";
+  color?: DashboardColor;
   onClick?: () => void;
 }
 
@@ -30,65 +31,14 @@ interface EnhancedStatsCardsProps {
   className?: string;
 }
 
-const colorConfig = {
-  blue: {
-    bg: "bg-blue-500/10",
-    text: "text-blue-500",
-    border: "border-blue-500/20",
-    gradient: "from-blue-500/20 to-transparent",
-  },
-  green: {
-    bg: "bg-green-500/10",
-    text: "text-green-500",
-    border: "border-green-500/20",
-    gradient: "from-green-500/20 to-transparent",
-  },
-  yellow: {
-    bg: "bg-yellow-500/10",
-    text: "text-yellow-500",
-    border: "border-yellow-500/20",
-    gradient: "from-yellow-500/20 to-transparent",
-  },
-  red: {
-    bg: "bg-red-500/10",
-    text: "text-red-500",
-    border: "border-red-500/20",
-    gradient: "from-red-500/20 to-transparent",
-  },
-  purple: {
-    bg: "bg-purple-500/10",
-    text: "text-purple-500",
-    border: "border-purple-500/20",
-    gradient: "from-purple-500/20 to-transparent",
-  },
-  cyan: {
-    bg: "bg-cyan-500/10",
-    text: "text-cyan-500",
-    border: "border-cyan-500/20",
-    gradient: "from-cyan-500/20 to-transparent",
-  },
-  orange: {
-    bg: "bg-orange-500/10",
-    text: "text-orange-500",
-    border: "border-orange-500/20",
-    gradient: "from-orange-500/20 to-transparent",
-  },
-  pink: {
-    bg: "bg-pink-500/10",
-    text: "text-pink-500",
-    border: "border-pink-500/20",
-    gradient: "from-pink-500/20 to-transparent",
-  },
-} as const;
-
-export type StatColor = keyof typeof colorConfig;
+export type StatColor = DashboardColor;
 
 const AnimatedNumber = React.memo(function AnimatedNumber({ value, className }: { value: number; className?: string }) {
   return <span className={className}>{formatNumber(value)}</span>;
 });
 
 const StatCard = React.memo(function StatCard({ stat, animated, index }: { stat: StatItem; animated: boolean; index: number }) {
-  const config = colorConfig[stat.color || "blue"];
+  const config = dashboardColorConfig[stat.color || "blue"];
   const Icon = stat.icon;
 
   return (
@@ -211,7 +161,7 @@ interface QuickStatsRowProps {
     label: string;
     value: number | string;
     icon?: React.ElementType;
-    color?: keyof typeof colorConfig;
+    color?: DashboardColor;
   }>;
   className?: string;
 }
@@ -220,7 +170,7 @@ export function QuickStatsRow({ stats, className }: QuickStatsRowProps) {
   return (
     <div className={cn("flex flex-wrap gap-4", className)}>
       {stats.map((stat, index) => {
-        const config = colorConfig[stat.color || "blue"];
+        const config = dashboardColorConfig[stat.color || "blue"];
         const Icon = stat.icon;
 
         return (
@@ -246,12 +196,12 @@ export function QuickStatsRow({ stats, className }: QuickStatsRowProps) {
 // Mini Chart Sparkline
 interface SparklineProps {
   data: number[];
-  color?: keyof typeof colorConfig;
+  color?: DashboardColor;
   className?: string;
 }
 
 function Sparkline({ data, color = "blue", className }: SparklineProps) {
-  const config = colorConfig[color];
+  const config = dashboardColorConfig[color];
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;

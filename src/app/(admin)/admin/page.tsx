@@ -301,7 +301,7 @@ export default function AdminDashboardPage() {
         openTickets: data?.stats?.openTickets ?? 0,
         moderationQueue: data?.stats?.moderationQueue ?? 0,
         pendingApprovals: data?.stats?.pendingApprovals ?? 0,
-        completionRate: data?.stats?.completionRate ?? 75,
+        completionRate: data?.stats?.completionRate ?? 0,
       },
       activity: safeActivity,
       topSellingCourses: data?.topSellingCourses,

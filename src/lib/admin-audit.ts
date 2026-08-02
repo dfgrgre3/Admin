@@ -29,6 +29,17 @@ export function logAdminAction(
   void options;
 }
 
+/**
+ * Convenience wrapper used by admin feature pages. The backend admin middleware
+ * is already the authoritative audit logger — this never sends a second,
+ * browser-supplied event and never stores anything client-side.
+ */
+export const adminAudit = {
+  record(action: string, details?: Record<string, unknown>) {
+    logAdminAction("UPDATE", "user", { details: { action, ...details } });
+  },
+};
+
 export async function getRecentAuditLogs(limit: number = 50): Promise<unknown[]> {
   const safeLimit = Math.min(Math.max(Math.floor(limit), 1), 100);
   const response = await fetch(`/api/admin/audit-logs?limit=${safeLimit}`, {

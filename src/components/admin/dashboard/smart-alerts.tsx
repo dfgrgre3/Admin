@@ -277,13 +277,13 @@ export function generateSmartAlerts(data: {
     });
   }
 
-  // New milestone alert
-  if (data.users.total >= 100 && data.users.total < 110) {
+  const milestone = Math.floor(data.users.total / 100) * 100;
+  if (milestone >= 100) {
     alerts.push({
       id: "milestone-users",
       type: "success",
       title: "إنجاز جديد!",
-      description: `تجاوز عدد المستخدمين ${Math.floor(data.users.total / 100) * 100} مستخدم`,
+      description: `وصل عدد المستخدمين ${milestone} مستخدم`,
       action: {
         label: "مشاركة الإنجاز",
       },

@@ -17,22 +17,20 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   const hasRedirected = useRef(false);
 
   useEffect(() => {
-    if (isLoading || hasRedirected.current) return;
+    if (isLoading) return;
+    if (hasRedirected.current) return;
 
     if (!isAuthenticated) {
       hasRedirected.current = true;
       router.replace("/admin-login");
-    } else if (isAuthenticated && !isStaffAdminPanelRole(user?.role)) {
+      return;
+    }
+
+    if (isAuthenticated && !isStaffAdminPanelRole(user?.role)) {
       hasRedirected.current = true;
-      // Redirect to admin-login with error param to prevent looping back
       router.replace("/admin-login?error=unauthorized_role");
     }
-  }, [isLoading, isAuthenticated, user, router]);
-
-  // Reset the redirect guard if deps change substantially
-  useEffect(() => {
-    hasRedirected.current = false;
-  }, [user?.id]);
+  }, [isLoading, isAuthenticated, user?.role, router]);
 
   if (isLoading) {
     return (
@@ -46,7 +44,14 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   }
 
   if (!isAuthenticated || !isStaffAdminPanelRole(user?.role)) {
-    return null;
+    return (
+      <div className="flex h-screen items-center justify-center bg-background" dir="rtl">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-sm font-bold text-muted-foreground">يتم توجيهك إلى صفحة الإدارة...</p>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;
