@@ -3,7 +3,9 @@
 import { AdminLayout } from "@/components/admin/layout/admin-layout";
 import { useAuth } from "@/contexts/auth-context";
 import { isStaffAdminPanelRole } from "@/lib/auth/admin-panel-roles";
-import { useRouter } from "next/navigation";
+import { getRequiredPermissionForAdminPath } from "@/lib/admin-panel-route-access";
+import { hasPermission } from "@/lib/permissions";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 /**
@@ -14,6 +16,7 @@ import { useEffect, useRef } from "react";
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const hasRedirected = useRef(false);
 
   useEffect(() => {
@@ -51,6 +54,18 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
           <p className="text-sm font-bold text-muted-foreground">يتم توجيهك إلى صفحة الإدارة...</p>
         </div>
       </div>
+    );
+  }
+
+  const requiredPermission = pathname ? getRequiredPermissionForAdminPath(pathname) : null;
+  if (requiredPermission && !hasPermission(user, requiredPermission)) {
+    return (
+      <main className="flex h-screen items-center justify-center bg-background p-6 text-center" dir="rtl">
+        <div>
+          <h1 className="text-xl font-bold">غير مصرح لك بالوصول إلى هذه الصفحة</h1>
+          <p className="mt-2 text-sm text-muted-foreground">تم تطبيق صلاحيات حسابك الحالية.</p>
+        </div>
+      </main>
     );
   }
 

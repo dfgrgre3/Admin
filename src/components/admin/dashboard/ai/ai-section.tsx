@@ -2,10 +2,9 @@
 
 import * as React from "react";
 import { AdminCard } from "@/components/admin/ui/admin-card";
-import { AiCommandCenter } from "@/components/admin/dashboard/ai-command-center";
 import { SmartAlerts } from "@/components/admin/dashboard/smart-alerts";
 import { GoalsKPIs } from "@/components/admin/dashboard/goals-kpis";
-import { Brain, Zap, Target, Bell } from "lucide-react";
+import { Brain, Target, Bell } from "lucide-react";
 
 interface AiSectionProps {
   dashboardContext: {
@@ -50,10 +49,7 @@ export function AiSection({
           <Brain className="h-6 w-6 text-primary" />
           <h3 className="text-xl font-black">مركز الأوامر الذكي</h3>
         </div>
-        <AiCommandCenter 
-          dashboardContext={dashboardContext} 
-          pageControls={pageControls} 
-        />
+        <p className="text-sm text-muted-foreground">تم دمج هذا القسم ضمن العرض الرئيسي للوحة التحكم.</p>
       </AdminCard>
 
       {/* Smart Alerts and Goals */}

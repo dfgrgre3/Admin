@@ -69,6 +69,10 @@ export function upstreamAuthHeaders(request: NextRequest): Record<string, string
  * The cookie is the source of truth: accepting a client-supplied header here
  * would allow the two values to diverge across dedicated proxy routes.
  */
+export function getCsrfTokenFromRequest(request: NextRequest): string | undefined {
+  return request.cookies.get('_csrf')?.value?.trim() || undefined;
+}
+
 export function addUpstreamCsrfHeaders(
   request: NextRequest,
   headers: Headers,
@@ -76,8 +80,8 @@ export function addUpstreamCsrfHeaders(
   const method = request.method.toUpperCase();
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) return;
 
-  const cookieToken = request.cookies.get('_csrf')?.value;
-  if (cookieToken) headers.set('X-CSRF-Token', cookieToken);
+  const csrfToken = getCsrfTokenFromRequest(request);
+  if (csrfToken) headers.set('X-CSRF-Token', csrfToken);
 }
 
 

@@ -1,9 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ComprehensiveStats } from "@/components/admin/dashboard/comprehensive-stats";
-import { QuickStatsRow } from "@/components/admin/dashboard/enhanced-stats-cards";
-import { Clock, Target, Award, FileText } from "lucide-react";
+import { MainStatsCard } from "@/components/admin/dashboard/stats/main-stats-card";
 
 interface StatsSectionProps {
   comprehensiveStats: ReturnType<typeof import("@/lib/dashboard-data").buildComprehensiveStats>;
@@ -26,27 +24,15 @@ interface StatsSectionProps {
  */
 export const StatsSection = React.memo(function StatsSection({
   comprehensiveStats,
-  activity,
   timeFilter,
   onTimeFilterChange,
-  onExport,
 }: StatsSectionProps) {
   return (
     <div className="space-y-8">
-      <ComprehensiveStats
-        stats={comprehensiveStats}
+      <MainStatsCard
+        stats={comprehensiveStats as React.ComponentProps<typeof MainStatsCard>["stats"]}
         timeFilter={timeFilter}
         onTimeFilterChange={onTimeFilterChange}
-        onExport={onExport}
-      />
-
-      <QuickStatsRow
-        stats={[
-          { label: "ساعة دراسة مجمعة", value: Math.round(activity.studyMinutes / 60), icon: Clock, color: "blue" },
-          { label: "مهمة مكتملة", value: activity.tasksCompleted, icon: Target, color: "green" },
-          { label: "إنجاز تعليمي", value: activity.achievementsEarned, icon: Award, color: "yellow" },
-          { label: "اختبار تم أداؤه", value: activity.examsTaken, icon: FileText, color: "purple" },
-        ]}
       />
     </div>
   );

@@ -52,7 +52,6 @@ import {
   ShieldCheck,
   ShieldX,
   Loader2,
-  MessageSquare,
   FileJson,
 } from "lucide-react";
 import { useExport, ExportColumn } from '@/lib/export-utils';
@@ -90,9 +89,6 @@ import { Button } from "@/components/ui/button";
 import { logger } from '@/lib/logger';
 import { AnalyticsSection } from "./_components/analytics-section";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
 import { useAdminRealtime } from "@/hooks/use-admin-realtime";
 import { adminAudit } from "@/lib/admin-audit";
 import {
@@ -101,7 +97,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -221,9 +216,7 @@ export default function AdminUsersPage() {
   const [passwordDialog, setPasswordDialog] = React.useState<{ open: boolean; user: AdminUserListItem | null; password?: string }>({ open: false, user: null });
   const [verifyDialog, setVerifyDialog] = React.useState<{ open: boolean; user: AdminUserListItem | null; type: "email" | "phone" }>({ open: false, user: null, type: "email" });
   const [roleDialog, setRoleDialog] = React.useState<{ open: boolean; user: AdminUserListItem | null; role?: UserRole }>({ open: false, user: null });
-  const [notifyDialog, setNotifyDialog] = React.useState<{ open: boolean; user: AdminUserListItem | null; title?: string; body?: string }>({ open: false, user: null });
   const [bulkRoleDialog, setBulkRoleDialog] = React.useState<{ open: boolean; ids: string[]; role?: UserRole }>({ open: false, ids: [] });
-  const [bulkNotifyDialog, setBulkNotifyDialog] = React.useState<{ open: boolean; ids: string[]; title?: string; body?: string }>({ open: false, ids: [] });
   const [impersonateDialog, setImpersonateDialog] = React.useState<{ open: boolean; user: AdminUserListItem | null }>({ open: false, user: null });
   const [impersonating, setImpersonating] = React.useState(false);
   const [importDialogOpen, setImportDialogOpen] = React.useState(false);
@@ -240,6 +233,7 @@ export default function AdminUsersPage() {
 
   const exportAbortControllerRef = React.useRef<AbortController | null>(null);
   const queryAbortControllerRef = React.useRef<AbortController | null>(null);
+  const allSelectedIdsRef = React.useRef<string[]>([]);
 
   React.useEffect(() => {
     queryAbortControllerRef.current = new AbortController();
@@ -569,30 +563,6 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleSendNotification = async (user: AdminUserListItem | null, title: string, body: string, ids?: string[]) => {
-    if (!canSendNotifications) return toast.error("غير مصرح بتنفيذ الإجراء");
-    setActionLoadingId("bulk-notify");
-    try {
-      if (user) {
-        await adminUsersApi.sendNotification(user.id, { title, body, channels: ["IN_APP", "PUSH"] });
-        toast.success(`تم إرسال الإشعار إلى ${user.name || user.email}`);
-        adminAudit.record("users.send_notification", { userId: user.id, title });
-      } else if (ids?.length) {
-        const result = await adminUsersApi.bulkNotify(ids, { title, body, channels: ["IN_APP", "PUSH"] });
-        toast.success(`تم إرسال الإشعار إلى ${result.success} مستخدم`);
-        if (result.failed) toast.error(`فشل الإرسال إلى ${result.failed} مستخدم`);
-        adminAudit.record("users.bulk_notify", { ids, title });
-      }
-      setNotifyDialog({ open: false, user: null });
-      setBulkNotifyDialog({ open: false, ids: [] });
-    } catch (err) {
-      toast.error("فشل إرسال الإشعار");
-      logger.error("Send notification failed", err);
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
-
   const handleImpersonate = async () => {
     if (!impersonateDialog.user) return;
     const blocked = getUserActionBlockReason(currentUser, impersonateDialog.user, "impersonate");
@@ -775,6 +745,24 @@ export default function AdminUsersPage() {
       setExportingJson(false);
       exportAbortControllerRef.current = null;
     }
+  };
+
+  // ── Arabic column labels for the visibility menu ──
+  const columnLabels: Record<string, string> = {
+    select: "تحديد",
+    name: "المستخدم",
+    phone: "الهاتف",
+    role: "الدور",
+    country: "الدولة",
+    createdAt: "تاريخ التسجيل",
+    lastLogin: "آخر دخول",
+    status: "الحالة",
+    verification: "التوثيق",
+    subscription: "الاشتراك",
+    wallet: "الرصيد",
+    counts: "الإحصائيات",
+    totalXP: "نقاط التفاعل",
+    actions: "الإجراءات",
   };
 
   // ── Table columns ──
@@ -1151,7 +1139,7 @@ export default function AdminUsersPage() {
 
               {/* Notifications */}
               {canSendNotifications && !isDeleted && (
-                <DropdownMenuItem onClick={() => setNotifyDialog({ open: true, user, title: "", body: "" })}>
+                <DropdownMenuItem onClick={() => setMessageDialog({ open: true, users: [user] })}>
                   <Bell className="ml-2 h-4 w-4" />
                   إرسال إشعار
                 </DropdownMenuItem>
@@ -1497,8 +1485,30 @@ export default function AdminUsersPage() {
           serverSide
           selectable
           virtualized
+          columnLabels={columnLabels}
+          onSortingChange={(sorting) => {
+            const col = sorting.length > 0 ? sorting[0] : null;
+            if (col) {
+              setSortBy(col.id);
+              setSortOrder(col.desc ? "desc" : "asc");
+              setPage(1);
+            }
+          }}
+          enableSelectAllPages
+          onSelectAllPages={() => {
+            // Select all users across all pages by fetching all IDs
+            toast.info("جاري تحديد جميع المستخدمين...");
+            void fetchExportRows().then((allUsers) => {
+              const allIds = allUsers.map((u) => u.id);
+              if (allIds.length > 0) {
+                // Store all IDs in a ref for bulk actions
+                allSelectedIdsRef.current = allIds;
+                toast.success(`تم تحديد ${allIds.length} مستخدم`);
+              }
+            });
+          }}
           bulkActions={[
-            ...(canSendNotifications ? [{ label: "إرسال إشعار جماعي", icon: Bell, variant: "outline" as const, onClick: (rows: AdminUserListItem[]) => setBulkNotifyDialog({ open: true, ids: rows.map((r) => r.id), title: "", body: "" }) }] : []),
+            ...(canSendNotifications ? [{ label: "إرسال إشعار جماعي", icon: Bell, variant: "outline" as const, onClick: (rows: AdminUserListItem[]) => setMessageDialog({ open: true, users: rows }) }] : []),
             ...(canSuspendUsers ? [{ label: "تعليق الحسابات", icon: Ban, variant: "outline" as const, onClick: (rows: AdminUserListItem[]) => setSuspendDialog({ open: true, ids: rows.map((r) => r.id) }) }] : []),
             ...(canSuspendUsers ? [{ label: "تفعيل الحسابات", icon: CheckCircle, variant: "outline" as const, onClick: (rows: AdminUserListItem[]) => setActivateDialog({ open: true, ids: rows.map((r) => r.id) }) }] : []),
             ...(canAssignRoles ? [{ label: "تعيين دور", icon: UserCog, variant: "outline" as const, onClick: (rows: AdminUserListItem[]) => setBulkRoleDialog({ open: true, ids: rows.map((r) => r.id) }) }] : []),
@@ -1759,74 +1769,6 @@ export default function AdminUsersPage() {
               loading={actionLoadingId === "bulk-role"}
             >
               تعيين الدور
-            </AdminButton>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Single notification dialog */}
-      <Dialog open={notifyDialog.open} onOpenChange={(open) => setNotifyDialog({ open, user: null })}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              إرسال إشعار إلى {notifyDialog.user?.name || notifyDialog.user?.email || ""}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="notify-title" className="text-sm font-bold">العنوان</Label>
-              <Input id="notify-title" value={notifyDialog.title || ""} onChange={(e) => setNotifyDialog({ ...notifyDialog, title: e.target.value })} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="notify-body" className="text-sm font-bold">النص</Label>
-              <Textarea id="notify-body" rows={4} value={notifyDialog.body || ""} onChange={(e) => setNotifyDialog({ ...notifyDialog, body: e.target.value })} />
-            </div>
-          </div>
-          <DialogFooter>
-            <AdminButton variant="outline" onClick={() => setNotifyDialog({ open: false, user: null })}>
-              إلغاء
-            </AdminButton>
-            <AdminButton
-              onClick={() => notifyDialog.user && notifyDialog.title && notifyDialog.body && handleSendNotification(notifyDialog.user, notifyDialog.title, notifyDialog.body)}
-              disabled={!notifyDialog.title || !notifyDialog.body}
-              loading={actionLoadingId === "bulk-notify"}
-            >
-              إرسال
-            </AdminButton>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Bulk notification dialog */}
-      <Dialog open={bulkNotifyDialog.open} onOpenChange={(open) => setBulkNotifyDialog({ open, ids: [] })}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              إرسال إشعار إلى {bulkNotifyDialog.ids.length} مستخدم
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="bulk-notify-title" className="text-sm font-bold">العنوان</Label>
-              <Input id="bulk-notify-title" value={bulkNotifyDialog.title || ""} onChange={(e) => setBulkNotifyDialog({ ...bulkNotifyDialog, title: e.target.value })} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="bulk-notify-body" className="text-sm font-bold">النص</Label>
-              <Textarea id="bulk-notify-body" rows={4} value={bulkNotifyDialog.body || ""} onChange={(e) => setBulkNotifyDialog({ ...bulkNotifyDialog, body: e.target.value })} />
-            </div>
-          </div>
-          <DialogFooter>
-            <AdminButton variant="outline" onClick={() => setBulkNotifyDialog({ open: false, ids: [] })}>
-              إلغاء
-            </AdminButton>
-            <AdminButton
-              onClick={() => bulkNotifyDialog.title && bulkNotifyDialog.body && handleSendNotification(null, bulkNotifyDialog.title, bulkNotifyDialog.body, bulkNotifyDialog.ids)}
-              disabled={!bulkNotifyDialog.title || !bulkNotifyDialog.body}
-              loading={actionLoadingId === "bulk-notify"}
-            >
-              إرسال
             </AdminButton>
           </DialogFooter>
         </DialogContent>

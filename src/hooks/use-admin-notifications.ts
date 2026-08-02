@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminFetch } from "@/lib/api/admin-api";
 import { useWebSocket } from "@/contexts/websocket-context";
-import type { RealtimeNotification } from "@/components/admin/dashboard/realtime-notifications";
+import type { RealtimeNotification } from "@/components/admin/dashboard/dashboard.types";
 
 export type AdminNotification = RealtimeNotification;
 

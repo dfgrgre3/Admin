@@ -236,13 +236,6 @@ export const adminUsersApi = {
     return unwrapData(response);
   },
 
-  // Reset all permissions to default.
-  // NOTE: the backend does not currently expose this endpoint; the call is
-  // kept for API parity but will 404 until the route is added server-side.
-  async resetAllPermissions(): Promise<void> {
-    await adminApi.post<void>("users/reset-all-permissions", {});
-  },
-
   // ── Profile-scoped sub-resources (Single View of the Customer) ──
 
   // GET /api/admin/users/{id}/activity
@@ -496,7 +489,12 @@ export const adminUsersApi = {
 
   // POST /api/admin/users/bulk-notify
   async bulkNotify(userIds: string[], payload: { title: string; body: string; channels?: Array<"EMAIL" | "SMS" | "PUSH" | "IN_APP"> }): Promise<BulkOperationResult> {
-    const result = await adminApi.post<BulkOperationResult | DataEnvelope<BulkOperationResult>>("users/bulk-notify", { userIds, ...payload });
+    const result = await adminApi.post<BulkOperationResult | DataEnvelope<BulkOperationResult>>("users/bulk-notify", {
+      userIds,
+      title: payload.title,
+      message: payload.body,
+      channels: payload.channels,
+    });
     return unwrapData(result);
   },
 

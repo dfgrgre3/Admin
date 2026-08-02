@@ -3,7 +3,6 @@
 import * as React from "react";
 import { DraggableDashboard } from "@/components/admin/dashboard/draggable-dashboard";
 import { ErrorBoundary } from "@/components/admin/ui/error-boundary";
-import { SystemPulse } from "@/components/admin/dashboard/system-pulse";
 
 interface DashboardLayoutProps {
   sections: Array<{
@@ -27,7 +26,7 @@ export function SystemDiagnosticsSection() {
   return (
     <ErrorBoundary fallback={<div className="text-gray-400 p-8 text-center font-bold">حدث خطأ في تحميل تشخيصات النظام</div>}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <SystemPulse />
+        <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8 text-center text-gray-400">تم دمج تشخيصات النظام ضمن القسم الرئيسي.</div>
         <div className="admin-glass p-8 rounded-[2rem] border border-white/10">
           <h3 className="text-xl font-black mb-6">حالة النظام</h3>
           <div className="space-y-4">

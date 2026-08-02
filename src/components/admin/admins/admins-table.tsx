@@ -3,6 +3,7 @@ import { RoleBadge, StatusBadge } from "@/components/admin/ui/admin-badge";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import { formatDateTime, formatRelativeTime } from "@/lib/utils";
 import type { UserRole, UserStatus } from "@/types/enums";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export interface AdminStaffRow {
   id: string;
@@ -19,6 +20,8 @@ interface AdminsTableProps {
   users: AdminStaffRow[];
   loading?: boolean;
   onViewAdmin?: (id: string) => void;
+  selectedIds?: string[];
+  onToggleSelect?: (id: string) => void;
 }
 
 const roleLabels: Record<string, string> = {
@@ -37,7 +40,7 @@ const getStatusValue = (status?: UserStatus) => {
   return "inactive";
 };
 
-export function AdminsTable({ users, loading = false, onViewAdmin }: AdminsTableProps) {
+export function AdminsTable({ users, loading = false, onViewAdmin, selectedIds = [], onToggleSelect }: AdminsTableProps) {
   return (
     <div className="rounded-[2rem] border border-border/70 bg-card/70 p-4 shadow-sm backdrop-blur-xl">
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -69,6 +72,7 @@ export function AdminsTable({ users, loading = false, onViewAdmin }: AdminsTable
           <table className="min-w-full border-separate border-spacing-y-2 text-right">
             <thead>
               <tr className="text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">
+                <th className="px-3 py-3 text-center">اختيار</th>
                 <th className="px-3 py-3">المشرف</th>
                 <th className="px-3 py-3">الدور</th>
                 <th className="px-3 py-3">الحالة</th>
@@ -81,7 +85,10 @@ export function AdminsTable({ users, loading = false, onViewAdmin }: AdminsTable
             <tbody>
               {users.map((admin) => (
                 <tr key={admin.id} className="rounded-2xl bg-background/60 shadow-sm ring-1 ring-border/60">
-                  <td className="rounded-r-2xl px-3 py-4">
+                  <td className="rounded-r-2xl px-3 py-4 text-center">
+                    <Checkbox checked={selectedIds.includes(admin.id)} onCheckedChange={() => onToggleSelect?.(admin.id)} />
+                  </td>
+                  <td className="px-3 py-4">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-sm font-black text-primary">
                         {(admin.name || admin.email || "م").slice(0, 1).toUpperCase()}

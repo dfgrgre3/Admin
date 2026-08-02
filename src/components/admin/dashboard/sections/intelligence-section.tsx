@@ -6,9 +6,6 @@ import {
   ActivityFeed,
   UpcomingEvents,
 } from "@/components/admin/dashboard/widgets";
-import { GlobalSearch } from "@/components/admin/dashboard/global-search";
-import { QuickFilters } from "@/components/admin/dashboard/advanced-filters";
-import { GoalsKPIs } from "@/components/admin/dashboard/goals-kpis";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import {
   TrendingUp,
@@ -19,6 +16,7 @@ import {
   Clock,
 } from "lucide-react";
 import type { DashboardGoal } from "@/lib/dashboard-utils";
+import { GoalsKPIs } from "@/components/admin/dashboard/goals-kpis";
 
 const CHART_SKELETON = (
   <div className="h-[300px] w-full animate-pulse bg-white/5 rounded-[2rem] border border-white/10" />
@@ -88,17 +86,26 @@ export const IntelligenceSection = React.memo(function IntelligenceSection({
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
       <div className="lg:col-span-3 space-y-8">
         <div className="flex flex-wrap items-center gap-6">
-          <GlobalSearch
-            placeholder="ابحث في المستخدمين، المواد، الاختبارات..."
-            className="flex-1 min-w-[300px] h-16 rounded-2xl bg-card border border-border text-foreground font-bold focus:border-primary/50"
-            onFocus={() => playSound("hover")}
-          />
-          <QuickFilters
-            filters={[
-              { id: "today", label: "اليوم", icon: Clock, active: timeFilter === "today", onClick: () => { playSound("click"); onTimeFilterChange("today"); } },
-              { id: "week", label: "هذا الأسبوع", icon: Calendar, active: timeFilter === "week", onClick: () => { playSound("click"); onTimeFilterChange("week"); } },
-            ]}
-          />
+          <div className="flex-1 min-w-[300px] h-16 rounded-2xl bg-card border border-border text-foreground font-bold focus:border-primary/50 flex items-center px-4">
+            <span className="text-muted-foreground">ابحث في المستخدمين، المواد، الاختبارات...</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-card/80 px-3 py-2">
+            {[
+              { id: "today", label: "اليوم" },
+              { id: "week", label: "هذا الأسبوع" },
+            ].map((filter) => (
+              <button
+                key={filter.id}
+                className={`rounded-lg px-3 py-2 text-sm font-bold transition-all ${timeFilter === filter.id ? "bg-primary text-white" : "text-muted-foreground hover:text-white hover:bg-white/5"}`}
+                onClick={() => {
+                  playSound("click");
+                  onTimeFilterChange(filter.id as "today" | "week");
+                }}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

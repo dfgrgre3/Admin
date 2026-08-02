@@ -25,7 +25,13 @@ export function UserNotificationsTab({ user }: { user: { id: string; name?: stri
     staleTime: 30_000,
   });
 
-  const items = data?.items ?? [];
+  const rawItems = Array.isArray((data as any)?.items)
+    ? (data as any).items
+    : Array.isArray((data as any)?.notifications)
+      ? (data as any).notifications
+      : [];
+  const total = (data as any)?.total ?? rawItems.length;
+  const items = rawItems;
 
   return (
     <Card className="border-none shadow-lg">
@@ -42,7 +48,7 @@ export function UserNotificationsTab({ user }: { user: { id: string; name?: stri
           </div>
           {data && (
             <Badge variant="secondary" className="rounded-full text-xs">
-              {data.total} إجمالي
+              {total} إجمالي
             </Badge>
           )}
         </div>
@@ -55,8 +61,8 @@ export function UserNotificationsTab({ user }: { user: { id: string; name?: stri
           <div className="p-5 text-sm text-destructive">تعذر تحميل الإشعارات. حاول مرة أخرى.</div>
         ) : items.length > 0 ? (
           <div className="divide-y">
-            {items.map((item) => {
-              const config = notificationTypeConfig[item.type] ?? notificationTypeConfig.IN_APP;
+            {items.map((item: { id: string; title: string; body: string; createdAt: string; readAt?: string | null; type?: keyof typeof notificationTypeConfig }) => {
+              const config = notificationTypeConfig[item.type ?? "IN_APP"] ?? notificationTypeConfig.IN_APP;
               const Icon = config.icon;
               const createdAt = new Date(item.createdAt);
               const readableDate = isValid(createdAt)

@@ -1,6 +1,8 @@
 /**
- * @deprecated This component has been refactored and moved to src/components/admin/royal-call
- * Use the new RoyalCallModal from there instead.
+ * Compatibility wrapper: re-export the main Broadcast modal.
+ * Keeps old imports working while pointing to the real implementation.
  */
-export { BroadcastModal as RoyalMessageModal } from "../broadcast/broadcast-modal";
+import { BroadcastModal } from "../broadcast/broadcast-modal";
+export default BroadcastModal;
+export { BroadcastModal, BroadcastModal as RoyalMessageModal };
 export type { UserModel } from "../broadcast/types";

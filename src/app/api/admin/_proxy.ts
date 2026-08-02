@@ -172,6 +172,16 @@ export async function forwardToGoApi(
 
   addUpstreamCsrfHeaders(request, headers);
 
+  const forwardedCsrfToken = request.cookies.get('_csrf')?.value?.trim();
+  if (forwardedCsrfToken && !headers.has('X-CSRF-Token')) {
+    headers.set('X-CSRF-Token', forwardedCsrfToken);
+  }
+
+  const forwardedIdempotencyKey = request.headers.get('idempotency-key');
+  if (forwardedIdempotencyKey && !headers.has('Idempotency-Key')) {
+    headers.set('Idempotency-Key', forwardedIdempotencyKey);
+  }
+
   if (
     init.body &&
     typeof init.body === 'string' &&

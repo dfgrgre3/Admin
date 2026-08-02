@@ -22,6 +22,10 @@ vi.mock("@/lib/api/admin-users-api", () => ({
 }));
 
 describe("AdminsPage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("renders the supervisors dashboard with backend data", async () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
@@ -80,5 +84,77 @@ describe("AdminsPage", () => {
     expect(screen.getByText("إجمالي المشرفين")).toBeInTheDocument();
     expect(screen.getByLabelText("البحث عن مشرف")).toBeInTheDocument();
     expect(screen.getByText("قائمة المشرفين")).toBeInTheDocument();
+  });
+
+  it("uses backend summary totals for admin statistics", async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    vi.mocked(adminUsersApiModule.adminUsersApi.list).mockResolvedValue({
+      users: [
+        {
+          id: "u-1",
+          email: "youssef@thanawy.com",
+          name: "يوسف محمد",
+          username: "youssef",
+          avatar: null,
+          role: UserRole.SUPER_ADMIN,
+          status: UserStatus.ACTIVE,
+          permissions: ["users:view"],
+          emailVerified: true,
+          createdAt: "2024-01-10T00:00:00Z",
+          lastLogin: "2026-08-02T10:00:00Z",
+          totalXP: 1040,
+          level: 8,
+          currentStreak: 5,
+          _count: { tasks: 12, studySessions: 44, achievements: 7 },
+        },
+        {
+          id: "u-2",
+          email: "ahmed@thanawy.com",
+          name: "أحمد علي",
+          username: "ahmed",
+          avatar: null,
+          role: UserRole.STUDENT,
+          status: UserStatus.ACTIVE,
+          permissions: [],
+          emailVerified: true,
+          createdAt: "2024-01-12T00:00:00Z",
+          lastLogin: null,
+          totalXP: 100,
+          level: 2,
+          currentStreak: 1,
+          _count: { tasks: 1, studySessions: 2, achievements: 0 },
+        },
+      ],
+      summary: {
+        totalUsers: 2,
+        totalAdmins: 3,
+        powerUsers: 1,
+        totalStudents: 1,
+        totalTeachers: 0,
+        totalModerators: 0,
+        verified: 2,
+        notVerified: 0,
+        suspended: 0,
+        active: 2,
+        blocked: 0,
+        deleted: 0,
+        newToday: 0,
+        newThisWeek: 0,
+        newThisMonth: 0,
+        onlineNow: 1,
+      },
+      pagination: { page: 1, limit: 10, total: 2, totalPages: 1 },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AdminsPage />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("3 عضو")).toBeInTheDocument();
+    });
   });
 });

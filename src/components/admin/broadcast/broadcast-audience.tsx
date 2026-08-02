@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserModel } from "./types";
 import { UserSegment } from "./broadcast-modal";
 import { Users, Shield, Search, CheckSquare, Square, UserCheck, Users2, UserCog, GraduationCap, UserX, Clock, Sparkles } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 interface BroadcastAudienceProps {
@@ -20,6 +20,9 @@ interface BroadcastAudienceProps {
   segments?: UserSegment[];
   selectedSegment?: string | null;
   onSelectSegment?: (segmentId: string | null) => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+  isLoading?: boolean;
 }
 
 const SEGMENT_ICONS: Record<string, typeof Users> = {
@@ -78,8 +81,10 @@ export function BroadcastAudience({
   segments = [],
   selectedSegment,
   onSelectSegment,
+  searchQuery = "",
+  onSearchChange,
+  isLoading = false,
 }: BroadcastAudienceProps) {
-  const [searchQuery, setSearchQuery] = useState("");
   
   const filteredUsers = useMemo(() => {
     let filtered = [...users];
@@ -132,7 +137,7 @@ export function BroadcastAudience({
   const visibleSelectedCount = filteredUsers.filter(u => selectedUserIds.includes(u.id)).length;
   const isAllVisibleSelected = filteredUsers.length > 0 && visibleSelectedCount === filteredUsers.length;
 
-  if (users.length === 0) {
+  if (isLoading && users.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-muted-foreground/40">
         <Users className="h-16 w-16 mb-4" />
@@ -202,7 +207,7 @@ export function BroadcastAudience({
           <Input
             placeholder={selectedSegment && selectedSegment !== "all" ? `بحث في ${segments.find(s => s.id === selectedSegment)?.name}...` : "بحث في المستخدمين..."}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => onSearchChange?.(e.target.value)}
             className="pr-10 bg-black/20 border-white/10 rounded-2xl h-12"
           />
         </div>

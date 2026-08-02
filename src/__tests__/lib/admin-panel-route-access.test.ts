@@ -3,6 +3,7 @@ import {
   getRequiredPermissionForAdminPath,
 } from "@/lib/admin-panel-route-access";
 import { PERMISSIONS } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permissions";
 
 describe("admin panel route access", () => {
   it("requires content access for the learning paths admin page", () => {
@@ -25,5 +26,9 @@ describe("admin panel route access", () => {
     expect(getRequiredPermissionForAdminApiRequest("/api/admin/dunning", "GET")).toBe(
       PERMISSIONS.ANALYTICS_VIEW,
     );
+  });
+
+  it("does not restore role defaults when the API supplies an empty effective set", () => {
+    expect(hasPermission({ role: "MODERATOR", permissions: [] }, PERMISSIONS.DASHBOARD_VIEW)).toBe(false);
   });
 });

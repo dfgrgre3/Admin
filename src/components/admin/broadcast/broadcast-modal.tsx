@@ -2,18 +2,18 @@
 
 import { adminFetch } from "@/lib/api/admin-api";
 import { apiRoutes } from "@/lib/api/routes";
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { MessageSquareText, Zap, Users, Send, Loader2, LayoutGrid, Megaphone, ChevronRight, ChevronLeft } from "lucide-react";
+import { MessageSquareText, Zap, Users, Send, Loader2, LayoutGrid, Megaphone, ChevronRight, ChevronLeft, BellRing, UserRound, type LucideIcon } from "lucide-react";
 import { m, AnimatePresence } from "framer-motion";
 import { BroadcastEditor } from "./broadcast-editor";
 import { BroadcastChannels } from "./broadcast-channels";
 import { BroadcastTemplates } from "./broadcast-templates";
 import { BroadcastPreview } from "./broadcast-preview";
 import { BroadcastAudience } from "./broadcast-audience";
-import { UserModel, BroadcastFormData, MessageTemplate } from "./types";
+import { UserModel, BroadcastFormData, MessageTemplate, BroadcastSendResult, resolveChannels } from "./types";
 
 export interface UserSegment {
   id: string;
@@ -31,11 +31,13 @@ interface BroadcastModalProps {
   onSelectSegment?: (segmentId: string | null) => void;
   onSearch?: (query: string) => void;
   isLoading?: boolean;
+  /** Optional callback fired after a successful send (e.g. refresh parent data). */
+  onSuccess?: () => void;
 }
 
 type Step = "templates" | "editor" | "audience" | "preview";
 
-const STEPS: { id: Step; label: string; icon: any; description: string }[] = [
+const STEPS: { id: Step; label: string; icon: LucideIcon; description: string }[] = [
   { id: "templates", label: "قوالب الرسائل", icon: LayoutGrid, description: "اختر قالباً جاهزاً كنقطة انطلاق لرسالتك" },
   { id: "editor", label: "محتوى الرسالة", icon: MessageSquareText, description: "صياغة نص الرسالة وتحديد قنوات البث" },
   { id: "audience", label: "المستهدفين", icon: Users, description: "مراجعة قائمة المستخدمين المستهدفين" },
@@ -51,20 +53,14 @@ export function BroadcastModal({
   onSelectSegment,
   onSearch,
   isLoading = false,
+  onSuccess,
 }: BroadcastModalProps) {
   const [activeStep, setActiveStep] = useState<Step>("templates");
   const [isSending, setIsSending] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState("custom");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
-
-  // Initialize selected users when users prop changes
-  useEffect(() => {
-    if (users.length > 0 && selectedUserIds.length === 0) {
-      // Auto-select all users by default
-      setSelectedUserIds(users.map(u => u.id));
-    }
-  }, [users, selectedUserIds.length]);
+  const hasInitializedAudience = useRef(false);
 
   const [formData, setFormData] = useState<BroadcastFormData>({
     title: "",
@@ -78,7 +74,32 @@ export function BroadcastModal({
     },
   });
 
-  const updateField = useCallback((field: string, value: any) => {
+  const isSingleUser = open && users.length === 1;
+
+  const resetModalState = useCallback(() => {
+    setActiveStep("templates");
+    setFormData({
+      title: "",
+      message: "",
+      type: "info",
+      actionUrl: "",
+      channels: { app: true, email: false, sms: false },
+    });
+    setSelectedTemplateId("custom");
+    setSearchQuery("");
+    setSelectedUserIds([]);
+    hasInitializedAudience.current = false;
+  }, []);
+
+  // Initialize selected users only once per modal open session.
+  useEffect(() => {
+    if (!hasInitializedAudience.current && open && users.length > 0) {
+      setSelectedUserIds(users.map((u) => u.id));
+      hasInitializedAudience.current = true;
+    }
+  }, [open, users]);
+
+  const updateField = useCallback((field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
 
@@ -143,9 +164,7 @@ export function BroadcastModal({
       return;
     }
 
-    const selectedChannels = Object.entries(formData.channels)
-      .filter(([_, isSelected]) => isSelected)
-      .map(([channel]) => channel);
+    const selectedChannels = resolveChannels(formData.channels);
 
     if (selectedChannels.length === 0) {
       toast.error("يجب اختيار قناة بث واحدة على الأقل");
@@ -168,33 +187,24 @@ export function BroadcastModal({
           title: formData.title,
           message: formData.message,
           type: formData.type,
-          channels: selectedChannels.map((channel) => channel === "app" ? "in-app" : channel),
+          channels: selectedChannels,
           actionUrl: formData.actionUrl,
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json() as BroadcastSendResult;
 
       if (response.ok) {
-        const summary = data?.data?.summary || data?.summary;
+        const summary = data?.summary;
         const successCount = summary?.success ?? summary?.sent ?? selectedUserIds.length;
         const failureCount = summary?.failure ?? summary?.failed ?? 0;
 
-        toast.success(`تم بث الرسالة بنجاح`, {
-          description: `وصلت الرسالة لـ ${successCount} مستخدم | الفشل: ${failureCount}`,
+        toast.success(isSingleUser ? "تم إرسال الإشعار بنجاح" : "تم بث الرسالة بنجاح", {
+          description: `وصلت الرسالة لـ ${successCount} مستخدم${failureCount ? ` | الفشل: ${failureCount}` : ""}`,
         });
+        onSuccess?.();
+        resetModalState();
         onOpenChange(false);
-        // Reset state
-        setActiveStep("templates");
-        setFormData({
-          title: "",
-          message: "",
-          type: "info",
-          actionUrl: "",
-          channels: { app: true, email: false, sms: false },
-        });
-        setSelectedTemplateId("custom");
-        setSelectedUserIds([]);
       } else {
         toast.error(data.error || "فشل إرسال الرسالة");
       }
@@ -217,29 +227,71 @@ export function BroadcastModal({
     };
   }, [formData.message]);
 
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+    onSearch?.(query);
+  }, [onSearch]);
+
   const activeStepIndex = STEPS.findIndex(s => s.id === activeStep);
   const nextStep = STEPS[activeStepIndex + 1]?.id;
   const prevStep = STEPS[activeStepIndex - 1]?.id;
 
+  const canAdvanceFromEditor = useMemo(() => {
+    const hasTitle = formData.title.trim().length > 0;
+    const hasMessage = formData.message.trim().length > 0;
+    const hasChannel = Object.values(formData.channels).some(Boolean);
+    return hasTitle && hasMessage && hasChannel;
+  }, [formData.title, formData.message, formData.channels]);
+
+  const handleNextStep = useCallback(() => {
+    if (activeStep === "editor" && !canAdvanceFromEditor) {
+      toast.error("يرجى كتابة عنوان ورسالة واختيار قناة بث واحدة على الأقل قبل المتابعة");
+      return;
+    }
+
+    if (activeStep === "audience" && selectedUserIds.length === 0) {
+      toast.error("يرجى اختيار مستخدم واحد على الأقل قبل المتابعة");
+      return;
+    }
+
+    setActiveStep(nextStep as Step);
+  }, [activeStep, canAdvanceFromEditor, nextStep, selectedUserIds.length]);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(nextOpen) => {
+      if (!nextOpen) {
+        resetModalState();
+      }
+      onOpenChange(nextOpen);
+    }}>
       <DialogContent className="max-w-5xl w-[95vw] h-[90vh] border-white/10 p-0 overflow-hidden bg-background/40 backdrop-blur-3xl shadow-[0_0_150px_rgba(0,0,0,0.8)] rounded-[2.5rem] sm:rounded-[3.5rem] focus:outline-none z-[100]">
         <div className="relative z-10 flex flex-col h-full overflow-hidden" dir="rtl">
           {/* Header */}
           <div className="p-10 pb-6 shrink-0 relative">
             <DialogHeader className="relative z-10">
               <div className="flex flex-col items-center justify-center space-y-4 text-center">
-                <div className="p-5 bg-primary/10 rounded-[2rem] border border-primary/20 shadow-xl">
-                  <Megaphone className="w-10 h-10 text-primary" />
+                <div className="relative p-5 bg-primary/10 rounded-[2rem] border border-primary/20 shadow-xl">
+                  {isSingleUser ? (
+                    <>
+                      <UserRound className="w-10 h-10 text-primary" />
+                      <div className="absolute -bottom-1 -left-1 bg-primary rounded-full p-1.5 border-2 border-background">
+                        <BellRing className="w-3 h-3 text-white" />
+                      </div>
+                    </>
+                  ) : (
+                    <Megaphone className="w-10 h-10 text-primary" />
+                  )}
                 </div>
 
                 <div className="space-y-1">
                   <DialogTitle className="text-4xl font-black text-white tracking-tighter">
-                    مركز البث المركزي
+                    {isSingleUser ? "إرسال إشعار إلى مستخدم واحد" : "مركز البث المركزي"}
                   </DialogTitle>
                   <DialogDescription className="text-gray-400 font-bold text-base uppercase tracking-widest flex items-center justify-center gap-2">
-                    إرسال تنبيه جماعي لـ {selectedUserIds.length > 0 ? selectedUserIds.length : users.length} مستهدف 
-                    {selectedUserIds.length > 0 && selectedUserIds.length !== users.length && ` (من أصل ${users.length})`}
+                    {isSingleUser
+                      ? `إرسال إلى: ${users[0]?.name || users[0]?.email || "المستخدم المحدد"}`
+                      : `إرسال تنبيه جماعي لـ ${selectedUserIds.length > 0 ? selectedUserIds.length : users.length} مستهدف 
+                      ${selectedUserIds.length > 0 && selectedUserIds.length !== users.length ? ` (من أصل ${users.length})` : ""}`}
                   </DialogDescription>
                 </div>
               </div>
@@ -325,6 +377,9 @@ export function BroadcastModal({
                       segments={segments}
                       selectedSegment={selectedSegment}
                       onSelectSegment={onSelectSegment}
+                      searchQuery={searchQuery}
+                      onSearchChange={handleSearchChange}
+                      isLoading={isLoading}
                     />
                   </div>
                 )}
@@ -373,7 +428,7 @@ export function BroadcastModal({
               {activeStep !== "preview" ? (
                 <Button
                   size="lg"
-                  onClick={() => setActiveStep(nextStep as Step)}
+                  onClick={handleNextStep}
                   className="h-16 px-12 rounded-2xl bg-white/5 border border-white/10 text-white font-black hover:bg-white/10 hover:border-white/20 group"
                 >
                   التالي
@@ -391,7 +446,7 @@ export function BroadcastModal({
                   ) : (
                     <Send className="w-6 h-6 ml-2" />
                   )}
-                  {isSending ? "جاري الإرسال..." : "بدء البث الجماعي الآن"}
+                  {isSending ? "جاري الإرسال..." : isSingleUser ? "إرسال الإشعار الآن" : "بدء البث الجماعي الآن"}
                 </Button>
               )}
             </div>

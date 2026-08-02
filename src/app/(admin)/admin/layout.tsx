@@ -1,10 +1,16 @@
 "use client";
 
+import { AdminRouteGuard } from "@/components/auth/AdminRouteGuard";
+
 export default function AdminRootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <AdminRouteGuard>
+      {children}
+    </AdminRouteGuard>
+  );
 }
 

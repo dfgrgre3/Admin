@@ -1,317 +1,152 @@
 "use client";
 
 import * as React from "react";
-import { adminFetch } from "@/lib/api/admin-api";
-import { apiRoutes } from "@/lib/api/routes";
 import { PageHeader } from "@/components/admin/ui/page-header";
-import { AdminDataTable } from "@/components/admin/ui/admin-table";
-import { AdminButton } from "@/components/admin/ui/admin-button";
+import { RoleMatrix } from "@/components/admin/permissions/role-matrix";
+import { UserPermissionsManager } from "@/components/admin/permissions/user-permissions-manager";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePermission } from "@/components/auth/PermissionGuard";
+import { PERMISSIONS } from "@/lib/permissions";
+import { adminAudit } from "@/lib/admin-audit";
 import {
-  ShieldAlert, ShieldCheck, UserCog, Save, RotateCcw
+  ShieldCheck,
+  TableProperties,
+  UserCog,
+  Info,
+  Lock,
+  Eye,
 } from "lucide-react";
-import { ColumnDef } from "@tanstack/react-table";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { DEFAULT_ROLE_PERMISSIONS, Permission } from "@/lib/permissions";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  permissions: string[];
-}
+import { Card } from "@/components/ui/card";
+import { getStaffRoles, getRolePermissionCount, getAllPermissionMetas } from "@/lib/permission-matrix-config";
 
 export default function PermissionsPage() {
-  const queryClient = useQueryClient();
-  const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
-  const [editingPermissions, setEditingPermissions] = React.useState<string[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const { hasPermission } = usePermission();
+  const canAssignPermissions = hasPermission(PERMISSIONS.USERS_ASSIGN_PERMISSIONS);
 
-  const { data: usersData, isLoading } = useQuery({
-    queryKey: ["admin", "staff-users"],
-    queryFn: async () => {
-      const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : "";
-      const [adminsRes, teachersRes, moderatorsRes] = await Promise.all([
-        adminFetch(`${apiRoutes.admin.users}?role=ADMIN&limit=100${searchParam}`),
-        adminFetch(`${apiRoutes.admin.users}?role=TEACHER&limit=100${searchParam}`),
-        adminFetch(`${apiRoutes.admin.users}?role=MODERATOR&limit=100${searchParam}`),
-      ]);
-
-      const [admins, teachers, moderators] = await Promise.all([
-        adminsRes.json(),
-        teachersRes.json(),
-        moderatorsRes.json(),
-      ]);
-
-      return [
-        ...(admins.data?.users || []),
-        ...(teachers.data?.users || []),
-        ...(moderators.data?.users || []),
-      ] as User[];
-    },
-  });
-
-  const resetAllPermissionsMutation = useMutation({
-    mutationFn: async () => {
-      const res = await adminFetch(`${apiRoutes.admin.users}/reset-all-permissions`, {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error("فشل إعادة تعيين الصلاحيات");
-      return res.json();
-    },
-    onSuccess: () => {
-      toast.success("تم إعادة تعيين كافة الصلاحيات إلى الوضع الافتراضي لجميع الأدوار");
-      queryClient.invalidateQueries({ queryKey: ["admin", "staff-users"] });
-    },
-    onError: () => toast.error("فشل في إعادة تعيين الصلاحيات"),
-  });
-
-  const updatePermissionsMutation = useMutation({
-    mutationFn: async ({ userId, permissions }: { userId: string; permissions: string[] }) => {
-      const res = await adminFetch(apiRoutes.admin.userById(userId), {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ permissions }),
-      });
-      if (!res.ok) throw new Error("Failed to update permissions");
-      return res.json();
-    },
-    onSuccess: () => {
-      toast.success("تم تحديث صلاحيات المستخدم بنجاح!");
-      queryClient.invalidateQueries({ queryKey: ["admin", "staff-users"] });
-      setIsDialogOpen(false);
-    },
-    onError: () => toast.error("فشل في تحديث الصلاحيات"),
-  });
-
-  const handleEditPermissions = (user: User) => {
-    setSelectedUser(user);
-    setEditingPermissions(user.permissions || []);
-    setIsDialogOpen(true);
-  };
-
-  const togglePermission = (perm: string) => {
-    setEditingPermissions((prev) =>
-      prev.includes(perm) ? prev.filter((p) => p !== perm) : [...prev, perm]
-    );
-  };
-
-  const columns: ColumnDef<User>[] = [
-    {
-      accessorKey: "name",
-      header: "المستخدم",
-      cell: ({ row }) => (
-        <div className="flex flex-col">
-          <span className="font-black text-sm">{row.original.name}</span>
-          <span className="text-[10px] text-muted-foreground">{row.original.email}</span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "role",
-      header: "الدور الوظيفي",
-      cell: ({ row }) => {
-        const role = row.original.role;
-        const colors: Record<string, string> = {
-          ADMIN: "bg-red-500/10 text-red-500 border-red-500/20",
-          TEACHER: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-          MODERATOR: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-        };
-        const labels: Record<string, string> = {
-          ADMIN: "مدير النظام",
-          TEACHER: "معلم",
-          MODERATOR: "مشرف",
-        };
-        return (
-          <Badge className={`rounded-full px-3 py-0.5 text-[10px] font-black uppercase ${colors[role] || ""}`}>
-            {labels[role] || role}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: "permissions",
-      header: "الصلاحيات المخصصة",
-      cell: ({ row }) => (
-        <div className="flex flex-wrap gap-1">
-          <Badge variant="outline" className="text-[10px] border-white/5 opacity-60">
-            {row.original.permissions?.length || 0} استثناءات
-          </Badge>
-          {row.original.role === "ADMIN" && (
-            <Badge className="bg-amber-500/10 text-amber-500 text-[10px] font-bold border-none">
-              كامل الصلاحيات (Admin Override)
-            </Badge>
-          )}
-        </div>
-      ),
-    },
-    {
-      id: "actions",
-      header: "الإجراءات",
-      cell: ({ row }) => (
-        <AdminButton
-          size="sm"
-          variant="outline"
-          icon={ShieldCheck}
-          onClick={() => handleEditPermissions(row.original)}
-          className="rounded-xl h-8 text-[10px] font-black"
-        >
-          تعديل الصلاحيات
-        </AdminButton>
-      ),
-    },
-  ];
-
-  const permissionCategories = React.useMemo(() => {
-    const categories: Record<string, string[]> = {
-      "الإدارة": ["dashboard:view", "analytics:view", "reports:view", "settings:view", "audit_logs:view"],
-      "المستخدمين": ["users:view", "users:manage", "students:view", "teachers:view", "teachers:manage"],
-      "المحتوى": ["subjects:view", "subjects:manage", "own_subjects:manage", "books:view", "books:manage", "own_books:manage", "resources:view", "resources:manage"],
-      "التعليم": ["exams:view", "exams:manage", "own_exams:manage", "challenges:view", "challenges:manage", "own_challenges:manage", "contests:view", "contests:manage"],
-      "المجتمع": ["blog:view", "blog:manage", "forum:view", "forum:moderate", "forum:manage", "comments:view", "comments:moderate", "events:view", "events:manage", "announcements:view", "announcements:manage"],
-      "أخرى": ["achievements:view", "achievements:manage", "rewards:view", "rewards:manage", "ai:manage", "live_monitor:view", "marketing:view", "ab_testing:view"],
-    };
-    return categories;
-  }, []);
+  const staffRoles = getStaffRoles();
+  const totalPermissions = getAllPermissionMetas().length;
 
   return (
-    <div className="space-y-10 pb-20" dir="rtl">
+    <div className="space-y-8 pb-20" dir="rtl">
       <PageHeader
         title="مصفوفة الصلاحيات"
-        description="إدارة أدوار وصلاحيات فريق العمل، منح وتعديل صلاحيات المشرفين والمعلمين."
-      >
-        <AdminButton
-          icon={ShieldAlert}
-          variant="outline"
-          className="opacity-70 group hover:opacity-100"
-          onClick={() => resetAllPermissionsMutation.mutate()}
-          loading={resetAllPermissionsMutation.isPending}
-        >
-          إعادة تعيين كافة الصلاحيات
-        </AdminButton>
-      </PageHeader>
-
-      <AdminDataTable
-        columns={columns}
-        data={usersData || []}
-        loading={isLoading}
-        searchKey="name"
-        searchPlaceholder="ابحث عن عضو فريق..."
+        description="إدارة شاملة لأدوار وصلاحيات فريق العمل — عرض وتخصيص صلاحيات كل دور وإدارة الاستثناءات الفردية"
       />
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-5xl bg-card/90 backdrop-blur-2xl border-white/10 rounded-[2.5rem] overflow-hidden p-0 h-[85vh] flex flex-col">
-          <DialogHeader className="p-8 border-b border-white/5 shrink-0" dir="rtl">
-            <div className="flex items-center gap-6">
-              <div className="w-16 h-16 rounded-3xl bg-primary/10 flex items-center justify-center text-primary">
-                <UserCog className="w-8 h-8" />
-              </div>
-              <div>
-                <DialogTitle className="text-2xl font-black">
-                  إدارة صلاحيات: {selectedUser?.name}
-                </DialogTitle>
-                <DialogDescription className="font-bold">
-                  يمكنك تخصيص الصلاحيات لهذا المستخدم بشكل فردي فوق صلاحياته الافتراضية.
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-
-          <div className="flex-1 overflow-y-auto p-8 bg-white/[0.02]" dir="rtl">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Object.entries(permissionCategories).map(([cat, perms]) => (
-                <div key={cat} className="space-y-4">
-                  <h4 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground border-b border-white/5 pb-2 mb-4">
-                    {cat}
-                  </h4>
-                  <div className="space-y-3">
-                    {perms.map((p) => {
-                      const isDefault = selectedUser
-                        ? (DEFAULT_ROLE_PERMISSIONS[selectedUser.role as keyof typeof DEFAULT_ROLE_PERMISSIONS] || []).includes(p as Permission)
-                        : false;
-                      const isActive = editingPermissions.includes(p) || isDefault;
-                      const isOverride = editingPermissions.includes(p);
-
-                      return (
-                        <div
-                          key={p}
-                          className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
-                            isActive
-                              ? "bg-primary/5 border-primary/20"
-                              : "bg-transparent border-white/5 opacity-50"
-                          }`}
-                        >
-                          <div className="space-y-0.5">
-                            <p className="text-[10px] font-black uppercase tracking-tight">
-                              {p.replace(/:/g, " ")}
-                            </p>
-                            {isDefault && (
-                              <Badge className="bg-emerald-500/10 text-emerald-500 text-[8px] font-black border-none uppercase h-4">
-                                افتراضي (Role)
-                              </Badge>
-                            )}
-                            {isOverride && !isDefault && (
-                              <Badge className="bg-amber-500/10 text-amber-500 text-[8px] font-black border-none uppercase h-4">
-                                استثناء (User)
-                              </Badge>
-                            )}
-                          </div>
-                          <Switch
-                            checked={isActive}
-                            disabled={isDefault}
-                            onCheckedChange={() => togglePermission(p)}
-                            title={isDefault ? "هذه الصلاحية تأتي تلقائياً مع الدور" : ""}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
+      {/* Info banner */}
+      <Card className="p-4 bg-primary/5 border-primary/20">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Info className="h-5 w-5 text-primary" />
           </div>
+          <div className="flex-1">
+            <h3 className="font-black text-sm mb-1">كيف تعمل مصفوفة الصلاحيات؟</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              الصلاحيات تُدار بشكل فردي لكل مستخدم، وقائمة الصلاحيات المخزنة في قاعدة البيانات هي المصدر
+              الوحيد والكامل لما يستطيع المستخدم فعله. الدور الوظيفي لا يمنح أي صلاحية إضافية بذاته،
+              وصلاحية التجاوز الكامل (admin:bypass) يجب منحها بوعي لمنح الوصول إلى كل شيء.
+            </p>
+          </div>
+        </div>
+      </Card>
 
-          <DialogFooter className="p-8 border-t border-white/5 bg-background shrink-0" dir="rtl">
-            <div className="flex items-center gap-3 w-full">
-              <AdminButton
-                className="flex-1 h-14 rounded-2xl text-lg font-black gap-3"
-                icon={Save}
-                onClick={() =>
-                  selectedUser &&
-                  updatePermissionsMutation.mutate({
-                    userId: selectedUser.id,
-                    permissions: editingPermissions,
-                  })
-                }
-                loading={updatePermissionsMutation.isPending}
-              >
-                حفظ تغييرات الصلاحيات
-              </AdminButton>
-              <AdminButton
-                variant="outline"
-                className="h-14 w-14 rounded-2xl border-white/10"
-                icon={RotateCcw}
-                onClick={() => {
-                  setSelectedUser(null);
-                  setIsDialogOpen(false);
-                }}
-              />
+      {/* Role overview cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {staffRoles.map((role) => {
+          const { total } = getRolePermissionCount(role.role);
+          const percentage = totalPermissions > 0 ? Math.round((total / totalPermissions) * 100) : 0;
+          return (
+            <Card
+              key={role.role}
+              className={`p-4 space-y-2 border ${role.badgeClass} hover:shadow-lg transition-all cursor-default`}
+            >
+              <div className="flex items-center justify-between">
+                <p className="font-black text-sm">{role.label}</p>
+                {role.isSystem && (
+                  <Lock className="h-3 w-3 opacity-50" />
+                )}
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-black">{total}</span>
+                <span className="text-xs text-muted-foreground">/ {totalPermissions} صلاحية</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-muted/50 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-current opacity-60 transition-all"
+                  style={{ width: `${percentage}%` }}
+                />
+              </div>
+              <p className="text-[10px] font-bold opacity-70 line-clamp-2">{role.description}</p>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Main tabs */}
+      <Tabs defaultValue="matrix" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto h-12 rounded-2xl">
+          <TabsTrigger value="matrix" className="rounded-xl gap-2 text-sm font-bold">
+            <TableProperties className="h-4 w-4" />
+            مصفوفة الأدوار
+          </TabsTrigger>
+          <TabsTrigger value="users" className="rounded-xl gap-2 text-sm font-bold">
+            <UserCog className="h-4 w-4" />
+            استثناءات المستخدمين
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Role Matrix Tab */}
+        <TabsContent value="matrix" className="mt-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h2 className="text-xl font-black">مصفوفة صلاحيات الأدوار</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  عرض جميع الصلاحيات الممنوحة لكل دور وظيفي في النظام ({totalPermissions} صلاحية إجمالية)
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-[10px] font-bold">
+                  <Eye className="h-3 w-3 ml-1" />
+                  عرض فقط
+                </Badge>
+              </div>
             </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <RoleMatrix editable={false} />
+          </div>
+        </TabsContent>
+
+        {/* User Permissions Tab */}
+        <TabsContent value="users" className="mt-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h2 className="text-xl font-black">إدارة استثناءات المستخدمين</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  منح أو سحب صلاحيات فردية لأعضاء فريق العمل فوق صلاحيات أدوارهم الافتراضية
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {canAssignPermissions ? (
+                  <Badge className="bg-emerald-500/10 text-emerald-600 text-[10px] font-bold border-none">
+                    <ShieldCheck className="h-3 w-3 ml-1" />
+                    صلاحية التعديل
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[10px] font-bold">
+                    <Lock className="h-3 w-3 ml-1" />
+                    صلاحية مطلوبة
+                  </Badge>
+                )}
+              </div>
+            </div>
+            <UserPermissionsManager
+              onSaved={() => adminAudit.record("permissions.user_updated")}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

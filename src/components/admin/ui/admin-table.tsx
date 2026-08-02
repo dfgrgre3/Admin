@@ -32,6 +32,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger } from
 "@/components/ui/dropdown-menu";
@@ -50,12 +51,24 @@ import {
   SlidersHorizontal,
   FileX,
   Download,
-
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
   Columns,
-  RefreshCw } from
+  RefreshCw,
+  CheckSquare,
+  X,
+  ListChecks,
+  Eye,
+  EyeOff,
+  Pin,
+  PinOff,
+  Maximize2,
+  Minimize2,
+  SearchX,
+  Loader2 } from
 "lucide-react";
 import { ButtonGroup } from "./admin-button";
-import { CheckSquare, X } from "lucide-react";
 import { getPageSizeOptions, normalizePageSize } from "@/lib/performance-config";
 import { useLazyVisibility } from "@/hooks/use-lazy-visibility";
 
@@ -88,6 +101,8 @@ interface AdminDataTableProps<TData, TValue> {
   currentPage?: number;
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
+  // Column labels for the visibility menu (Arabic-friendly)
+  columnLabels?: Record<string, string>;
   // Bulk actions
   bulkActions?: {
     label: string;
@@ -96,6 +111,13 @@ interface AdminDataTableProps<TData, TValue> {
     variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
     disabled?: boolean;
   }[];
+  // Enable server-side sorting
+  onSortingChange?: (sorting: SortingState) => void;
+  // Enable select-all across pages
+  enableSelectAllPages?: boolean;
+  onSelectAllPages?: () => void;
+  // Compact mode
+  compact?: boolean;
 }
 
 export function AdminDataTable<TData, TValue>({
@@ -139,8 +161,17 @@ function AdminDataTableContent<TData, TValue>({
   currentPage: serverCurrentPage = 1,
   onPageChange,
   onPageSizeChange,
+  // Column labels
+  columnLabels,
   // Bulk actions
-  bulkActions
+  bulkActions,
+  // Server-side sorting
+  onSortingChange,
+  // Select all pages
+  enableSelectAllPages = false,
+  onSelectAllPages,
+  // Compact mode
+  compact = false,
 }: Omit<AdminDataTableProps<TData, TValue>, "lazyLoad">) {
   const pageSize = normalizePageSize(requestedPageSize);
   const pageSizeOptions = React.useMemo(() => getPageSizeOptions(pageSize), [pageSize]);
@@ -152,14 +183,21 @@ function AdminDataTableContent<TData, TValue>({
     pageIndex: serverCurrentPage - 1,
     pageSize
   });
+  const [isFullscreen, setIsFullscreen] = React.useState(false);
 
   const parentRef = React.useRef<HTMLDivElement>(null);
-
 
   // Sync pagination with server
   React.useEffect(() => {
     setPagination({ pageIndex: serverCurrentPage - 1, pageSize });
   }, [serverCurrentPage, pageSize]);
+
+  // Notify parent of sorting changes (server-side)
+  React.useEffect(() => {
+    if (serverSide && onSortingChange) {
+      onSortingChange(sorting);
+    }
+  }, [sorting, serverSide, onSortingChange]);
 
   const table = useReactTable({
     data,
@@ -189,7 +227,8 @@ function AdminDataTableContent<TData, TValue>({
       onPageSizeChange?.(newState.pageSize);
     } :
     setPagination,
-    manualPagination: serverSide
+    manualPagination: serverSide,
+    manualSorting: serverSide && !!onSortingChange,
   });
 
   // Notify parent of selection changes
@@ -215,7 +254,7 @@ function AdminDataTableContent<TData, TValue>({
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 52,
+    estimateSize: () => compact ? 44 : 52,
     overscan: 5,
     enabled: virtualized,
   });
@@ -226,6 +265,38 @@ function AdminDataTableContent<TData, TValue>({
   const paddingBottom = virtualItems.length > 0 && virtualItems[virtualItems.length - 1]
     ? totalSize - (virtualItems[virtualItems.length - 1]?.end ?? 0)
     : 0;
+
+  // Helper to get Arabic column label
+  const getColumnLabel = (columnId: string): string => {
+    if (columnLabels?.[columnId]) return columnLabels[columnId];
+    // Fallback: humanize the id
+    return columnId
+      .replace(/([A-Z])/g, " $1")
+      .replace(/^./, (str) => str.toUpperCase())
+      .trim();
+  };
+
+  // Sort indicator component
+  const SortIndicator = ({ column }: { column: any }) => {
+    if (!column.getCanSort()) return null;
+    const sorted = column.getIsSorted();
+    return (
+      <span className="inline-flex items-center gap-0.5 mr-1">
+        {sorted === "asc" ? (
+          <ArrowUp className="h-3 w-3 text-primary" />
+        ) : sorted === "desc" ? (
+          <ArrowDown className="h-3 w-3 text-primary" />
+        ) : (
+          <ArrowUpDown className="h-3 w-3 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+        )}
+      </span>
+    );
+  };
+
+  // Toggle fullscreen
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
 
   return (
     <div className={cn("w-full space-y-4", className)}>
@@ -259,6 +330,14 @@ function AdminDataTableContent<TData, TValue>({
                   <div>
                     <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">تحديد العناصر</p>
                     <p className="text-sm font-black text-white">{selectedCount} محدد</p>
+                    {enableSelectAllPages && totalRows > selectedCount && (
+                      <button
+                        onClick={onSelectAllPages}
+                        className="text-[10px] text-primary hover:text-primary/80 font-bold underline mt-0.5"
+                      >
+                        تحديد الكل ({formatNumber(totalRows)})
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -321,6 +400,14 @@ function AdminDataTableContent<TData, TValue>({
             </AdminButton>
           }
 
+          {/* Fullscreen toggle */}
+          <IconButton
+            icon={isFullscreen ? Minimize2 : Maximize2}
+            label={isFullscreen ? "إنهاء ملء الشاشة" : "ملء الشاشة"}
+            variant="ghost"
+            onClick={toggleFullscreen}
+          />
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <AdminButton variant="outline" size="sm">
@@ -328,22 +415,45 @@ function AdminDataTableContent<TData, TValue>({
                 الأعمدة
               </AdminButton>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="rounded-xl">
+            <DropdownMenuContent align="end" className="rounded-xl w-56 max-h-[400px] overflow-y-auto">
+              <DropdownMenuLabel className="text-xs font-black text-muted-foreground">
+                إظهار / إخفاء الأعمدة
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
               {table.
               getAllColumns().
               filter((column) => column.getCanHide()).
               map((column) => {
+                const isVisible = column.getIsVisible();
                 return (
                   <DropdownMenuCheckboxItem
                     key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
+                    className="capitalize font-bold text-sm"
+                    checked={isVisible}
                     onCheckedChange={(value) => column.toggleVisibility(!!value)}>
                     
-                      {column.id}
+                      <span className="flex items-center gap-2">
+                        {isVisible ? <Eye className="h-3.5 w-3.5 text-primary" /> : <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
+                        {getColumnLabel(column.id)}
+                      </span>
                     </DropdownMenuCheckboxItem>);
 
               })}
+              <DropdownMenuSeparator />
+              <div className="p-2 flex items-center justify-between">
+                <button
+                  onClick={() => table.getAllColumns().filter(c => c.getCanHide()).forEach(c => c.toggleVisibility(true))}
+                  className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+                >
+                  <Eye className="h-3 w-3" /> إظهار الكل
+                </button>
+                <button
+                  onClick={() => table.getAllColumns().filter(c => c.getCanHide()).forEach(c => c.toggleVisibility(false))}
+                  className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                >
+                  <EyeOff className="h-3 w-3" /> إخفاء الكل
+                </button>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -355,8 +465,9 @@ function AdminDataTableContent<TData, TValue>({
       <div
         ref={parentRef}
         className={cn(
-          "rounded-xl border bg-card",
-          virtualized ? "max-h-[600px] overflow-auto" : "overflow-hidden"
+          "rounded-xl border bg-card transition-all duration-300",
+          virtualized ? "max-h-[600px] overflow-auto" : "overflow-hidden",
+          isFullscreen && "fixed inset-4 z-[70] max-h-none overflow-auto shadow-2xl"
         )}
       >
         <Table>
@@ -364,17 +475,30 @@ function AdminDataTableContent<TData, TValue>({
             {table.getHeaderGroups().map((headerGroup) =>
             <TableRow key={headerGroup.id} className="bg-muted/30 hover:bg-muted/30">
                 {headerGroup.headers.map((header) => {
+                const canSort = header.column.getCanSort();
                 return (
                   <TableHead
                     key={header.id}
-                    className="font-semibold text-xs uppercase tracking-wider">
+                    className={cn(
+                      "font-semibold text-xs uppercase tracking-wider whitespace-nowrap",
+                      canSort && "group cursor-pointer select-none"
+                    )}
+                    onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
+                    aria-sort={
+                      header.column.getIsSorted() === "asc" ? "ascending" :
+                      header.column.getIsSorted() === "desc" ? "descending" : undefined
+                    }
+                  >
                     
                       {header.isPlaceholder ?
                     null :
-                    flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
+                    <span className="inline-flex items-center gap-1">
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                      {canSort && <SortIndicator column={header.column} />}
+                    </span>}
                     </TableHead>);
 
               })}
@@ -385,7 +509,7 @@ function AdminDataTableContent<TData, TValue>({
             {loading ?
             // Loading skeleton
             Array.from({ length: 5 }).map((_, i) =>
-            <TableRow key={i}>
+            <TableRow key={i} className="hover:bg-transparent">
                   {columns.map((_, j) =>
               <TableCell key={j}>
                       <div className="h-4 w-20 bg-muted animate-pulse rounded" />
@@ -408,10 +532,14 @@ function AdminDataTableContent<TData, TValue>({
                       <TableRow
                         key={row.id}
                         data-state={row.getIsSelected() && "selected"}
-                        className="transition-colors hover:bg-muted/30"
+                        className={cn(
+                          "transition-colors hover:bg-muted/30",
+                          row.getIsSelected() && "bg-primary/5 hover:bg-primary/10",
+                          virtualRow.index % 2 === 1 && "bg-muted/5"
+                        )}
                       >
                         {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id} className="py-3">
+                          <TableCell key={cell.id} className={cn("py-3", compact && "py-2")}>
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </TableCell>
                         ))}
@@ -425,14 +553,18 @@ function AdminDataTableContent<TData, TValue>({
                   )}
                 </>
               ) : (
-                rows.map((row) => (
+                rows.map((row, rowIndex) => (
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className="transition-colors hover:bg-muted/30"
+                    className={cn(
+                      "transition-colors hover:bg-muted/30",
+                      row.getIsSelected() && "bg-primary/5 hover:bg-primary/10",
+                      rowIndex % 2 === 1 && "bg-muted/5"
+                    )}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="py-3">
+                      <TableCell key={cell.id} className={cn("py-3", compact && "py-2")}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     ))}
@@ -445,7 +577,7 @@ function AdminDataTableContent<TData, TValue>({
                 <TableCell colSpan={columns.length} className="h-48">
                   <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
                     <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50">
-                      <FileX className="h-8 w-8" />
+                      <SearchX className="h-8 w-8" />
                     </div>
                     <div className="text-center">
                       <p className="font-semibold text-foreground">

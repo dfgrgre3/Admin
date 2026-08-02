@@ -60,6 +60,7 @@ const breadcrumbLabels: Record<string, string> = {
   "ab-testing": "اختبارات A/B",
   automations: "محرك القواعد",
   live: "المراقبة اللحظية",
+  "monitoring-security": "مركز المراقبة والأمان",
   reports: "مُنشئ التقارير",
   permissions: "الصلاحيات",
   curriculum: "المنهج الدراسي",

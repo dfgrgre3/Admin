@@ -11,10 +11,14 @@ import { AdminButton } from "@/components/admin/ui/admin-button";
 import { PageHeader } from "@/components/admin/ui/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DEFAULT_ROLE_PERMISSIONS, PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS, stripPermissionsSentinel } from "@/lib/permissions";
 import { logger } from '@/lib/logger';
 
 const permissionGroups = [
+  {
+    title: "التجاوز الكامل",
+    permissions: [PERMISSIONS.ADMIN_BYPASS],
+  },
   {
     title: "المستخدمون",
     permissions: [PERMISSIONS.USERS_VIEW, PERMISSIONS.USERS_MANAGE, PERMISSIONS.STUDENTS_VIEW],
@@ -89,6 +93,7 @@ const permissionGroups = [
 ] as const;
 
 const permissionLabels: Record<string, string> = {
+  [PERMISSIONS.ADMIN_BYPASS]: "تجاوز كامل للصلاحيات (وصول غير مقيد)",
   [PERMISSIONS.DASHBOARD_VIEW]: "عرض لوحة التحكم",
   [PERMISSIONS.ANALYTICS_VIEW]: "عرض التحليلات",
   [PERMISSIONS.REPORTS_VIEW]: "عرض التقارير",
@@ -171,7 +176,7 @@ export default function UserPermissionsPage() {
 
         const data = (await response.json()) as UserPermissionsResponse;
         setUser(data);
-        setSelectedPermissions(data.permissions ?? []);
+        setSelectedPermissions(stripPermissionsSentinel(data.permissions ?? []));
       } catch (error) {
         logger.error("Error fetching user permissions:", error);
         toast.error("حدث خطأ أثناء تحميل الصلاحيات");
@@ -191,6 +196,22 @@ export default function UserPermissionsPage() {
 
   const handleSave = async () => {
     if (!user) return;
+
+    // Saving the list REPLACES the user's stored permissions. Granting full
+    // bypass is irreversible from the target's perspective — require an
+    // explicit confirmation.
+    const permsToSave = stripPermissionsSentinel(selectedPermissions);
+    const grantsBypass =
+      permsToSave.includes(PERMISSIONS.ADMIN_BYPASS) &&
+      !(user.permissions ?? []).includes(PERMISSIONS.ADMIN_BYPASS);
+    if (grantsBypass) {
+      const confirmed = confirm(
+        "أنت على وشك منح هذا المستخدم تجاوزاً كاملاً للصلاحيات (admin:bypass).\n\n" +
+          "سيحصل على وصول غير مقيد إلى كل صفحة وكل عملية وكل واجهة برمجية.\n\nهل تريد المتابعة؟",
+      );
+      if (!confirmed) return;
+    }
+
     setIsSaving(true);
     try {
       const response = await adminFetch(apiRoutes.admin.users, {
@@ -198,7 +219,7 @@ export default function UserPermissionsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId,
-          permissions: selectedPermissions,
+          permissions: permsToSave,
         }),
       });
 
@@ -235,8 +256,6 @@ export default function UserPermissionsPage() {
     return null;
   }
 
-  const defaultPermissions = new Set<string>((DEFAULT_ROLE_PERMISSIONS as any)[user.role] ?? []);
-
   return (
     <div className="space-y-6" dir="rtl">
       <PageHeader
@@ -262,7 +281,7 @@ export default function UserPermissionsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          {Array.from(defaultPermissions).map((permission) => (
+          {selectedPermissions.map((permission) => (
             <AdminBadge key={permission} variant="outline" status="info">
               {permissionLabels[permission] || permission}
             </AdminBadge>
@@ -279,8 +298,7 @@ export default function UserPermissionsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {group.permissions.map((permission) => {
-                const inherited = defaultPermissions.has(permission);
-                const checked = inherited || selectedPermissions.includes(permission);
+                const checked = selectedPermissions.includes(permission);
 
                 return (
                   <label
@@ -290,17 +308,11 @@ export default function UserPermissionsPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{permissionLabels[permission] || permission}</span>
-                        {inherited && (
-                          <AdminBadge variant="outline" status="neutral">
-                            من الدور
-                          </AdminBadge>
-                        )}
                       </div>
                       <p className="text-xs text-muted-foreground">{permission}</p>
                     </div>
                     <Checkbox
                       checked={checked}
-                      disabled={inherited}
                       onCheckedChange={(value) => togglePermission(permission, value === true)}
                     />
                   </label>
@@ -319,7 +331,7 @@ export default function UserPermissionsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          إذا كان المستخدم يملك الصلاحية أصلًا من خلال الدور فلن تحتاج لإضافتها هنا، ولا يمكن إلغاءها من هذه الصفحة.
+          الصلاحيات المعروضة هنا هي الصلاحيات الفعلية المخزنة للمستخدم؛ يمكن منحها أو سحبها مباشرة.
         </CardContent>
       </Card>
     </div>

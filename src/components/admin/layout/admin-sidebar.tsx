@@ -491,9 +491,16 @@ const financialNavItems: SidebarNavItem[] = [
 const infrastructureNavItems: SidebarNavItem[] = [
   {
     title: "مركز المراقبة والآمان",
-    href: "/admin/live",
+    href: "/admin/monitoring-security",
     icon: ShieldCheck,
     color: "bg-rose-500",
+    permission: "LIVE_MONITOR_VIEW",
+  },
+  {
+    title: "المراقبة اللحظية",
+    href: "/admin/live",
+    icon: Radio,
+    color: "bg-rose-600",
     permission: "LIVE_MONITOR_VIEW",
   },
   {
@@ -841,6 +848,17 @@ export function AdminSidebar() {
     return [];
   });
 
+  // Bookmarks are persisted locally and may have been created before an
+  // administrator revoked access. Never let those saved labels bypass the
+  // same sidebar permission filter.
+  const visibleBookmarks = React.useMemo(
+    () => bookmarks.filter((bookmark) => {
+      const item = allNavItems.find((navItem) => navItem.href === bookmark.href);
+      return item ? canAccessNavItem(item) : false;
+    }),
+    [allNavItems, bookmarks, canAccessNavItem],
+  );
+
   const toggleCollapsed = () => {
     setCollapsed((previous) => !previous);
   };
@@ -993,7 +1011,7 @@ export function AdminSidebar() {
       )}
 
       {/* Bookmarks */}
-      {!collapsed && bookmarks.length > 0 && (
+      {!collapsed && visibleBookmarks.length > 0 && (
         <div className="px-3 py-3 border-b border-border/50">
           <h3 className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70 flex items-center gap-2">
             <div className="flex items-center justify-center h-5 w-5 rounded-md bg-yellow-500/10 text-yellow-500">
@@ -1002,7 +1020,7 @@ export function AdminSidebar() {
             <span>المفضلة</span>
           </h3>
           <nav className="space-y-0.5 mt-2">
-            {bookmarks.map((bookmark) => {
+            {visibleBookmarks.map((bookmark) => {
               const IconComponent = BOOKMARK_ICON_MAP[bookmark.iconName] || Bookmark;
               const isActive = pathname === bookmark.href;
               return (

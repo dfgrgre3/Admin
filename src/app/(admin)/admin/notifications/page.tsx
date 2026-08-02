@@ -117,8 +117,9 @@ export default function AdminNotificationsPage() {
                     icon={RotateCcw}
                     loading={isResending}
                     onClick={() => handleResendFailed(broadcast.id)}
+                    className="border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
                   >
-                    إعادة المحاولة
+                    إعادة إرسال الإشعار الجماعي
                   </AdminButton>
                 )}
                 <AdminButton variant="ghost" size="sm" icon={Send}>

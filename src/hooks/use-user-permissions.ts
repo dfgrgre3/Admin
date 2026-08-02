@@ -1,5 +1,5 @@
 import { UserRole } from "@/types/enums";
-import { PERMISSIONS, Permission } from "@/lib/permissions";
+import { PERMISSIONS, Permission, hasPermission as hasPermissionCore } from "@/lib/permissions";
 
 export interface PermissionUserContext {
   id: string;
@@ -7,20 +7,23 @@ export interface PermissionUserContext {
   permissions?: string[];
 }
 
+/**
+ * Thin wrapper over the single `hasPermission` implementation in
+ * `@/lib/permissions`. A role name — including SUPER_ADMIN — never grants
+ * anything on its own: only the database-backed permission array from
+ * `/api/auth/me` is authoritative, matching Go `GetEffectivePermissions`.
+ */
 export function useUserPermissions(currentUser?: PermissionUserContext | null) {
   const hasPermission = (permissionKey: Permission | string): boolean => {
     if (!currentUser) return false;
-    if (currentUser.role === UserRole.SUPER_ADMIN) return true;
-    if (currentUser.permissions?.includes(PERMISSIONS.ADMIN_BYPASS)) return true;
-    if (currentUser.permissions?.includes(PERMISSIONS.USERS_MANAGE)) {
-      if (permissionKey.startsWith("users:")) return true;
-    }
-    return currentUser.permissions?.includes(permissionKey) ?? false;
+    return hasPermissionCore(
+      { role: String(currentUser.role), permissions: currentUser.permissions },
+      permissionKey,
+    );
   };
 
   const canViewField = (fieldCategory: "financial" | "contact" | "audit" | "notes"): boolean => {
     if (!currentUser) return false;
-    if (currentUser.role === UserRole.SUPER_ADMIN) return true;
 
     switch (fieldCategory) {
       case "financial":

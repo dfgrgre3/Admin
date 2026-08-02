@@ -2,8 +2,7 @@
 
 import * as React from "react";
 import { AdminButton } from "@/components/admin/ui/admin-button";
-import { RefreshCw, Bell } from "lucide-react";
-import { RealtimeNotifications } from "@/components/admin/dashboard/realtime-notifications";
+import { RefreshCw } from "lucide-react";
 
 interface DashboardHeaderProps {
   userName?: string;
@@ -45,13 +44,6 @@ export function DashboardHeader({
         >
           تحديث البيانات
         </AdminButton>
-        <RealtimeNotifications
-          notifications={notifications}
-          isConnected={isConnected}
-          onMarkAsRead={onMarkAsRead}
-          onMarkAllAsRead={onMarkAllAsRead}
-          onDismiss={onDismiss}
-        />
       </div>
     </header>
   );

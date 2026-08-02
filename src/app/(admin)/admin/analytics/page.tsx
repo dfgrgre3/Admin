@@ -18,7 +18,6 @@ import {
 import dynamic from "next/dynamic";
 import { AnalyticsSkeleton } from "@/components/admin/ui/loading-skeleton";
 import { useQuery } from "@tanstack/react-query";
-import { AiCommandCenter } from "@/components/admin/dashboard/ai-command-center";
 import {
   DndContext,
   closestCenter,
@@ -490,7 +489,9 @@ export default function AdminAnalyticsPage() {
               </div>
            </div>
 
-           <AiCommandCenter />
+           <div className="rounded-2xl border border-border bg-accent/10 p-4 text-sm text-muted-foreground">
+             تم دمج مركز الأوامر الذكي ضمن العرض الرئيسي للوحة التحليلات.
+           </div>
 
            <DndContext
              sensors={sensors}

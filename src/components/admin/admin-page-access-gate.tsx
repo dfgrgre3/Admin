@@ -17,8 +17,11 @@ export function AdminPageAccessGate({ children }: { children: React.ReactNode })
     [pathname],
   );
 
+  // Fail closed: no resolved user means no access. Never treat a missing user
+  // as permission to render, even though the early return below also covers it.
   const allowed = React.useMemo(() => {
-    if (!required || !user) return true;
+    if (!required) return true;
+    if (!user) return false;
     return hasPermission(user, required);
   }, [required, user]);
 

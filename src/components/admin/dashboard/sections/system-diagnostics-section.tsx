@@ -1,14 +1,8 @@
 "use client";
 
 import * as React from "react";
-import dynamic from "next/dynamic";
 import { ErrorBoundary } from "@/components/admin/ui/error-boundary";
 import { SmartAlerts } from "@/components/admin/dashboard/smart-alerts";
-
-const SystemPulse = dynamic(() => import("@/components/admin/dashboard/system-pulse").then(mod => mod.SystemPulse), {
-  ssr: false,
-  loading: () => <div className="h-[300px] w-full animate-pulse bg-white/5 rounded-[2rem] border border-white/10" />,
-});
 
 interface Alert {
   id: string;
@@ -36,7 +30,9 @@ export const SystemDiagnosticsSection = React.memo(function SystemDiagnosticsSec
   return (
     <ErrorBoundary fallback={<div className="text-gray-400 p-8 text-center font-bold">حدث خطأ في تحميل تشخيصات النظام</div>}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <SystemPulse />
+        <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8 text-center text-gray-400">
+          تم دمج تشخيصات النظام ضمن العرض الموحّد للوحة التحكم.
+        </div>
         <SmartAlerts
           alerts={alerts}
           title="التنبيهات والتحليلات الذكية"

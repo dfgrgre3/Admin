@@ -4,10 +4,24 @@ export const PERMISSIONS = {
   /** Matches Go `PermAdminBypass` — grants all scoped permissions when present in effective list. */
   ADMIN_BYPASS: "admin:bypass",
 
+  /**
+   * Sentinel marker (matches Go `PermPermissionsCustom`). When present in a
+   * user's stored permissions array, the backend returns ONLY the stored
+   * permissions without merging role defaults — enabling restrictive
+   * per-user customization. The sentinel is filtered out of the effective
+   * list and never matches any permission check.
+   */
+  PERMISSIONS_CUSTOM: "permissions:custom",
+
+  // Super / System
+  SYSTEM_MANAGE: "system:manage",
+  SYSTEM_SETTINGS: "system:settings",
+
   // Global / Dashboard
   DASHBOARD_VIEW: "dashboard:view",
   ANALYTICS_VIEW: "analytics:view",
   REPORTS_VIEW: "reports:view",
+  REPORTS_MANAGE: "reports:manage",
 
   // User Management
   USERS_VIEW: "users:view",
@@ -17,6 +31,7 @@ export const PERMISSIONS = {
   USERS_VIEW_AUDIT_LOG: "users:view:audit_log",
   USERS_ADD_NOTE: "users:add:note",
   STUDENTS_VIEW: "students:view",
+  STUDENTS_MANAGE: "students:manage",
 
   // Extended Users Management Hub Permissions
   USERS_CREATE: "users:create",
@@ -26,6 +41,7 @@ export const PERMISSIONS = {
   USERS_SUSPEND: "users:suspend",
   USERS_EXPORT: "users:export",
   USERS_IMPORT: "users:import",
+  USERS_IMPERSONATE: "users:impersonate",
   USERS_ASSIGN_ROLES: "users:assign_roles",
   USERS_ASSIGN_PERMISSIONS: "users:assign_permissions",
   USERS_VIEW_SESSIONS: "users:view:sessions",
@@ -44,21 +60,36 @@ export const PERMISSIONS = {
 
   // Content Management (Subjects, Books, Resources, Exams)
   SUBJECTS_VIEW: "subjects:view",
+  SUBJECTS_CREATE: "subjects:create",
+  SUBJECTS_UPDATE: "subjects:update",
+  SUBJECTS_DELETE: "subjects:delete",
   SUBJECTS_MANAGE: "subjects:manage",
+  SUBJECTS_PUBLISH: "subjects:publish",
+  SUBJECTS_APPROVE: "subjects:approve",
   OWN_SUBJECTS_MANAGE: "own_subjects:manage",
   LEARNING_PATHS_VIEW: "learning_paths:view",
   LEARNING_PATHS_MANAGE: "learning_paths:manage",
 
   BOOKS_VIEW: "books:view",
+  BOOKS_CREATE: "books:create",
+  BOOKS_UPDATE: "books:update",
+  BOOKS_DELETE: "books:delete",
   BOOKS_MANAGE: "books:manage",
+  BOOKS_PUBLISH: "books:publish",
   OWN_BOOKS_MANAGE: "own_books:manage",
 
   RESOURCES_VIEW: "resources:view",
   RESOURCES_MANAGE: "resources:manage",
+  RESOURCES_PUBLISH: "resources:publish",
   OWN_RESOURCES_MANAGE: "own_resources:manage",
 
   EXAMS_VIEW: "exams:view",
+  EXAMS_CREATE: "exams:create",
+  EXAMS_UPDATE: "exams:update",
+  EXAMS_DELETE: "exams:delete",
   EXAMS_MANAGE: "exams:manage",
+  EXAMS_APPROVE: "exams:approve",
+  EXAMS_PUBLISH: "exams:publish",
   OWN_EXAMS_MANAGE: "own_exams:manage",
 
   TEACHERS_VIEW: "teachers:view",
@@ -78,13 +109,21 @@ export const PERMISSIONS = {
   CONTESTS_MANAGE: "contests:manage",
 
   BLOG_VIEW: "blog:view",
+  BLOG_CREATE: "blog:create",
+  BLOG_UPDATE: "blog:update",
+  BLOG_DELETE: "blog:delete",
   BLOG_MANAGE: "blog:manage",
+  BLOG_PUBLISH: "blog:publish",
 
   FORUM_VIEW: "forum:view",
+  FORUM_CREATE: "forum:create",
+  FORUM_UPDATE: "forum:update",
+  FORUM_DELETE: "forum:delete",
   FORUM_MODERATE: "forum:moderate",
   FORUM_MANAGE: "forum:manage",
 
   COMMENTS_VIEW: "comments:view",
+  COMMENTS_CREATE: "comments:create",
   COMMENTS_MODERATE: "comments:moderate",
 
   EVENTS_VIEW: "events:view",
@@ -99,6 +138,7 @@ export const PERMISSIONS = {
   REWARDS_MANAGE: "rewards:manage",
 
   AI_MANAGE: "ai:manage",
+  AI_USAGE: "ai:usage",
 
   LIVE_MONITOR_VIEW: "live_monitor:view",
 
@@ -109,6 +149,26 @@ export const PERMISSIONS = {
   SETTINGS_VIEW: "settings:view",
   // Note: SETTINGS_MANAGE is intentionally omitted - backend uses SETTINGS_VIEW for all settings operations
   AUDIT_LOGS_VIEW: "audit_logs:view",
+
+  // Support / Tickets
+  TICKETS_VIEW: "tickets:view",
+  TICKETS_CREATE: "tickets:create",
+  TICKETS_UPDATE: "tickets:update",
+  TICKETS_MANAGE: "tickets:manage",
+  TICKETS_RESOLVE: "tickets:resolve",
+  FAQS_MANAGE: "faqs:manage",
+
+  // Parent Dashboard (Children)
+  CHILDREN_VIEW: "children:view",
+  CHILDREN_GRADES: "children:grades",
+  CHILDREN_PROGRESS: "children:progress",
+  CHILDREN_ATTENDANCE: "children:attendance",
+  CHILDREN_COMMUNICATE: "children:communicate",
+  CHILDREN_PAYMENT: "children:payment",
+
+  // Notifications
+  NOTIFICATIONS_SEND: "notifications:send",
+  NOTIFICATIONS_MANAGE: "notifications:manage",
 
   // Assignments / Homework
   ASSIGNMENTS_VIEW: "assignments:view",
@@ -194,6 +254,7 @@ export function resolvePermissionInput(
 export function permissionGrantMatches(grant: string, required: Permission | string): boolean {
   const req = String(required);
   if (grant === req || grant === PERMISSIONS.ADMIN_BYPASS) return true;
+	if (grant.endsWith(":manage") && req === `${grant.slice(0, -":manage".length)}:view`) return true;
   if (grant === "own_subjects:manage" && (req === "subjects:manage" || req === "subjects:view" || req === "learning_paths:manage" || req === "learning_paths:view")) return true;
   if (grant === "subjects:manage" && (req === "subjects:manage" || req === "subjects:view" || req === "learning_paths:manage" || req === "learning_paths:view")) return true;
   if (grant === "subjects:view" && (req === "subjects:view" || req === "learning_paths:view")) return true;
@@ -209,16 +270,50 @@ export function permissionGrantMatches(grant: string, required: Permission | str
   return false;
 }
 
+/**
+ * The sentinel value that marks a user as having a custom (restrictive)
+ * permission set. Must match Go `PermPermissionsCustom`.
+ */
+export const PERMISSIONS_CUSTOM_SENTINEL = "permissions:custom";
+
+/**
+ * Returns true when the user's stored permissions include the
+ * `permissions:custom` sentinel, meaning their effective permissions are
+ * exactly the stored set (no role defaults merged in).
+ */
+export function isCustomPermissionsMode(
+  permissions: string[] | null | undefined,
+): boolean {
+  return Array.isArray(permissions) && permissions.includes(PERMISSIONS_CUSTOM_SENTINEL);
+}
+
+/**
+ * Strips the `permissions:custom` sentinel from a permissions array.
+ * Useful when displaying the real permissions to the user.
+ */
+export function stripPermissionsSentinel(
+  permissions: string[] | null | undefined,
+): string[] {
+  if (!Array.isArray(permissions)) return [];
+  return permissions.filter((p) => p !== PERMISSIONS_CUSTOM_SENTINEL);
+}
+
 function getEffectivePermissionStrings(user: {
   role: string;
   permissions?: string[] | null;
 }): string[] {
   const fromApi = user.permissions;
-  if (Array.isArray(fromApi) && fromApi.length > 0) {
-    return fromApi;
+  // `/api/auth/me` always returns the effective permission set. An empty
+  // array is meaningful: it can be a deliberately restrictive custom set.
+  if (Array.isArray(fromApi)) {
+    // The backend already filters the sentinel, but filter again here as a
+    // safety net for stale/cached client state.
+    return fromApi.filter((p) => p !== PERMISSIONS_CUSTOM_SENTINEL);
   }
-  const role = user.role as UserRole;
-  return [...(DEFAULT_ROLE_PERMISSIONS[role] || [])];
+  // A missing permission payload is never an invitation to infer privileges
+  // from a role name. Fail closed until `/api/auth/me` supplies the database
+  // backed effective permissions.
+  return [];
 }
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -235,19 +330,41 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.TEACHERS_VIEW,
     PERMISSIONS.PARENTS_VIEW,
     PERMISSIONS.SUBJECTS_VIEW,
-    PERMISSIONS.LEARNING_PATHS_VIEW,
-    PERMISSIONS.LEARNING_PATHS_MANAGE,
+    PERMISSIONS.SUBJECTS_APPROVE,
+    PERMISSIONS.BOOKS_VIEW,
+    PERMISSIONS.BOOKS_PUBLISH,
+    PERMISSIONS.RESOURCES_VIEW,
+    PERMISSIONS.RESOURCES_PUBLISH,
     PERMISSIONS.EXAMS_VIEW,
+    PERMISSIONS.EXAMS_APPROVE,
+    PERMISSIONS.EXAMS_PUBLISH,
+    PERMISSIONS.CHALLENGES_VIEW,
+    PERMISSIONS.CONTESTS_VIEW,
     PERMISSIONS.BLOG_VIEW,
+    PERMISSIONS.BLOG_CREATE,
+    PERMISSIONS.BLOG_UPDATE,
+    PERMISSIONS.BLOG_DELETE,
+    PERMISSIONS.BLOG_PUBLISH,
     PERMISSIONS.FORUM_VIEW,
+    PERMISSIONS.FORUM_CREATE,
+    PERMISSIONS.FORUM_UPDATE,
+    PERMISSIONS.FORUM_DELETE,
     PERMISSIONS.FORUM_MODERATE,
     PERMISSIONS.COMMENTS_VIEW,
     PERMISSIONS.COMMENTS_MODERATE,
     PERMISSIONS.EVENTS_VIEW,
+    PERMISSIONS.EVENTS_MANAGE,
     PERMISSIONS.ANNOUNCEMENTS_VIEW,
-    PERMISSIONS.AUDIT_LOGS_VIEW,
+    PERMISSIONS.ANNOUNCEMENTS_MANAGE,
+    PERMISSIONS.TICKETS_VIEW,
+    PERMISSIONS.TICKETS_MANAGE,
+    PERMISSIONS.TICKETS_RESOLVE,
+    PERMISSIONS.ACHIEVEMENTS_VIEW,
+    PERMISSIONS.REWARDS_VIEW,
     PERMISSIONS.LIVE_MONITOR_VIEW,
     PERMISSIONS.MARKETING_VIEW,
+    PERMISSIONS.SETTINGS_VIEW,
+    PERMISSIONS.NOTIFICATIONS_SEND,
   ],
 
   SUPPORT: [
@@ -256,14 +373,24 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.STUDENTS_VIEW,
     PERMISSIONS.TEACHERS_VIEW,
     PERMISSIONS.PARENTS_VIEW,
-    PERMISSIONS.AUDIT_LOGS_VIEW,
+    PERMISSIONS.TICKETS_VIEW,
+    PERMISSIONS.TICKETS_CREATE,
+    PERMISSIONS.TICKETS_UPDATE,
+    PERMISSIONS.TICKETS_MANAGE,
+    PERMISSIONS.TICKETS_RESOLVE,
+    PERMISSIONS.FAQS_MANAGE,
+    PERMISSIONS.FORUM_VIEW,
+    PERMISSIONS.COMMENTS_VIEW,
+    PERMISSIONS.ANNOUNCEMENTS_VIEW,
+    PERMISSIONS.NOTIFICATIONS_SEND,
+    PERMISSIONS.SETTINGS_VIEW,
   ],
 
   TEACHER: [
     PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.ANALYTICS_VIEW,
     PERMISSIONS.STUDENTS_VIEW,
     PERMISSIONS.SUBJECTS_VIEW,
-    PERMISSIONS.LEARNING_PATHS_VIEW,
     PERMISSIONS.OWN_SUBJECTS_MANAGE,
     PERMISSIONS.BOOKS_VIEW,
     PERMISSIONS.OWN_BOOKS_MANAGE,
@@ -273,20 +400,58 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.OWN_EXAMS_MANAGE,
     PERMISSIONS.CHALLENGES_VIEW,
     PERMISSIONS.OWN_CHALLENGES_MANAGE,
-    PERMISSIONS.ANALYTICS_VIEW,
+    PERMISSIONS.BLOG_VIEW,
+    PERMISSIONS.BLOG_CREATE,
+    PERMISSIONS.BLOG_UPDATE,
+    PERMISSIONS.FORUM_VIEW,
+    PERMISSIONS.FORUM_CREATE,
+    PERMISSIONS.COMMENTS_VIEW,
+    PERMISSIONS.COMMENTS_CREATE,
+    PERMISSIONS.ACHIEVEMENTS_VIEW,
+    PERMISSIONS.REWARDS_VIEW,
+    PERMISSIONS.AI_USAGE,
   ],
 
   PARENT: [
     PERMISSIONS.DASHBOARD_VIEW,
-    PERMISSIONS.PARENTS_VIEW,
+    PERMISSIONS.CHILDREN_VIEW,
+    PERMISSIONS.CHILDREN_GRADES,
+    PERMISSIONS.CHILDREN_PROGRESS,
+    PERMISSIONS.CHILDREN_ATTENDANCE,
+    PERMISSIONS.CHILDREN_COMMUNICATE,
+    PERMISSIONS.CHILDREN_PAYMENT,
+    PERMISSIONS.SUBJECTS_VIEW,
+    PERMISSIONS.BOOKS_VIEW,
+    PERMISSIONS.EXAMS_VIEW,
+    PERMISSIONS.BLOG_VIEW,
+    PERMISSIONS.FORUM_VIEW,
+    PERMISSIONS.COMMENTS_VIEW,
+    PERMISSIONS.ACHIEVEMENTS_VIEW,
+    PERMISSIONS.NOTIFICATIONS_SEND,
   ],
 
-  STUDENT: [],
+  STUDENT: [
+    PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.ANALYTICS_VIEW,
+    PERMISSIONS.SUBJECTS_VIEW,
+    PERMISSIONS.BOOKS_VIEW,
+    PERMISSIONS.RESOURCES_VIEW,
+    PERMISSIONS.EXAMS_VIEW,
+    PERMISSIONS.CHALLENGES_VIEW,
+    PERMISSIONS.BLOG_VIEW,
+    PERMISSIONS.FORUM_VIEW,
+    PERMISSIONS.FORUM_CREATE,
+    PERMISSIONS.COMMENTS_VIEW,
+    PERMISSIONS.COMMENTS_CREATE,
+    PERMISSIONS.ACHIEVEMENTS_VIEW,
+    PERMISSIONS.REWARDS_VIEW,
+    PERMISSIONS.AI_USAGE,
+  ],
 };
 
 /**
- * Effective permissions come from `/api/auth/me` (`GetEffectivePermissions` in Go).
- * Falls back to `DEFAULT_ROLE_PERMISSIONS` only when the API list is empty (e.g. stale cache).
+ * Effective permissions come exclusively from `/api/auth/me`
+ * (`GetEffectivePermissions` in Go). A missing payload denies access.
  */
 export function hasPermission(
   user: { role: string; permissions?: string[] | null } | null,

@@ -33,7 +33,7 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 const MAX_RETRY_DELAY = 10_000;
 const CLIENT_RATE_WINDOW_MS = 10_000;
-const CLIENT_RATE_LIMIT = 60;
+const CLIENT_RATE_LIMIT = 120; // raised to stay below the backend global limit (500/min)
 
 const requestTimestamps: number[] = [];
 
@@ -92,7 +92,7 @@ function unwrapApiEnvelope<T>(payload: T | ApiEnvelope<T>): T {
 class ApiClient {
     /** In-flight CSRF bootstrap request — shared across concurrent callers to avoid duplicate fetches */
     private csrfBootstrapPromise: Promise<void> | null = null;
-
+    private lastCsrfToken: string | null = null;
     /**
      * Ensures the _csrf cookie exists by fetching GET /api/auth/csrf when it is absent.
      * Multiple simultaneous callers share the same in-flight request (single-flight pattern).
@@ -105,6 +105,12 @@ class ApiClient {
         if (typeof window === 'undefined') return;
         if (!forceRefresh && this.getCookie('_csrf')) return;
 
+        const existingCookie = this.getCookie('_csrf');
+        if (!forceRefresh && existingCookie) {
+            this.lastCsrfToken = existingCookie;
+            return;
+        }
+
         if (!this.csrfBootstrapPromise) {
             this.csrfBootstrapPromise = fetch('/api/auth/csrf', {
                 method: 'GET',
@@ -114,6 +120,10 @@ class ApiClient {
                 .then((response) => {
                     if (!response.ok) {
                         throw new Error(`CSRF bootstrap failed with status ${response.status}`);
+                    }
+                    const token = response.headers.get('X-CSRF-Token');
+                    if (token) {
+                        this.lastCsrfToken = token;
                     }
                 })
                 .finally(() => { this.csrfBootstrapPromise = null; });
@@ -136,7 +146,10 @@ class ApiClient {
             await this.ensureCsrfToken();
             const csrfToken = this.getCookie('_csrf');
             if (csrfToken) {
+                this.lastCsrfToken = csrfToken;
                 headers.set('X-CSRF-Token', csrfToken);
+            } else if (this.lastCsrfToken) {
+                headers.set('X-CSRF-Token', this.lastCsrfToken);
             }
         }
 
@@ -217,7 +230,20 @@ class ApiClient {
                 this.resetAuthStore();
             }
 
-            const shouldRetry = [408, 429, 500, 502, 503, 504].includes(response.status) && retryCount < retries;
+            // 429 Too Many Requests: respect the server's Retry-After header
+            // instead of blindly retrying with exponential backoff (which would
+            // burn through the rate-limit quota even faster). Only retry once.
+            if (response.status === 429 && retryCount < 1) {
+                const retryAfterHeader = response.headers.get('Retry-After');
+                const retryAfterSec = retryAfterHeader ? parseInt(retryAfterHeader, 10) : NaN;
+                const waitMs = Number.isFinite(retryAfterSec) && retryAfterSec > 0
+                    ? Math.min(retryAfterSec * 1000, MAX_RETRY_DELAY)
+                    : retryDelay(retryCount);
+                await sleep(waitMs);
+                return this.executeFetch(endpoint, options, retryCount + 1);
+            }
+
+            const shouldRetry = [408, 500, 502, 503, 504].includes(response.status) && retryCount < retries;
             if (shouldRetry) {
                 await sleep(retryDelay(retryCount));
                 return this.executeFetch(endpoint, options, retryCount + 1);
@@ -266,7 +292,8 @@ class ApiClient {
             if (responseText) errorMessage = responseText;
         }
 
-        const shouldRetry = [408, 429, 500, 502, 503, 504].includes(response.status) && retryCount < retries;
+        // 429 is already handled (with Retry-After) in executeFetch; never retry it here.
+        const shouldRetry = [408, 500, 502, 503, 504].includes(response.status) && retryCount < retries;
         if (!shouldRetry) {
             throw new ApiError(errorMessage, response.status, errorCode, errorData);
         }

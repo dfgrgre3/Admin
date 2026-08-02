@@ -30,8 +30,10 @@ function buildProxyRequestOptions(request: NextRequest, authHeaders: Record<stri
 
     // Keep the double-submit values identical even when the browser has just
     // received a refreshed CSRF cookie from the bootstrap endpoint.
-    const csrfCookie = request.cookies.get('_csrf')?.value;
-    if (csrfCookie) mergedHeaders['X-CSRF-Token'] = csrfCookie;
+    const csrfCookie = request.cookies.get('_csrf')?.value?.trim();
+    if (csrfCookie) {
+      mergedHeaders['X-CSRF-Token'] = csrfCookie;
+    }
 
     // Forward Idempotency-Key if present (injected by apiClient.buildHeaders)
     const idempotencyKey = request.headers.get('idempotency-key');

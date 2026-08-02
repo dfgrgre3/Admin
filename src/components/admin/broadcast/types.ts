@@ -1,4 +1,4 @@
-import { MessageSquareText, Shield, Book, Award, AlertCircle } from "lucide-react";
+import { MessageSquareText, Book, Award, AlertCircle, BellRing, Wrench, RefreshCcw, Sparkles, type LucideIcon } from "lucide-react";
 
 export type MessageType = "info" | "success" | "warning" | "error";
 
@@ -8,8 +8,9 @@ export interface MessageTemplate {
   title: string;
   message: string;
   type: MessageType;
-  icon: any;
+  icon: LucideIcon;
   description: string;
+  category?: string;
 }
 
 export const BROADCAST_TEMPLATES: MessageTemplate[] = [
@@ -28,7 +29,7 @@ export const BROADCAST_TEMPLATES: MessageTemplate[] = [
     title: "مرحباً بك في منصتنا التعليمية 👋", 
     message: "يسعدنا انضمامك إلينا. استعد لبدء رحلتك التعليمية وتطوير مهاراتك مع أفضل الخبراء!", 
     type: "info",
-    icon: Shield,
+    icon: Sparkles,
     description: "رسالة ترحيبية للمستخدمين الجدد"
   },
   { 
@@ -58,7 +59,42 @@ export const BROADCAST_TEMPLATES: MessageTemplate[] = [
     icon: AlertCircle,
     description: "تنبيه رسمي بخصوص مخالفة السياسات"
   },
+  // ── Additional notification-draft templates (shared with users hub) ──
+  { 
+    id: "update", 
+    label: "تحديث مهم", 
+    title: "تحديث مهم على المنصة 🚀", 
+    message: "تم تحديث المنصة بميزات جديدة. تفضل بزيارة القسم المحدث للاطلاع على التفاصيل.", 
+    type: "info",
+    icon: RefreshCcw,
+    description: "إشعار بتحديثات وميزات جديدة",
+    category: "تحديث"
+  },
+  { 
+    id: "reminder", 
+    label: "تذكير مهم", 
+    title: "تذكير مهم 📌", 
+    message: "يرجى مراجعة المهام أو الدروس المتاحة لديك قبل الموعد المحدد.", 
+    type: "warning",
+    icon: BellRing,
+    description: "تذكير بالمهام والدروس المستحقة",
+    category: "تذكير"
+  },
+  { 
+    id: "maintenance", 
+    label: "صيانة مجدولة", 
+    title: "صيانة مجدولة 🛠️", 
+    message: "سيتم إجراء صيانة للمنصة خلال الفترة القادمة، يرجى مراعاة ذلك.", 
+    type: "warning",
+    icon: Wrench,
+    description: "إشعار بصيانة مجدولة",
+    category: "صيانة"
+  },
 ];
+
+export function getBroadcastTemplates(): MessageTemplate[] {
+  return BROADCAST_TEMPLATES;
+}
 
 export interface UserModel {
   id: string;
@@ -81,4 +117,37 @@ export interface BroadcastFormData {
     email: boolean;
     sms: boolean;
   };
+}
+
+// ── Send-result types shared across the broadcast flow ──
+export interface BroadcastSendSummary {
+  success?: number;
+  sent?: number;
+  failure?: number;
+  failed?: number;
+}
+
+export interface BroadcastSendResult {
+  summary?: BroadcastSendSummary;
+  message?: string;
+  error?: string;
+}
+
+// Physical delivery channels the backend understands.
+export type BroadcastDeliveryChannel = "IN_APP" | "PUSH" | "EMAIL" | "SMS";
+
+export const CHANNEL_LABELS: Record<BroadcastDeliveryChannel, string> = {
+  IN_APP: "داخل التطبيق",
+  PUSH: "Push",
+  EMAIL: "البريد الإلكتروني",
+  SMS: "رسالة نصية",
+};
+
+// Map the UI boolean channel object to backend channel identifiers.
+export function resolveChannels(channels: BroadcastFormData["channels"]): BroadcastDeliveryChannel[] {
+  const result: BroadcastDeliveryChannel[] = [];
+  if (channels.app) result.push("IN_APP", "PUSH");
+  if (channels.email) result.push("EMAIL");
+  if (channels.sms) result.push("SMS");
+  return result;
 }
