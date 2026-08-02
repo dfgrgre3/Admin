@@ -62,6 +62,17 @@ import {
   Flame,
   Package,
   Route,
+  Shield,
+  ShieldHalf,
+  PlaySquare,
+  PackageOpen,
+  MessagesSquare,
+  Vote,
+  ShoppingCart,
+  CalendarClock,
+  Languages,
+  Braces,
+  Gauge,
 } from "lucide-react";
 import { IconButton } from "@/components/admin/ui/admin-button";
 import {
@@ -125,6 +136,20 @@ const mainNavItems: SidebarNavItem[] = [
     href: "/admin/users",
     icon: Users,
     color: "bg-violet-500",
+    permission: "USERS_VIEW",
+  },
+  {
+    title: "المشرفون",
+    href: "/admin/admins",
+    icon: Shield,
+    color: "bg-emerald-500",
+    permission: "USERS_VIEW",
+  },
+  {
+    title: "المشرفون الإشرافيون",
+    href: "/admin/moderators",
+    icon: ShieldHalf,
+    color: "bg-cyan-500",
     permission: "USERS_VIEW",
   },
   {
@@ -236,6 +261,27 @@ const contentNavItems: SidebarNavItem[] = [
     permission: "RESOURCES_VIEW",
   },
   {
+    title: "الدروس",
+    href: "/admin/lessons",
+    icon: PlaySquare,
+    color: "bg-cyan-500",
+    permission: "SUBJECTS_VIEW",
+  },
+  {
+    title: "الواجبات",
+    href: "/admin/assignments",
+    icon: ClipboardList,
+    color: "bg-teal-500",
+    permission: "SUBJECTS_VIEW",
+  },
+  {
+    title: "حزم الدورات",
+    href: "/admin/course-bundles",
+    icon: PackageOpen,
+    color: "bg-emerald-500",
+    permission: "SUBJECTS_VIEW",
+  },
+  {
     title: "منشئ صفحات الهبوط",
     href: "/admin/landing",
     icon: LayoutTemplate,
@@ -326,6 +372,20 @@ const communityNavItems: SidebarNavItem[] = [
     permission: "FORUM_VIEW",
   },
   {
+    title: "النقاشات",
+    href: "/admin/discussions",
+    icon: MessagesSquare,
+    color: "bg-cyan-500",
+    permission: "FORUM_VIEW",
+  },
+  {
+    title: "استطلاعات الرأي",
+    href: "/admin/polls",
+    icon: Vote,
+    color: "bg-emerald-500",
+    permission: "FORUM_VIEW",
+  },
+  {
     title: "المدونة الأكاديمية",
     href: "/admin/blog",
     icon: Newspaper,
@@ -354,6 +414,27 @@ const financialNavItems: SidebarNavItem[] = [
     href: "/admin/revenue",
     icon: DollarSign,
     color: "bg-amber-500",
+    permission: "ANALYTICS_VIEW",
+  },
+  {
+    title: "الطلبات",
+    href: "/admin/orders",
+    icon: ShoppingCart,
+    color: "bg-blue-500",
+    permission: "ANALYTICS_VIEW",
+  },
+  {
+    title: "الفواتير",
+    href: "/admin/invoices",
+    icon: FileText,
+    color: "bg-cyan-600",
+    permission: "ANALYTICS_VIEW",
+  },
+  {
+    title: "خطط التقسيط",
+    href: "/admin/installments",
+    icon: CalendarClock,
+    color: "bg-violet-600",
     permission: "ANALYTICS_VIEW",
   },
   {
@@ -456,6 +537,27 @@ const infrastructureNavItems: SidebarNavItem[] = [
     icon: ScrollText,
     color: "bg-violet-500",
     permission: "AUDIT_LOGS_VIEW",
+  },
+  {
+    title: "التعريب واللغات",
+    href: "/admin/languages",
+    icon: Languages,
+    color: "bg-teal-500",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+  {
+    title: "مستكشف API",
+    href: "/admin/api-explorer",
+    icon: Braces,
+    color: "bg-blue-500",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+  {
+    title: "مؤشرات النظام",
+    href: "/admin/system-metrics",
+    icon: Gauge,
+    color: "bg-emerald-500",
+    permission: PERMISSIONS.SETTINGS_VIEW,
   }
 ];
 
@@ -641,6 +743,17 @@ const BOOKMARK_ICON_MAP: Record<string, React.ElementType> = {
   DollarSign,
   ClipboardList,
   Database,
+  Shield,
+  ShieldHalf,
+  PlaySquare,
+  PackageOpen,
+  MessagesSquare,
+  Vote,
+  ShoppingCart,
+  CalendarClock,
+  Languages,
+  Braces,
+  Gauge,
 };
 
 export function AdminSidebar() {

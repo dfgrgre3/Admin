@@ -3,12 +3,52 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/admin/ui/page-header";
-import { AdminDataTable, RowActions } from "@/components/admin/ui/admin-table";
+import { AdminDataTable } from "@/components/admin/ui/admin-table";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import { RoleBadge, StatusBadge } from "@/components/admin/ui/admin-badge";
 import { AdminStatsCard } from "@/components/admin/ui/admin-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserPlus, Download, Mail, Shield, Users, Zap, Search, Send, LogIn, Upload, AlertTriangle, RefreshCw, Filter, MoreHorizontal, Eye, Edit, Trash2, Ban, CheckCircle } from "lucide-react";
+import { 
+  UserPlus, 
+  Download, 
+  Mail, 
+  Shield, 
+  Users, 
+  Zap, 
+  Search, 
+  Send, 
+  LogIn, 
+  Upload, 
+  AlertTriangle, 
+  RefreshCw, 
+  Filter, 
+  MoreHorizontal, 
+  Eye, 
+  Edit, 
+  Trash2, 
+  Ban, 
+  CheckCircle,
+  CreditCard,
+  BookOpen,
+  Package,
+  Award,
+  Monitor,
+  Key,
+  Phone,
+  Globe,
+  UserCheck,
+  UserX,
+  RotateCcw,
+  Settings,
+  Activity,
+  FileText,
+  Bell,
+  LifeBuoy,
+  FilterX,
+  Calendar,
+  Wallet,
+  Layers
+} from "lucide-react";
 import { useExport, ExportColumn } from '@/lib/export-utils';
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
@@ -43,6 +83,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { logger } from '@/lib/logger';
 import { AnalyticsSection } from "./_components/analytics-section";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
 
 
 export default function AdminUsersPage() {

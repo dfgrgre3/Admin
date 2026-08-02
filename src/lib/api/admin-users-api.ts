@@ -18,6 +18,8 @@ export interface AdminUserListItem extends Pick<User,
   phoneVerified?: boolean | null;
   twoFactorEnabled?: boolean;
   country?: string | null;
+  city?: string | null;
+  gender?: string | null;
   gradeLevel?: string | null;
   activeSubscriptionId?: string | null;
   subscriptionExpiresAt?: string | null;
@@ -25,12 +27,45 @@ export interface AdminUserListItem extends Pick<User,
   trialEndsAt?: string | null;
   role: UserRole;
   status: UserStatus;
-  _count: { tasks: number; studySessions: number; achievements: number };
+  walletBalance?: number;
+  coursesCount?: number;
+  ordersCount?: number;
+  certificatesCount?: number;
+  devicesCount?: number;
+  subscriptionStatus?: string;
+  isOnline?: boolean;
+  lastActivityAt?: string | null;
+  _count: { 
+    tasks: number; 
+    studySessions: number; 
+    achievements: number;
+    courses?: number;
+    orders?: number;
+    certificates?: number;
+    devices?: number;
+  };
 }
 
 export interface AdminUsersPage {
   users: AdminUserListItem[];
-  summary: { totalUsers: number; totalAdmins: number; powerUsers: number };
+  summary: { 
+    totalUsers: number; 
+    totalAdmins: number; 
+    powerUsers: number;
+    totalStudents: number;
+    totalTeachers: number;
+    totalModerators: number;
+    verified: number;
+    notVerified: number;
+    suspended: number;
+    active: number;
+    blocked: number;
+    deleted: number;
+    newToday: number;
+    newThisWeek: number;
+    newThisMonth: number;
+    onlineNow: number;
+  };
   pagination: { page: number; limit: number; total: number; totalPages: number };
 }
 
@@ -40,7 +75,7 @@ export interface AdminUsersQuery {
   search?: string;
   role?: UserRole;
   status?: UserStatus;
-  sortBy?: "name" | "createdAt" | "lastLogin" | "totalXP" | "status";
+  sortBy?: "name" | "createdAt" | "lastLogin" | "totalXP" | "status" | "walletBalance" | "coursesCount" | "ordersCount";
   sortOrder?: "asc" | "desc";
   emailVerified?: boolean;
   phoneVerified?: boolean;
@@ -50,11 +85,20 @@ export interface AdminUsersQuery {
   lastLoginFrom?: string;
   lastLoginTo?: string;
   country?: string;
+  city?: string;
+  gender?: string;
   gradeLevel?: string;
   subscriptionStatus?: string;
   subscriptionExpiresTo?: string;
   paymentStatus?: string;
   includeDeleted?: boolean;
+  isOnline?: boolean;
+  walletMin?: number;
+  walletMax?: number;
+  coursesMin?: number;
+  coursesMax?: number;
+  ordersMin?: number;
+  ordersMax?: number;
 }
 
 type DataEnvelope<T> = { data: T };
