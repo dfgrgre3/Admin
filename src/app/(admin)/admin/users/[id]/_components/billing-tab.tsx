@@ -43,6 +43,30 @@ import {
 import { toast } from "sonner";
 import { format, isValid } from "date-fns";
 import { ar } from "date-fns/locale";
+import { useQuery } from "@tanstack/react-query";
+import { adminUsersApi, type UserOrderItem } from "@/lib/api/admin-users-api";
+import { usePermission } from "@/components/auth/PermissionGuard";
+import { PERMISSIONS } from "@/lib/permissions";
+
+const ORDER_STATUS_STYLES: Record<string, string> = {
+  COMPLETED: "bg-success/10 text-success border-success/20",
+  PAID: "bg-success/10 text-success border-success/20",
+  PENDING: "bg-warning/10 text-warning border-warning/20",
+  PROCESSING: "bg-info/10 text-info border-info/20",
+  CANCELLED: "bg-muted text-muted-foreground border-border/20",
+  REFUNDED: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  FAILED: "bg-danger/10 text-danger border-danger/20",
+};
+
+const ORDER_STATUS_LABELS: Record<string, string> = {
+  COMPLETED: "مكتمل",
+  PAID: "مدفوع",
+  PENDING: "قيد الانتظار",
+  PROCESSING: "قيد المعالجة",
+  CANCELLED: "ملغي",
+  REFUNDED: "مسترد",
+  FAILED: "فاشل",
+};
 
 interface AdminPayment {
   id: string;
@@ -75,6 +99,8 @@ export function BillingTab({
   user: UserDetails;
   canManage: boolean;
 }) {
+  const { hasPermission } = usePermission();
+  const canViewOrders = hasPermission(PERMISSIONS.USERS_VIEW_ORDERS);
   const [payments, setPayments] = React.useState<AdminPayment[]>([]);
   const [transactions, setTransactions] = React.useState<WalletTransaction[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -91,6 +117,13 @@ export function BillingTab({
   const [couponValue, setCouponValue] = React.useState("");
   const [couponDesc, setCouponDesc] = React.useState("");
   const [couponSaving, setCouponSaving] = React.useState(false);
+
+  const { data: ordersData, isLoading: loadingOrders } = useQuery({
+    queryKey: ["admin", "user", user.id, "orders"],
+    queryFn: () => adminUsersApi.getOrders(user.id, { limit: 50 }),
+    staleTime: 30_000,
+    enabled: canViewOrders,
+  });
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -117,7 +150,8 @@ export function BillingTab({
   }, [user.id]);
 
   React.useEffect(() => {
-    void load();
+    const timer = window.setTimeout(() => void load(), 0);
+    return () => window.clearTimeout(timer);
   }, [load]);
 
   const adjustBalance = async () => {
@@ -521,6 +555,75 @@ export function BillingTab({
           )}
         </CardContent>
       </Card>
+
+      {/* Orders */}
+      {canViewOrders && (
+        <Card className="border-none shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5" />
+              الطلبات
+            </CardTitle>
+            <CardDescription>
+              {ordersData?.total ?? 0} طلب شراء مرتبط بهذا المستخدم
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingOrders ? (
+              <div className="flex justify-center py-10">
+                <Loader2 className="h-7 w-7 animate-spin text-primary" />
+              </div>
+            ) : ordersData && ordersData.items.length > 0 ? (
+              <div className="space-y-2">
+                {ordersData.items.map((order: UserOrderItem) => (
+                  <div
+                    key={order.id}
+                    className="flex items-center justify-between rounded-xl border p-3.5 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
+                        <ShoppingCart className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold" dir="ltr">
+                          {order.orderNumber || order.id}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {order.itemsCount} منتج ·{" "}
+                          {isValid(new Date(order.createdAt))
+                            ? format(new Date(order.createdAt), "d MMM yyyy · HH:mm", {
+                                locale: ar,
+                              })
+                            : "-"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-left">
+                        <p className="font-black text-base">
+                          {order.amount.toLocaleString()} {order.currency}
+                        </p>
+                        <Badge
+                          className={`text-[10px] font-bold rounded-full border ${
+                            ORDER_STATUS_STYLES[order.status] || "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {ORDER_STATUS_LABELS[order.status] || order.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <ShoppingCart className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                <p className="font-medium">لا توجد طلبات مسجلة لهذا المستخدم</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Adjust Balance Dialog */}
       <Dialog open={adjustOpen} onOpenChange={setAdjustOpen}>

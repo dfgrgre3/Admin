@@ -1,4 +1,4 @@
-﻿{
+{
   "nav": {
     "home": "الرئيسية",
     "timeManagement": "إدارة الوقت",
@@ -117,5 +117,256 @@
     "notFound": "الصفحة غير موجودة",
     "timeout": "انتهت مهلة الطلب",
     "tryAgain": "يرجى المحاولة مرة أخرى"
+  },
+  "courses": {
+    "title": "إدارة الدورات التعليمية",
+    "subtitle": "تحكم في المحتوى، الطلاب، والأداء المالي لمنصة Thanawy",
+    "manageCategories": "إدارة التصنيفات",
+    "newCourse": "دورة تعليمية جديدة",
+    "resultsCount": "نتائج",
+    "stats": {
+      "total": "إجمالي الدورات",
+      "published": "المنشورة",
+      "draft": "مسودة",
+      "archived": "مؤرشفة",
+      "pendingReview": "قيد المراجعة",
+      "rejected": "مرفوضة",
+      "enrollments": "إجمالي الاشتراكات",
+      "active": "نشطة",
+      "paid": "مدفوعة",
+      "free": "مجانية"
+    },
+    "fields": {
+      "title": "الدورة",
+      "price": "السعر",
+      "duration": "المدة",
+      "students": "الطلاب",
+      "modules": "الوحدات",
+      "level": "المستوى",
+      "status": "الحالة",
+      "actions": "إجراءات",
+      "levelBeginner": "مبتدئ",
+      "levelIntermediate": "متوسط",
+      "levelAdvanced": "متقدم",
+      "freeLabel": "مجانية",
+      "instructorPlaceholder": "بدون مدرس"
+    },
+    "status": {
+      "draft": "مسودة",
+      "pendingReview": "قيد المراجعة",
+      "published": "منشورة",
+      "rejected": "مرفوضة",
+      "archived": "مؤرشفة"
+    },
+    "filters": {
+      "title": "الفلاتر والخيارات",
+      "searchPlaceholder": "ابحث عن دورة بالاسم أو الكود...",
+      "clearSearch": "مسح البحث",
+      "allStatuses": "كل الحالات",
+      "allLevels": "كل المستويات",
+      "allCategories": "كل التصنيفات",
+      "sortNewest": "الأحدث",
+      "sortOldest": "الأقدم",
+      "sortPriceAsc": "السعر: من الأقل للأعلى",
+      "sortPriceDesc": "السعر: من الأعلى للأقل",
+      "sortEnrollments": "الأكثر اشتراكاً",
+      "sortName": "الاسم",
+      "viewGrid": "عرض شبكي",
+      "viewList": "عرض قائمة",
+      "refresh": "تحديث",
+      "addCourse": "دورة جديدة",
+      "filterBy": "الفلترة حسب",
+      "category": "التصنيف",
+      "sort": "الترتيب",
+      "clearAll": "مسح الكل"
+    },
+    "card": {
+      "featured": "مميزة",
+      "free": "مجانية",
+      "noInstructor": "بدون مدرس"
+    },
+    "selection": {
+      "select": "تحديد الدورة",
+      "deselect": "إلغاء تحديد الدورة",
+      "selectPage": "تحديد كل الدورات في هذه الصفحة",
+      "deselectPage": "إلغاء التحديد في هذه الصفحة",
+      "selectedCount": "تم تحديد {{count}} دورة"
+    },
+    "description": "إدارة الدورات التعليمية ومناهجها وطلابها",
+    "edit": {
+      "title": "تعديل الدورة",
+      "description": "تعديل بيانات الدورة والإعدادات",
+      "goToCurriculum": "إدارة المنهج"
+    },
+    "bulk": {
+      "selected": "المحددة",
+      "publish": "نشر",
+      "unpublish": "إلغاء النشر",
+      "archive": "أرشفة",
+      "restore": "استعادة",
+      "delete": "حذف",
+      "clear": "إلغاء التحديد"
+    },
+    "actions": {
+      "label": "إجراءات",
+      "view": "عرض الدورة",
+      "edit": "تعديل",
+      "duplicate": "تكرار",
+      "archive": "أرشفة",
+      "restore": "استعادة",
+      "publish": "نشر",
+      "unpublish": "إلغاء النشر",
+      "delete": "حذف",
+      "export": "تصدير",
+      "cancelSelection": "إلغاء التحديد",
+      "curriculum": "إدارة المنهج",
+      "analytics": "التحليلات",
+      "viewInSite": "عرض في الموقع",
+      "deleteConfirmTitle": "حذف الدورة نهائيًا",
+      "deleteConfirmDesc": "سيتم حذف الدورة بشكل دائم إذا لم يكن هناك طلاب مسجلون. هذه العملية لا يمكن التراجع عنها.",
+      "deleteConfirm": "نعم، احذف",
+      "archiveConfirmTitle": "أرشفة الدورة",
+      "archiveConfirmDesc": "سيتم إخفاء الدورة عن الموقع والوصول إليها سيصبح مقيدًا. يمكنك استعادتها في أي وقت.",
+      "restoreConfirmTitle": "استعادة الدورة",
+      "restoreConfirmDesc": "سيتم إعادة تفعيل الدورة ومراجعة حالة نشرها. هل تريد المتابعة؟",
+      "bulkDeleteTitle": "حذف الدورات المحددة",
+      "bulkDeleteDesc": "سيتم حذف {{count}} دورات نهائيًا إذا لم تكن هناك طلاب مسجلون بها. هذه العملية لا يمكن التراجع عنها.",
+      "bulkArchiveTitle": "أرشفة الدورات المحددة",
+      "bulkArchiveDesc": "سيتم أرشفة {{count}} دورات وإخفاؤها عن الموقع. يمكنك استعادتها في أي وقت.",
+      "categoryDeleteTitle": "حذف التصنيف",
+      "categoryDeleteDesc": "سيتم حذف التصنيف نهائيًا. هل أنت متأكد؟",
+      "categoryDeleteConfirm": "نعم، احذف التصنيف"
+    },
+    "empty": {
+      "create": "إنشاء دورة جديدة",
+      "noDataTitle": "لا توجد دورات بعد",
+      "noDataDesc": "ابدأ بإضافة أول دورة تعليمية لتظهر هنا.",
+      "noFilteredTitle": "لا توجد نتائج مطابقة",
+      "noFilteredDesc": "جرّب تعديل البحث أو إزالة الفلاتر للوصول إلى نتائج أخرى.",
+      "clearFilters": "مسح الفلاتر",
+      "clearSearch": "مسح البحث"
+    },
+    "error": {
+      "loadTitle": "تعذر تحميل الدورات",
+      "loadDesc": "حدث خطأ أثناء جلب البيانات من الخادم. تحقق من اتصالك وحاول مرة أخرى.",
+      "retry": "إعادة المحاولة"
+    },
+    "errors": {
+      "generic": "حدث خطأ غير متوقع",
+      "saveFailed": "تعذر حفظ الدورة",
+      "deleteFailed": "تعذر حذف الدورة",
+      "statusFailed": "تعذر تغيير حالة النشر",
+      "archiveFailed": "تعذر تحديث حالة الأرشفة",
+      "categorySaveFailed": "تعذر حفظ التصنيف",
+      "categoryDeleteFailed": "تعذر حذف التصنيف",
+      "duplicateFailed": "تعذر تكرار الدورة",
+      "bulkFailed": "تعذر تنفيذ العملية الجماعية"
+    },
+    "toasts": {
+      "created": "تم إنشاء الدورة بنجاح",
+      "updated": "تم تحديث الدورة بنجاح",
+      "deleted": "تم حذف الدورة",
+      "published": "تم نشر الدورة",
+      "unpublished": "تم إلغاء نشر الدورة",
+      "archived": "تمت أرشفة الدورة",
+      "restored": "تمت استعادة الدورة",
+      "categoryCreated": "تم إنشاء التصنيف",
+      "categoryUpdated": "تم تحديث التصنيف",
+      "categoryDeleted": "تم حذف التصنيف",
+      "duplicated": "تم تكرار الدورة",
+      "bulkDone": "تم تنفيذ العملية على الدورات المحددة",
+      "bulkPartial": "تمت العملية على {{succeeded}} وفشلت على {{failed}}"
+    },
+    "actionDefaults": {
+      "title": "دورة بدون عنوان"
+    },
+    "pagination": {
+      "showing": "عرض {{start}} – {{end}} من أصل",
+      "perPage": "{{count}} لكل صفحة",
+      "first": "الصفحة الأولى",
+      "previous": "الصفحة السابقة",
+      "page": "الصفحة {{page}}",
+      "next": "الصفحة التالية",
+      "last": "الصفحة الأخيرة"
+    },
+    "form": {
+      "basicInfo": "المعلومات الأساسية",
+      "settings": "الإعدادات",
+      "pricing": "التسعير",
+      "seo": "تحسين محركات البحث",
+      "subtitle": "العنوان الفرعي",
+      "shortDescription": "الوصف المختصر",
+      "description": "الوصف الكامل",
+      "language": "اللغة",
+      "category": "التصنيف",
+      "instructor": "المدرب",
+      "visibility": "الرؤية",
+      "selectInstructor": "اختر مدرباً",
+      "noInstructor": "بدون مدرب",
+      "priceType": "نوع السعر",
+      "price": "السعر",
+      "currency": "العملة",
+      "metaTitle": "عنوان SEO",
+      "metaDescription": "وصف SEO",
+      "titlePlaceholder": "أدخل عنوان الدورة"
+    },
+    "validation": {
+      "titleRequired": "عنوان الدورة مطلوب",
+      "slugRequired": "الرابط المختصر مطلوب",
+      "slugFormat": "الرابط المختصر يجب أن يحتوي على أرقام وشرطات فقط",
+      "titleMax": "العنوان يجب أن يكون 200 حرف أو أقل",
+      "subtitleMax": "العنوان الفرعي يجب أن يكون 300 حرف أو أقل",
+      "shortDescMax": "الوصف المختصر يجب أن يكون 500 حرف أو أقل",
+      "priceMin": "السعر لا يمكن أن يكون سالباً",
+      "currencyRequired": "العملة مطلوبة",
+      "invalidUrl": "يرجى إدخال رابط صالح",
+      "metaTitleMax": "عنوان SEO يجب أن يكون 70 حرف أو أقل",
+      "metaDescMax": "وصف SEO يجب أن يكون 160 حرف أو أقل",
+      "moduleTitleRequired": "عنوان الوحدة مطلوب",
+      "lessonTitleRequired": "عنوان الدرس مطلوب",
+      "selectAtLeastOne": "يرجى تحديد عنصر واحد على الأقل"
+    },
+    "publish": {
+      "missingRequirements": "متطلبات النشر الناقصة"
+    },
+    "curriculum": {
+      "title": "منهج الدورة",
+      "modules": "وحدات",
+      "lessons": "دروس",
+      "addModule": "إضافة وحدة",
+      "editModule": "تعديل الوحدة",
+      "addLesson": "إضافة درس",
+      "editLesson": "تعديل الدرس",
+      "deleteLesson": "حذف الدرس",
+      "empty": "لا توجد وحدات بعد",
+      "emptyDesc": "ابدأ بإضافة وحدة دراسية لتنظيم محتوى الدورة.",
+      "noLessons": "لا توجد دروس في هذه الوحدة",
+      "moduleDialogDesc": "أدخل بيانات الوحدة الدراسية",
+      "lessonDialogDesc": "أدخل بيانات الدرس",
+      "moduleTitle": "عنوان الوحدة",
+      "moduleDescription": "وصف الوحدة",
+      "lessonTitle": "عنوان الدرس",
+      "lessonType": "نوع الدرس",
+      "freePreview": "معاينة مجانية",
+      "content": "المحتوى",
+      "videoUrl": "رابط الفيديو",
+      "deleteLessonDesc": "سيتم حذف هذا الدرس نهائياً. هل أنت متأكد؟"
+    },
+    "error": {
+      "unauthorized": "غير مصرح لك بالوصول إلى هذه الصفحة"
+    },
+    "lessonType": {
+      "video": "فيديو",
+      "text": "نصي",
+      "quiz": "اختبار",
+      "assignment": "واجب",
+      "download": "تحميل",
+      "externalLink": "رابط خارجي"
+    },
+    "priceType": {
+      "free": "مجاني",
+      "paid": "مدفوع",
+      "subscription": "اشتراك"
+    }
   }
 }

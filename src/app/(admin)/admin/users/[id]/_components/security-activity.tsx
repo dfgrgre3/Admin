@@ -3,7 +3,6 @@
 import * as React from "react";
 import type { UserDetails } from "./types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   ShieldAlert,
@@ -12,13 +11,11 @@ import {
   CheckCircle2,
   XCircle,
   Globe,
-  Monitor,
   Loader2,
   AlertTriangle,
 } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { ar } from "date-fns/locale";
-import { toast } from "sonner";
 import { adminUsersApi } from "@/lib/api/admin-users-api";
 
 // ── Login Attempts ──────────────────────────────────────────────
@@ -33,16 +30,18 @@ function LoginAttemptsCard({ userId }: { userId: string }) {
 
   React.useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    adminUsersApi.getLoginAttempts(userId, { limit: 50 })
-      .then((res) => {
-        if (cancelled) return;
-        setAttempts(res.attempts);
-        setFailedCount(res.failedCount);
-      })
-      .catch(() => !cancelled && setError("تعذر تحميل محاولات الدخول"))
-      .finally(() => !cancelled && setLoading(false));
-    return () => { cancelled = true; };
+    const timer = window.setTimeout(() => {
+      setLoading(true);
+      adminUsersApi.getLoginAttempts(userId, { limit: 50 })
+        .then((res) => {
+          if (cancelled) return;
+          setAttempts(res.attempts);
+          setFailedCount(res.failedCount);
+        })
+        .catch(() => !cancelled && setError("تعذر تحميل محاولات الدخول"))
+        .finally(() => !cancelled && setLoading(false));
+    }, 0);
+    return () => { cancelled = true; window.clearTimeout(timer); };
   }, [userId]);
 
   return (
@@ -116,17 +115,19 @@ function VideoEngagementCard({ userId }: { userId: string }) {
 
   React.useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    adminUsersApi.getVideoEngagement(userId, { limit: 100 })
-      .then((res) => {
-        if (cancelled) return;
-        setVideos(res.videos);
-        setTotalMinutes(res.totalWatchMinutes);
-        setTotalVideos(res.totalVideos);
-      })
-      .catch(() => !cancelled && setError("تعذر تحميل بيانات مشاهدة الفيديو"))
-      .finally(() => !cancelled && setLoading(false));
-    return () => { cancelled = true; };
+    const timer = window.setTimeout(() => {
+      setLoading(true);
+      adminUsersApi.getVideoEngagement(userId, { limit: 100 })
+        .then((res) => {
+          if (cancelled) return;
+          setVideos(res.videos);
+          setTotalMinutes(res.totalWatchMinutes);
+          setTotalVideos(res.totalVideos);
+        })
+        .catch(() => !cancelled && setError("تعذر تحميل بيانات مشاهدة الفيديو"))
+        .finally(() => !cancelled && setLoading(false));
+    }, 0);
+    return () => { cancelled = true; window.clearTimeout(timer); };
   }, [userId]);
 
   const completedCount = videos.filter((v) => v.completed).length;
@@ -150,7 +151,7 @@ function VideoEngagementCard({ userId }: { userId: string }) {
               <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">معدل إكمال الفيديوهات</span>
               <span className="text-sm font-black text-primary">{completionRate}%</span>
             </div>
-            <Progress value={completionRate} className="h-2 bg-primary/10" />
+            <Progress value={completionRate} label="معدل إكمال الفيديوهات" className="h-2 bg-primary/10" />
           </div>
         )}
 

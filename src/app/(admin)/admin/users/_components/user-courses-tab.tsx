@@ -4,7 +4,7 @@ import * as React from "react";
 import { AdminCard } from "@/components/admin/ui/admin-card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Clock, Award, TrendingUp } from "lucide-react";
-import { formatDate, formatCurrency } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 
 interface Course {
   id: string;
@@ -22,15 +22,9 @@ interface UserCoursesTabProps {
   userId: string;
 }
 
-export function UserCoursesTab({ userId }: UserCoursesTabProps) {
-  const [courses, setCourses] = React.useState<Course[]>([]);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    // TODO: Fetch courses from API
-    // For now, using placeholder data
-    setLoading(false);
-  }, [userId]);
+export function UserCoursesTab({ userId: _userId }: UserCoursesTabProps) {
+  const [courses] = React.useState<Course[]>([]);
+  const [loading] = React.useState(false);
 
   if (loading) {
     return (

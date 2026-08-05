@@ -3,7 +3,7 @@
 import * as React from "react";
 import { AdminCard } from "@/components/admin/ui/admin-card";
 import { Badge } from "@/components/ui/badge";
-import { Monitor, Smartphone, Tablet, Globe, MapPin, Clock, Shield, ShieldCheck } from "lucide-react";
+import { Monitor, Smartphone, Tablet, Globe, Shield, ShieldCheck } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
 interface Device {
@@ -22,14 +22,9 @@ interface UserDevicesTabProps {
   userId: string;
 }
 
-export function UserDevicesTab({ userId }: UserDevicesTabProps) {
-  const [devices, setDevices] = React.useState<Device[]>([]);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    // TODO: Fetch devices from API
-    setLoading(false);
-  }, [userId]);
+export function UserDevicesTab({ userId: _userId }: UserDevicesTabProps) {
+  const [devices] = React.useState<Device[]>([]);
+  const [loading] = React.useState(false);
 
   const getDeviceIcon = (type: string) => {
     switch (type) {

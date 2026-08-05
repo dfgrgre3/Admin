@@ -112,6 +112,7 @@ export function AdminNotes({ notes, userId }: AdminNotesProps) {
           <Button
             className="rounded-xl self-start"
             size="icon"
+            aria-label="إضافة ملاحظة"
             onClick={handleAddNote}
             disabled={isAdding || !newNote.trim()}>
             <Plus className="h-4 w-4" />

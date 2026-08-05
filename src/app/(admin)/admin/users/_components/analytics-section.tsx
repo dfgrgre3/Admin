@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { ChartLine, ChartBar, ChartDonut, ChartMultiLine } from "@/components/shared/charts";
 import { Bookmark } from "lucide-react";
 import { adminUsersApi } from "@/lib/api/admin-users-api";
-import { EmptyState } from "@/components/shared/empty-state";
 
 export function AnalyticsSection() {
   const { data: analytics, isLoading, isError, error } = useQuery({

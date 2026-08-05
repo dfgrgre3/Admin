@@ -36,7 +36,7 @@ export function ActivityChart({ user }: ActivityChartProps) {
     { name: "الموسم", value: user.seasonXP ?? 0, color: XP_DISTRIBUTION_COLORS[4] }
   ].filter(item => item.value > 0);
 
-  const formatTooltipValue = (value: any): string => {
+  const formatTooltipValue = (value: unknown): string => {
     if (typeof value === "number") return `${value.toLocaleString()} XP`;
     if (typeof value === "string") return `${value} XP`;
     return "0 XP";
@@ -150,7 +150,7 @@ export function ActivityChart({ user }: ActivityChartProps) {
                   />
                   <Tooltip 
                     contentStyle={{ borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)", direction: "rtl" }}
-                    formatter={(value: any) => [`${value} ساعة`, "مذاكرة"]}
+                    formatter={(value: unknown) => [`${value} ساعة`, "مذاكرة"]}
                   />
                   <Bar dataKey="hours" fill="#3b82f6" radius={[8, 8, 0, 0]} />
                 </BarChart>
@@ -192,7 +192,7 @@ export function ActivityChart({ user }: ActivityChartProps) {
                   />
                   <Tooltip 
                     contentStyle={{ borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)", direction: "rtl" }}
-                    formatter={(value: any) => [`${value}%`, "التركيز"]}
+                    formatter={(value: unknown) => [`${value}%`, "التركيز"]}
                   />
                   <Line 
                     type="monotone" 

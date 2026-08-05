@@ -23,14 +23,9 @@ interface UserCertificatesTabProps {
   userId: string;
 }
 
-export function UserCertificatesTab({ userId }: UserCertificatesTabProps) {
-  const [certificates, setCertificates] = React.useState<Certificate[]>([]);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    // TODO: Fetch certificates from API
-    setLoading(false);
-  }, [userId]);
+export function UserCertificatesTab({ userId: _userId }: UserCertificatesTabProps) {
+  const [certificates] = React.useState<Certificate[]>([]);
+  const [loading] = React.useState(false);
 
   if (loading) {
     return (

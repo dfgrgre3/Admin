@@ -26,7 +26,10 @@ import {
   Smartphone,
   Laptop,
   LogOut,
-  KeyRound
+  KeyRound,
+  MailCheck,
+  MessageSquareCheck,
+  Send,
 } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -147,9 +150,41 @@ export function SecurityTab({ user, onUserChange, actionBlockReason }: SecurityT
   const [statusExpiresAt, setStatusExpiresAt] = React.useState("");
   const [revokeAllOpen, setRevokeAllOpen] = React.useState(false);
   const [reset2FAOpen, setReset2FAOpen] = React.useState(false);
+  const [verificationLoading, setVerificationLoading] = React.useState<string | null>(null);
   const sessionManager = useSessionManagement();
   const twoFactorManager = useAdmin2FAManagement();
   const userSessions = sessionManager.sessions.filter((session) => session.userId === user.id);
+
+  const handleVerificationAction = async (action: "verify-email" | "verify-phone" | "send-activation-link") => {
+    if (actionBlockReason) return toast.error(actionBlockReason);
+    setVerificationLoading(action);
+    try {
+      switch (action) {
+        case "verify-email": {
+          const updated = await adminUsersApi.verifyEmail(user.id);
+          onUserChange({ ...user, ...updated, emailVerified: true });
+          toast.success("تم توثيق البريد الإلكتروني للمستخدم");
+          break;
+        }
+        case "verify-phone": {
+          const updated = await adminUsersApi.verifyPhone(user.id);
+          onUserChange({ ...user, ...updated, phoneVerified: true });
+          toast.success("تم توثيق رقم الهاتف للمستخدم");
+          break;
+        }
+        case "send-activation-link": {
+          await adminUsersApi.sendActivationLink(user.id);
+          toast.success("تم إرسال رابط التفعيل إلى بريد المستخدم");
+          break;
+        }
+      }
+      fetchSecurityLogs();
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "فشل تنفيذ الإجراء");
+    } finally {
+      setVerificationLoading(null);
+    }
+  };
 
   const handleRevokeAllSessions = () => {
     if (actionBlockReason) return toast.error(actionBlockReason);
@@ -451,6 +486,63 @@ export function SecurityTab({ user, onUserChange, actionBlockReason }: SecurityT
               title={actionBlockReason || undefined}
               onClick={() => setReset2FAOpen(true)}
             >إعادة ضبط 2FA</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Verification & Activation */}
+      <Card className="border-none shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <MailCheck className="h-5 w-5 text-primary" />
+            التوثيق والتفعيل
+          </CardTitle>
+          <CardDescription>توثيق البريد أو الهاتف يدويًا أو إعادة إرسال رابط التفعيل</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Button
+              variant="outline"
+              className="h-20 flex-col gap-1 rounded-2xl border-primary/20 hover:bg-primary/5 hover:border-primary/30"
+              disabled={!!user.emailVerified || verificationLoading !== null || !!actionBlockReason}
+              title={user.emailVerified ? "البريد موثق بالفعل" : actionBlockReason || undefined}
+              onClick={() => handleVerificationAction("verify-email")}
+            >
+              {verificationLoading === "verify-email" ? (
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              ) : (
+                <MailCheck className="h-5 w-5 text-primary" />
+              )}
+              <span className="text-xs font-bold">{user.emailVerified ? "البريد موثق" : "توثيق البريد"}</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-20 flex-col gap-1 rounded-2xl border-success/20 hover:bg-success/5 hover:border-success/30"
+              disabled={!user.phone || !!user.phoneVerified || verificationLoading !== null || !!actionBlockReason}
+              title={!user.phone ? "لا يوجد رقم هاتف مسجل" : user.phoneVerified ? "الهاتف موثق بالفعل" : actionBlockReason || undefined}
+              onClick={() => handleVerificationAction("verify-phone")}
+            >
+              {verificationLoading === "verify-phone" ? (
+                <Loader2 className="h-5 w-5 animate-spin text-success" />
+              ) : (
+                <MessageSquareCheck className="h-5 w-5 text-success" />
+              )}
+              <span className="text-xs font-bold">{user.phoneVerified ? "الهاتف موثق" : "توثيق الهاتف"}</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-20 flex-col gap-1 rounded-2xl border-amber-500/20 hover:bg-amber-500/5 hover:border-amber-500/30"
+              disabled={verificationLoading !== null || !!actionBlockReason}
+              title={actionBlockReason || undefined}
+              onClick={() => handleVerificationAction("send-activation-link")}
+            >
+              {verificationLoading === "send-activation-link" ? (
+                <Loader2 className="h-5 w-5 animate-spin text-amber-600" />
+              ) : (
+                <Send className="h-5 w-5 text-amber-600" />
+              )}
+              <span className="text-xs font-bold">إرسال رابط التفعيل</span>
+            </Button>
           </div>
         </CardContent>
       </Card>

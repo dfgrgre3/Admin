@@ -5,13 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { adminFetch } from "@/lib/api/admin-api";
 import type { UserModel } from "@/components/admin/broadcast/types";
 
-interface BroadcastMessage {
-  title: string;
-  body?: string;
-  type?: "info" | "success" | "warning" | "error";
-  url?: string;
-}
-
 export type BroadcastUser = UserModel;
 
 export interface UserSegment {
@@ -27,6 +20,7 @@ export function useBroadcastUsers() {
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<Error | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [now] = useState(() => Date.now());
 
   // Fetch all users for broadcast
   const { data: usersData, isLoading: isLoadingUsers, error: usersError } = useQuery({
@@ -81,14 +75,14 @@ export function useBroadcastUsers() {
           case "active":
             filtered = filtered.filter(u => {
               if (!u.lastLogin) return false;
-              const daysSince = (Date.now() - new Date(u.lastLogin).getTime()) / (1000 * 60 * 60 * 24);
+              const daysSince = (now - new Date(u.lastLogin).getTime()) / (1000 * 60 * 60 * 24);
               return daysSince <= 7;
             });
             break;
           case "inactive":
             filtered = filtered.filter(u => {
               if (!u.lastLogin) return true;
-              const daysSince = (Date.now() - new Date(u.lastLogin).getTime()) / (1000 * 60 * 60 * 24);
+              const daysSince = (now - new Date(u.lastLogin).getTime()) / (1000 * 60 * 60 * 24);
               return daysSince > 30;
             });
             break;
@@ -110,7 +104,7 @@ export function useBroadcastUsers() {
     }
     
     return filtered;
-  }, [usersData, selectedSegment, segments, searchQuery]);
+  }, [usersData, selectedSegment, segments, searchQuery, now]);
 
   const selectSegment = useCallback((segmentId: string | null) => {
     setSelectedSegment(segmentId);

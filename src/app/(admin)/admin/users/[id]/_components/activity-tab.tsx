@@ -20,7 +20,6 @@ import {
   Timer,
   Target,
   LogIn,
-  LogOut,
   AlertTriangle,
   Video,
   MapPin,

@@ -165,7 +165,6 @@ export default function UserEditPage() {
     };
 
     fetchUser();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, router, formReset]);
 
   const handleSubmit = async (values: UserEditFormValues) => {

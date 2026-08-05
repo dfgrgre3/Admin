@@ -4,9 +4,10 @@ import * as React from "react";
 import { AdminCard } from "@/components/admin/ui/admin-card";
 import { Badge } from "@/components/ui/badge";
 import { Ticket, Clock, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
-interface Ticket {
+interface SupportTicketItem {
   id: string;
   subject: string;
   status: "open" | "in_progress" | "resolved" | "closed";
@@ -22,14 +23,9 @@ interface UserTicketsTabProps {
   userId: string;
 }
 
-export function UserTicketsTab({ userId }: UserTicketsTabProps) {
-  const [tickets] = React.useState<Ticket[]>([]);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    // TODO: Fetch tickets from API
-    setLoading(false);
-  }, [userId]);
+export function UserTicketsTab({ userId: _userId }: UserTicketsTabProps) {
+  const [tickets] = React.useState<SupportTicketItem[]>([]);
+  const [loading] = React.useState(false);
 
   if (loading) {
     return (
@@ -153,7 +149,9 @@ export function UserTicketsTab({ userId }: UserTicketsTabProps) {
   );
 }
 
-const statusConfigMap: Record<string, { label: string; variant: any; icon: any }> = {
+type TicketBadgeVariant = "default" | "secondary" | "destructive" | "outline";
+
+const statusConfigMap: Record<string, { label: string; variant: TicketBadgeVariant; icon: LucideIcon }> = {
   open: { label: "مفتوح", variant: "destructive", icon: AlertTriangle },
   in_progress: { label: "قيد المعالجة", variant: "secondary", icon: Clock },
   resolved: { label: "تم الحل", variant: "default", icon: CheckCircle },

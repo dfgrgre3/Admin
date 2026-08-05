@@ -18,7 +18,6 @@ import {
   Shield,
   CreditCard,
   LifeBuoy,
-  LogIn,
   Bell
 } from "lucide-react";
 import { toast } from "sonner";
@@ -81,7 +80,7 @@ export default function UserDetailPage() {
     handleSubmit,
     watch,
     reset: resetPasswordForm,
-    formState: { errors, isValid, dirtyFields },
+    formState: { errors, dirtyFields },
   } = useForm<PasswordResetFormData>({
     resolver: zodResolver(passwordResetSchema),
     mode: "onChange",
@@ -108,7 +107,6 @@ export default function UserDetailPage() {
     isLoading,
     isError,
     error,
-    refetch,
   } = useQuery<UserDetails>({
     queryKey: ["admin", "user", userId],
     queryFn: async ({ signal }) => {
@@ -369,7 +367,6 @@ export default function UserDetailPage() {
             {canManageUsers && <TabsContent value="settings">
               <SettingsTab
                 user={user}
-                editedUser={editedUser}
                 setEditedUser={setEditedUser}
                 handleUpdate={handleUpdate}
                 setIsEditing={() => {}}

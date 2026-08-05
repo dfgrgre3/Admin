@@ -19,7 +19,6 @@ import {
   Calendar,
   Settings,
   Edit,
-  Lock,
   ShieldCheck,
   ArrowRight,
   KeyRound,
@@ -40,6 +39,9 @@ import { format, isValid, formatDistanceToNow } from "date-fns";
 import { ar } from "date-fns/locale";
 import { toast } from "sonner";
 import * as React from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Camera, Loader2 } from "lucide-react";
+import { adminUsersApi } from "@/lib/api/admin-users-api";
 
 export function UserProfileSidebar({
   user,
@@ -57,6 +59,40 @@ export function UserProfileSidebar({
   canManage?: boolean;
 }) {
   const { level, levelProgress, xpToNextLevel } = computeLevelProgress(user);
+  const [now] = React.useState(() => Date.now());
+  const queryClient = useQueryClient();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const avatarMutation = useMutation({
+    mutationFn: (file: File) => adminUsersApi.uploadAvatar(user.id, file),
+    onSuccess: (updatedUser) => {
+      toast.success("تم تحديث الصورة الشخصية بنجاح");
+      queryClient.setQueryData(["admin", "user", user.id], (old: unknown) => ({
+        ...(typeof old === "object" && old !== null ? old : {}),
+        ...updatedUser,
+        avatar: updatedUser.avatar ?? undefined,
+      }));
+      queryClient.invalidateQueries({ queryKey: ["admin", "user", user.id] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "فشل رفع الصورة الشخصية");
+    },
+  });
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("حجم الصورة يجب ألا يتجاوز 5 ميجابايت");
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast.error("يجب اختيار ملف صورة صالح");
+      return;
+    }
+    avatarMutation.mutate(file);
+    event.target.value = "";
+  };
 
   const handleChangePassword = () => {
     if (onChangePassword) {
@@ -79,7 +115,7 @@ export function UserProfileSidebar({
     : "لم يسجل دخول بعد";
 
   const isOnline = user.lastLogin
-    ? (Date.now() - new Date(user.lastLogin).getTime()) < 5 * 60 * 1000
+    ? (now - new Date(user.lastLogin).getTime()) < 5 * 60 * 1000
     : false;
 
   return (
@@ -105,6 +141,31 @@ export function UserProfileSidebar({
                 {user.name?.charAt(0) || user.email?.charAt(0)?.toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
+            {canManage && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={avatarMutation.isPending}
+                  className="absolute bottom-1 left-1 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground border-2 border-background shadow-lg transition-transform hover:scale-110 disabled:opacity-60"
+                  title="تغيير الصورة الشخصية"
+                >
+                  {avatarMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                  aria-label="رفع صورة شخصية"
+                />
+              </>
+            )}
             {user.emailVerified && (
               <div className="absolute bottom-1 right-1 bg-background rounded-full p-1 border shadow-sm">
                 <CheckCircle className="h-5 w-5 text-success fill-success/10" />

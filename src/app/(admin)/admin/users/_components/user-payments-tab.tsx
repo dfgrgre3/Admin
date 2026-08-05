@@ -3,7 +3,7 @@
 import * as React from "react";
 import { AdminCard } from "@/components/admin/ui/admin-card";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, TrendingUp, ArrowDown, ArrowUp, CheckCircle, XCircle, Clock } from "lucide-react";
+import { CreditCard, TrendingUp, ArrowDown, CheckCircle, XCircle, Clock } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 
 interface Payment {
@@ -23,14 +23,9 @@ interface UserPaymentsTabProps {
   userId: string;
 }
 
-export function UserPaymentsTab({ userId }: UserPaymentsTabProps) {
-  const [payments, setPayments] = React.useState<Payment[]>([]);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    // TODO: Fetch payments from API
-    setLoading(false);
-  }, [userId]);
+export function UserPaymentsTab({ userId: _userId }: UserPaymentsTabProps) {
+  const [payments] = React.useState<Payment[]>([]);
+  const [loading] = React.useState(false);
 
   const getStatusBadge = (status: string) => {
     switch (status) {

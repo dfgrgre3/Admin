@@ -154,6 +154,14 @@ const ONLINE_OPTIONS = [
   { value: "offline", label: "غير متصل" },
 ];
 
+const PAYMENT_OPTIONS = [
+  { value: "all", label: "الكل" },
+  { value: "PAID", label: "مدفوع" },
+  { value: "OVERDUE", label: "متأخر عن السداد" },
+  { value: "TRIAL", label: "فترة تجريبية" },
+  { value: "NONE", label: "بدون دفع" },
+];
+
 export default function AdminUsersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -201,6 +209,7 @@ export default function AdminUsersPage() {
   const [gender, setGender] = React.useState(() => searchParams.get("gender") || "all");
   const [verified, setVerified] = React.useState(() => searchParams.get("verified") || "all");
   const [subscriptionStatus, setSubscriptionStatus] = React.useState(() => searchParams.get("subscription") || "all");
+  const [paymentStatus, setPaymentStatus] = React.useState(() => searchParams.get("payment") || "all");
   const [online, setOnline] = React.useState(() => searchParams.get("online") || "all");
   const [createdFrom, setCreatedFrom] = React.useState(() => searchParams.get("createdFrom") || "");
   const [createdTo, setCreatedTo] = React.useState(() => searchParams.get("createdTo") || "");
@@ -271,6 +280,7 @@ export default function AdminUsersPage() {
       gender,
       verified,
       subscription: subscriptionStatus,
+      payment: paymentStatus,
       online,
       createdFrom,
       createdTo,
@@ -285,7 +295,7 @@ export default function AdminUsersPage() {
     if (typeof window !== "undefined") {
       window.history.replaceState(window.history.state, "", url);
     }
-  }, [page, limit, querySearch, role, status, sortBy, sortOrder, country, city, gender, verified, subscriptionStatus, online, createdFrom, createdTo, walletMin, walletMax, includeDeleted]);
+  }, [page, limit, querySearch, role, status, sortBy, sortOrder, country, city, gender, verified, subscriptionStatus, paymentStatus, online, createdFrom, createdTo, walletMin, walletMax, includeDeleted]);
 
   const clearAllFilters = () => {
     setSearch("");
@@ -297,6 +307,7 @@ export default function AdminUsersPage() {
     setGender("all");
     setVerified("all");
     setSubscriptionStatus("all");
+    setPaymentStatus("all");
     setOnline("all");
     setCreatedFrom("");
     setCreatedTo("");
@@ -308,13 +319,13 @@ export default function AdminUsersPage() {
 
   const hasActiveFilters = Boolean(
     role !== "all" || status !== "all" || search || country || city ||
-    gender !== "all" || verified !== "all" || subscriptionStatus !== "all" ||
+    gender !== "all" || verified !== "all" || subscriptionStatus !== "all" || paymentStatus !== "all" ||
     online !== "all" || createdFrom || createdTo || walletMin || walletMax || includeDeleted
   );
 
   // ── Fetch users (server-side pagination/search/filter/sort) ──
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["admin", "users", page, limit, querySearch, role, status, sortBy, sortOrder, country, city, gender, verified, subscriptionStatus, online, createdFrom, createdTo, walletMin, walletMax, includeDeleted],
+    queryKey: ["admin", "users", page, limit, querySearch, role, status, sortBy, sortOrder, country, city, gender, verified, subscriptionStatus, paymentStatus, online, createdFrom, createdTo, walletMin, walletMax, includeDeleted],
     queryFn: async () => {
       const signal = queryAbortControllerRef.current?.signal;
       return adminUsersApi.list({
@@ -330,6 +341,7 @@ export default function AdminUsersPage() {
         gender: gender === "all" ? undefined : gender,
         emailVerified: verified === "all" ? undefined : verified === "verified",
         subscriptionStatus: subscriptionStatus === "all" ? undefined : subscriptionStatus,
+        paymentStatus: paymentStatus === "all" ? undefined : paymentStatus,
         isOnline: online === "all" ? undefined : online === "online",
         createdFrom: createdFrom || undefined,
         createdTo: createdTo || undefined,
@@ -372,7 +384,7 @@ export default function AdminUsersPage() {
           const userId = event.data?.userId || event.data?.id;
           if (userId) {
             queryClient.setQueryData<AdminUsersPageData>(
-              ["admin", "users", page, limit, querySearch, role, status, sortBy, sortOrder, country, city, gender, verified, subscriptionStatus, online, createdFrom, createdTo, walletMin, walletMax, includeDeleted],
+              ["admin", "users", page, limit, querySearch, role, status, sortBy, sortOrder, country, city, gender, verified, subscriptionStatus, paymentStatus, online, createdFrom, createdTo, walletMin, walletMax, includeDeleted],
               (old) => old ? {
                 ...old,
                 users: old.users.map((u) => {
@@ -396,12 +408,12 @@ export default function AdminUsersPage() {
 
     return () => unsubscribers.forEach((unsub) => unsub());
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subscribe, canViewUsers, queryClient, page, limit, querySearch, role, status, sortBy, sortOrder, country, city, gender, verified, subscriptionStatus, online, createdFrom, createdTo, walletMin, walletMax, includeDeleted]);
+  }, [subscribe, canViewUsers, queryClient, page, limit, querySearch, role, status, sortBy, sortOrder, country, city, gender, verified, subscriptionStatus, paymentStatus, online, createdFrom, createdTo, walletMin, walletMax, includeDeleted]);
 
   // ── Shared helpers ──
   const refreshWithOptimistic = async (ids: string[], changes: Partial<AdminUserListItem>) => {
     queryClient.setQueryData<AdminUsersPageData>(
-      ["admin", "users", page, limit, querySearch, role, status, sortBy, sortOrder, country, city, gender, verified, subscriptionStatus, online, createdFrom, createdTo, walletMin, walletMax, includeDeleted],
+      ["admin", "users", page, limit, querySearch, role, status, sortBy, sortOrder, country, city, gender, verified, subscriptionStatus, paymentStatus, online, createdFrom, createdTo, walletMin, walletMax, includeDeleted],
       (old) => old ? {
         ...old,
         users: old.users.map((item) => ids.includes(item.id) ? { ...item, ...changes } : item),
@@ -760,6 +772,7 @@ export default function AdminUsersPage() {
     status: "الحالة",
     verification: "التوثيق",
     subscription: "الاشتراك",
+    payment: "حالة الدفع",
     wallet: "الرصيد",
     counts: "الإحصائيات",
     totalXP: "نقاط التفاعل",
@@ -922,6 +935,38 @@ export default function AdminUsersPage() {
             {row.original.subscriptionExpiresAt && (
               <span className="text-[10px] text-muted-foreground mt-0.5">
                 حتى {new Date(row.original.subscriptionExpiresAt).toLocaleDateString("ar-EG")}
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: "payment",
+      header: "حالة الدفع",
+      cell: ({ row }) => {
+        const { paymentStatus, trialEndsAt } = row.original;
+        if (!canViewFinancial) {
+          return <span className="text-xs text-muted-foreground">مخفي</span>;
+        }
+        const paymentLabel =
+          paymentStatus === "PAID" ? "مدفوع"
+          : paymentStatus === "OVERDUE" ? "متأخر عن السداد"
+          : paymentStatus === "TRIAL" ? "فترة تجريبية"
+          : "بدون دفع";
+        const paymentClass =
+          paymentStatus === "PAID" ? "bg-success/10 text-success"
+          : paymentStatus === "OVERDUE" ? "bg-danger/10 text-danger"
+          : paymentStatus === "TRIAL" ? "bg-amber-500/10 text-amber-600"
+          : "bg-muted/50 text-muted-foreground";
+        return (
+          <div className="flex flex-col">
+            <span className={`text-[11px] font-black rounded-full px-2 py-0.5 w-fit ${paymentClass}`}>
+              {paymentLabel}
+            </span>
+            {paymentStatus === "TRIAL" && trialEndsAt && (
+              <span className="text-[10px] text-muted-foreground mt-0.5">
+                تنتهي {new Date(trialEndsAt).toLocaleDateString("ar-EG")}
               </span>
             )}
           </div>
@@ -1431,6 +1476,21 @@ export default function AdminUsersPage() {
                 </SelectContent>
               </Select>
             </div>
+            {canViewFinancial && (
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-black text-muted-foreground">حالة الدفع</Label>
+                <Select value={paymentStatus} onValueChange={(v) => { setPaymentStatus(v); setPage(1); }}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label className="text-[11px] font-black text-muted-foreground">الحالة</Label>
               <Select value={online} onValueChange={(v) => { setOnline(v); setPage(1); }}>

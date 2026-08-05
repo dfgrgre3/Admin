@@ -116,14 +116,23 @@ describe("User Management Module Unit Tests", () => {
       expect(hasPermission(regularAdmin, PERMISSIONS.USERS_VIEW)).toBe(true);
     });
 
-    it("grants full field access to Super Admin", () => {
-      const userContext = { id: "super_1", role: UserRole.SUPER_ADMIN, permissions: [] };
+    it("grants full field access to Super Admin holding ADMIN_BYPASS", () => {
+      const userContext = { id: "super_1", role: UserRole.SUPER_ADMIN, permissions: [PERMISSIONS.ADMIN_BYPASS] };
       const { canViewField, isSuperAdmin } = useUserPermissions(userContext);
 
       expect(isSuperAdmin).toBe(true);
       expect(canViewField("financial")).toBe(true);
       expect(canViewField("contact")).toBe(true);
       expect(canViewField("audit")).toBe(true);
+    });
+
+    it("denies field access to Super Admin without DB-backed permissions", () => {
+      const bareSuperAdmin = { id: "super_1", role: UserRole.SUPER_ADMIN, permissions: [] };
+      const { canViewField } = useUserPermissions(bareSuperAdmin);
+
+      expect(canViewField("financial")).toBe(false);
+      expect(canViewField("contact")).toBe(false);
+      expect(canViewField("audit")).toBe(false);
     });
 
     it("blocks Support role from financial and audit fields if missing specific permissions", () => {

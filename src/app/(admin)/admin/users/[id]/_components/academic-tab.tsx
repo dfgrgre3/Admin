@@ -33,12 +33,14 @@ import {
   Trash2,
   RefreshCw,
   Loader2,
+  Award,
+  ExternalLink,
 } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { ar } from "date-fns/locale";
 import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { adminUsersApi, type UserEnrollment } from "@/lib/api/admin-users-api";
+import { adminUsersApi, type UserEnrollment, type UserCertificateItem } from "@/lib/api/admin-users-api";
 import { adminFetch } from "@/lib/api/admin-api";
 import { usePermission } from "@/components/auth/PermissionGuard";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -60,10 +62,18 @@ export function AcademicTab({ user }: { user: UserDetails }) {
   const {
     data: enrollmentsData,
     isLoading: loadingEnrollments,
-    refetch: refetchEnrollments,
   } = useQuery<{ total: number; avgProgress: number; enrollments: UserEnrollment[] }>({
     queryKey: ["admin", "user", user.id, "enrollments"],
     queryFn: () => adminUsersApi.getEnrollments(user.id),
+    staleTime: 30_000,
+  });
+
+  const { data: certificatesData, isLoading: loadingCertificates } = useQuery<{
+    total: number;
+    items: UserCertificateItem[];
+  }>({
+    queryKey: ["admin", "user", user.id, "certificates"],
+    queryFn: () => adminUsersApi.getCertificates(user.id, { limit: 50 }),
     staleTime: 30_000,
   });
 
@@ -321,6 +331,74 @@ export function AcademicTab({ user }: { user: UserDetails }) {
         </CardContent>
       </Card>
 
+      {/* Certificates */}
+      <Card className="border-none shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Award className="h-5 w-5 text-primary" />
+            الشهادات
+          </CardTitle>
+          <CardDescription>
+            {certificatesData?.total ?? 0} شهادة حصل عليها المستخدم
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          {loadingCertificates ? (
+            <div className="flex items-center justify-center py-10">
+              <RefreshCw className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : certificatesData && certificatesData.items.length > 0 ? (
+            <div className="divide-y">
+              {certificatesData.items.map((cert) => (
+                <div
+                  key={cert.id}
+                  className="flex items-center justify-between gap-3 p-4 px-6 hover:bg-muted/30 transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
+                      <Award className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-sm truncate">{cert.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {cert.courseName}
+                        {cert.grade != null && (
+                          <span className="mr-2 text-primary font-bold">
+                            {cert.grade >= 50 ? "ناجح" : "راسب"} · {cert.grade}%
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        صدرت في{" "}
+                        {isValid(new Date(cert.issuedAt))
+                          ? format(new Date(cert.issuedAt), "d MMM yyyy", { locale: ar })
+                          : "-"}
+                      </p>
+                    </div>
+                  </div>
+                  {cert.url && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl shrink-0"
+                      onClick={() => window.open(cert.url!, "_blank", "noopener,noreferrer")}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5 ml-1" />
+                      عرض
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <Award className="h-10 w-10 mx-auto mb-3 opacity-20" />
+              <p className="font-medium">لا توجد شهادات مسجلة لهذا المستخدم</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Exam Results Table */}
       <Card className="border-none shadow-lg">
         <CardHeader>
@@ -472,7 +550,7 @@ export function AcademicTab({ user }: { user: UserDetails }) {
                   </p>
                 </div>
                 <p className="text-sm italic font-medium text-muted-foreground">
-                  "{user.studyGoal}"
+                  «{user.studyGoal}»
                 </p>
               </div>
             )}

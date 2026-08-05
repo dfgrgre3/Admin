@@ -4,6 +4,7 @@ import * as React from "react";
 import { AdminCard } from "@/components/admin/ui/admin-card";
 import { Badge } from "@/components/ui/badge";
 import { Flag, AlertTriangle, Clock, CheckCircle, XCircle, Eye } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
 interface Report {
@@ -24,17 +25,12 @@ interface UserReportsTabProps {
   userId: string;
 }
 
-export function UserReportsTab({ userId }: UserReportsTabProps) {
+export function UserReportsTab({ userId: _userId }: UserReportsTabProps) {
   const [reports] = React.useState<Report[]>([]);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    // TODO: Fetch reports from API
-    setLoading(false);
-  }, [userId]);
+  const [loading] = React.useState(false);
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; variant: any; icon: any }> = {
+    const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline"; icon: LucideIcon }> = {
       pending: { label: "معلق", variant: "secondary", icon: Clock },
       reviewing: { label: "قيد المراجعة", variant: "default", icon: Eye },
       resolved: { label: "تم الحل", variant: "default", icon: CheckCircle },

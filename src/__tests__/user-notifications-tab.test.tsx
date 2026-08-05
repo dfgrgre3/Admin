@@ -4,6 +4,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { UserNotificationsTab } from "@/app/(admin)/admin/users/[id]/_components/user-notifications-tab";
 import { adminUsersApi } from "@/lib/api/admin-users-api";
 
+vi.mock("@/components/auth/PermissionGuard", async () => {
+  const actual = await vi.importActual<typeof import("@/components/auth/PermissionGuard")>("@/components/auth/PermissionGuard");
+  return {
+    ...actual,
+    usePermission: () => ({ hasPermission: () => true, user: null }),
+  };
+});
+
 vi.mock("@/lib/api/admin-users-api", async () => {
   const actual = await vi.importActual<typeof import("@/lib/api/admin-users-api")>("@/lib/api/admin-users-api");
   return {

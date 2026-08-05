@@ -101,6 +101,20 @@ export interface AdminUsersQuery {
   ordersMax?: number;
 }
 
+export interface AdminUsersAnalytics {
+  growth: Array<{ name: string; users: number }>;
+  roles: Array<{ name: string; value: number }>;
+  countries: Array<{ name: string; users: number }>;
+  loginActivity: Array<{ name: string; logins: number }>;
+  registrations: Array<{ name: string; registrations: number }>;
+}
+
+export interface AdminUsersFilterOptions {
+  teachers: Array<{ id: string; name: string }>;
+  courses: Array<{ id: string; name: string }>;
+  categories: Array<{ id: string; name: string }>;
+}
+
 type DataEnvelope<T> = { data: T };
 
 function isDataEnvelope<T>(value: unknown): value is DataEnvelope<T> {
@@ -269,24 +283,14 @@ export const adminUsersApi = {
   },
 
   // GET /api/admin/users/analytics
-  async getAnalytics(): Promise<{
-    growth: Array<{ name: string; users: number }>;
-    roles: Array<{ name: string; value: number }>;
-    countries: Array<{ name: string; users: number }>;
-    loginActivity: Array<{ name: string; logins: number }>;
-    registrations: Array<{ name: string; registrations: number }>;
-  }> {
-    const result = await adminApi.get<any>("users/analytics");
+  async getAnalytics(): Promise<AdminUsersAnalytics> {
+    const result = await adminApi.get<AdminUsersAnalytics | DataEnvelope<AdminUsersAnalytics>>("users/analytics");
     return unwrapData(result);
   },
 
   // GET /api/admin/users/filter-options
-  async getFilterOptions(): Promise<{
-    teachers: Array<{ id: string; name: string }>;
-    courses: Array<{ id: string; name: string }>;
-    categories: Array<{ id: string; name: string }>;
-  }> {
-    const result = await adminApi.get<any>("users/filter-options");
+  async getFilterOptions(): Promise<AdminUsersFilterOptions> {
+    const result = await adminApi.get<AdminUsersFilterOptions | DataEnvelope<AdminUsersFilterOptions>>("users/filter-options");
     return unwrapData(result);
   },
 

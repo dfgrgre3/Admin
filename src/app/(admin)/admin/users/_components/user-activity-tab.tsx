@@ -3,7 +3,7 @@
 import * as React from "react";
 import { AdminCard } from "@/components/admin/ui/admin-card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Clock, Calendar, TrendingUp, Award, BookOpen } from "lucide-react";
+import { Activity, Clock, TrendingUp, Award, BookOpen } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
 interface ActivityItem {
@@ -12,21 +12,18 @@ interface ActivityItem {
   title: string;
   description: string;
   timestamp: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 interface UserActivityTabProps {
   userId: string;
 }
 
-export function UserActivityTab({ userId }: UserActivityTabProps) {
-  const [activities, setActivities] = React.useState<ActivityItem[]>([]);
-  const [loading, setLoading] = React.useState(true);
+type ActivityBadgeVariant = "default" | "secondary" | "outline";
 
-  React.useEffect(() => {
-    // TODO: Fetch activities from API
-    setLoading(false);
-  }, [userId]);
+export function UserActivityTab({ userId: _userId }: UserActivityTabProps) {
+  const [activities] = React.useState<ActivityItem[]>([]);
+  const [loading] = React.useState(false);
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -46,7 +43,7 @@ export function UserActivityTab({ userId }: UserActivityTabProps) {
   };
 
   const getActivityBadge = (type: string) => {
-    const badges: Record<string, { label: string; variant: any }> = {
+    const badges: Record<string, { label: string; variant: ActivityBadgeVariant }> = {
       study: { label: "دراسة", variant: "default" },
       exam: { label: "اختبار", variant: "secondary" },
       achievement: { label: "إنجاز", variant: "default" },

@@ -194,8 +194,15 @@ export function SuspendUserModal({ open, onOpenChange, user, onSuccess }: Suspen
   const [durationHours, setDurationHours] = React.useState(24);
   const [notifyUser, setNotifyUser] = React.useState(true);
   const [submitting, setSubmitting] = React.useState(false);
+  const [prevOpen, setPrevOpen] = React.useState(open);
 
-  React.useEffect(() => { if (!open) { setReason(""); setDurationHours(24); } }, [open]);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (!open) {
+      setReason("");
+      setDurationHours(24);
+    }
+  }
 
   const handleSubmit = async () => {
     if (!user || !reason.trim()) return toast.error("السبب مطلوب");
@@ -267,8 +274,14 @@ export function ChangeRoleModal({ open, onOpenChange, user, onSuccess }: ChangeR
   const [selectedRole, setSelectedRole] = React.useState("STUDENT");
   const [reason, setReason] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
+  const [prevOpen, setPrevOpen] = React.useState(open);
+  const [prevUser, setPrevUser] = React.useState(user);
 
-  React.useEffect(() => { if (open && user) setSelectedRole(user.role || "STUDENT"); }, [open, user]);
+  if (prevOpen !== open || prevUser !== user) {
+    setPrevOpen(open);
+    setPrevUser(user);
+    if (open && user) setSelectedRole(user.role || "STUDENT");
+  }
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -334,8 +347,15 @@ export function ResetPasswordModal({ open, onOpenChange, userId, userName, onSuc
   const [newPassword, setNewPassword] = React.useState("");
   const [forceChange, setForceChange] = React.useState(true);
   const [submitting, setSubmitting] = React.useState(false);
+  const [prevOpen, setPrevOpen] = React.useState(open);
 
-  React.useEffect(() => { if (!open) { setSendLink(false); setNewPassword(""); } }, [open]);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (!open) {
+      setSendLink(false);
+      setNewPassword("");
+    }
+  }
 
   const handleSubmit = async () => {
     if (!userId) return;
@@ -413,9 +433,21 @@ export function InviteUserModal({ open, onOpenChange, prefillEmail, onSuccess }:
   const [message, setMessage] = React.useState("");
   const [expiresInHours, setExpiresInHours] = React.useState(72);
   const [submitting, setSubmitting] = React.useState(false);
+  const [prevOpen, setPrevOpen] = React.useState(open);
+  const [prevPrefill, setPrevPrefill] = React.useState(prefillEmail);
 
-  React.useEffect(() => { if (!open) { setEmail(""); setName(""); setMessage(""); } }, [open]);
-  React.useEffect(() => { if (prefillEmail) setEmail(prefillEmail); }, [prefillEmail]);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (!open) {
+      setEmail("");
+      setName("");
+      setMessage("");
+    }
+  }
+  if (prefillEmail !== prevPrefill) {
+    setPrevPrefill(prefillEmail);
+    if (prefillEmail) setEmail(prefillEmail);
+  }
 
   const handleSubmit = async () => {
     if (!email || !email.includes("@")) return toast.error("بريد إلكتروني غير صالح");
@@ -503,8 +535,15 @@ export function MergeUsersModal({ open, onOpenChange, primaryUserId, primaryUser
   const [mergeEnrollments, setMergeEnrollments] = React.useState(true);
   const [mergeCertificates, setMergeCertificates] = React.useState(true);
   const [submitting, setSubmitting] = React.useState(false);
+  const [prevOpen, setPrevOpen] = React.useState(open);
 
-  React.useEffect(() => { if (!open) { setSecondaryId(""); setConfirmText(""); } }, [open]);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (!open) {
+      setSecondaryId("");
+      setConfirmText("");
+    }
+  }
 
   const handleMerge = async () => {
     if (!primaryUserId || !secondaryId) return toast.error("أدخل ID الحساب الثانوي");
@@ -587,8 +626,16 @@ export function DeleteAnonymizeModal({ open, onOpenChange, user, onSuccess }: De
   const [keepFinancials, setKeepFinancials] = React.useState(true);
   const [confirmText, setConfirmText] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
+  const [prevOpen, setPrevOpen] = React.useState(open);
 
-  React.useEffect(() => { if (!open) { setReason(""); setConfirmText(""); setAction("soft-delete"); } }, [open]);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (!open) {
+      setReason("");
+      setConfirmText("");
+      setAction("soft-delete");
+    }
+  }
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -670,7 +717,12 @@ interface ImpersonateModalProps {
 
 export function ImpersonateModal({ open, onOpenChange, user, onConfirm, loading }: ImpersonateModalProps) {
   const [reason, setReason] = React.useState("");
-  React.useEffect(() => { if (!open) setReason(""); }, [open]);
+  const [prevOpen, setPrevOpen] = React.useState(open);
+
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (!open) setReason("");
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -7,22 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   User,
-  Mail,
-  Phone,
   MapPin,
   Calendar,
   Shield,
-  CreditCard,
   BookOpen,
   Award,
-  Ticket,
-  FileText,
   Activity,
-  Monitor,
-  Flag,
-  Settings,
-  Eye,
-  EyeOff,
   Lock,
   Unlock,
   CheckCircle,
@@ -33,10 +23,10 @@ import {
   Building2,
   GraduationCap,
   UserCheck,
-  UserX,
   Globe,
 } from "lucide-react";
-import { formatNumber, formatCurrency, formatDate } from "@/lib/utils";
+import type { LucideIcon } from "lucide-react";
+import { formatNumber, formatDate } from "@/lib/utils";
 import type { AdminUserListItem } from "@/lib/api/admin-users-api";
 import { UserCoursesTab } from "./user-courses-tab";
 import { UserPaymentsTab } from "./user-payments-tab";
@@ -67,7 +57,7 @@ export function UserProfileView({
   const [activeTab, setActiveTab] = React.useState("overview");
 
   const getUserTypeLabel = (role: string) => {
-    const types: Record<string, { label: string; icon: any; color: string }> = {
+    const types: Record<string, { label: string; icon: LucideIcon; color: string }> = {
       STUDENT: { label: "طالب", icon: GraduationCap, color: "blue" },
       TEACHER: { label: "مدرس", icon: UserCheck, color: "green" },
       ADMIN: { label: "مدير", icon: Shield, color: "red" },

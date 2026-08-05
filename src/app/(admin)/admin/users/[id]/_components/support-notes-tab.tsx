@@ -22,7 +22,7 @@ import {
 import { format, isValid } from "date-fns";
 import { ar } from "date-fns/locale";
 import { adminFetch } from "@/lib/api/admin-api";
-import { useSupportTickets, type SupportTicket, type TicketStatus } from "@/hooks/use-support-tickets";
+import type { SupportTicket, TicketStatus } from "@/hooks/use-support-tickets";
 
 const TICKET_STATUS_META: Record<TicketStatus, { label: string; className: string; icon: React.ElementType }> = {
   open: { label: "مفتوحة", className: "bg-blue-500/10 text-blue-500 border-blue-500/20", icon: CircleDot },
@@ -73,7 +73,8 @@ export function SupportNotesTab({ user }: { user: UserDetails }) {
   }, [user.id]);
 
   React.useEffect(() => {
-    void loadTickets();
+    const timer = window.setTimeout(() => void loadTickets(), 0);
+    return () => window.clearTimeout(timer);
   }, [loadTickets]);
 
   const openTickets = tickets.filter((t) => t.status === "open" || t.status === "in_progress" || t.status === "escalated").length;

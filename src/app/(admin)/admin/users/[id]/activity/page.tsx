@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { adminUsersApi } from "@/lib/api/admin-users-api";
 import { PageHeader } from "@/components/admin/ui/page-header";
 import { AdminButton } from "@/components/admin/ui/admin-button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,6 @@ import {
   Filter,
   Calendar,
   Monitor,
-  MapPin,
   Loader2,
 } from "lucide-react";
 import { format, isValid, formatDistanceToNow } from "date-fns";

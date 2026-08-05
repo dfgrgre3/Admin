@@ -230,13 +230,20 @@ export const apiRoutes = {
     // Subjects & Courses
     subjects: '/api/admin/subjects',
     courses: '/api/admin/courses',
+    coursesMeta: '/api/admin/courses/meta',
+    courseCheckSlug: (slug: string) => `/api/admin/courses/check-slug/${slug}`,
     courseAction: '/api/admin/courses/action',
     courseDuplicate: '/api/admin/courses/duplicate',
     courseBatch: '/api/admin/courses/batch',
     courseExport: '/api/admin/courses/export',
+    courseExportJob: (jobId: string) => `/api/admin/courses/export/${jobId}`,
     courseStudents: (courseId: string) => `/api/admin/courses/${courseId}/students`,
     courseAnalytics: (courseId: string) => `/api/admin/courses/${courseId}/analytics`,
     courseCurriculum: (courseId: string) => `/api/admin/courses/${courseId}/curriculum`,
+    courseModule: (courseId: string, moduleId: string) => `/api/admin/courses/${courseId}/modules/${moduleId}`,
+    courseModulesReorder: (courseId: string) => `/api/admin/courses/${courseId}/modules/reorder`,
+    courseLesson: (courseId: string, lessonId: string) => `/api/admin/courses/${courseId}/lessons/${lessonId}`,
+    courseLessonsReorder: (courseId: string, moduleId: string) => `/api/admin/courses/${courseId}/modules/${moduleId}/lessons/reorder`,
     courseCurriculumStats: (courseId: string) => `/api/admin/courses/${courseId}/curriculum-stats`,
     courseEnrollments: (courseId: string) => `/api/admin/courses/${courseId}/enrollments`,
     courseMarketing: (courseId: string) => `/api/admin/courses/${courseId}/marketing`,
@@ -279,6 +286,11 @@ export const apiRoutes = {
 
     // Categories
     courseCategories: '/api/admin/course-categories',
+
+    // Uploads
+    uploadPresign: '/api/admin/uploads/presign',
+    uploadConfirm: '/api/admin/uploads/confirm',
+    assetStatus: (assetId: string) => `/api/admin/assets/${assetId}/status`,
 
     // Course Certificates
     certificates: '/api/admin/certificates',

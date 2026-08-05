@@ -32,14 +32,12 @@ import { useEffect, useCallback, useRef } from "react";
 
 export function SettingsTab({
   user,
-  editedUser,
   setEditedUser,
   handleUpdate,
   setIsEditing,
   saving = false
 }: {
   user: UserDetails;
-  editedUser: Partial<UserDetails>;
   setEditedUser: (u: Partial<UserDetails>) => void;
   handleUpdate: () => Promise<void>;
   setIsEditing: (e: boolean) => void;

@@ -20,17 +20,12 @@ interface UserNotesTabProps {
   userId: string;
 }
 
-export function UserNotesTab({ userId }: UserNotesTabProps) {
-  const [notes, setNotes] = React.useState<Note[]>([]);
-  const [loading, setLoading] = React.useState(true);
+export function UserNotesTab({ userId: _userId }: UserNotesTabProps) {
+  const [notes] = React.useState<Note[]>([]);
+  const [loading] = React.useState(false);
   const [newNote, setNewNote] = React.useState("");
   const [category, setCategory] = React.useState("general");
   const [isPrivate, setIsPrivate] = React.useState(true);
-
-  React.useEffect(() => {
-    // TODO: Fetch notes from API
-    setLoading(false);
-  }, [userId]);
 
   const handleAddNote = () => {
     if (!newNote.trim()) return;

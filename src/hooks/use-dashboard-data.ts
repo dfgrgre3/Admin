@@ -137,15 +137,15 @@ export function useDashboardData() {
     studyMinutes: Number((aggregatedData.activity as { studyMinutes?: number } | undefined)?.studyMinutes ?? 0),
   }), [aggregatedData.activity]);
 
-  const safeRecentActivity = React.useMemo(() => normalizeRecentActivity(aggregatedData.recentActivity as DashboardData["recentActivity"]), [aggregatedData.recentActivity]);
-  const safeUpcomingEvents = React.useMemo(() => normalizeUpcomingEvents(aggregatedData.upcomingEvents as DashboardData["upcomingEvents"]), [aggregatedData.upcomingEvents]);
+  const safeRecentActivity = React.useMemo(() => normalizeRecentActivity(aggregatedData.recentActivity as unknown as DashboardData["recentActivity"]), [aggregatedData.recentActivity]);
+  const safeUpcomingEvents = React.useMemo(() => normalizeUpcomingEvents(aggregatedData.upcomingEvents as unknown as DashboardData["upcomingEvents"]), [aggregatedData.upcomingEvents]);
   const safeCharts = React.useMemo(() => ({
-    userGrowth: formatUserGrowthData((aggregatedData.charts as DashboardData["charts"])?.userGrowth),
-    activity: (aggregatedData.charts as DashboardData["charts"])?.activity ?? [],
+    userGrowth: formatUserGrowthData((aggregatedData.charts as unknown as DashboardData["charts"])?.userGrowth),
+    activity: (aggregatedData.charts as unknown as DashboardData["charts"])?.activity ?? [],
   }), [aggregatedData.charts]);
 
   const safeGoals = React.useMemo<DashboardGoal[]>(() => {
-    const goals = aggregatedData.goals as DashboardGoal[] | undefined;
+    const goals = aggregatedData.goals as unknown as DashboardGoal[] | undefined;
     if (Array.isArray(goals) && goals.length > 0) {
       return goals;
     }

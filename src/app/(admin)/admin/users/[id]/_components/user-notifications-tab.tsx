@@ -1,12 +1,42 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import * as React from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, isValid } from "date-fns";
 import { ar } from "date-fns/locale";
-import { Bell, CheckCheck, Clock3, Mail, MessageSquareText, Smartphone } from "lucide-react";
+import { Bell, CheckCheck, Clock3, Loader2, Mail, MessageSquareText, Send, Smartphone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { adminUsersApi, type UserNotificationItem } from "@/lib/api/admin-users-api";
+import { usePermission } from "@/components/auth/PermissionGuard";
+import { PERMISSIONS } from "@/lib/permissions";
+import { toast } from "sonner";
+
+type NotificationsPayload = {
+  total?: number;
+  items?: UserNotificationItem[];
+  notifications?: UserNotificationItem[];
+};
+
+const CHANNEL_OPTIONS = [
+  { value: "EMAIL", label: "بريد إلكتروني" },
+  { value: "SMS", label: "رسالة نصية" },
+  { value: "PUSH", label: "إشعار فوري" },
+  { value: "IN_APP", label: "داخل التطبيق" },
+] as const;
 
 const notificationTypeConfig: Record<
   UserNotificationItem["type"],
@@ -19,19 +49,65 @@ const notificationTypeConfig: Record<
 };
 
 export function UserNotificationsTab({ user }: { user: { id: string; name?: string | null } }) {
+  const queryClient = useQueryClient();
+  const { hasPermission } = usePermission();
+  const canSend = hasPermission(PERMISSIONS.USERS_SEND_NOTIFICATIONS);
+
+  const [sendOpen, setSendOpen] = React.useState(false);
+  const [title, setTitle] = React.useState("");
+  const [body, setBody] = React.useState("");
+  const [channels, setChannels] = React.useState<Set<"EMAIL" | "SMS" | "PUSH" | "IN_APP">>(new Set(["IN_APP"]));
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["admin", "user", user.id, "notifications"],
     queryFn: () => adminUsersApi.getUserNotifications(user.id, { limit: 20, page: 1 }),
     staleTime: 30_000,
   });
 
-  const rawItems = Array.isArray((data as any)?.items)
-    ? (data as any).items
-    : Array.isArray((data as any)?.notifications)
-      ? (data as any).notifications
+  const payload = data as NotificationsPayload | undefined;
+  const rawItems = Array.isArray(payload?.items)
+    ? payload.items
+    : Array.isArray(payload?.notifications)
+      ? payload.notifications
       : [];
-  const total = (data as any)?.total ?? rawItems.length;
+  const total = payload?.total ?? rawItems.length;
   const items = rawItems;
+
+  const sendMutation = useMutation({
+    mutationFn: () =>
+      adminUsersApi.sendNotification(user.id, {
+        title: title.trim(),
+        body: body.trim(),
+        channels: Array.from(channels),
+      }),
+    onSuccess: () => {
+      toast.success("تم إرسال الإشعار للمستخدم بنجاح");
+      setSendOpen(false);
+      setTitle("");
+      setBody("");
+      setChannels(new Set(["IN_APP"]));
+      queryClient.invalidateQueries({ queryKey: ["admin", "user", user.id, "notifications"] });
+    },
+    onError: (err: Error) => toast.error(err.message || "فشل إرسال الإشعار"),
+  });
+
+  const toggleChannel = (channel: "EMAIL" | "SMS" | "PUSH" | "IN_APP") => {
+    setChannels((prev) => {
+      const next = new Set(prev);
+      if (next.has(channel)) {
+        next.delete(channel);
+      } else {
+        next.add(channel);
+      }
+      return next;
+    });
+  };
+
+  const resetSendForm = () => {
+    setTitle("");
+    setBody("");
+    setChannels(new Set(["IN_APP"]));
+  };
 
   return (
     <Card className="border-none shadow-lg">
@@ -46,11 +122,23 @@ export function UserNotificationsTab({ user }: { user: { id: string; name?: stri
               آخر {items.length} إشعار مرسل إلى {user.name || "المستخدم"}
             </CardDescription>
           </div>
-          {data && (
-            <Badge variant="secondary" className="rounded-full text-xs">
-              {total} إجمالي
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {data && (
+              <Badge variant="secondary" className="rounded-full text-xs">
+                {total} إجمالي
+              </Badge>
+            )}
+            {canSend && (
+              <Button
+                size="sm"
+                className="rounded-xl gap-1.5"
+                onClick={() => setSendOpen(true)}
+              >
+                <Send className="h-3.5 w-3.5" />
+                إرسال إشعار
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
 
@@ -112,6 +200,89 @@ export function UserNotificationsTab({ user }: { user: { id: string; name?: stri
           </div>
         )}
       </CardContent>
+
+      <Dialog open={sendOpen} onOpenChange={(open) => {
+        setSendOpen(open);
+        if (!open) resetSendForm();
+      }}>
+        <DialogContent dir="rtl" className="rounded-[2rem] border-white/10 bg-card/95 backdrop-blur-xl max-w-md">
+          <DialogHeader className="space-y-3">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20">
+              <Send className="h-7 w-7" />
+            </div>
+            <DialogTitle className="text-center text-xl font-black">
+              إرسال إشعار للمستخدم
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              سيُرسل الإشعار إلى {user.name || "المستخدم"} عبر القنوات المحددة
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="notification-title" className="text-sm font-bold">العنوان *</Label>
+              <Input
+                id="notification-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="مثال: تذكير بموعد الامتحان"
+                className="h-12 rounded-xl"
+                maxLength={120}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notification-body" className="text-sm font-bold">نص الإشعار *</Label>
+              <Textarea
+                id="notification-body"
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                placeholder="اكتب نص الرسالة..."
+                className="rounded-xl min-h-[100px]"
+                maxLength={1000}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-bold">قنوات الإرسال</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {CHANNEL_OPTIONS.map((channel) => (
+                  <label
+                    key={channel.value}
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-bold cursor-pointer transition-colors ${
+                      channels.has(channel.value)
+                        ? "border-primary/40 bg-primary/5 text-primary"
+                        : "hover:bg-muted/50"
+                    }`}
+                  >
+                    <Checkbox
+                      checked={channels.has(channel.value)}
+                      onCheckedChange={() => toggleChannel(channel.value)}
+                    />
+                    {channel.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-3">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-xl h-11"
+              onClick={() => setSendOpen(false)}
+              type="button"
+            >
+              إلغاء
+            </Button>
+            <Button
+              className="flex-1 rounded-xl h-11"
+              disabled={!title.trim() || !body.trim() || channels.size === 0 || sendMutation.isPending}
+              type="button"
+              onClick={() => sendMutation.mutate()}
+            >
+              {sendMutation.isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+              إرسال الإشعار
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

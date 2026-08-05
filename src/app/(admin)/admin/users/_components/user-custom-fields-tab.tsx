@@ -13,7 +13,7 @@ interface CustomField {
   type: "text" | "number" | "date" | "select" | "multiselect" | "checkbox" | "file";
   required: boolean;
   options?: string[];
-  value?: any;
+  value?: unknown;
   isVisible: boolean;
   createdAt: string;
 }
@@ -22,15 +22,9 @@ interface UserCustomFieldsTabProps {
   userId: string;
 }
 
-export function UserCustomFieldsTab({ userId }: UserCustomFieldsTabProps) {
-  const [fields, setFields] = React.useState<CustomField[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [editingField, setEditingField] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    // TODO: Fetch custom fields from API
-    setLoading(false);
-  }, [userId]);
+export function UserCustomFieldsTab({ userId: _userId }: UserCustomFieldsTabProps) {
+  const [fields] = React.useState<CustomField[]>([]);
+  const [loading] = React.useState(false);
 
   const getFieldTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
@@ -59,7 +53,7 @@ export function UserCustomFieldsTab({ userId }: UserCustomFieldsTabProps) {
         );
       case "file":
         return (
-          <a href={field.value} className="text-primary hover:underline">
+          <a href={String(field.value ?? "")} className="text-primary hover:underline">
             عرض الملف
           </a>
         );
@@ -68,11 +62,11 @@ export function UserCustomFieldsTab({ userId }: UserCustomFieldsTabProps) {
         if (Array.isArray(field.value)) {
           return field.value.map((v, i) => (
             <Badge key={i} variant="outline" className="ml-1">
-              {v}
+              {String(v)}
             </Badge>
           ));
         }
-        return <Badge variant="outline">{field.value}</Badge>;
+        return <Badge variant="outline">{String(field.value ?? "")}</Badge>;
       default:
         return <span className="font-bold">{String(field.value)}</span>;
     }

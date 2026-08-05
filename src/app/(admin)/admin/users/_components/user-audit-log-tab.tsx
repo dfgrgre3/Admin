@@ -139,7 +139,8 @@ export function UserAuditLogTab({ userId }: UserAuditLogTabProps) {
   }, [userId]);
 
   React.useEffect(() => {
-    fetchLogs();
+    const timer = window.setTimeout(() => void fetchLogs(), 0);
+    return () => window.clearTimeout(timer);
   }, [fetchLogs]);
 
   // ── Loading skeleton ──────────────────────────────────────────────────────

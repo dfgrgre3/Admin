@@ -294,14 +294,15 @@ class ApiClient {
     }
 
     /**
-     * Parses an error response. Returns `true` when the caller should retry;
-     * otherwise throws an ApiError.
+     * Parses an error response and throws an ApiError.
+     * Note: retryable 5xx/408 statuses are already retried inside executeFetch,
+     * so this only formats the final failure.
      */
-    private async handleErrorAndReturnRetry(response: Response, retryCount: number, retries: number): Promise<boolean> {
+    private async handleErrorAndThrow(response: Response): Promise<never> {
         let errorMessage = `Server error: ${response.statusText}`;
         let errorCode = 'HTTP_ERROR';
         let errorData: unknown = null;
-        
+
         const responseText = await response.text();
         try {
             errorData = JSON.parse(responseText);
@@ -314,21 +315,17 @@ class ApiClient {
             if (responseText) errorMessage = responseText;
         }
 
-        // 429 is already handled (with Retry-After) in executeFetch; never retry it here.
-        const shouldRetry = [408, 500, 502, 503, 504].includes(response.status) && retryCount < retries;
-        if (!shouldRetry) {
-            throw new ApiError(errorMessage, response.status, errorCode, errorData);
-        }
-        return true;
+        throw new ApiError(errorMessage, response.status, errorCode, errorData);
     }
 
     /**
      * Typed request — uses executeFetch internally and parses the JSON response.
-     * This eliminates the duplication between fetch() and request().
+     * All retries (network, 5xx, CSRF, 401-refresh, 429) live in executeFetch,
+     * so request() must not retry again or failures get amplified 4x.
      */
-    private async request<T>(endpoint: string, options: FetchOptions = {}, retryCount = 0): Promise<T> {
-        const response = await this.executeFetch(endpoint, options, retryCount);
-        
+    private async request<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
+        const response = await this.executeFetch(endpoint, options);
+
         // Check for empty response
         const contentLength = response.headers.get('content-length');
         if (response.status === 204 || contentLength === '0') {
@@ -336,11 +333,7 @@ class ApiClient {
         }
 
         if (!response.ok) {
-            const shouldRetry = await this.handleErrorAndReturnRetry(response, retryCount, options.retries ?? MAX_RETRIES);
-            if (shouldRetry) {
-                await sleep(retryDelay(retryCount));
-                return this.request<T>(endpoint, options, retryCount + 1);
-            }
+            await this.handleErrorAndThrow(response);
         }
 
         const payload = await response.json() as T | ApiEnvelope<T>;

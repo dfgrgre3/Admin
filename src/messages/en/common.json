@@ -1,4 +1,4 @@
-﻿{
+{
   "nav": {
     "home": "Home",
     "timeManagement": "Time Management",
@@ -117,5 +117,256 @@
     "notFound": "Page not found",
     "timeout": "Request timeout",
     "tryAgain": "Please try again"
+  },
+  "courses": {
+    "title": "Course Management",
+    "subtitle": "Manage content, students, and financial performance for Thanawy platform",
+    "manageCategories": "Manage Categories",
+    "newCourse": "New Course",
+    "resultsCount": "Results",
+    "stats": {
+      "total": "Total Courses",
+      "published": "Published",
+      "draft": "Draft",
+      "archived": "Archived",
+      "pendingReview": "Pending Review",
+      "rejected": "Rejected",
+      "enrollments": "Total Enrollments",
+      "active": "Active",
+      "paid": "Paid",
+      "free": "Free"
+    },
+    "fields": {
+      "title": "Course",
+      "price": "Price",
+      "duration": "Duration",
+      "students": "Students",
+      "modules": "Modules",
+      "level": "Level",
+      "status": "Status",
+      "actions": "Actions",
+      "levelBeginner": "Beginner",
+      "levelIntermediate": "Intermediate",
+      "levelAdvanced": "Advanced",
+      "freeLabel": "Free",
+      "instructorPlaceholder": "No Instructor"
+    },
+    "status": {
+      "draft": "Draft",
+      "pendingReview": "Pending Review",
+      "published": "Published",
+      "rejected": "Rejected",
+      "archived": "Archived"
+    },
+    "filters": {
+      "title": "Filters & Options",
+      "searchPlaceholder": "Search by course name or code...",
+      "clearSearch": "Clear search",
+      "allStatuses": "All Statuses",
+      "allLevels": "All Levels",
+      "allCategories": "All Categories",
+      "sortNewest": "Newest",
+      "sortOldest": "Oldest",
+      "sortPriceAsc": "Price: Low to High",
+      "sortPriceDesc": "Price: High to Low",
+      "sortEnrollments": "Most Enrolled",
+      "sortName": "Name",
+      "viewGrid": "Grid view",
+      "viewList": "List view",
+      "refresh": "Refresh",
+      "addCourse": "New Course",
+      "filterBy": "Filter by",
+      "category": "Category",
+      "sort": "Sort by",
+      "clearAll": "Clear All"
+    },
+    "card": {
+      "featured": "Featured",
+      "free": "Free",
+      "noInstructor": "No Instructor"
+    },
+    "selection": {
+      "select": "Select course",
+      "deselect": "Deselect course",
+      "selectPage": "Select all on page",
+      "deselectPage": "Deselect all on page",
+      "selectedCount": "{{count}} courses selected"
+    },
+    "bulk": {
+      "selected": "Selected",
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "archive": "Archive",
+      "restore": "Restore",
+      "delete": "Delete",
+      "clear": "Clear Selection"
+    },
+    "actions": {
+      "label": "Actions",
+      "view": "View course",
+      "edit": "Edit",
+      "duplicate": "Duplicate",
+      "archive": "Archive",
+      "restore": "Restore",
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "delete": "Delete",
+      "export": "Export",
+      "cancelSelection": "Clear selection",
+      "curriculum": "Curriculum",
+      "analytics": "Analytics",
+      "viewInSite": "View on Site",
+      "deleteConfirmTitle": "Delete Course Permanently",
+      "deleteConfirmDesc": "The course will be permanently deleted if there are no registered students. This action is irreversible.",
+      "deleteConfirm": "Yes, delete",
+      "archiveConfirmTitle": "Archive course",
+      "archiveConfirmDesc": "The course will be hidden from the site and access will be restricted. You can restore it at any time.",
+      "restoreConfirmTitle": "Restore course",
+      "restoreConfirmDesc": "The course will be reactivated and its publish status reviewed. Continue?",
+      "bulkDeleteTitle": "Delete Selected Courses",
+      "bulkDeleteDesc": "{{count}} courses will be permanently deleted if no students are enrolled. This action is irreversible.",
+      "bulkArchiveTitle": "Archive Selected Courses",
+      "bulkArchiveDesc": "{{count}} courses will be archived and hidden from the site. You can restore them at any time.",
+      "categoryDeleteTitle": "Delete Category",
+      "categoryDeleteDesc": "The category will be permanently deleted. Are you sure?",
+      "categoryDeleteConfirm": "Yes, delete category"
+    },
+    "empty": {
+      "create": "Create New Course",
+      "noDataTitle": "No courses yet",
+      "noDataDesc": "Start by adding your first course — it will show up here.",
+      "noFilteredTitle": "No matching results",
+      "noFilteredDesc": "Try adjusting your search or removing filters to find other results.",
+      "clearFilters": "Clear filters",
+      "clearSearch": "Clear search"
+    },
+    "error": {
+      "loadTitle": "Failed to load courses",
+      "loadDesc": "An error occurred while fetching data from the server. Check your connection and try again.",
+      "retry": "Retry"
+    },
+    "errors": {
+      "generic": "An unexpected error occurred",
+      "saveFailed": "Failed to save the course",
+      "deleteFailed": "Failed to delete the course",
+      "statusFailed": "Failed to change publish status",
+      "archiveFailed": "Failed to update archive status",
+      "categorySaveFailed": "Failed to save the category",
+      "categoryDeleteFailed": "Failed to delete the category",
+      "duplicateFailed": "Failed to duplicate the course",
+      "bulkFailed": "Failed to run the bulk action"
+    },
+    "toasts": {
+      "created": "Course created successfully",
+      "updated": "Course updated successfully",
+      "deleted": "Course deleted",
+      "published": "Course published",
+      "unpublished": "Course unpublished",
+      "archived": "Course archived",
+      "restored": "Course restored",
+      "categoryCreated": "Category created",
+      "categoryUpdated": "Category updated",
+      "categoryDeleted": "Category deleted",
+      "duplicated": "Course duplicated",
+      "bulkDone": "Bulk action applied to the selected courses",
+      "bulkPartial": "Applied to {{succeeded}}, failed for {{failed}}"
+    },
+    "actionDefaults": {
+      "title": "Untitled course"
+    },
+    "description": "Manage courses, curricula, and students",
+    "edit": {
+      "title": "Edit Course",
+      "description": "Edit course data and settings",
+      "goToCurriculum": "Manage Curriculum"
+    },
+    "pagination": {
+      "showing": "Showing {{start}}–{{end}} of",
+      "perPage": "{{count}} per page",
+      "first": "First page",
+      "previous": "Previous page",
+      "page": "Page {{page}}",
+      "next": "Next page",
+      "last": "Last page"
+    },
+    "form": {
+      "basicInfo": "Basic Information",
+      "settings": "Settings",
+      "pricing": "Pricing",
+      "seo": "SEO",
+      "subtitle": "Subtitle",
+      "shortDescription": "Short Description",
+      "description": "Full Description",
+      "language": "Language",
+      "category": "Category",
+      "instructor": "Instructor",
+      "visibility": "Visibility",
+      "selectInstructor": "Select an instructor",
+      "noInstructor": "No instructor",
+      "priceType": "Price Type",
+      "price": "Price",
+      "currency": "Currency",
+      "metaTitle": "SEO Title",
+      "metaDescription": "SEO Description",
+      "titlePlaceholder": "Enter course title"
+    },
+    "validation": {
+      "titleRequired": "Course title is required",
+      "slugRequired": "Slug is required",
+      "slugFormat": "Slug must contain only lowercase letters, numbers, and hyphens",
+      "titleMax": "Title must be 200 characters or less",
+      "subtitleMax": "Subtitle must be 300 characters or less",
+      "shortDescMax": "Short description must be 500 characters or less",
+      "priceMin": "Price cannot be negative",
+      "currencyRequired": "Currency is required",
+      "invalidUrl": "Please enter a valid URL",
+      "metaTitleMax": "Meta title must be 70 characters or less",
+      "metaDescMax": "Meta description must be 160 characters or less",
+      "moduleTitleRequired": "Module title is required",
+      "lessonTitleRequired": "Lesson title is required",
+      "selectAtLeastOne": "Please select at least one item"
+    },
+    "publish": {
+      "missingRequirements": "Missing publish requirements"
+    },
+    "curriculum": {
+      "title": "Course Curriculum",
+      "modules": "Modules",
+      "lessons": "Lessons",
+      "addModule": "Add Module",
+      "editModule": "Edit Module",
+      "addLesson": "Add Lesson",
+      "editLesson": "Edit Lesson",
+      "deleteLesson": "Delete Lesson",
+      "empty": "No modules yet",
+      "emptyDesc": "Start by adding a module to organize course content.",
+      "noLessons": "No lessons in this module",
+      "moduleDialogDesc": "Enter module details",
+      "lessonDialogDesc": "Enter lesson details",
+      "moduleTitle": "Module Title",
+      "moduleDescription": "Module Description",
+      "lessonTitle": "Lesson Title",
+      "lessonType": "Lesson Type",
+      "freePreview": "Free Preview",
+      "content": "Content",
+      "videoUrl": "Video URL",
+      "deleteLessonDesc": "This lesson will be permanently deleted. Are you sure?"
+    },
+    "error": {
+      "unauthorized": "You are not authorized to access this page"
+    },
+    "lessonType": {
+      "video": "Video",
+      "text": "Text",
+      "quiz": "Quiz",
+      "assignment": "Assignment",
+      "download": "Download",
+      "externalLink": "External Link"
+    },
+    "priceType": {
+      "free": "Free",
+      "paid": "Paid",
+      "subscription": "Subscription"
+    }
   }
 }
