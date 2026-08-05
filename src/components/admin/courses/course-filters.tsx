@@ -13,6 +13,9 @@ import {
   SlidersHorizontal,
   ArrowUpDown,
   Keyboard,
+  Tag,
+  User,
+  DollarSign,
 } from "lucide-react";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import { Input } from "@/components/ui/input";
@@ -29,9 +32,12 @@ import { cn } from "@/lib/utils";
 interface CourseFiltersProps {
   onSearch: (query: string) => void;
   onFilterChange: (filters: { level: string; status: string; category: string }) => void;
+  onPriceTypeChange?: (priceType: string) => void;
+  onInstructorChange?: (instructorId: string) => void;
   onViewChange: (view: "grid" | "list") => void;
   currentView: "grid" | "list";
   categories: Array<{ id: string; name: string }>;
+  teachers?: Array<{ id: string; name: string }>;
   onRefresh: () => void;
   onAddCourse: () => void;
   totalCount?: number;
@@ -39,12 +45,21 @@ interface CourseFiltersProps {
   onSortChange?: (sort: string) => void;
 }
 
+interface ActiveFilterChip {
+  key: string;
+  label: string;
+  onRemove: () => void;
+}
+
 export function CourseFilters({
   onSearch,
   onFilterChange,
+  onPriceTypeChange,
+  onInstructorChange,
   onViewChange,
   currentView,
   categories,
+  teachers = [],
   onRefresh,
   onAddCourse,
   totalCount,
@@ -55,6 +70,8 @@ export function CourseFilters({
   const [level, setLevel] = React.useState("ALL");
   const [status, setStatus] = React.useState("ALL");
   const [category, setCategory] = React.useState("ALL");
+  const [priceType, setPriceType] = React.useState("ALL");
+  const [instructor, setInstructor] = React.useState("ALL");
   const [sort, setSort] = React.useState("newest");
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [showFilters, setShowFilters] = React.useState(false);
@@ -64,8 +81,36 @@ export function CourseFilters({
     level !== "ALL",
     status !== "ALL",
     category !== "ALL",
+    priceType !== "ALL",
+    instructor !== "ALL",
     search !== "",
   ].filter(Boolean).length;
+
+  // Build active filter chips
+  const activeChips: ActiveFilterChip[] = React.useMemo(() => {
+    const chips: ActiveFilterChip[] = [];
+    if (search) chips.push({ key: "search", label: `بحث: "${search}"`, onRemove: () => { setSearch(""); onSearch(""); } });
+    if (level !== "ALL") {
+      const levelLabels: Record<string, string> = { BEGINNER: "مبتدئ", INTERMEDIATE: "متوسط", ADVANCED: "متقدم" };
+      chips.push({ key: "level", label: `المستوى: ${levelLabels[level] ?? level}`, onRemove: () => { setLevel("ALL"); onFilterChange({ level: "ALL", status, category }); } });
+    }
+    if (status !== "ALL") {
+      const statusLabels: Record<string, string> = { draft: "مسودة", pending_review: "قيد المراجعة", published: "منشور", archived: "مؤرشف" };
+      chips.push({ key: "status", label: `الحالة: ${statusLabels[status] ?? status}`, onRemove: () => { setStatus("ALL"); onFilterChange({ level, status: "ALL", category }); } });
+    }
+    if (category !== "ALL") {
+      const cat = categories.find((c) => c.id === category);
+      chips.push({ key: "category", label: `التصنيف: ${cat?.name ?? category}`, onRemove: () => { setCategory("ALL"); onFilterChange({ level, status, category: "ALL" }); } });
+    }
+    if (priceType !== "ALL") {
+      chips.push({ key: "price", label: priceType === "FREE" ? "مجانية" : "مدفوعة", onRemove: () => { setPriceType("ALL"); onPriceTypeChange?.("ALL"); } });
+    }
+    if (instructor !== "ALL") {
+      const teacher = teachers.find((t) => t.id === instructor);
+      chips.push({ key: "instructor", label: `المدرس: ${teacher?.name ?? instructor}`, onRemove: () => { setInstructor("ALL"); onInstructorChange?.("ALL"); } });
+    }
+    return chips;
+  }, [search, level, status, category, priceType, instructor, categories, teachers, onFilterChange, onPriceTypeChange, onInstructorChange, onSearch]);
 
   // Debounced search
   React.useEffect(() => {
@@ -110,9 +155,13 @@ export function CourseFilters({
     setLevel("ALL");
     setStatus("ALL");
     setCategory("ALL");
+    setPriceType("ALL");
+    setInstructor("ALL");
     setSort("newest");
     onSearch("");
     onFilterChange({ level: "ALL", status: "ALL", category: "ALL" });
+    onPriceTypeChange?.("ALL");
+    onInstructorChange?.("ALL");
     onSortChange?.("newest");
   };
 
@@ -240,6 +289,41 @@ export function CourseFilters({
         </div>
       </div>
 
+      {/* Active Filter Chips */}
+      <AnimatePresence>
+        {activeChips.length > 0 && (
+          <m.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="flex flex-wrap items-center gap-2"
+          >
+            <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground/60">
+              فلاتر نشطة:
+            </span>
+            {activeChips.map((chip) => (
+              <m.button
+                key={chip.key}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                onClick={chip.onRemove}
+                className="group flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[11px] font-bold text-primary transition-all hover:bg-primary/10 hover:border-primary/30"
+              >
+                {chip.label}
+                <X className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity" />
+              </m.button>
+            ))}
+            <button
+              onClick={handleReset}
+              className="text-[11px] font-black text-red-500 hover:text-red-600 transition-colors"
+            >
+              مسح الكل
+            </button>
+          </m.div>
+        )}
+      </AnimatePresence>
+
       {/* Filters Panel */}
       <AnimatePresence>
         {showFilters && (
@@ -312,6 +396,55 @@ export function CourseFilters({
                   ))}
                 </SelectContent>
               </Select>
+
+              {/* Price Type Filter */}
+              {onPriceTypeChange && (
+                <Select
+                  value={priceType}
+                  onValueChange={(val) => {
+                    setPriceType(val);
+                    onPriceTypeChange(val);
+                  }}
+                >
+                  <SelectTrigger className="w-32 h-10 rounded-xl bg-background/70 text-xs font-bold border-border/60">
+                    <div className="flex items-center gap-1.5">
+                      <DollarSign className="h-3 w-3" />
+                      <SelectValue placeholder="نوع السعر" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="ALL" className="font-bold text-xs">كل الأسعار</SelectItem>
+                    <SelectItem value="FREE" className="font-bold text-xs">مجانية</SelectItem>
+                    <SelectItem value="PAID" className="font-bold text-xs">مدفوعة</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+
+              {/* Instructor Filter */}
+              {onInstructorChange && teachers.length > 0 && (
+                <Select
+                  value={instructor}
+                  onValueChange={(val) => {
+                    setInstructor(val);
+                    onInstructorChange(val);
+                  }}
+                >
+                  <SelectTrigger className="w-40 h-10 rounded-xl bg-background/70 text-xs font-bold border-border/60">
+                    <div className="flex items-center gap-1.5">
+                      <User className="h-3 w-3" />
+                      <SelectValue placeholder="المدرس" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="ALL" className="font-bold text-xs">كل المدرسين</SelectItem>
+                    {teachers.map((teacher) => (
+                      <SelectItem key={teacher.id} value={teacher.id} className="font-bold text-xs">
+                        {teacher.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
 
               {/* Sort */}
               {onSortChange && (

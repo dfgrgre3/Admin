@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
@@ -7,25 +7,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { Resolver } from "react-hook-form";
 import {
-  Archive,
-  BookOpen,
-  CheckCircle2,
-  DollarSign,
-  Gift,
   Plus,
   Tags,
-  TrendingUp,
-  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog";
+import { CourseStats } from "@/components/admin/courses/dashboard-stats";
 import { CourseFilters } from "@/components/admin/courses/course-filters";
 import { CourseContentView } from "@/components/admin/courses/course-content-view";
 import { CourseBulkActions } from "@/components/admin/courses/course-bulk-actions";
 import { CoursePagination } from "@/components/admin/courses/course-pagination";
 import { CourseEmptyState } from "@/components/admin/courses/course-empty-state";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn, formatNumber, formatPrice } from "@/lib/utils";
 import { apiRoutes } from "@/lib/api/routes";
 import { adminFetch } from "@/lib/api/admin-api";
 import { COURSE_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
@@ -57,6 +51,27 @@ interface CoursesResponse {
   };
 }
 
+interface CourseStatsResponse {
+  data?: {
+    stats?: {
+      totalCourses?: number;
+      publishedCourses?: number;
+      draftCourses?: number;
+      archivedCourses?: number;
+      totalEnrollments?: number;
+      activeStudents?: number;
+      totalRevenue?: number;
+      avgCompletion?: number;
+      paidCourses?: number;
+      freeCourses?: number;
+      growth?: {
+        enrollments?: number;
+        revenue?: number;
+      };
+    };
+  };
+}
+
 export default function AdminCoursesPage() {
   const router = useRouter();
   const { hasPermission } = usePermission();
@@ -83,6 +98,8 @@ export default function AdminCoursesPage() {
   const [filterLevel, setFilterLevel] = React.useState("ALL");
   const [filterStatus, setFilterStatus] = React.useState("ALL");
   const [filterCategory, setFilterCategory] = React.useState("ALL");
+  const [filterPriceType, setFilterPriceType] = React.useState("ALL");
+  const [filterInstructor, setFilterInstructor] = React.useState("ALL");
   const [sortBy, setSortBy] = React.useState("newest");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -99,6 +116,8 @@ export default function AdminCoursesPage() {
       filterLevel,
       filterStatus,
       filterCategory,
+      filterPriceType,
+      filterInstructor,
       sortBy],
 
     queryFn: async () => {
@@ -110,6 +129,9 @@ export default function AdminCoursesPage() {
       if (deferredSearch) params.set("search", deferredSearch);
       if (filterLevel !== "ALL") params.set("level", filterLevel);
       if (filterCategory !== "ALL") params.set("categoryId", filterCategory);
+      if (filterPriceType === "FREE") params.set("price", "0");
+      if (filterPriceType === "PAID") params.set("price", ">0");
+      if (filterInstructor !== "ALL") params.set("instructorId", filterInstructor);
 
       // Use the new status field for lifecycle filtering
       if (filterStatus !== "ALL") params.set("status", filterStatus.toLowerCase());
@@ -131,6 +153,21 @@ export default function AdminCoursesPage() {
     if (pagination.totalPages) return pagination.totalPages;
     return Math.max(1, Math.ceil((pagination.total || 0) / Math.max(limit, 1)));
   }, [pagination, limit]);
+
+  // Separate query for global stats (not limited to current page)
+  const { data: statsResponse } = useQuery({
+    queryKey: ["admin", "courses", "stats"],
+    queryFn: async () => {
+      try {
+        const response = await adminFetch(`${apiRoutes.admin.courses}?limit=1&stats=true`);
+        if (!response.ok) return null;
+        return (await response.json()) as CourseStatsResponse;
+      } catch {
+        return null;
+      }
+    },
+    staleTime: 60_000
+  });
 
   const { data: teachers = [] } = useQuery({
     queryKey: ["admin", "teachers"],
@@ -171,36 +208,38 @@ export default function AdminCoursesPage() {
 
   React.useEffect(() => {
     setPage(1);
-  }, [deferredSearch, filterLevel, filterStatus, filterCategory, sortBy]);
+  }, [deferredSearch, filterLevel, filterStatus, filterCategory, filterPriceType, filterInstructor, sortBy]);
 
+  // Stats: prefer backend stats if available, fallback to pagination total + page data
   const statsData = React.useMemo(() => {
-    const totalEnrollments = courses.reduce((s, c) => s + (c._count?.enrollments || 0), 0);
-    const totalRevenue = courses.reduce((s, c) => s + c.price * (c._count?.enrollments || 0), 0);
-    const publishedCourses = courses.filter((c) => c.isPublished).length;
-    const draftCourses = courses.filter((c) => !c.isPublished).length;
-    const archivedCourses = courses.filter((c) => !c.isActive).length;
-    const privateCourses = courses.filter((c) => !c.isPublished).length;
-    const publicCourses = courses.filter((c) => c.isPublished).length;
-    const paidCourses = courses.filter((c) => c.price > 0).length;
-    const freeCourses = courses.filter((c) => c.price === 0).length;
-    const activeEnrollments = Math.round(totalEnrollments * 0.72);
-    
+    const backendStats = statsResponse?.data?.stats;
+    const pageEnrollments = courses.reduce((s, c) => s + (c._count?.enrollments || 0), 0);
+    const pageRevenue = courses.reduce((s, c) => s + c.price * (c._count?.enrollments || 0), 0);
+    const pagePublished = courses.filter((c) => c.isPublished).length;
+    const pageDraft = courses.filter((c) => !c.isPublished).length;
+    const pageArchived = courses.filter((c) => !c.isActive).length;
+    const pagePaid = courses.filter((c) => c.price > 0).length;
+    const pageFree = courses.filter((c) => c.price === 0).length;
+
     return {
-      totalEnrollments,
-      totalRevenue,
-      activeStudents: activeEnrollments,
-      avgCompletion: 65,
-      totalCourses: pagination?.total ?? courses.length,
-      publishedCourses,
-      draftCourses,
-      archivedCourses,
-      privateCourses,
-      publicCourses,
-      paidCourses,
-      freeCourses,
-      growth: { enrollments: 12, revenue: 8 }
+      totalEnrollments: backendStats?.totalEnrollments ?? pageEnrollments,
+      totalRevenue: backendStats?.totalRevenue ?? pageRevenue,
+      activeStudents: backendStats?.activeStudents ?? Math.round(pageEnrollments * 0.72),
+      avgCompletion: backendStats?.avgCompletion ?? 65,
+      totalCourses: backendStats?.totalCourses ?? pagination?.total ?? courses.length,
+      publishedCourses: backendStats?.publishedCourses ?? pagePublished,
+      draftCourses: backendStats?.draftCourses ?? pageDraft,
+      archivedCourses: backendStats?.archivedCourses ?? pageArchived,
+      privateCourses: backendStats?.draftCourses ?? pageDraft,
+      publicCourses: backendStats?.publishedCourses ?? pagePublished,
+      paidCourses: backendStats?.paidCourses ?? pagePaid,
+      freeCourses: backendStats?.freeCourses ?? pageFree,
+      growth: {
+        enrollments: backendStats?.growth?.enrollments ?? 12,
+        revenue: backendStats?.growth?.revenue ?? 8
+      }
     };
-  }, [courses, pagination]);
+  }, [courses, pagination, statsResponse]);
 
   const _openQuickCreate = (course?: Course) => {
     if (course) {
@@ -294,7 +333,7 @@ export default function AdminCoursesPage() {
     }
   };
 
-  const handleToggleStatus = async (course: Course) => {
+  const handleToggleStatus = async (course: Course | import("@/components/admin/courses/types").CourseBase) => {
     try {
       const response = await adminFetch(apiRoutes.admin.courses, {
         method: "PATCH",
@@ -368,7 +407,7 @@ export default function AdminCoursesPage() {
     }
   };
 
-const handleToggleActive = async (course: Course) => {
+  const handleToggleActive = async (course: Course | import("@/components/admin/courses/types").CourseBase) => {
     try {
       const response = await adminFetch(apiRoutes.admin.courses, {
         method: "PATCH",
@@ -434,6 +473,7 @@ const handleToggleActive = async (course: Course) => {
 
   return (
     <div className="space-y-8" dir="rtl">
+      {/* Header - simplified, no stats grid */}
       <div className="relative overflow-hidden rounded-[2.5rem] border border-border/50 bg-card/30 p-8 backdrop-blur-xl">
         <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-[80px]" />
         <div className="absolute -right-20 -bottom-20 h-64 w-64 rounded-full bg-violet-500/10 blur-[80px]" />
@@ -470,28 +510,10 @@ const handleToggleActive = async (course: Course) => {
             </AdminButton>
           </div>}
         </div>
-
-        <div className="mt-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-          {[
-            { label: "إجمالي الدورات", value: statsData.totalCourses, icon: BookOpen, color: "text-blue-500" },
-            { label: "المنشورة", value: statsData.publishedCourses, icon: CheckCircle2, color: "text-emerald-500" },
-            { label: "مسودة", value: statsData.draftCourses, icon: Tags, color: "text-orange-500" },
-            { label: "مؤرشفة", value: statsData.archivedCourses, icon: Archive, color: "text-slate-500" },
-            { label: "إجمالي الاشتراكات", value: statsData.totalEnrollments, icon: Users, color: "text-violet-500" },
-            { label: "نشطة", value: statsData.activeStudents, icon: TrendingUp, color: "text-cyan-500" },
-            { label: "مدفوعة", value: statsData.paidCourses, icon: DollarSign, color: "text-emerald-500" },
-            { label: "مجانية", value: statsData.freeCourses, icon: Gift, color: "text-pink-500" },
-          ].map((stat, i) => (
-            <div key={i} className="rounded-2xl border border-border/50 bg-background/40 p-4 backdrop-blur-md">
-              <div className="flex items-center gap-2 mb-1">
-                <stat.icon className={cn("h-3 w-3", stat.color)} />
-                <span className="text-[10px] font-black uppercase text-muted-foreground">{stat.label}</span>
-              </div>
-              <p className="text-xl font-black">{stat.value}</p>
-            </div>
-          ))}
-        </div>
       </div>
+
+      {/* Stats - using the dedicated CourseStats component */}
+      <CourseStats stats={statsData} />
 
       <CourseFilters
         onSearch={setSearch}
@@ -500,10 +522,13 @@ const handleToggleActive = async (course: Course) => {
           setFilterStatus(filters.status);
           setFilterCategory(filters.category);
         }}
+        onPriceTypeChange={setFilterPriceType}
+        onInstructorChange={setFilterInstructor}
         onSortChange={setSortBy}
         onViewChange={setView}
         currentView={view}
         categories={categories}
+        teachers={teachers}
         onRefresh={() => refetch()}
         onAddCourse={() => setQuickCreateOpen(true)}
         totalCount={pagination?.total ?? courses.length}
@@ -541,6 +566,7 @@ const handleToggleActive = async (course: Course) => {
         handleBatchAction={handleBatchAction}
         handleDuplicate={handleDuplicate}
         handleToggleStatus={handleToggleStatus}
+        handleToggleActive={handleToggleActive}
         handleExport={handleExport}
         refetch={refetch}
         router={router}

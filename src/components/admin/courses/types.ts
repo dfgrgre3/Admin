@@ -29,6 +29,9 @@ export interface CourseBase {
   coursePrerequisites?: string[] | null;
   targetAudience?: string[] | null;
   whatYouLearn?: string[] | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  status?: "draft" | "pending_review" | "published" | "archived" | string;
   _count: {
     enrollments: number;
     topics: number;
@@ -76,4 +79,7 @@ export interface CourseActionCallbacks {
   onDuplicate?: (course: CourseBase) => void;
   onDelete?: (course: CourseBase) => void;
   onToggleStatus?: (course: CourseBase) => void;
+  onToggleActive?: (course: CourseBase) => void;
+  onViewCurriculum?: (course: CourseBase) => void;
+  onViewAnalytics?: (course: CourseBase) => void;
 }

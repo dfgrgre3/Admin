@@ -151,7 +151,7 @@ function VideoEngagementCard({ userId }: { userId: string }) {
               <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">معدل إكمال الفيديوهات</span>
               <span className="text-sm font-black text-primary">{completionRate}%</span>
             </div>
-            <Progress value={completionRate} label="معدل إكمال الفيديوهات" className="h-2 bg-primary/10" />
+            <Progress value={completionRate} aria-label="معدل إكمال الفيديوهات" className="h-2 bg-primary/10" />
           </div>
         )}
 

@@ -161,11 +161,21 @@ export function CourseEditor({
         whatYouLearn: toMultiline(savedCourse.whatYouLearn),
         simpleDescription: toMultiline(savedCourse.simpleDescription),
       });
+
+      const createdCourseId = !isEdit && (
+        result?.data?.course?.id ||
+        result?.course?.id ||
+        result?.data?.id ||
+        result?.data?.course_id ||
+        result?.id
+      );
+
       router.refresh();
 
-      const createdCourseId = !isEdit && (result?.data?.course?.id || result?.id);
       if (createdCourseId) {
         router.push(`/admin/courses/${createdCourseId}/curriculum`);
+      } else if (!isEdit) {
+        router.push("/admin/courses");
       }
     } catch (error: unknown) {
       const err = error as Error;

@@ -21,6 +21,7 @@ import {
   Unlock,
   Layers,
   GraduationCap,
+  Calendar,
 } from "lucide-react";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import { Badge } from "@/components/ui/badge";
@@ -74,6 +75,17 @@ export const CourseListItem = React.memo(function CourseListItem({
   const level = (levelConfig[course.level] ?? levelConfig.INTERMEDIATE)!;
   const isFree = !course.price || course.price === 0;
   const canManage = Boolean(onEdit || onDuplicate || onDelete || onToggleStatus);
+
+  const formatShortDate = (dateStr?: string | null) => {
+    if (!dateStr) return null;
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString("ar-EG", { month: "short", day: "numeric" });
+    } catch {
+      return null;
+    }
+  };
+  const updatedDate = formatShortDate(course.updatedAt);
 
   return (
     <m.div
@@ -200,6 +212,14 @@ export const CourseListItem = React.memo(function CourseListItem({
           {course.isPublished ? "منشورة" : "مسودة"}
         </Badge>
       </div>
+
+      {/* Date */}
+      {updatedDate && (
+        <div className="hidden items-center gap-1 text-[10px] font-bold text-muted-foreground/60 2xl:flex">
+          <Calendar className="h-3 w-3" />
+          <span>{updatedDate}</span>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center gap-1.5 shrink-0">

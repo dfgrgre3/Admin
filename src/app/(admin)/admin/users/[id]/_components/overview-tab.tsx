@@ -210,7 +210,7 @@ export function OverviewTab({ user }: { user: UserDetails }) {
           </div>
           <Progress
             value={levelProgress}
-            label="التقدم نحو المستوى التالي"
+            aria-label="التقدم نحو المستوى التالي"
             className="h-3 rounded-full bg-primary/10"
             indicatorClassName="bg-gradient-to-r from-primary to-primary/60"
           />
@@ -262,7 +262,7 @@ export function OverviewTab({ user }: { user: UserDetails }) {
                   <div className="relative">
                     <Progress
                       value={percentage}
-                      label={`نسبة ${xp.label}`}
+                      aria-label={`نسبة ${xp.label}`}
                       className="h-2.5 rounded-full bg-muted"
                       indicatorClassName={`${xp.color} shadow-md`}
                     />

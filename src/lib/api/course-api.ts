@@ -183,6 +183,44 @@ export interface CourseListFilters {
   limit?: number;
 }
 
+function prepareCoursePayload<T extends Record<string, any>>(data: T): Record<string, any> {
+  const payload: Record<string, any> = { ...data };
+
+  let targetAudienceStr: string | undefined = undefined;
+  if (Array.isArray(payload.target_audience)) {
+    targetAudienceStr = payload.target_audience.filter(Boolean).join('\n');
+  } else if (typeof payload.target_audience === 'string') {
+    targetAudienceStr = payload.target_audience;
+  } else if (Array.isArray(payload.targetAudience)) {
+    targetAudienceStr = payload.targetAudience.filter(Boolean).join('\n');
+  } else if (typeof payload.targetAudience === 'string') {
+    targetAudienceStr = payload.targetAudience;
+  }
+
+  if (targetAudienceStr !== undefined) {
+    payload.targetAudience = targetAudienceStr;
+    payload.target_audience = targetAudienceStr;
+  }
+
+  let prereqStr: string | undefined = undefined;
+  if (Array.isArray(payload.prerequisites_text)) {
+    prereqStr = payload.prerequisites_text.filter(Boolean).join('\n');
+  } else if (typeof payload.prerequisites_text === 'string') {
+    prereqStr = payload.prerequisites_text;
+  } else if (Array.isArray(payload.prerequisitesText)) {
+    prereqStr = payload.prerequisitesText.filter(Boolean).join('\n');
+  } else if (typeof payload.prerequisitesText === 'string') {
+    prereqStr = payload.prerequisitesText;
+  }
+
+  if (prereqStr !== undefined) {
+    payload.prerequisitesText = prereqStr;
+    payload.prerequisites_text = prereqStr;
+  }
+
+  return payload;
+}
+
 export const courseApi = {
   // Course CRUD
   listCourses: async (filters?: CourseListFilters) => {
@@ -209,11 +247,11 @@ export const courseApi = {
   },
 
   createCourse: async (data: CreateCourseInput) => {
-    return apiClient.post<{ course: Course }>('/api/admin/courses', data);
+    return apiClient.post<{ course: Course }>('/api/admin/courses', prepareCoursePayload(data));
   },
 
   updateCourse: async (id: string, data: UpdateCourseInput) => {
-    return apiClient.patch<{ course: Course }>(`/api/admin/courses/${id}`, data);
+    return apiClient.patch<{ course: Course }>(`/api/admin/courses/${id}`, prepareCoursePayload(data));
   },
 
   deleteCourse: async (id: string) => {
