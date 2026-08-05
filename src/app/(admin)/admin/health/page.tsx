@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { OverallStatusBanner } from "./_components/overall-status-banner";
 import { HealthStatsCards } from "./_components/health-stats-cards";
 import { HealthTabs } from "./_components/health-tabs";
+import { LazySection } from "@/components/admin/ui/lazy-section";
 import { useExportHealthReport, useHealthData } from "./_hooks/useHealthData";
 import type { TimeRange } from "./_types/health";
 
@@ -127,13 +128,17 @@ export default function KingdomHealthPage() {
         <>
           {system?.overall && <OverallStatusBanner health={system.overall} />}
           <HealthStatsCards exams={healthData.exams} security={healthData.security} performance={performance} />
-          <PerformanceCharts performance={performance} autoRefresh={autoRefresh} />
-          <HealthTabs
-            system={system}
-            exams={healthData.exams}
-            security={healthData.security}
-            performance={performance}
-          />
+          <LazySection minHeight={420} rootMargin="250px">
+            <PerformanceCharts performance={performance} autoRefresh={autoRefresh} />
+          </LazySection>
+          <LazySection minHeight={300} rootMargin="250px">
+            <HealthTabs
+              system={system}
+              exams={healthData.exams}
+              security={healthData.security}
+              performance={performance}
+            />
+          </LazySection>
         </>
       )}
     </div>

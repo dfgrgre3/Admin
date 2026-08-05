@@ -4,10 +4,7 @@ import React, { Suspense, useState, lazy } from 'react';
 import { AuthProvider } from '@/contexts/auth-context';
 import { SettingsProvider } from '@/contexts/settings-context';
 import ClientLayoutProvider from '@/providers/client-layout-provider';
-import { NotificationsProvider } from '@/providers/notifications-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { Toaster } from 'sonner';
 import ErrorBoundary from '@/components/error-boundary';
 import { HydrationFix } from '@/components/hydration-fix';
 import { LazyMotion, domAnimation } from 'framer-motion';
@@ -15,10 +12,22 @@ import { PerformanceProvider } from '@/components/providers/PerformanceProvider'
 import { ReactQueryPersistence } from '@/providers/react-query-persistence';
 import { PERFORMANCE_DEFAULTS } from '@/lib/performance-config';
 
-// Lazy load WebSocket provider to reduce initial JS bundle size
-// WebSocket is disabled by default, so we defer loading it completely
+// Lazy load non-critical providers to reduce initial JS bundle size.
+// These are only needed after the user interacts with the app.
 const WebSocketProvider = lazy(() => 
   import('@/contexts/websocket-context').then(mod => ({ default: mod.WebSocketProvider }))
+);
+
+const NotificationsProvider = lazy(() =>
+  import('@/providers/notifications-provider').then(mod => ({ default: mod.NotificationsProvider }))
+);
+
+const TooltipProvider = lazy(() =>
+  import('@/components/ui/tooltip').then(mod => ({ default: mod.TooltipProvider }))
+);
+
+const Toaster = lazy(() =>
+  import('sonner').then(mod => ({ default: mod.Toaster }))
 );
 
 function makeQueryClient() {

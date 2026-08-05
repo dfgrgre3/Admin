@@ -37,6 +37,7 @@ import { ar } from "date-fns/locale";
 import * as React from "react";
 import dynamic from "next/dynamic";
 import { AdminNotes } from "./admin-notes";
+import { LazySection } from "@/components/admin/ui/lazy-section";
 
 const ActivityChart = dynamic(() => import("./activity-chart").then(mod => mod.ActivityChart), { ssr: false, loading: () => <div className="h-[200px] w-full animate-pulse bg-muted/30 rounded-3xl" /> });
 
@@ -221,7 +222,9 @@ export function OverviewTab({ user }: { user: UserDetails }) {
       </Card>
 
       {/* Charts Section */}
-      <ActivityChart user={user} />
+      <LazySection minHeight={260} rootMargin="250px">
+        <ActivityChart user={user} />
+      </LazySection>
 
       {/* XP Distribution & Engagement Stats */}
       <div className="grid gap-8 md:grid-cols-2">

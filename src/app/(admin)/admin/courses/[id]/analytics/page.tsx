@@ -21,6 +21,7 @@ import { apiRoutes } from "@/lib/api/routes";
 import { adminFetch } from "@/lib/api/admin-api";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { LazySection } from "@/components/admin/ui/lazy-section";
 
 const RevenueAreaChart = dynamic(() => import("../_components/analytics-charts").then(mod => mod.RevenueAreaChart), { ssr: false, loading: () => <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" /> });
 const EngagementBarChart = dynamic(() => import("../_components/analytics-charts").then(mod => mod.EngagementBarChart), { ssr: false, loading: () => <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" /> });
@@ -199,16 +200,18 @@ export default function CourseAnalyticsPage() {
       </div>
 
       {/* Student Activity / Engagement */}
-      <AdminCard className="p-6">
-        <h3 className="text-lg font-black mb-8">التفاعل مع الدروس</h3>
-        <div className="h-[300px]">
-          {mounted && !isLoading ? (
-            <EngagementBarChart data={performanceData} />
-          ) : (
-            <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" />
-          )}
-        </div>
-      </AdminCard>
+      <LazySection minHeight={380} rootMargin="200px">
+        <AdminCard className="p-6">
+          <h3 className="text-lg font-black mb-8">التفاعل مع الدروس</h3>
+          <div className="h-[300px]">
+            {mounted && !isLoading ? (
+              <EngagementBarChart data={performanceData} />
+            ) : (
+              <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" />
+            )}
+          </div>
+        </AdminCard>
+      </LazySection>
     </div>
   );
 }

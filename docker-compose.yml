@@ -4,9 +4,9 @@ services:
     ports:
       - "5433:5433"
     environment:
-      POSTGRES_DB: thanawy
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Khaled@2008
+      POSTGRES_DB: ${POSTGRES_DB:-thanawy}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your local .env file}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -41,9 +41,9 @@ services:
       GIN_MODE: release
       PORT: 8082
       BACKEND_PORT: 8082
-      DATABASE_URL: postgresql://postgres:Khaled@2008@database:5433/thanawy?sslmode=disable
-      DATABASE_URL_DIRECT: postgresql://postgres:Khaled@2008@database:5433/thanawy?sslmode=disable
-      DATABASE_WRITE_DSN: postgresql://postgres:Khaled@2008@database:5433/thanawy?sslmode=disable
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your local .env file}@database:5433/${POSTGRES_DB:-thanawy}?sslmode=disable
+      DATABASE_URL_DIRECT: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your local .env file}@database:5433/${POSTGRES_DB:-thanawy}?sslmode=disable
+      DATABASE_WRITE_DSN: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your local .env file}@database:5433/${POSTGRES_DB:-thanawy}?sslmode=disable
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your local .env file}
       JWT_ISSUER_URL: http://localhost:8082
@@ -85,6 +85,7 @@ services:
       NEXT_PUBLIC_API_URL: http://localhost:8082
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       NEXT_PUBLIC_BASE_URL: http://localhost:3000
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
     depends_on:
       backend:
         condition: service_healthy

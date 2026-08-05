@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import {
   ActivityFeed,
   UpcomingEvents,
@@ -13,7 +14,7 @@ import {
   Activity,
   Calendar,
   Megaphone,
-  Clock,
+  Search,
 } from "lucide-react";
 import type { DashboardGoal } from "@/lib/dashboard-utils";
 import { GoalsKPIs } from "@/components/admin/dashboard/goals-kpis";
@@ -82,13 +83,29 @@ export const IntelligenceSection = React.memo(function IntelligenceSection({
   isFetching,
   playSound,
 }: IntelligenceSectionProps) {
+  const router = useRouter();
+  const [query, setQuery] = React.useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    playSound("click");
+    router.push(`/admin/users?search=${encodeURIComponent(query.trim())}`);
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
       <div className="lg:col-span-3 space-y-8">
         <div className="flex flex-wrap items-center gap-6">
-          <div className="flex-1 min-w-[300px] h-16 rounded-2xl bg-card border border-border text-foreground font-bold focus:border-primary/50 flex items-center px-4">
-            <span className="text-muted-foreground">ابحث في المستخدمين، المواد، الاختبارات...</span>
-          </div>
+          <form onSubmit={handleSearch} className="relative flex-1 min-w-[300px]">
+            <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="ابحث عن مستخدم بالاسم أو البريد الإلكتروني..."
+              className="h-16 w-full rounded-2xl bg-card border border-border text-foreground font-bold focus:border-primary/50 pr-12 pl-4 outline-none transition-all focus:ring-2 focus:ring-primary/20"
+            />
+          </form>
           <div className="flex items-center gap-2 rounded-xl border border-border bg-card/80 px-3 py-2">
             {[
               { id: "today", label: "اليوم" },

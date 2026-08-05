@@ -52,7 +52,9 @@ const nextConfig = {
       '@radix-ui/react-tabs',
       '@radix-ui/react-select',
     ],
-    // Uploads use the dedicated file-upload API; keep proxy request bodies bounded.
+    // Only the static `/uploads/:path*` rewrite is proxied by Next itself, and it
+    // is read-only. API uploads go through route handlers in `src/app/api`, which
+    // are not subject to this limit.
     proxyClientMaxBodySize: '10mb',
     scrollRestoration: true,
     // Reduce JavaScript execution time
@@ -121,13 +123,23 @@ const nextConfig = {
 
   async rewrites() {
     return [
-      {
-        source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8082/api'}/:path*`,
-      },
+      // NOTE: there is deliberately NO `/api/:path*` rewrite here.
+      //
+      // `rewrites()` returning a plain array is treated as `afterFiles`, which is
+      // evaluated *before* dynamic App Router routes. A `/api/:path*` rewrite
+      // therefore shadowed every dynamic API route — `/api/admin/upload/presign`,
+      // `/api/admin/courses/[id]`, `/api/admin/users/[...path]` and the
+      // `src/app/api/[...path]` catch-all — sending the browser request straight
+      // to the Go API. That bypassed the proxy layer that enforces
+      // `assertAdminApiPermission`, re-derives `X-CSRF-Token` from the
+      // (URL-decoded) `_csrf` cookie, and strips `Origin`/`Referer`, producing
+      // `403 {"error":"CSRF token validation failed"}` on those routes.
+      //
+      // All `/api/*` traffic must go through the route handlers in `src/app/api`,
+      // which is the browser-facing security boundary.
       {
         source: '/uploads/:path*',
-        destination: `${(process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8082/api').replace('/api', '')}/uploads/:path*`,
+        destination: `${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8082/api').replace('/api', '')}/uploads/:path*`,
       },
     ];
   },

@@ -561,7 +561,7 @@ export default function AdminBlogPage() {
                             const formData = new FormData();
                             formData.append("file", file);
                             // Use adminFetch so X-CSRF-Token is automatically injected
-                            const response = await adminFetch("/api/upload", {
+                            const response = await adminFetch("/api/admin/upload", {
                               method: "POST",
                               body: formData,
                             });

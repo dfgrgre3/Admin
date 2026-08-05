@@ -113,6 +113,8 @@ export const ADMIN_API_RULES: ReadonlyArray<{
     { pattern: /^\/api\/admin\/audit-logs/, view: PERMISSIONS.AUDIT_LOGS_VIEW },
     { pattern: /^\/api\/admin\/automations/, view: PERMISSIONS.ADMIN_BYPASS },
     { pattern: /^\/api\/admin\/dashboard/, view: PERMISSIONS.DASHBOARD_VIEW },
+    // Course/media editors upload through the admin upload endpoints.
+    { pattern: /^\/api\/admin\/upload(?:\/.*)?$/, view: PERMISSIONS.RESOURCES_VIEW, manage: PERMISSIONS.RESOURCES_MANAGE },
   ];
 
 function isWriteMethod(method: string): boolean {

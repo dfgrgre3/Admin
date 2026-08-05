@@ -1,15 +1,9 @@
 import js from "@eslint/js";
 import globals from "globals";
-import { fileURLToPath } from "node:url";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import typescriptParser from "@typescript-eslint/parser";
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
-import { FlatCompat } from "@eslint/eslintrc";
-
-const flatCompat = new FlatCompat({
-  baseDirectory: fileURLToPath(new URL(".", import.meta.url)),
-});
 
 export default [
   {
@@ -36,9 +30,11 @@ export default [
     ],
   },
   js.configs.recommended,
-  // Load the legacy eslintrc-based plugin configs through the modern
-  // FlatCompat bridge instead of spreading their `.rules` by hand.
-  ...flatCompat.extends("plugin:react/recommended", "plugin:react-hooks/recommended"),
+  // Native flat configs from the plugins themselves — no legacy eslintrc
+  // bridge (FlatCompat) needed. Kept in sync with plugin majors; remove this
+  // comment once both plugins are fully flat-only.
+  react.configs.flat.recommended,
+  reactHooks.configs.flat["recommended-latest"],
   {
     files: ["**/*.{js,jsx,mjs,cjs,ts,tsx}"],
     languageOptions: {

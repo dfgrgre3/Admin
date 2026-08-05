@@ -39,6 +39,7 @@ import { m } from "framer-motion";
 import { toast } from "sonner";
 import { apiRoutes } from "@/lib/api/routes";
 import { adminFetch } from "@/lib/api/admin-api";
+import { LazyTab } from "@/components/admin/ui/lazy-section";
 
 const DailyActiveUsersChart = dynamic(() => import('./charts').then(mod => mod.DailyActiveUsersChart), { ssr: false, loading: () => <div className="h-[300px] w-full animate-pulse bg-muted/50 rounded-xl" /> });
 const DailyRegistrationsChart = dynamic(() => import('./charts').then(mod => mod.DailyRegistrationsChart), { ssr: false, loading: () => <div className="h-[300px] w-full animate-pulse bg-muted/50 rounded-xl" /> });
@@ -171,6 +172,7 @@ const SortableWidgetBlock = React.memo(function SortableWidgetBlock({
 export default function AdminAnalyticsPage() {
   const [period, setPeriod] = React.useState("month");
   const [isEditMode, setIsEditMode] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState("dashboard");
   const [widgetOrder, setWidgetOrder] = React.useState(["users", "activity", "finance", "content"]);
 
   const sensors = useSensors(
@@ -455,7 +457,7 @@ export default function AdminAnalyticsPage() {
         </div>
       </PageHeader>
 
-      <Tabs defaultValue="dashboard" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="w-full bg-background/50 h-14 p-1 border-border rounded-xl mb-6">
           <TabsTrigger value="dashboard" className="w-full h-full text-base font-bold rounded-lg data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
              لوحتي المخصصة (Custom Widgets)
@@ -597,6 +599,7 @@ export default function AdminAnalyticsPage() {
             TAB 2: REGIONAL ECONOMICS (FINANCE)
             ==================================== */}
         <TabsContent value="finance" className="space-y-6">
+          <LazyTab active={activeTab === "finance"}>
            {revenueLoading ? (
              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                {Array.from({ length: 3 }).map((_, i) => (
@@ -739,12 +742,14 @@ export default function AdminAnalyticsPage() {
                  </div>
               </AdminCard>
            </div>
+          </LazyTab>
         </TabsContent>
 
         {/* ====================================
             TAB 3: USER JOURNEY MAPPING
             ==================================== */}
         <TabsContent value="journey" className="space-y-6">
+          <LazyTab active={activeTab === "journey"}>
            <AdminCard variant="glass" className="bg-gradient-to-br from-purple-500/5 to-transparent border-purple-500/20">
               <div className="flex items-center justify-between mb-6">
                  <div>
@@ -838,6 +843,7 @@ export default function AdminAnalyticsPage() {
                   </div>
                </AdminCard>
            </div>
+          </LazyTab>
         </TabsContent>
       </Tabs>
     </div>

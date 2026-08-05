@@ -18,6 +18,7 @@ import { useDashboardExport } from "@/lib/export-utils";
 import { useAdminDashboardWidgets, mergeDashboardWidgetPayloads } from "@/hooks/use-admin-dashboard-widgets";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { PERMISSIONS } from "@/lib/permissions";
+import { LazySection } from "@/components/admin/ui/lazy-section";
 import {
   buildHeatmapData,
   buildDistributionData,
@@ -29,7 +30,8 @@ import {
 } from "@/lib/dashboard-utils";
 import type { UserSegment } from "@/components/admin/broadcast/broadcast-modal";
 import type { UserModel } from "@/components/admin/broadcast/types";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, CalendarDays, Wifi, WifiOff, Download, ShieldCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Code-split section components
 import { StatsSection } from "@/components/admin/dashboard/sections/stats-section";
@@ -38,6 +40,7 @@ import { IntelligenceSection } from "@/components/admin/dashboard/sections/intel
 import { SystemDiagnosticsSection } from "@/components/admin/dashboard/sections/system-diagnostics-section";
 import { ActivityDistributionSection } from "@/components/admin/dashboard/sections/activity-distribution-section";
 import { RealtimeNotificationsSection } from "@/components/admin/dashboard/sections/realtime-notifications-section";
+import { CommandCenterSection } from "@/components/admin/dashboard/sections/command-center-section";
 
 // Code-split the BroadcastModal (heavy dialog + user list)
 const BroadcastModal = dynamic(() => import("@/components/admin/broadcast/broadcast-modal").then(mod => ({ default: mod.BroadcastModal })), {
@@ -115,12 +118,12 @@ export default function AdminDashboardPage() {
   const { isConnected: wsConnected } = useWebSocket();
   const [timeFilter, setTimeFilter] = React.useState("today");
   const [isBroadcastOpen, setIsBroadcastOpen] = React.useState(false);
+  const [lastUpdated, setLastUpdated] = React.useState<Date | null>(null);
 
   // Real-time notifications
   const {
     notifications,
     markAsRead,
-    markAllAsRead,
     dismiss,
   } = useAdminNotifications();
 
@@ -143,6 +146,15 @@ export default function AdminDashboardPage() {
 
   const { overview, stats, intelligence, systems, activity, isLoading, isFetching, isError, errors, refetchAll } = useAdminDashboardWidgets(timeFilter);
 
+  // Track the real moment data was last successfully loaded
+  const prevFetching = React.useRef(false);
+  React.useEffect(() => {
+    if (prevFetching.current && !isFetching && !isLoading) {
+      setLastUpdated(new Date());
+    }
+    prevFetching.current = isFetching;
+  }, [isFetching, isLoading]);
+
   const aggregatedData = React.useMemo(() => {
     const widgetData = {
       overview: overview.data as Record<string, unknown> | undefined,
@@ -160,11 +172,6 @@ export default function AdminDashboardPage() {
 
   const { exportDashboardData } = useDashboardExport(aggregatedData.stats || {});
 
-  const handleRefresh = React.useCallback(() => {
-    playSound("click");
-    void refetchAll();
-  }, [playSound, refetchAll]);
-
   const handleTimeFilterChange = React.useCallback((filter: "today" | "week" | "month" | "year") => {
     playSound("click");
     setTimeFilter(filter);
@@ -175,21 +182,10 @@ export default function AdminDashboardPage() {
     exportDashboardData();
   }, [playSound, exportDashboardData]);
 
-  const pageControls = React.useMemo(() => ({
-    refreshDashboard: handleRefresh,
-    openBroadcast: () => setIsBroadcastOpen(true),
-    setTimeFilter: (filter: "today" | "week" | "month" | "year") => setTimeFilter(filter),
-    scrollToSection: (sectionId: string) => {
-      const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "center" });
-        element.classList.add("ring-4", "ring-primary/50", "scale-[1.01]", "transition-all", "duration-500");
-        setTimeout(() => {
-          element.classList.remove("ring-4", "ring-primary/50", "scale-[1.01]");
-        }, 3000);
-      }
-    }
-  }), [handleRefresh]);
+  const handleRefresh = React.useCallback(() => {
+    playSound("click");
+    void refetchAll();
+  }, [playSound, refetchAll]);
 
   // ── Derived data (all hooks before early return) ────────────────────────
 
@@ -261,17 +257,6 @@ export default function AdminDashboardPage() {
     });
   }, [aggregatedData.stats, aggregatedData.activity, safeStats, safeActivity, safeTrends]);
 
-  const agentDashboardContext = React.useMemo(() => ({
-    stats: safeStats,
-    trends: safeTrends,
-    activity: safeActivity,
-    alerts: alertData,
-    recentActivity: safeRecentActivity.slice(0, 8),
-    upcomingEvents: safeUpcomingEvents.slice(0, 8),
-    timeFilter,
-    realtime: { connected: wsConnected },
-  }), [safeStats, safeTrends, safeActivity, alertData, safeRecentActivity, safeUpcomingEvents, timeFilter, wsConnected]);
-
   const distributionData = React.useMemo(
     () => buildDistributionData(safeStats),
     [safeStats],
@@ -342,11 +327,12 @@ export default function AdminDashboardPage() {
     },
     {
       id: "command-center",
-      content: <div className="rounded-[2rem] border border-primary/20 bg-white/5 p-8 text-center text-gray-400">تم دمج مركز الأوامر الذكي ضمن القسم الذكي الرئيسي.</div>
+      content: <CommandCenterSection playSound={playSound} />
     },
     {
       id: "intelligence",
       content: (
+        <LazySection minHeight={400} rootMargin="250px">
         <IntelligenceSection
           userGrowthData={safeCharts.userGrowth}
           activityData={safeCharts.activity}
@@ -360,19 +346,34 @@ export default function AdminDashboardPage() {
           isFetching={isFetching}
           playSound={playSound}
         />
+        </LazySection>
       )
     },
     {
       id: "system-diagnostics",
-      content: <SystemDiagnosticsSection alerts={alertData} />
+      content: (
+        <LazySection minHeight={300} rootMargin="250px">
+          <SystemDiagnosticsSection
+            alerts={alertData}
+            wsConnected={wsConnected}
+            isError={isError}
+            errorCount={errors.length}
+            lastUpdated={lastUpdated}
+            isFetching={isFetching}
+            onRefresh={handleRefresh}
+          />
+        </LazySection>
+      )
     },
     {
       id: "activity-and-distribution",
       content: (
-        <ActivityDistributionSection
-          heatmapData={heatmapData}
-          distributionData={distributionData}
-        />
+        <LazySection minHeight={400} rootMargin="250px">
+          <ActivityDistributionSection
+            heatmapData={heatmapData}
+            distributionData={distributionData}
+          />
+        </LazySection>
       )
     }
   ], [
@@ -385,8 +386,6 @@ export default function AdminDashboardPage() {
     notifications,
     markAsRead,
     dismiss,
-    agentDashboardContext,
-    pageControls,
     safeCharts,
     safeRecentActivity,
     safeUpcomingEvents,
@@ -396,6 +395,10 @@ export default function AdminDashboardPage() {
     alertData,
     heatmapData,
     distributionData,
+    wsConnected,
+    isError,
+    errors.length,
+    lastUpdated,
   ]);
 
   // ── Show toast when no data ─────────────────────────────────────────────
@@ -422,13 +425,45 @@ export default function AdminDashboardPage() {
         </div>
       }>
         <header className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-1">
-            <h1 className="text-4xl font-black tracking-tight">لوحة التحكم الإدارية</h1>
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-4xl font-black tracking-tight">لوحة التحكم الإدارية</h1>
+              <span className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold",
+                wsConnected
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                  : "border-amber-500/30 bg-amber-500/10 text-amber-400"
+              )}>
+                {wsConnected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
+                {wsConnected ? "اتصال لحظي نشط" : "الاتصال اللحظي غير متصل"}
+              </span>
+              {user?.role && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  {String(user.role).replace(/_/g, " ")}
+                </span>
+              )}
+            </div>
             <p className="text-gray-400 font-medium">مرحباً بك، {user?.name || "المسؤول"}. إليك نظرة شاملة على مستجدات المنصة التعليمية.</p>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <CalendarDays className="h-4 w-4" />
+              <span className="font-semibold text-gray-400">
+                {new Intl.DateTimeFormat("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" }).format(new Date())}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3">
             <AdminButton
               variant="outline"
+              size="lg"
+              onClick={handleExport}
+              icon={Download}
+              className="h-14 px-6 rounded-2xl"
+            >
+              تصدير البيانات
+            </AdminButton>
+            <AdminButton
+              variant="premium"
               size="lg"
               onClick={handleRefresh}
               loading={isFetching}
@@ -437,15 +472,29 @@ export default function AdminDashboardPage() {
             >
               تحديث البيانات
             </AdminButton>
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-muted-foreground">
-              آخر تحديث: {isFetching ? "جاري التحديث..." : "محدث"}
+            <div className={cn(
+              "rounded-2xl border px-4 py-3 text-sm font-semibold",
+              isFetching
+                ? "border-white/10 bg-white/5 text-gray-400"
+                : "border-emerald-500/20 bg-emerald-500/5 text-emerald-400"
+            )}>
+              آخر تحديث: {isFetching
+                ? "جاري التحديث..."
+                : lastUpdated
+                  ? new Intl.DateTimeFormat("ar-EG", { hour: "2-digit", minute: "2-digit" }).format(lastUpdated)
+                  : "—"}
             </div>
           </div>
         </header>
 
         {isError && (
-          <div className="rounded-[2rem] border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
-            تعذر تحميل بعض widgets. يتم عرض البيانات المتاحة حالياً، ويمكنك إعادة المحاولة لاحقاً.
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-[2rem] border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
+            <div className="flex items-center gap-2 font-semibold">
+              <span>تعذر تحميل {errors.length} من أقسام البيانات. يتم عرض المعلومات المتاحة حالياً.</span>
+            </div>
+            <AdminButton variant="outline" size="sm" onClick={handleRefresh} loading={isFetching}>
+              إعادة المحاولة
+            </AdminButton>
           </div>
         )}
 

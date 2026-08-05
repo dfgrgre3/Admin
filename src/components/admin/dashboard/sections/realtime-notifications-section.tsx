@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Bell, CheckCheck, Clock3, ExternalLink, Sparkles, Trash2, ArrowRight, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminButton } from "@/components/admin/ui/admin-button";
@@ -57,13 +58,13 @@ export const RealtimeNotificationsSection = React.memo(function RealtimeNotifica
           <div className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-bold text-primary">
             {unreadCount} غير مقروءة
           </div>
-          <a
+          <Link
             href="/admin/notifications"
             className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-semibold text-gray-300 transition-colors hover:border-primary/30 hover:text-primary"
           >
             <ExternalLink className="h-4 w-4" />
             عرض الكل
-          </a>
+          </Link>
         </div>
       </div>
 

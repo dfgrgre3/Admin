@@ -32,6 +32,7 @@ import { AdminCard } from "@/components/admin/ui/admin-card";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatPrice } from "@/lib/utils";
+import { LazySection } from "@/components/admin/ui/lazy-section";
 
 const EnrollmentAreaChart = dynamic(() => import("./_components/overview-charts").then(mod => mod.EnrollmentAreaChart), { ssr: false, loading: () => <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" /> });
 const ReadinessGauge = dynamic(() => import("./_components/overview-charts").then(mod => mod.ReadinessGauge), { ssr: false, loading: () => <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" /> });
@@ -300,27 +301,29 @@ export default function CourseOverviewPage() {
         </div>
 
         {/* Area Chart */}
-        <AdminCard className="p-6 border-border/40">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-base font-black">منحنى التسجيلات والإيرادات</h3>
-              <p className="text-xs text-muted-foreground mt-0.5 font-bold">
-                توزيع نسبي على الأسابيع السبعة الأخيرة
-              </p>
+        <LazySection minHeight={420} rootMargin="200px">
+          <AdminCard className="p-6 border-border/40">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-base font-black">منحنى التسجيلات والإيرادات</h3>
+                <p className="text-xs text-muted-foreground mt-0.5 font-bold">
+                  توزيع نسبي على الأسابيع السبعة الأخيرة
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Badge variant="outline" className="rounded-xl px-3 py-1 bg-blue-500/5 border-blue-500/20 text-blue-500 text-[10px] font-bold">
+                  التسجيلات
+                </Badge>
+                <Badge variant="outline" className="rounded-xl px-3 py-1 bg-emerald-500/5 border-emerald-500/20 text-emerald-500 text-[10px] font-bold">
+                  الإيرادات
+                </Badge>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Badge variant="outline" className="rounded-xl px-3 py-1 bg-blue-500/5 border-blue-500/20 text-blue-500 text-[10px] font-bold">
-                التسجيلات
-              </Badge>
-              <Badge variant="outline" className="rounded-xl px-3 py-1 bg-emerald-500/5 border-emerald-500/20 text-emerald-500 text-[10px] font-bold">
-                الإيرادات
-              </Badge>
+            <div className="h-[280px] w-full" style={{ minWidth: 0 }}>
+              {mounted && <EnrollmentAreaChart data={chartData} />}
             </div>
-          </div>
-          <div className="h-[280px] w-full" style={{ minWidth: 0 }}>
-            {mounted && <EnrollmentAreaChart data={chartData} />}
-          </div>
-        </AdminCard>
+          </AdminCard>
+        </LazySection>
 
         {/* Quick Actions */}
         <AdminCard className="p-6 border-border/40">

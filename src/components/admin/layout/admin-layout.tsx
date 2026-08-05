@@ -1,12 +1,61 @@
 ﻿"use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { AdminPageAccessGate } from "@/components/admin/admin-page-access-gate";
-import { AdminSidebar } from "@/components/admin/layout/admin-sidebar";
-import { AdminHeader } from "@/components/admin/layout/admin-header";
-import { CommandPalette } from "@/components/admin/ui/command-palette";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+
+// ── Dynamic (code-split) layout components ──────────────────────────────────
+// All three are loaded in separate chunks and only fetched after the main
+// page content has been painted. Each has its own lightweight skeleton so the
+// shell has zero waiting cost.
+
+const AdminSidebar = dynamic(
+  () => import("@/components/admin/layout/admin-sidebar").then((m) => m.AdminSidebar),
+  {
+    ssr: false,
+    loading: () => (
+      <aside className="hidden h-screen w-[260px] border-l border-border bg-card/50 lg:block">
+        <div className="flex h-full animate-pulse flex-col gap-4 p-4">
+          <div className="h-10 w-10 rounded-xl bg-muted/30" />
+          <div className="space-y-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-9 w-full rounded-lg bg-muted/20" />
+            ))}
+          </div>
+        </div>
+      </aside>
+    ),
+  },
+);
+
+const AdminHeader = dynamic(
+  () => import("@/components/admin/layout/admin-header").then((m) => m.AdminHeader),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-16 items-center justify-between border-b px-4 lg:px-6 animate-pulse bg-muted/10">
+        <div className="flex items-center gap-4">
+          <div className="h-8 w-8 rounded-lg bg-muted/30" />
+          <div className="h-8 w-8 rounded-lg bg-muted/30 lg:hidden" />
+        </div>
+        <div className="hidden items-center gap-2 md:flex">
+          <div className="h-9 w-64 rounded-lg bg-muted/20" />
+          <div className="h-9 w-9 rounded-lg bg-muted/20" />
+          <div className="h-9 w-9 rounded-lg bg-muted/20" />
+        </div>
+      </div>
+    ),
+  },
+);
+
+// CommandPalette includes the full command dialog + keyboard shortcuts, so it
+// loads only after the rest of the shell has settled.
+const CommandPalette = dynamic(
+  () => import("@/components/admin/ui/command-palette").then((m) => m.CommandPalette),
+  { ssr: false, loading: () => null },
+);
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -14,22 +63,10 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
-  const [sidebarLoaded, setSidebarLoaded] = React.useState(false);
-  const [headerLoaded, setHeaderLoaded] = React.useState(false);
   const touchStartX = React.useRef(0);
   const touchEndX = React.useRef(0);
   const mobileSidebarRef = React.useRef<HTMLDivElement>(null);
   const previouslyFocused = React.useRef<HTMLElement | null>(null);
-
-  // Lazy load sidebar and header
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setSidebarLoaded(true);
-      setHeaderLoaded(true);
-    }, 50);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   // Handle escape key
   React.useEffect(() => {
@@ -130,16 +167,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         onTouchEnd={handleTouchEnd}
       >
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.15)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.15)_1px,transparent_1px)] bg-[size:28px_28px] opacity-30 dark:opacity-20" />
-        
-        {/* Lazy load CommandPalette */}
-        {headerLoaded && <CommandPalette />}
-        
+
+        {/* Desktop sidebar — code-split with its own skeleton */}
         <div className="relative z-10 hidden lg:block">
-          {sidebarLoaded ? (
-            <AdminSidebar />
-          ) : (
-            <div className="w-[260px] animate-pulse bg-muted/20" />
-          )}
+          <AdminSidebar />
         </div>
 
         {sidebarOpen && (
@@ -149,6 +180,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           />
         )}
 
+        {/* Mobile drawer */}
         <div
           className={cn(
             "fixed inset-y-0 right-0 z-50 transform transition-transform duration-300 ease-in-out lg:hidden glass-panel-strong",
@@ -162,26 +194,22 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           inert={!sidebarOpen || undefined}
           onKeyDown={handleDrawerKeyDown}
         >
-          {sidebarLoaded ? <AdminSidebar /> : <div className="w-[260px] animate-pulse bg-muted/20" />}
+          <AdminSidebar />
         </div>
 
         <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
-          {headerLoaded ? (
-            <AdminHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-          ) : (
-            <div className="flex h-16 items-center justify-between border-b px-4 lg:px-6 animate-pulse bg-muted/10">
-              <div className="flex items-center gap-4">
-                <div className="h-8 w-8 bg-muted/30 rounded-lg" />
-                <div className="h-8 w-8 bg-muted/30 rounded-lg lg:hidden" />
-              </div>
-            </div>
-          )}
+          {/* Header — code-split with its own skeleton */}
+          <AdminHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+
           <main className="admin-performance-scope flex-1 overflow-y-auto">
             <div className="mx-auto w-full max-w-[1680px] p-4 lg:p-6">
               <AdminPageAccessGate>{children}</AdminPageAccessGate>
             </div>
           </main>
         </div>
+
+        {/* Command palette — loaded lazily after initial paint */}
+        <CommandPalette />
       </div>
     </TooltipProvider>
   );

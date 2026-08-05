@@ -76,6 +76,7 @@ import {
   type RolePermissionInfo,
 } from "@/lib/api/security-api";
 import { exportToCSV, type ExportColumn } from "@/lib/export-utils";
+import { LazyTab } from "@/components/admin/ui/lazy-section";
 
 // ─────────────────────────────────────────────
 // Constants
@@ -693,93 +694,101 @@ export default function AdminSecurityHubPage() {
           </div>
         </TabsContent>
 
-        {/* ── Sessions Tab ── */}
+        {/* ── Sessions Tab (lazy — only mounts when tab is active) ── */}
         <TabsContent value="sessions" className="space-y-6 pt-6">
-          <div className="rounded-[2.5rem] border border-border bg-card p-1 overflow-hidden shadow-xl">
-            <AdminDataTable
-              columns={sessionColumns}
-              data={sessions}
-              loading={sessionsQuery.isLoading}
-              searchKey="ip"
-              searchPlaceholder="بحث بالعنوان أو المستخدم..."
-              actions={{ onRefresh: () => sessionsQuery.refetch(), onExport: handleExportSessions }}
-              emptyMessage={{ title: "لا توجد جلسات", description: "لم يتم العثور على أي جلسات." }}
-              virtualized
-            />
-          </div>
+          <LazyTab active={activeTab === "sessions"}>
+            <div className="rounded-[2.5rem] border border-border bg-card p-1 overflow-hidden shadow-xl">
+              <AdminDataTable
+                columns={sessionColumns}
+                data={sessions}
+                loading={sessionsQuery.isLoading}
+                searchKey="ip"
+                searchPlaceholder="بحث بالعنوان أو المستخدم..."
+                actions={{ onRefresh: () => sessionsQuery.refetch(), onExport: handleExportSessions }}
+                emptyMessage={{ title: "لا توجد جلسات", description: "لم يتم العثور على أي جلسات." }}
+                virtualized
+              />
+            </div>
+          </LazyTab>
         </TabsContent>
 
-        {/* ── Devices Tab ── */}
+        {/* ── Devices Tab (lazy) ── */}
         <TabsContent value="devices" className="space-y-6 pt-6">
-          <div className="rounded-[2.5rem] border border-border bg-card p-1 overflow-hidden shadow-xl">
-            <AdminDataTable
-              columns={devicesColumns}
-              data={devices}
-              loading={devicesQuery.isLoading}
-              searchKey="userName"
-              searchPlaceholder="بحث بالاسم أو الجهاز..."
-              actions={{ onRefresh: () => devicesQuery.refetch() }}
-              emptyMessage={{ title: "لا توجد أجهزة", description: "لم يتم العثور على أي أجهزة." }}
-              virtualized
-            />
-          </div>
+          <LazyTab active={activeTab === "devices"}>
+            <div className="rounded-[2.5rem] border border-border bg-card p-1 overflow-hidden shadow-xl">
+              <AdminDataTable
+                columns={devicesColumns}
+                data={devices}
+                loading={devicesQuery.isLoading}
+                searchKey="userName"
+                searchPlaceholder="بحث بالاسم أو الجهاز..."
+                actions={{ onRefresh: () => devicesQuery.refetch() }}
+                emptyMessage={{ title: "لا توجد أجهزة", description: "لم يتم العثور على أي أجهزة." }}
+                virtualized
+              />
+            </div>
+          </LazyTab>
         </TabsContent>
 
-        {/* ── Whitelist Tab ── */}
+        {/* ── Whitelist Tab (lazy) ── */}
         <TabsContent value="whitelist" className="space-y-6 pt-6">
-          <WhitelistSection
-            entries={whitelist}
-            settings={whitelistSettings}
-            blockedAttempts={blockedAttempts}
-            isLoading={whitelistQuery.isLoading}
-            onRefresh={() => whitelistQuery.refetch()}
-            onAdd={async (entry) => {
-              try {
-                await securityApi.addIPToWhitelist(entry);
-                toast.success("تمت إضافة العنوان للقائمة البيضاء");
-                whitelistQuery.refetch();
-              } catch {
-                toast.error("فشل إضافة العنوان");
-              }
-            }}
-            onRemove={async (id) => {
-              try {
-                await securityApi.removeIPFromWhitelist(id);
-                toast.success("تم حذف العنوان من القائمة البيضاء");
-                whitelistQuery.refetch();
-              } catch {
-                toast.error("فشل حذف العنوان");
-              }
-            }}
-            onToggleStatus={async (id, status) => {
-              try {
-                await securityApi.updateIPWhitelistEntry(id, { status });
-                toast.success("تم تحديث حالة العنوان");
-                whitelistQuery.refetch();
-              } catch {
-                toast.error("فشل تحديث الحالة");
-              }
-            }}
-            onUpdateSettings={async (settings) => {
-              try {
-                await securityApi.updateIPWhitelistSettings(settings);
-                toast.success("تم حفظ إعدادات القائمة البيضاء");
-                whitelistSettingsQuery.refetch();
-              } catch {
-                toast.error("فشل حفظ الإعدادات");
-              }
-            }}
-          />
+          <LazyTab active={activeTab === "whitelist"}>
+            <WhitelistSection
+              entries={whitelist}
+              settings={whitelistSettings}
+              blockedAttempts={blockedAttempts}
+              isLoading={whitelistQuery.isLoading}
+              onRefresh={() => whitelistQuery.refetch()}
+              onAdd={async (entry) => {
+                try {
+                  await securityApi.addIPToWhitelist(entry);
+                  toast.success("تمت إضافة العنوان للقائمة البيضاء");
+                  whitelistQuery.refetch();
+                } catch {
+                  toast.error("فشل إضافة العنوان");
+                }
+              }}
+              onRemove={async (id) => {
+                try {
+                  await securityApi.removeIPFromWhitelist(id);
+                  toast.success("تم حذف العنوان من القائمة البيضاء");
+                  whitelistQuery.refetch();
+                } catch {
+                  toast.error("فشل حذف العنوان");
+                }
+              }}
+              onToggleStatus={async (id, status) => {
+                try {
+                  await securityApi.updateIPWhitelistEntry(id, { status });
+                  toast.success("تم تحديث حالة العنوان");
+                  whitelistQuery.refetch();
+                } catch {
+                  toast.error("فشل تحديث الحالة");
+                }
+              }}
+              onUpdateSettings={async (settings) => {
+                try {
+                  await securityApi.updateIPWhitelistSettings(settings);
+                  toast.success("تم حفظ إعدادات القائمة البيضاء");
+                  whitelistSettingsQuery.refetch();
+                } catch {
+                  toast.error("فشل حفظ الإعدادات");
+                }
+              }}
+            />
+          </LazyTab>
         </TabsContent>
 
-        {/* ── Logs Tab ── */}
+        {/* ── Logs Tab (lazy) ── */}
         <TabsContent value="logs" className="space-y-6 pt-6">
-          <LogsSection
-            logs={logs}
-            isLoading={logsQuery.isLoading}
-            onRefresh={() => logsQuery.refetch()}
-            onExport={handleExportLogs}
-          />
+          <LazyTab active={activeTab === "logs"}>
+            <LogsSection
+              logs={logs}
+              isLoading={logsQuery.isLoading}
+              onRefresh={() => logsQuery.refetch()}
+              onExport={handleExportLogs}
+            />
+          </LazyTab>
         </TabsContent>
       </Tabs>
     </div>

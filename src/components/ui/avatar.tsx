@@ -54,6 +54,8 @@ const AvatarImage = React.forwardRef<
     <img
       ref={ref}
       src={src}
+      loading="lazy"
+      decoding="async"
       className={cn("aspect-square h-full w-full object-cover", className)}
       onLoad={() => setStatus("loaded")}
       onError={() => setStatus("error")}

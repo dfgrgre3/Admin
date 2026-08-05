@@ -71,16 +71,18 @@ interface DraggableDashboardProps {
   onOrderChange?: (newOrder: string[]) => void;
 }
 
-const EMPTY_ARRAY: readonly { id: string; content: React.ReactNode }[] = [];
+type DashboardChild = { id: string; content: React.ReactNode };
+
+const EMPTY_ARRAY: readonly DashboardChild[] = [];
 const STORAGE_KEY = "admin-dashboard-layout";
 
-export function DraggableDashboard({ children: initialChildren, onOrderChange, ...props }: DraggableDashboardProps & { sections?: any }) {
-  const children = initialChildren || (props as any).sections || EMPTY_ARRAY;
+export function DraggableDashboard({ children: initialChildren, onOrderChange }: DraggableDashboardProps) {
+  const children = initialChildren || EMPTY_ARRAY;
   const { playSound } = usePremiumSounds();
 
   // Memoize default order to prevent unnecessary recalculations
   const defaultOrder = React.useMemo(
-    () => children.map((c: any) => String(c.id)),
+    () => children.map((c: DashboardChild) => String(c.id)),
     [children]
   );
 
@@ -107,13 +109,8 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange, .
   // Persist cleaned-up order so stale duplicates don't reappear on next load
   React.useEffect(() => {
     if (typeof window === "undefined") return;
-    const deduped = Array.from(new Set(items));
-    if (deduped.length !== items.length) {
-      setItems(deduped);
-      return;
-    }
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(new Set(items))));
     } catch {
       // Ignore localStorage errors
     }
@@ -122,7 +119,7 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange, .
   // Sync items when children change (e.g. new sections added), but avoid infinite loops
   const childrenIds = React.useMemo(() => {
     const seen = new Set<string>();
-    return children.map((c: any) => c.id).filter((id) => {
+    return children.map((c: DashboardChild) => c.id).filter((id) => {
       if (seen.has(id)) return false;
       seen.add(id);
       return true;
@@ -134,6 +131,8 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange, .
   React.useEffect(() => {
     // Only update if IDs have actually changed
     if (childrenIdsKey !== itemsKey) {
+      // This is an intentional reconciliation between external (children) and local state
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setItems((prev) => {
         const currentIds = childrenIds;
         const existingIds = new Set(prev);
@@ -155,6 +154,7 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange, .
         return result;
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [childrenIdsKey]);
 
   const sensors = useSensors(
@@ -191,7 +191,7 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange, .
 
   // Reset layout to default order
   const resetLayout = React.useCallback(() => {
-    const defaultOrder = children.map((c: any) => String(c.id));
+    const defaultOrder = children.map((c: DashboardChild) => String(c.id));
     setItems(defaultOrder);
     if (typeof window !== "undefined") {
       localStorage.removeItem(STORAGE_KEY);

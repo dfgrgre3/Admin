@@ -25,7 +25,23 @@ interface JwtPayload {
 const JWT_SECRET = process.env.JWT_SECRET?.trim();
 const JWT_ISSUER = process.env.JWT_ISSUER_URL || "";
 
-let jwtSecretWarningLogged = false;
+// Fail-closed diagnostics: the warning is throttled (once per 30s) instead of
+// being printed a single time per process. Frequent redeploys/restarts therefore
+// still surface the misconfiguration in production logs, without spamming on
+// every single request.
+const JWT_SECRET_WARNING_INTERVAL_MS = 30_000;
+let jwtSecretLastWarningAt = 0;
+
+function warnMissingJwtSecret(context: string) {
+  const now = Date.now();
+  if (now - jwtSecretLastWarningAt < JWT_SECRET_WARNING_INTERVAL_MS) return;
+  jwtSecretLastWarningAt = now;
+  console.error(
+    `[middleware] ${context}: JWT_SECRET is missing or shorter than 32 characters — ` +
+    `protected routes fail closed (all /admin and /api/admin requests are rejected). ` +
+    `Set a random 32+ char secret that matches the backend in your environment (e.g. .env.local / deploy env).`
+  );
+}
 
 // Reuse a single CryptoKey-like SecretKey across requests.
 const secretKey = JWT_SECRET && JWT_SECRET.length >= 32
@@ -35,9 +51,7 @@ const secretKey = JWT_SECRET && JWT_SECRET.length >= 32
 if (!secretKey) {
   // Failing closed is correct, but a missing secret must never be silent:
   // every protected request is being rejected until this is fixed.
-  console.error(
-    "[middleware] JWT_SECRET is missing or shorter than 32 characters — protected routes fail closed."
-  );
+  warnMissingJwtSecret("module init");
 }
 
 /**
@@ -51,10 +65,7 @@ async function verifyAccessToken(
   token: string
 ): Promise<{ payload: JwtPayload | null; expired: boolean }> {
   if (!secretKey) {
-    if (!jwtSecretWarningLogged) {
-      console.error('[Admin Middleware] JWT_SECRET is missing. Authentication will fail closed.');
-      jwtSecretWarningLogged = true;
-    }
+    warnMissingJwtSecret("verifyAccessToken");
     return { payload: null, expired: false };
   }
   try {
@@ -174,7 +185,7 @@ export async function middleware(req: NextRequest) {
         redirectRes.cookies.delete("refresh_token");
         return redirectRes;
       }
-    } catch (err) {
+    } catch (_err) {
       // Network error during refresh, allow request to fail gracefully in UI or return error
       if (req.nextUrl.pathname.startsWith("/api/")) {
         return NextResponse.json({ error: "Service unavailable during session verification" }, { status: 503 });

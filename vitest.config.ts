@@ -8,6 +8,9 @@ export default defineConfig({
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     exclude: [
       "node_modules/**",
+      // E2E specs live in src/__tests__/e2e and are NOT unit tests — they run
+      // through Playwright instead (see playwright.config.ts -> testDir).
+      // Run them with:  npm run test:e2e  (or npm run test:all for both).
       "src/__tests__/e2e/**",
     ],
     pool: "threads",

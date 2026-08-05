@@ -93,6 +93,15 @@ export const authApiService = {
       });
     } catch {
       // Ignore errors — always clear client state
+    } finally {
+      if (typeof window !== 'undefined') {
+        try {
+          window.localStorage.removeItem('accessToken');
+          window.localStorage.removeItem('refreshToken');
+        } catch {
+          // Ignore localStorage cleanup failures
+        }
+      }
     }
   },
 

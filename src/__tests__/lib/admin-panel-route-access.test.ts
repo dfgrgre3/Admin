@@ -28,6 +28,12 @@ describe("admin panel route access", () => {
     );
   });
 
+  it("requires resources manage for admin upload presign writes", () => {
+    expect(getRequiredPermissionForAdminApiRequest("/api/admin/upload/presign", "POST")).toBe(
+      PERMISSIONS.RESOURCES_MANAGE,
+    );
+  });
+
   it("does not restore role defaults when the API supplies an empty effective set", () => {
     expect(hasPermission({ role: "MODERATOR", permissions: [] }, PERMISSIONS.DASHBOARD_VIEW)).toBe(false);
   });

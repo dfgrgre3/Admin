@@ -94,6 +94,16 @@ class ApiClient {
     private csrfBootstrapPromise: Promise<void> | null = null;
     private lastCsrfToken: string | null = null;
     /**
+     * Whether we have ever successfully bootstrapped a CSRF token in this
+     * session. The Next.js proxy re-derives the X-CSRF-Token header from the
+     * `_csrf` cookie, so the only thing the browser controls is that a *valid*
+     * cookie is present on the request. A stale cookie string can linger in
+     * `document.cookie` after the backend has already invalidated it, so we must
+     * not trust its mere presence — we bootstrap once up front and again on every
+     * CSRF rejection to guarantee a freshly minted token.
+     */
+    private csrfBootstrapped = false;
+    /**
      * Ensures the _csrf cookie exists by fetching GET /api/auth/csrf when it is absent.
      * Multiple simultaneous callers share the same in-flight request (single-flight pattern).
      *
@@ -103,10 +113,12 @@ class ApiClient {
      */
     private async ensureCsrfToken(forceRefresh = false): Promise<void> {
         if (typeof window === 'undefined') return;
-        if (!forceRefresh && this.getCookie('_csrf')) return;
 
         const existingCookie = this.getCookie('_csrf');
-        if (!forceRefresh && existingCookie) {
+        // Trust a cookie only if it was minted by a bootstrap we performed this
+        // session. A leftover/expired cookie string would otherwise let a stale
+        // token slip through and trigger "CSRF token validation failed".
+        if (!forceRefresh && existingCookie && this.csrfBootstrapped) {
             this.lastCsrfToken = existingCookie;
             return;
         }
@@ -125,11 +137,14 @@ class ApiClient {
                     if (token) {
                         this.lastCsrfToken = token;
                     }
+                    this.csrfBootstrapped = true;
+                    // Wait a small delay to ensure cookie is set
+                    return new Promise<void>(resolve => setTimeout(resolve, 50));
                 })
                 .finally(() => { this.csrfBootstrapPromise = null; });
         }
 
-        return this.csrfBootstrapPromise;
+        return this.csrfBootstrapPromise!;
     }
 
     private async buildHeaders(customOptions: RequestInit): Promise<Headers> {
@@ -164,6 +179,12 @@ class ApiClient {
     private resetAuthStore(): void {
         if (typeof window !== 'undefined') {
             useAuthStore.getState().reset();
+            try {
+                window.localStorage.removeItem('accessToken');
+                window.localStorage.removeItem('refreshToken');
+            } catch {
+                // Ignore localStorage cleanup failures
+            }
         }
     }
 
@@ -217,8 +238,9 @@ class ApiClient {
             timer.stop();
             clearTimeout(id);
 
-            if (await this.isCsrfValidationFailure(response) && retryCount < 1) {
+            if (await this.isCsrfValidationFailure(response) && retryCount < 2) {
                 await this.ensureCsrfToken(true);
+                await sleep(200); // Increased delay to ensure cookie is set
                 return this.executeFetch(endpoint, options, retryCount + 1);
             }
 
@@ -332,6 +354,9 @@ class ApiClient {
 
         this.refreshPromise = (async () => {
             try {
+                // Ensure CSRF token exists before refresh
+                await this.ensureCsrfToken();
+                
                 const headers: Record<string, string> = {};
                 if (typeof window !== 'undefined') {
                     const csrfToken = this.getCookie('_csrf');
@@ -345,9 +370,27 @@ class ApiClient {
                     headers,
                     credentials: 'include',
                 });
-                return response.ok;
-            } catch {
 
+                if (!response.ok) {
+                    return false;
+                }
+
+                const data = await response.json().catch(() => null) as { accessToken?: string; refreshToken?: string } | null;
+                if (typeof window !== 'undefined' && data) {
+                    try {
+                        if (data.accessToken) {
+                            window.localStorage.setItem('accessToken', data.accessToken);
+                        }
+                        if (data.refreshToken) {
+                            window.localStorage.setItem('refreshToken', data.refreshToken);
+                        }
+                    } catch {
+                        // Ignore localStorage failures
+                    }
+                }
+
+                return true;
+            } catch {
                 return false;
             } finally {
                 this.refreshPromise = null;
@@ -389,6 +432,16 @@ class ApiClient {
         return this.request<T>(endpoint, { ...options, method: 'DELETE' });
     }
 
+    /**
+     * Read a cookie and URL-decode its value.
+     *
+     * Decoding is required, not cosmetic: the Go API writes the CSRF cookie with
+     * Gin's `c.SetCookie`, which stores `url.QueryEscape(token)` — so a token
+     * ending in base64 padding reaches `document.cookie` as `...%3D`. Gin then
+     * reads it back with `c.Cookie`, which `url.QueryUnescape`s it. Sending the
+     * raw `...%3D` string as `X-CSRF-Token` therefore fails the double-submit
+     * comparison with `403 {"error":"CSRF token validation failed"}`.
+     */
     private getCookie(name: string): string | null {
         if (typeof document === 'undefined') return null;
         const nameEQ = name + "=";
@@ -398,7 +451,15 @@ class ApiClient {
             if (!c) continue;
             let trimmed = c;
             while (trimmed.charAt(0) === ' ') trimmed = trimmed.substring(1);
-            if (trimmed.indexOf(nameEQ) === 0) return trimmed.substring(nameEQ.length);
+            if (trimmed.indexOf(nameEQ) === 0) {
+                const rawValue = trimmed.substring(nameEQ.length);
+                try {
+                    return decodeURIComponent(rawValue);
+                } catch {
+                    // Malformed percent-encoding — fall back to the raw value.
+                    return rawValue;
+                }
+            }
         }
         return null;
     }

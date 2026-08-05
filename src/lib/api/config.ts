@@ -1,6 +1,6 @@
 import { trimTrailingSlashes } from "@/lib/utils";
 
-const DEVELOPMENT_BACKEND_ORIGIN = "http://127.0.0.1:8082";
+const DEVELOPMENT_BACKEND_ORIGIN = "http://localhost:8082";
 export const BROWSER_API_BASE_URL = "/api";
 
 function ensureProtocol(url: string): string {

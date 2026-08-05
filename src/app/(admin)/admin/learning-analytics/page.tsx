@@ -6,6 +6,7 @@ import { AdminStatsCard } from "@/components/admin/ui/admin-card";
 import { useQuery } from "@tanstack/react-query";
 import { Flame, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { analyticsApi } from "@/lib/api/analytics-api";
+import { LazySection } from "@/components/admin/ui/lazy-section";
 
 export default function LearningAnalyticsPage() {
   const [videoKey, setVideoKey] = React.useState("");
@@ -70,7 +71,8 @@ export default function LearningAnalyticsPage() {
       </div>
 
       {/* Churn Alerts */}
-      <div className="rounded-lg border">
+      <LazySection minHeight={300} rootMargin="200px">
+        <div className="rounded-lg border">
         <div className="p-4 border-b font-bold flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-red-500" /> تنبيهات التسرب (الطلاب المعرضون للمغادرة)
         </div>
@@ -101,7 +103,8 @@ export default function LearningAnalyticsPage() {
             )}
           </tbody>
         </table>
-      </div>
+        </div>
+      </LazySection>
     </div>
   );
 }

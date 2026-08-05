@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ColumnDef } from "@tanstack/react-table";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { adminFetch } from "@/lib/api/admin-api";
 
 interface TeacherApplication {
   id: string;
@@ -28,7 +29,7 @@ export default function TeacherApplicationsPage() {
   const { data: applications = [], isLoading, refetch } = useQuery<TeacherApplication[]>({
     queryKey: ["admin", "teacher-applications"],
     queryFn: async () => {
-      const response = await fetch("/api/admin/teachers/applications");
+      const response = await adminFetch("/api/admin/teachers/applications");
       if (!response.ok) throw new Error("Failed to fetch applications");
       const res = await response.json();
       return res.data || [];
@@ -37,7 +38,7 @@ export default function TeacherApplicationsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async ({ id, name, approved }: { id: string; name: string; approved: boolean }) => {
-      const response = await fetch(`/api/admin/teachers/applications?id=${id}&approve=${approved}`, {
+      const response = await adminFetch(`/api/admin/teachers/applications?id=${id}&approve=${approved}`, {
         method: "DELETE",
       });
       if (!response.ok) {

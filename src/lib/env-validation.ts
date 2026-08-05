@@ -150,7 +150,7 @@ interface EnsureEnvironmentOptions {
   fatal?: boolean;
 }
 
-export function ensureValidEnvironment(options: EnsureEnvironmentOptions = {}): void {
+export function ensureValidEnvironment(options: EnsureEnvironmentOptions = {}): EnvValidationResult {
   const fatal = options.fatal ?? process.env.NODE_ENV === 'production';
   const result = validateEnvironment();
 
@@ -175,4 +175,8 @@ export function ensureValidEnvironment(options: EnsureEnvironmentOptions = {}): 
       );
     }
   }
+
+  // Return the validation result so callers (e.g. instrumentation) can trigger
+  // external alerts even when validation is non-fatal.
+  return result;
 }

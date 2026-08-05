@@ -41,6 +41,7 @@ export default async function RootLayout({
       <head>
         {/* No font preconnects: next/font/google self-hosts fonts at build time. */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className={`${alexandria.variable} font-sans`} suppressHydrationWarning>
         <SWRegistration />

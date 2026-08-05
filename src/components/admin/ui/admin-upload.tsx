@@ -95,7 +95,7 @@ export function AdminUpload({
       formData.append("file", file);
 
       // Use apiClient.fetch so X-CSRF-Token is automatically injected
-      const response = await apiClient.fetch("/api/upload", {
+      const response = await apiClient.fetch("/api/admin/upload", {
         method: "POST",
         body: formData,
       });
@@ -121,7 +121,7 @@ export function AdminUpload({
 
       // Use apiClient.fetch so the X-CSRF-Token header is automatically injected
       // (plain fetch() bypasses the CSRF injection in ApiClient.buildHeaders)
-      const presignResponse = await apiClient.fetch("/api/upload/presign", {
+      const presignResponse = await apiClient.fetch("/api/admin/upload/presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -191,7 +191,7 @@ export function AdminUpload({
   const uploadChunked = React.useCallback(
     async (file: File, durationSeconds?: number) => {
       // Use apiClient.fetch for all requests so X-CSRF-Token is automatically injected
-      const initResponse = await apiClient.fetch("/api/upload/chunked", {
+      const initResponse = await apiClient.fetch("/api/admin/upload/chunked", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -221,7 +221,7 @@ export function AdminUpload({
         chunkFormData.append("chunkIndex", String(chunkIndex));
         chunkFormData.append("totalChunks", String(totalChunks));
 
-        const chunkResponse = await apiClient.fetch("/api/upload/chunked", {
+        const chunkResponse = await apiClient.fetch("/api/admin/upload/chunked", {
           method: "PUT",
           body: chunkFormData,
         });
@@ -234,7 +234,7 @@ export function AdminUpload({
         setProgress(Math.round(((chunkIndex + 1) / totalChunks) * 95));
       }
 
-      const completeResponse = await apiClient.fetch("/api/upload/chunked", {
+      const completeResponse = await apiClient.fetch("/api/admin/upload/chunked", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uploadId }),

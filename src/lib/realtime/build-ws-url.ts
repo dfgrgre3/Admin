@@ -6,15 +6,20 @@
 export function buildAppUserWebSocketUrl(userId: string): string {
   if (typeof window === "undefined" || !userId) return "";
 
-  const isProduction = process.env.NODE_ENV === 'production';
-  const wsProtocol = isProduction || window.location.protocol === "https:" ? "wss:" : "ws:";
-
   // Use NEXT_PUBLIC_API_URL if available, otherwise fall back to NEXT_PUBLIC_WS_HOST,
   // otherwise fall back to window.location.host (for backward compatibility)
   const apiUrl =
     (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL?.trim()) ||
     (typeof process !== "undefined" && process.env.NEXT_PUBLIC_WS_HOST?.trim()) ||
     window.location.host;
+
+  // Follow the configured backend protocol. A tunneled HTTPS frontend can
+  // still use an HTTP localhost backend during development; forcing `wss` in
+  // that case makes the browser try to TLS-connect to a plain HTTP server.
+  const configuredProtocol = apiUrl.match(/^([a-z][a-z\d+.-]*):\/\//i)?.[1];
+  const wsProtocol = configuredProtocol
+    ? (configuredProtocol.toLowerCase() === "https" ? "wss:" : "ws:")
+    : (window.location.protocol === "https:" ? "wss:" : "ws:");
 
   // Extract host from API URL (e.g., "http://localhost:8082/api" -> "localhost:8082")
   // or use the host directly if it's already in host:port format
@@ -31,12 +36,23 @@ export function buildAppUserWebSocketUrl(userId: string): string {
     host = apiUrl;
   }
 
-  // Get access token from cookies for WebSocket authentication
-  // The browser's WebSocket API cannot set custom headers, so we pass the token as a query parameter
-  const accessToken = getAccessTokenFromCookie();
+  // Get access token from cookies for WebSocket authentication.
+  // The browser's WebSocket API cannot set custom headers, so we pass the token as a query parameter.
+  // Cookies may be HttpOnly or blocked on cross-origin WS connections, so fall back to localStorage.
+  const accessToken = getAccessTokenFromCookie() || getAccessTokenFromStorage();
   const tokenParam = accessToken ? `&access_token=${encodeURIComponent(accessToken)}` : '';
 
   return `${wsProtocol}//${host}/api/ws?userId=${encodeURIComponent(userId)}${tokenParam}`;
+}
+
+function getAccessTokenFromStorage(): string | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    return window.localStorage.getItem('accessToken');
+  } catch {
+    return null;
+  }
 }
 
 /**

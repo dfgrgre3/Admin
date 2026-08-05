@@ -575,6 +575,7 @@ function SidebarNavLink({ item, pathname, collapsed, onBookmarkToggle }: Sidebar
   const linkContent = (
     <Link
       href={item.href}
+      prefetch={false}
       aria-label={collapsed ? item.title : undefined}
       className={cn(
         "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 outline-none",

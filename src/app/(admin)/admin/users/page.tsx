@@ -88,6 +88,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { logger } from '@/lib/logger';
 import { AnalyticsSection } from "./_components/analytics-section";
+import { LazySection } from "@/components/admin/ui/lazy-section";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAdminRealtime } from "@/hooks/use-admin-realtime";
 import { adminAudit } from "@/lib/admin-audit";
@@ -1305,7 +1306,9 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Analytics Charts Section */}
-      <AnalyticsSection />
+      <LazySection minHeight={320} rootMargin="250px">
+        <AnalyticsSection />
+      </LazySection>
 
       {/* Role Tabs */}
       <Tabs value={role} onValueChange={(val) => { setRole(val as "all" | UserRole); setPage(1); }} className="w-full">

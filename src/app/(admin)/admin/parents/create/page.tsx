@@ -19,6 +19,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { adminApi } from "@/lib/api/admin-api";
 import { adminUsersApi } from "@/lib/api/admin-users-api";
 import { UserRole } from "@/types/enums";
 import { logger }from '@/lib/logger';
@@ -54,31 +55,24 @@ export default function CreateParentPage() {
   const handleSubmit = async (values: CreateParentValues) => {
     setIsSubmitting(true);
     try {
-      // Create user with PARENT role using the existing API
-      const result = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: values.name,
-          email: values.email,
-          password: values.password,
-          username: values.username || undefined,
-          role: UserRole.PARENT,
-          phone: values.phone || undefined,
-          country: values.country || undefined,
-        }),
+      const data = await adminApi.post<{ id: string } | { data?: { id: string } }>("users", {
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        username: values.username || undefined,
+        role: UserRole.PARENT,
+        phone: values.phone || undefined,
+        country: values.country || undefined,
       });
 
-      if (!result.ok) {
-        const error = await result.json();
-        toast.error(error.error || "تعذر إنشاء ولي الأمر");
+      const id = (data as { id: string }).id || (data as { data?: { id: string } }).data?.id;
+      if (!id) {
+        toast.error("تعذر إنشاء ولي الأمر");
         return;
       }
 
-      const data = await result.json();
       toast.success("تم إنشاء ولي الأمر بنجاح");
-      router.push(`/admin/parents/${data.data?.id ?? data.id}`);
+      router.push(`/admin/parents/${id}`);
     } catch (error) {
       logger.error("Error creating parent:", error);
       toast.error("حدث خطأ أثناء إنشاء ولي الأمر");

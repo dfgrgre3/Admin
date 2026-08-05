@@ -54,6 +54,16 @@ export function useLogin(options?: UseLoginOptions) {
           });
         }
 
+        // Persist tokens for WebSocket authentication when cookies are unavailable.
+        if (typeof window !== 'undefined' && result.data) {
+          if (result.data.accessToken) {
+            window.localStorage.setItem('accessToken', result.data.accessToken);
+          }
+          if (result.data.refreshToken) {
+            window.localStorage.setItem('refreshToken', result.data.refreshToken);
+          }
+        }
+
         // Success - refresh user data
         await refreshUser();
         
