@@ -46,7 +46,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { type CourseBase, type CourseActionCallbacks, levelConfig } from "./types";
+import { type CourseBase, type CourseActionCallbacks, levelConfig, FALLBACK_LEVEL } from "./types";
 
 // --- Types ---
 interface CourseCardProps extends CourseActionCallbacks {
@@ -118,7 +118,7 @@ export function CourseCard({
   // Direct calculations (faster than useMemo for simple primitives)
   const learnersCount = course._count?.enrollments ?? 0;
   const topicsCount = course._count?.topics ?? 0;
-  const level = levelConfig[course.level] ?? levelConfig.INTERMEDIATE;
+  const level = levelConfig[course.level] ?? FALLBACK_LEVEL;
   const isFree = !course.price || course.price === 0;
   const canManage = Boolean(onEdit || onDuplicate || onDelete || onToggleStatus || onToggleActive);
   const relativeDate = getRelativeTime(course.createdAt);

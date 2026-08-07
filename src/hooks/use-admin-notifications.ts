@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminFetch } from "@/lib/api/admin-api";
 import { useWebSocket } from "@/contexts/websocket-context";
 import type { RealtimeNotification } from "@/components/admin/dashboard/dashboard.types";
+import { PERFORMANCE_DEFAULTS } from "@/lib/performance-config";
 
 export type AdminNotification = RealtimeNotification;
 
@@ -39,9 +40,11 @@ export function useAdminNotifications() {
         unreadCount: json.data?.unreadCount || json.unreadCount || notifications.filter((n) => !n.read).length,
       };
     },
-    // Only use polling fallback when WebSocket is not connected
-    refetchInterval: isConnected ? false : 60000, // 60 seconds fallback when WS is down
-    refetchIntervalInBackground: false, // Don't refetch when tab is hidden
+    staleTime: PERFORMANCE_DEFAULTS.queryStaleTimeMs,
+    gcTime: PERFORMANCE_DEFAULTS.queryGcTimeMs,
+    refetchOnWindowFocus: false,
+    refetchInterval: isConnected ? false : PERFORMANCE_DEFAULTS.notificationsPollIntervalMs,
+    refetchIntervalInBackground: false,
   });
 
   // Listen for WebSocket messages with reconnection logic
@@ -68,9 +71,6 @@ export function useAdminNotifications() {
           };
 
           setRealtimeNotifications((prev) => [newNotification, ...prev]);
-
-          // Invalidate query to refresh the list
-          queryClient.invalidateQueries({ queryKey: ["admin", "notifications"] });
         }
       } catch {
         // Silently ignore parsing errors

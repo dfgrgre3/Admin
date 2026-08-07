@@ -97,18 +97,8 @@ export function useGlobalSettings() {
       
       // Smart detection for weak devices
       const savedEfficiency = localStorage.getItem('efficiencyMode');
-      let efficiencyMode = savedEfficiency === 'true';
-      
-      if (savedEfficiency === null && typeof navigator !== 'undefined') {
-        // Auto-enable if CPU cores < 4 or RAM < 4GB (if supported)
-        const nav = navigator as Navigator & { deviceMemory?: number };
-        const isLowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4) || 
-                        (nav.deviceMemory !== undefined && nav.deviceMemory < 4);
-        if (isLowEnd) {
-          efficiencyMode = true;
-          logger.info('[useGlobalSettings] Low-end device detected, auto-enabling Efficiency Mode');
-        }
-      }
+      // Performance-first: efficiency mode is on unless the user explicitly disabled it.
+      const efficiencyMode = savedEfficiency !== 'false';
 
       applyTheme(theme);
       applyFontSize(fontSize);

@@ -578,7 +578,7 @@ function SidebarNavLink({ item, pathname, collapsed, onBookmarkToggle }: Sidebar
       prefetch={false}
       aria-label={collapsed ? item.title : undefined}
       className={cn(
-        "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 outline-none",
+        "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium outline-none",
         "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         isActive
           ? "bg-gradient-to-l from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/30"
@@ -911,18 +911,18 @@ export function AdminSidebar() {
   return (
     <aside
       className={cn(
-        "flex h-screen flex-col border-l border-border glass-panel-strong transition-all duration-300 ease-in-out",
+        "flex h-screen flex-col border-l border-border glass-panel-strong",
         collapsed ? "w-[72px]" : "w-[260px]"
       )}
       aria-label="القائمة الجانبية للإدارة"
     >
       {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b border-border/50 bg-gradient-to-b from-background/80 to-background/50 backdrop-blur-sm px-3">
+      <div className="flex h-16 items-center justify-between border-b border-border/50 bg-background px-3">
         {!collapsed && (
-          <div className="flex items-center gap-3 pr-1 animate-in fade-in slide-in-from-right-2 duration-300">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/30 shadow-lg shadow-primary/20 ring-2 ring-primary/10">
+          <div className="flex items-center gap-3 pr-1">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl overflow-hidden bg-primary/10 border border-primary/30">
               <Image
-                src="/logo-tolo.jpg"
+                src="/logo-tolo.webp"
                 alt="TOLO"
                 width={40}
                 height={40}
@@ -933,7 +933,7 @@ export function AdminSidebar() {
             <div>
               <span className="font-bold text-sm tracking-tight text-foreground">{currentPageTitle || "لوحة التحكم"}</span>
               <p className="text-[10px] text-primary font-bold mt-0.5 flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                 {currentPageTitle ? `الفيصل: ${currentPageTitle}` : "إدارة الموقع"}
               </p>
             </div>
@@ -947,7 +947,7 @@ export function AdminSidebar() {
               variant="ghost"
               onClick={() => window.dispatchEvent(new CustomEvent("open-command-palette"))}
               aria-label="البحث"
-              className="hover:bg-primary/10 hover:text-primary transition-all"
+              className="hover:bg-primary/10 hover:text-primary"
             />
           )}
           <IconButton
@@ -956,7 +956,6 @@ export function AdminSidebar() {
             variant="ghost"
             onClick={toggleCollapsed}
             className={cn(
-              "transition-all duration-200",
               collapsed ? "mx-auto" : "",
               "hover:bg-primary/10 hover:text-primary"
             )}
@@ -966,8 +965,8 @@ export function AdminSidebar() {
       </div>
 
       {!collapsed && user && (
-        <div className="border-b border-border/50 px-3 py-3 animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card p-3 backdrop-blur-sm shadow-lg shadow-primary/5 hover:shadow-primary/10 transition-all duration-300">
+        <div className="border-b border-border/50 px-3 py-3">
+          <div className="rounded-2xl border border-primary/20 bg-card p-3">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-chart-2 text-white font-bold text-sm shadow-lg shadow-primary/30 ring-2 ring-primary/20">
                 {(user.name || "A").substring(0, 2).toUpperCase()}

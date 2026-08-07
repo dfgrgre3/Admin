@@ -6,18 +6,13 @@ import { AdminPageAccessGate } from "@/components/admin/admin-page-access-gate";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-// ── Dynamic (code-split) layout components ──────────────────────────────────
-// All three are loaded in separate chunks and only fetched after the main
-// page content has been painted. Each has its own lightweight skeleton so the
-// shell has zero waiting cost.
-
 const AdminSidebar = dynamic(
   () => import("@/components/admin/layout/admin-sidebar").then((m) => m.AdminSidebar),
   {
     ssr: false,
     loading: () => (
-      <aside className="hidden h-screen w-[260px] border-l border-border bg-card/50 lg:block">
-        <div className="flex h-full animate-pulse flex-col gap-4 p-4">
+      <aside className="hidden h-screen w-[260px] border-l border-border bg-card/50 lg:block" aria-hidden="true">
+        <div className="flex h-full flex-col gap-4 p-4">
           <div className="h-10 w-10 rounded-xl bg-muted/30" />
           <div className="space-y-2">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -35,7 +30,7 @@ const AdminHeader = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-16 items-center justify-between border-b px-4 lg:px-6 animate-pulse bg-muted/10">
+      <div className="flex h-16 items-center justify-between border-b px-4 lg:px-6 bg-muted/10" aria-hidden="true">
         <div className="flex items-center gap-4">
           <div className="h-8 w-8 rounded-lg bg-muted/30" />
           <div className="h-8 w-8 rounded-lg bg-muted/30 lg:hidden" />
@@ -50,8 +45,6 @@ const AdminHeader = dynamic(
   },
 );
 
-// CommandPalette includes the full command dialog + keyboard shortcuts, so it
-// loads only after the rest of the shell has settled.
 const CommandPalette = dynamic(
   () => import("@/components/admin/ui/command-palette").then((m) => m.CommandPalette),
   { ssr: false, loading: () => null },
@@ -68,7 +61,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const mobileSidebarRef = React.useRef<HTMLDivElement>(null);
   const previouslyFocused = React.useRef<HTMLElement | null>(null);
 
-  // Handle escape key
   React.useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -80,7 +72,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     return () => window.removeEventListener("keydown", handleEscape);
   }, []);
 
-  // Focus management: move focus into drawer on open, restore on close
   React.useEffect(() => {
     if (sidebarOpen) {
       previouslyFocused.current = document.activeElement as HTMLElement | null;
@@ -99,8 +90,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     }
   }, [sidebarOpen]);
 
-  // Focus trap: keep Tab within the drawer while it's open
-  const handleDrawerKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+  const handleDrawerKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== "Tab" || !sidebarOpen) return;
     const drawer = mobileSidebarRef.current;
     if (!drawer) return;
@@ -119,33 +109,29 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       e.preventDefault();
       first.focus();
     }
-  };
+  }, [sidebarOpen]);
 
-  // Touch gestures for mobile sidebar
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = React.useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0]!.clientX;
-  };
+  }, []);
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = React.useCallback((e: React.TouchEvent) => {
     touchEndX.current = e.touches[0]!.clientX;
-  };
+  }, []);
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = React.useCallback(() => {
     const swipeThreshold = 50;
     const diff = touchStartX.current - touchEndX.current;
 
-    // Swipe left to close (when sidebar is open on mobile)
     if (diff > swipeThreshold && sidebarOpen) {
       setSidebarOpen(false);
     }
 
-    // Swipe right to open (when near right edge)
     if (diff < -swipeThreshold && !sidebarOpen && touchStartX.current > window.innerWidth - 50) {
       setSidebarOpen(true);
     }
-  };
+  }, [sidebarOpen]);
 
-  // Lock body scroll when sidebar is open on mobile
   React.useEffect(() => {
     if (sidebarOpen && window.innerWidth < 1024) {
       document.body.style.overflow = "hidden";
@@ -157,33 +143,35 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     };
   }, [sidebarOpen]);
 
+  const toggleSidebar = React.useCallback(() => {
+    setSidebarOpen((prev) => !prev);
+  }, []);
+
   return (
     <TooltipProvider>
       <div
-        className="relative flex h-screen overflow-hidden dark:ambient-bg bg-[radial-gradient(circle_at_top,#0f172a08,transparent_32%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--background))_40%,hsl(var(--muted)/0.25))]"
+        className="relative flex h-screen overflow-hidden bg-background"
         dir="rtl"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.15)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.15)_1px,transparent_1px)] bg-[size:28px_28px] opacity-30 dark:opacity-20" />
 
-        {/* Desktop sidebar — code-split with its own skeleton */}
         <div className="relative z-10 hidden lg:block">
           <AdminSidebar />
         </div>
 
         {sidebarOpen && (
           <div
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity duration-300"
+            className="fixed inset-0 z-50 bg-black/60 lg:hidden"
             onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
           />
         )}
 
-        {/* Mobile drawer */}
         <div
           className={cn(
-            "fixed inset-y-0 right-0 z-50 transform transition-transform duration-300 ease-in-out lg:hidden glass-panel-strong",
+            "fixed inset-y-0 right-0 z-50 lg:hidden border-l border-border bg-card",
             sidebarOpen ? "translate-x-0" : "translate-x-full"
           )}
           ref={mobileSidebarRef}
@@ -198,8 +186,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
 
         <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
-          {/* Header — code-split with its own skeleton */}
-          <AdminHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+          <AdminHeader onMenuClick={toggleSidebar} />
 
           <main className="admin-performance-scope flex-1 overflow-y-auto">
             <div className="mx-auto w-full max-w-[1680px] p-4 lg:p-6">
@@ -208,7 +195,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </main>
         </div>
 
-        {/* Command palette — loaded lazily after initial paint */}
         <CommandPalette />
       </div>
     </TooltipProvider>

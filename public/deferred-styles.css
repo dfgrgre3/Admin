@@ -1,0 +1,488 @@
+/* ── Non-critical styles — loaded asynchronously after first paint ──
+   These styles are not needed for the initial render and are deferred
+   to reduce the render-blocking CSS payload. */
+
+/* Premium Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.4);
+  background-clip: padding-box;
+}
+
+/* ── Glass Panel System ───────────────────────────────────────────────── */
+.glass-panel {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.glass-panel-strong {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.glass-panel-subtle {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+}
+
+/* ── Dark: Default card — solid surface, no blur ── */
+.dark .card,
+.dark [data-slot="card"],
+.dark [role="article"] {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.dark .card:hover,
+.dark [data-slot="card"]:hover {
+  border-color: hsl(var(--primary) / 0.4);
+}
+
+/* ── Premium RPG & Utility Enhancements ── */
+.dark .ambient-bg {
+  background-color: hsl(var(--background));
+}
+
+.mesh-gradient {
+  background-color: hsl(var(--background));
+}
+
+.dark .rpg-glass {
+  position: relative;
+  overflow: hidden;
+  border-radius: 2.5rem;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.rpg-glass-light {
+  position: relative;
+  overflow: hidden;
+  border-radius: 2.5rem;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dark .rpg-glass-premium {
+  position: relative;
+  overflow: hidden;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.efficiency-mode .rpg-glass,
+.efficiency-mode .rpg-glass-light,
+.efficiency-mode .rpg-glass-premium,
+.efficiency-mode .rpg-card {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-color: hsl(var(--card)) !important;
+  box-shadow: none !important;
+  border-color: hsl(var(--border)) !important;
+  background-image: none !important;
+}
+
+.custom-scrollbar-premium::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar-premium::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar-premium::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar-premium::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.5);
+}
+
+.shadow-inner-premium {
+  box-shadow: inset 0 2px 20px 0 rgba(0, 0, 0, 0.4);
+}
+
+.rpg-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid hsl(var(--border));
+  padding: 1.5rem;
+  background: hsl(var(--card));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.rpg-card:hover {
+  border-color: hsl(var(--primary) / 0.4);
+}
+
+.dark .rpg-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.dark .rpg-card:hover {
+  border-color: hsl(var(--primary) / 0.4);
+}
+
+.rpg-glow-primary {
+  box-shadow: none;
+}
+
+.rpg-neon-text {
+  color: hsl(var(--primary));
+  filter: none;
+}
+
+.rpg-gold-text {
+  color: hsl(38 95% 55%);
+  filter: none;
+}
+
+.rpg-divider {
+  height: 1px;
+  width: 100%;
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    hsl(var(--primary) / 0.25),
+    transparent
+  );
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.rpg-royal-glow {
+  box-shadow: 0 0 40px rgba(251, 191, 36, 0.2), 0 0 80px rgba(251, 191, 36, 0.1);
+}
+
+.rpg-royal-border {
+  border: 1px solid hsl(38 95% 55% / 0.3);
+  position: relative;
+}
+
+.rpg-royal-border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid hsl(38 95% 55% / 0.1);
+  border-radius: inherit;
+  transform: scale(1.02);
+}
+
+.glass-morphism {
+  background: hsl(0 0% 100%);
+  border: 1px solid hsl(0 0% 90%);
+}
+
+.dark .glass-morphism {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+}
+
+.gradient-border {
+  position: relative;
+  background: linear-gradient(hsl(var(--background)), hsl(var(--background))) padding-box,
+    linear-gradient(to right, hsl(var(--primary)), transparent) border-box;
+  border: 1px solid transparent;
+}
+
+/* Skeleton — static, no shimmer animation */
+.animate-shimmer {
+  background: hsl(var(--muted));
+}
+
+/* Fix RTL dialog positioning */
+.dialog-content {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+[dir="rtl"] .dialog-content {
+  left: auto;
+  right: 50%;
+  transform: translate(50%, -50%);
+}
+
+/* ── Visual Polish Layer ──────────────────────────────────────────────── */
+.card,
+[data-slot="card"] {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.dark .card,
+.dark [data-slot="card"] {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+/* Brand-tinted focus ring */
+*:focus-visible {
+  --tw-ring-color: hsl(var(--primary) / 0.55);
+  --tw-ring-offset-color: hsl(var(--background));
+}
+
+/* Smooth, brand-aligned selection colour */
+::selection {
+  background: hsl(var(--primary) / 0.18);
+  color: hsl(var(--foreground));
+}
+
+/* Consistent hover for interactive cards — no transform/lift */
+.rpg-card,
+[data-slot="card"] {
+  transition: none;
+}
+
+/* Tabular numerals for stats/metrics alignment */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Warm-tinted scrollbar thumb for a more cohesive dark look */
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+  background-clip: padding-box;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.45);
+  background-clip: padding-box;
+}
+
+/* ── Light/Dark color compatibility overrides ──────────────────────── */
+/* Performance: disable decorative animations and heavy transitions */
+.animate-pulse,
+.animate-bounce,
+.animate-in,
+[class*="animate-in"],
+[class*="slide-in-from"],
+[class*="fade-in"] {
+  animation: none !important;
+}
+
+.transition-all,
+[class*="duration-300"],
+[class*="duration-500"],
+[class*="duration-700"] {
+  transition: none !important;
+}
+
+/* Performance: strip expensive backdrop-blur from Tailwind utilities */
+[class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Performance: disable decorative pulse/bounce; keep spin for loaders */
+.animate-pulse,
+.animate-bounce {
+  animation: none !important;
+}
+
+/* Light: white-* utilities map to solid border */
+.border-white\/5,
+.border-white\/10,
+.border-white\/20,
+.border-white\/\[0\.04\],
+.border-white\/\[0\.06\],
+.border-white\/\[0\.08\],
+.border-white\/\[0\.12\],
+.border-white\/\[0\.15\] {
+  border-color: hsl(var(--border));
+}
+
+.bg-white\/5,
+.bg-white\/10,
+.bg-white\/20,
+.bg-white\/\[0\.04\],
+.bg-white\/\[0\.06\],
+.bg-white\/\[0\.08\],
+.bg-white\/\[0\.12\],
+.bg-white\/\[0\.15\] {
+  background-color: hsl(var(--muted));
+}
+
+/* Dark mode: keep a soft luminous tint for white-* utilities */
+.dark .border-white\/5,
+.dark .border-white\/10,
+.dark .border-white\/20,
+.dark .border-white\/\[0\.04\],
+.dark .border-white\/\[0\.06\],
+.dark .border-white\/\[0\.08\],
+.dark .border-white\/\[0\.12\],
+.dark .border-white\/\[0\.15\] {
+  border-color: hsl(var(--border));
+}
+
+.dark .bg-white\/5,
+.dark .bg-white\/10,
+.dark .bg-white\/20,
+.dark .bg-white\/\[0\.04\],
+.dark .bg-white\/\[0\.06\],
+.dark .bg-white\/\[0\.08\],
+.dark .bg-white\/\[0\.12\],
+.dark .bg-white\/\[0\.15\] {
+  background-color: hsl(var(--muted));
+}
+
+/* ── Enhanced table styles for dark glass theme ── */
+.dark .table-header-fixed thead {
+  background: hsl(var(--card));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.dark tr {
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+}
+
+.dark tr:hover {
+  background: hsl(var(--muted) / 0.5);
+}
+
+.dark tr[data-state="selected"] {
+  background: hsl(var(--primary) / 0.12);
+}
+
+/* ── Dialog / Popover — solid surfaces, no blur ── */
+.dark [role="dialog"] {
+  background: hsl(var(--popover));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  color: hsl(var(--popover-foreground));
+}
+
+.dark [data-radix-popper-content-wrapper] {
+  background: transparent !important;
+}
+
+.dark [role="menu"],
+.dark [role="listbox"],
+.dark [data-radix-dropdown-menu-content] {
+  background: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  color: hsl(var(--popover-foreground));
+}
+
+/* ── Input / Select — solid surfaces ── */
+.dark input,
+.dark select,
+.dark textarea,
+.dark [role="combobox"] {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus,
+.dark [role="combobox"]:focus {
+  border-color: hsl(var(--primary) / 0.5);
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15);
+}
+
+/* ── Nav links / sidebar items ── */
+.dark .sidebar-link {
+  background: transparent;
+}
+
+.dark .sidebar-link:hover {
+  background: hsl(var(--sidebar-accent));
+}
+
+.dark .sidebar-link-active {
+  background: hsl(var(--primary) / 0.18) !important;
+  color: hsl(var(--primary));
+}
+
+/* ── Stats cards — solid surfaces ── */
+.dark .stats-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+}
+
+.dark .stats-card:hover {
+  border-color: hsl(var(--primary) / 0.3);
+}
+
+/* ── Skeleton glass polish ── */
+.dark .animate-pulse {
+  background: hsl(var(--muted));
+}
+
+/* ── Tabs glass polish ── */
+.dark [role="tablist"] {
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+}
+
+.dark [role="tab"][data-state="active"] {
+  background: hsl(var(--primary) / 0.18);
+  color: hsl(var(--primary));
+}
+
+/* ── Performance: disable compositing hints and smooth scroll ── */
+html {
+  scroll-behavior: auto;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Better image defaults */
+img,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* Inherit fonts for form controls */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+/* Improve RTL text selection */
+[dir="rtl"] ::selection {
+  background: hsl(var(--primary) / 0.18);
+}

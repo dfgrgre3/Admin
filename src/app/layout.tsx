@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { GlobalProviders } from '@/providers';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { SWRegistration } from '@/components/sw-registration';
+import { DeferredStyles } from '@/components/deferred-styles';
 import './globals.css';
 
 const alexandria = Alexandria({
@@ -19,6 +20,11 @@ const alexandria = Alexandria({
 export const metadata: Metadata = {
   title: { default: 'لوحة التحكم | Tolo', template: '%s | Tolo' },
   description: 'لوحة التحكم وإدارة نظام Tolo التعليمي',
+  openGraph: {
+    type: 'website',
+    locale: 'ar_SA',
+    siteName: 'Tolo',
+  },
 };
 
 export const viewport: Viewport = {
@@ -37,13 +43,14 @@ export default async function RootLayout({
   const hasAuthToken = cookieStore.has('access_token') || cookieStore.has('refresh_token') || cookieStore.has('session_id');
 
   return (
-    <html lang="ar" dir="rtl" suppressHydrationWarning data-scroll-behavior="smooth">
+    <html lang="ar" dir="rtl" suppressHydrationWarning className="efficiency-mode">
       <head>
         {/* No font preconnects: next/font/google self-hosts fonts at build time. */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className={`${alexandria.variable} font-sans`} suppressHydrationWarning>
+        <DeferredStyles />
         <SWRegistration />
         <ThemeProvider
           attribute="class"

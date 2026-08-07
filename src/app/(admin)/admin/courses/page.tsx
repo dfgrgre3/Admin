@@ -391,7 +391,7 @@ export default function AdminCoursesPage() {
     }
   };
 
-  const handleDuplicate = async (course: Course) => {
+  const handleDuplicate = async (course: Course | import("@/components/admin/courses/types").CourseBase) => {
     try {
       const response = await adminFetch(apiRoutes.admin.courseDuplicate, {
         method: "POST",
@@ -499,11 +499,7 @@ export default function AdminCoursesPage() {
             </AdminButton>
             <AdminButton
               className="h-12 rounded-2xl px-8 font-black gap-2 shadow-xl shadow-primary/20"
-              onClick={() => {
-                setEditingCourse(null);
-                quickForm.reset(quickCourseDefaults);
-                setQuickCreateOpen(true);
-              }}
+              onClick={() => router.push("/admin/courses/new")}
             >
               <Plus className="h-5 w-5" />
               دورة تعليمية جديدة

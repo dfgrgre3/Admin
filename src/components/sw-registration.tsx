@@ -9,17 +9,13 @@ export function SWRegistration() {
   const { supported, permission, subscribe } = usePushSubscription();
 
   useEffect(() => {
-    // Register service worker on mount
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      registerServiceWorker().catch(() => {
-        // Silently fail in production, skip in development
-      });
-    }
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+    registerServiceWorker().catch(() => {
+      // Silently fail in production
+    });
   }, []);
 
-  // If the user already granted notification permission earlier, subscribe to
-  // push automatically once the service worker is active. Otherwise the user
-  // opts in via the notifications settings UI.
   useEffect(() => {
     if (!supported || permission !== 'granted') return;
     let active = true;

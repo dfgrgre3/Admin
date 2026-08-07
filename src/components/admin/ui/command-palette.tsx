@@ -21,7 +21,6 @@ import {
   Loader2,
   Bot,
 } from "lucide-react";
-import { m } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { usePremiumSounds } from "@/hooks/use-premium-sounds";
 import { logger } from '@/lib/logger';
@@ -207,23 +206,18 @@ export function CommandPalette() {
       setOpen(val);
     }}>
       <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-2xl overflow-hidden top-[15%] translate-y-0">
-        <m.div
-          initial={{ opacity: 0, scale: 0.9, y: -20, rotateX: -10 }}
-          animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: -10, rotateX: 5 }}
-          transition={{ type: "spring", damping: 20, stiffness: 300 }}
-          className="bg-card/90 backdrop-blur-3xl border border-white/10 shadow-[0_0_100px_-20px_rgba(var(--primary),0.3)] rounded-[2.5rem] overflow-hidden flex flex-col perspective-1000"
+        <div
+          className="bg-card border border-border shadow-lg rounded-2xl overflow-hidden flex flex-col"
           onKeyDown={handleKeyDown}
         >
           <DialogTitle className="sr-only">لوحة الأوامر</DialogTitle>
           {/* Search Bar */}
           <div className="flex items-center px-6 py-5 border-b border-white/5 bg-gradient-to-r from-primary/10 via-transparent to-transparent">
-            <div className="flex items-center justify-center h-10 w-10 rounded-2xl bg-primary/20 ml-4 relative">
-              <div className="absolute inset-0 bg-primary/20 blur-lg rounded-full animate-pulse" />
+            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-primary/15 ml-4">
               {loading ? (
-                <Loader2 className="h-5 w-5 text-primary animate-spin relative z-10" />
+                <Loader2 className="h-5 w-5 text-primary animate-spin" />
               ) : (
-                <Zap className="h-5 w-5 text-primary relative z-10" />
+                <Zap className="h-5 w-5 text-primary" />
               )}
             </div>
             <input
@@ -266,26 +260,24 @@ export function CommandPalette() {
                           setOpen(false);
                         }}
                         onMouseEnter={() => {
-                          if (!isSelected) playSound('hover');
                           setSelectedIndex(globalIdx);
                         }}
                         className={cn(
-                          "w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group text-right relative overflow-hidden",
-                          isSelected 
-                            ? "bg-primary text-primary-foreground shadow-2xl shadow-primary/40 -translate-x-2" 
-                            : "hover:bg-white/5 text-muted-foreground hover:text-foreground"
+                          "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl group text-right relative overflow-hidden",
+                          isSelected
+                            ? "bg-primary text-primary-foreground"
+                            : "hover:bg-muted/60 text-muted-foreground hover:text-foreground"
                         )}
                       >
                         {isSelected && (
-                          <m.div 
-                            layoutId="active-shine"
-                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 translate-x-full animate-[shimmer_2s_infinite]" 
+                          <div
+                            className="absolute inset-0 bg-primary/10"
                           />
                         )}
-                        
+
                         <div className={cn(
-                          "h-11 w-11 rounded-xl flex items-center justify-center transition-all duration-500",
-                          isSelected ? "bg-white/20 rotate-0 scale-110" : "bg-primary/5 group-hover:bg-primary/10 group-hover:rotate-12"
+                          "h-11 w-11 rounded-xl flex items-center justify-center",
+                          isSelected ? "bg-white/20" : "bg-primary/5 group-hover:bg-primary/10"
                         )}>
                           <Icon className={cn("h-5 w-5", isSelected ? "text-white" : "text-primary")} />
                         </div>
@@ -300,14 +292,10 @@ export function CommandPalette() {
                         </div>
                         
                         {isSelected && (
-                          <m.div
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="flex items-center gap-2"
-                          >
+                          <div className="flex items-center gap-2">
                             <span className="text-[10px] font-black uppercase tracking-widest text-white/50">تفعيل</span>
                             <ArrowRight className="h-4 w-4" />
-                          </m.div>
+                          </div>
                         )}
                       </button>
                     );
@@ -317,7 +305,7 @@ export function CommandPalette() {
             ))}
 
             {allActions.length === 0 && !loading && (
-              <div className="py-20 text-center space-y-6 animate-in fade-in zoom-in duration-500">
+              <div className="py-20 text-center space-y-6">
                 <div className="h-20 w-20 rounded-[2rem] bg-primary/5 flex items-center justify-center mx-auto ring-1 ring-primary/20 relative">
                   <div className="absolute inset-0 bg-primary/10 blur-2xl rounded-full" />
                   <Search className="h-10 w-10 text-primary/30 relative z-10" />
@@ -352,7 +340,7 @@ export function CommandPalette() {
               <span className="font-black text-primary tracking-[0.2em] text-[9px] uppercase">Nexus OS v2.0 // COMMAND_LINE</span>
             </div>
           </div>
-        </m.div>
+        </div>
       </DialogContent>
     </Dialog>
   );

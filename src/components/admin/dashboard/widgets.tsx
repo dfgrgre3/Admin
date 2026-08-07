@@ -1,14 +1,12 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { cn, formatNumber, formatRelativeTime } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
 import { AdminCard } from "../ui/admin-card";
 import { AdminButton, IconButton } from "../ui/admin-button";
-import { AdminBadge, CountBadge } from "../ui/admin-badge";
+import { AdminBadge } from "../ui/admin-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  TrendingUp,
   Users,
   Target,
   Clock,
@@ -18,7 +16,6 @@ import {
   MessageSquare,
   Activity,
   ChevronLeft,
-  Sparkles,
   RefreshCw,
   ClipboardList,
   Megaphone,
@@ -104,7 +101,7 @@ export const ActivityFeed = React.memo(function ActivityFeed({
         {loading ? (
           // Loading skeleton
           Array.from({ length: maxItems }).map((_, i) => (
-            <div key={i} className="flex items-start gap-3 animate-pulse">
+            <div key={i} className="flex items-start gap-3">
               <div className="h-10 w-10 rounded-full bg-muted" />
               <div className="flex-1 space-y-1">
                 <div className="h-4 w-3/4 bg-muted rounded" />
@@ -118,7 +115,7 @@ export const ActivityFeed = React.memo(function ActivityFeed({
             <p className="text-sm">لا توجد نشاطات حديثة</p>
           </div>
         ) : (
-          displayActivities.map((activity, index) => {
+          displayActivities.map((activity) => {
             const config = activityConfig[activity.type];
             const Icon = config.icon;
 
@@ -126,10 +123,8 @@ export const ActivityFeed = React.memo(function ActivityFeed({
               <div
                 key={activity.id}
                 className={cn(
-                  "flex items-start gap-3 p-2 rounded-lg transition-colors hover:bg-muted/50",
-                  "animate-in fade-in slide-in-from-right-2"
+                  "flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50",
                 )}
-                style={{ animationDelay: `${index * 50}ms` }}
               >
                 {activity.user ? (
                   <Avatar className="h-10 w-10">
@@ -165,129 +160,6 @@ export const ActivityFeed = React.memo(function ActivityFeed({
     </AdminCard>
   );
 });
-
-// Quick Actions Widget
-interface QuickAction {
-  title: string;
-  description?: string;
-  icon: React.ElementType;
-  href?: string;
-  onClick?: () => void;
-  color?: "blue" | "green" | "yellow" | "red" | "purple" | "cyan" | "orange" | "pink";
-  badge?: number;
-  permission?: string;
-}
-
-interface QuickActionsProps {
-  actions: QuickAction[];
-  title?: string;
-  layout?: "grid" | "list";
-  className?: string;
-}
-
-const actionColors = {
-  blue: "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20",
-  green: "bg-green-500/10 text-green-500 hover:bg-green-500/20",
-  yellow: "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20",
-  red: "bg-red-500/10 text-red-500 hover:bg-red-500/20",
-  purple: "bg-purple-500/10 text-purple-500 hover:bg-purple-500/20",
-  cyan: "bg-cyan-500/10 text-cyan-500 hover:bg-cyan-500/20",
-  orange: "bg-orange-500/10 text-orange-500 hover:bg-orange-500/20",
-  pink: "bg-pink-500/10 text-pink-500 hover:bg-pink-500/20",
-};
-
-import { usePermission } from "@/components/auth/PermissionGuard";
-
-function QuickActions({
-  actions,
-  title = "إجراءات سريعة",
-  layout = "grid",
-  className,
-}: QuickActionsProps) {
-  const { hasPermission } = usePermission();
-
-  const filteredActions = actions.filter(
-    (action) => !action.permission || hasPermission(action.permission as any)
-  );
-
-  if (filteredActions.length === 0) return null;
-
-  const content = (
-    <div
-      className={cn(
-        layout === "grid" ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" : "space-y-2",
-        className
-      )}
-    >
-      {filteredActions.map((action, index) => {
-        const colorClass = actionColors[action.color || "blue"];
-        const Icon = action.icon;
-
-        const inner = (
-          <div
-            className={cn(
-              "group flex items-center gap-3 rounded-xl p-3 transition-all",
-              layout === "grid" ? "flex-col text-center" : "flex-row",
-              "hover:shadow-md hover:-translate-y-0.5",
-              "animate-in fade-in zoom-in-95"
-            )}
-            style={{ animationDelay: `${index * 50}ms` }}
-          >
-            <div
-              className={cn(
-                "flex h-12 w-12 items-center justify-center rounded-xl transition-transform group-hover:scale-110",
-                colorClass
-              )}
-            >
-              <Icon className="h-6 w-6" />
-            </div>
-            <div className={cn(layout === "grid" && "text-center")}>
-              <p className="text-sm font-medium flex items-center gap-1 justify-center">
-                {action.title}
-                {action.badge && <CountBadge count={action.badge} />}
-              </p>
-              {action.description && (
-                <p className="text-xs text-muted-foreground mt-0.5">{action.description}</p>
-              )}
-            </div>
-          </div>
-        );
-
-        if (action.href) {
-          return (
-            <Link
-              key={index}
-              href={action.href}
-              className="rounded-xl border bg-card hover:bg-accent transition-colors"
-            >
-              {inner}
-            </Link>
-          );
-        }
-
-        return (
-          <button
-            key={index}
-            onClick={action.onClick}
-            className="rounded-xl border bg-card hover:bg-accent transition-colors text-right w-full"
-          >
-            {inner}
-          </button>
-        );
-      })}
-    </div>
-  );
-
-  return (
-    <div className="space-y-4">
-      <h3 className="font-semibold text-lg flex items-center gap-2">
-        <Sparkles className="h-5 w-5 text-primary" />
-        {title}
-      </h3>
-      {content}
-    </div>
-  );
-}
 
 // Upcoming Events Widget
 interface UpcomingEvent {
@@ -390,163 +262,5 @@ export const UpcomingEvents = React.memo(function UpcomingEvents({
   );
 });
 
-// Top Performers Widget
-interface Performer {
-  id: string;
-  name: string;
-  avatar?: string;
-  level: number;
-  xp: number;
-  streak: number;
-  rank: number;
-}
 
-interface TopPerformersProps {
-  performers: Performer[];
-  title?: string;
-  className?: string;
-}
 
-export const TopPerformers = React.memo(function TopPerformers({
-  performers,
-  title = "لوحة المتميزين",
-  className,
-}: TopPerformersProps) {
-  return (
-    <div className={cn("admin-glass p-8 border-yellow-500/10", className)}>
-      <div className="flex items-center justify-between mb-8">
-        <h3 className="font-black text-xl flex items-center gap-3">
-          <Award className="h-6 w-6 text-yellow-500" />
-          <span>{title}</span>
-        </h3>
-      </div>
-
-      <div className="space-y-4">
-        {performers.map((performer, index) => (
-          <div
-            key={performer.id}
-            className={cn(
-              "flex items-center gap-4 p-4 rounded-2xl transition-all border border-white/5 bg-white/5 hover:border-yellow-500/30",
-              index === 0 && "bg-yellow-500/10 border-yellow-500/30 ring-1 ring-yellow-500/20",
-              index === 1 && "bg-gray-400/5",
-              index === 2 && "bg-orange-500/5"
-            )}
-          >
-            <div
-              className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-full text-xs font-black shadow-lg",
-                index === 0 && "bg-gradient-to-br from-yellow-300 to-amber-600 text-white",
-                index === 1 && "bg-gradient-to-br from-gray-300 to-gray-500 text-white",
-                index === 2 && "bg-gradient-to-br from-orange-300 to-orange-600 text-white",
-                index > 2 && "bg-muted text-gray-500"
-              )}
-            >
-              {performer.rank}
-            </div>
-
-            <Avatar className="h-12 w-12 border-2 border-white/5 shadow-xl">
-              <AvatarImage src={performer.avatar} />
-              <AvatarFallback className="font-black">{performer.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-black truncate">{performer.name}</p>
-              <div className="flex items-center gap-2 mt-1">
-                 <span className="text-[10px] font-black text-primary uppercase tracking-widest">المستوى {performer.level}</span>
-                 <div className="w-12 h-1 bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-primary" style={{ width: '65%' }} />
-                 </div>
-              </div>
-            </div>
-
-            <div className="text-left bg-black/20 p-2 px-3 rounded-xl border border-white/5">
-              <p className="text-xs font-black text-yellow-500 font-mono">{formatNumber(performer.xp)}</p>
-              <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest">نقطة تفاعل</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-});
-
-// Progress Overview Widget
-interface ProgressItem {
-  id: string;
-  label: string;
-  current: number;
-  target: number;
-  color?: "blue" | "green" | "yellow" | "red" | "purple" | "cyan" | "orange" | "pink";
-}
-
-interface ProgressOverviewProps {
-  items: ProgressItem[];
-  title?: string;
-  className?: string;
-}
-
-export const ProgressOverview = React.memo(function ProgressOverview({
-  items,
-  title = "لوحة المتابعة والتقدم",
-  className,
-}: ProgressOverviewProps) {
-  const barColors = {
-    blue: "from-blue-600 to-sky-400 shadow-blue-500/20",
-    green: "from-emerald-600 to-teal-400 shadow-emerald-500/20",
-    yellow: "from-amber-500 to-yellow-300 shadow-amber-500/20",
-    red: "from-rose-600 to-red-400 shadow-red-500/20",
-    purple: "from-purple-600 to-indigo-400 shadow-purple-500/20",
-    cyan: "from-cyan-500 to-sky-300 shadow-cyan-500/20",
-    orange: "from-orange-600 to-amber-400 shadow-orange-500/20",
-    pink: "from-pink-600 to-rose-400 shadow-pink-500/20",
-  };
-
-  return (
-    <div className={cn("admin-glass p-8 border-primary/10", className)}>
-      <div className="flex items-center justify-between mb-8">
-        <h3 className="font-black text-xl flex items-center gap-3">
-          <TrendingUp className="h-6 w-6 text-primary" />
-          <span>{title}</span>
-        </h3>
-      </div>
-
-      <div className="space-y-8">
-        {items.map((item) => {
-          const percentage = Math.min(100, Math.round((item.current / item.target) * 100));
-          const color = item.color || "blue";
-
-          return (
-            <div key={item.id} className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-black text-gray-300">{item.label}</span>
-                <div className="flex items-center gap-2">
-                   <span className="text-[10px] font-black text-primary font-mono">{formatNumber(item.current)}</span>
-                   <span className="text-[10px] text-gray-600">/</span>
-                   <span className="text-[10px] font-black text-gray-500 font-mono">{formatNumber(item.target)}</span>
-                </div>
-              </div>
-              
-              <div className="relative h-4 bg-black/40 rounded-full overflow-hidden border border-white/5 p-0.5">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all duration-1000 bg-gradient-to-r shadow-lg relative overflow-hidden",
-                    barColors[color]
-                  )}
-                  style={{ width: `${percentage}%` }}
-                >
-                   {/* Animated shine effect */}
-                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center px-1">
-                 <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">التقدم</span>
-                 <span className="text-[10px] font-black text-gray-400 font-mono">{percentage}%</span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-});

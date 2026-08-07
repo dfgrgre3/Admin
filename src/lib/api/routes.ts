@@ -238,6 +238,7 @@ export const apiRoutes = {
     courseExport: '/api/admin/courses/export',
     courseExportJob: (jobId: string) => `/api/admin/courses/export/${jobId}`,
     courseStudents: (courseId: string) => `/api/admin/courses/${courseId}/students`,
+    courseOverview: (courseId: string) => `/api/admin/courses/${courseId}/overview`,
     courseAnalytics: (courseId: string) => `/api/admin/courses/${courseId}/analytics`,
     courseCurriculum: (courseId: string) => `/api/admin/courses/${courseId}/curriculum`,
     courseModule: (courseId: string, moduleId: string) => `/api/admin/courses/${courseId}/modules/${moduleId}`,

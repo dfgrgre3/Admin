@@ -51,10 +51,13 @@ export interface CourseCategory {
 
 // ─── Level Configuration ──────────────────────────────────────────────────────
 
-export const levelConfig: Record<
-  string,
-  { label: string; color: string; num: string }
-> = {
+export interface LevelConfigEntry {
+  label: string;
+  color: string;
+  num: string;
+}
+
+export const levelConfig: Record<string, LevelConfigEntry> = {
   BEGINNER: {
     label: "مبتدئ",
     color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/25",
@@ -70,6 +73,12 @@ export const levelConfig: Record<
     color: "text-violet-400 bg-violet-500/10 border-violet-500/25",
     num: "3",
   },
+};
+
+export const FALLBACK_LEVEL: LevelConfigEntry = {
+  label: "غير محدد",
+  color: "text-slate-400 bg-slate-500/10 border-slate-500/25",
+  num: "-",
 };
 
 // ─── Action Callbacks ─────────────────────────────────────────────────────────

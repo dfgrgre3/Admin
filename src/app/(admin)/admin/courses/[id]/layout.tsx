@@ -108,8 +108,8 @@ export default function CourseDetailLayout({ children }: CourseLayoutProps) {
     {
       label: "إعدادات الدورة",
       icon: Settings,
-      href: `/admin/courses/${courseId}/edit`,
-      active: pathname === `/admin/courses/${courseId}/edit`,
+      href: `/admin/courses/${courseId}/settings`,
+      active: pathname === `/admin/courses/${courseId}/settings`,
     },
     {
       label: "سير العمل والمراجعة",

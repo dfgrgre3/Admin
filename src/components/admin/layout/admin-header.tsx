@@ -282,7 +282,7 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border/60 bg-background/80 px-2 backdrop-blur-xl sm:px-4 lg:px-6">
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border/60 bg-background px-2 sm:px-4 lg:px-6">
       <div className="flex min-w-0 items-center gap-1 sm:gap-3">
         {/* Mobile Menu Button */}
         <IconButton
@@ -474,7 +474,7 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
           <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-1 sm:gap-2.5 h-9 rounded-lg px-1 sm:px-2 hover:bg-accent transition-colors">
                 <Avatar className="h-7 w-7 ring-2 ring-primary/20">
-                  <AvatarImage src={user?.avatar || "/logo-tolo.jpg"} alt={user?.name || "Admin"} />
+                  <AvatarImage src={user?.avatar || "/logo-tolo.webp"} alt={user?.name || "Admin"} />
                   <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xs font-bold">
                     {user?.name?.[0] || user?.email?.[0] || "م"}
                   </AvatarFallback>

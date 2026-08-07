@@ -1,11 +1,12 @@
 "use client";
 
+import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const SKELETON_VARIANTS = {
-  default: "bg-gradient-to-r from-muted via-muted/60 to-muted bg-[length:200%_100%]",
-  dark: "bg-gradient-to-r from-white/5 via-white/[0.07] to-white/5 bg-[length:200%_100%]",
-  glow: "bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 bg-[length:200%_100%]",
+  default: "bg-muted",
+  dark: "bg-muted/80",
+  glow: "bg-primary/10",
 } as const;
 
 type SkeletonVariant = keyof typeof SKELETON_VARIANTS;
@@ -14,19 +15,19 @@ function Skeleton({ className, variant = "default", ...props }: React.HTMLAttrib
   return (
     <div
       className={cn(
-        "animate-pulse rounded-md bg-[length:200%_100%]",
+        "rounded-md",
         SKELETON_VARIANTS[variant],
         className
       )}
+      aria-hidden="true"
       {...props}
     />
   );
 }
 
-export function DashboardSkeleton() {
+export const DashboardSkeleton = React.memo(function DashboardSkeleton() {
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Page Header Skeleton */}
+    <div className="space-y-6" role="status" aria-label="جاري تحميل لوحة التحكم">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <Skeleton className="h-8 w-48" />
@@ -34,13 +35,11 @@ export function DashboardSkeleton() {
         </div>
       </div>
 
-      {/* Stats Cards Skeleton */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[...Array(4)].map((_, i) => (
           <div
             key={i}
             className="rounded-xl border bg-card p-6 space-y-3"
-            style={{ animationDelay: `${i * 100}ms` }}
           >
             <div className="flex items-center justify-between">
               <Skeleton className="h-4 w-24" />
@@ -52,7 +51,6 @@ export function DashboardSkeleton() {
         ))}
       </div>
 
-      {/* Charts Skeleton */}
       <div className="grid gap-4 md:grid-cols-2">
         {[...Array(2)].map((_, i) => (
           <div key={i} className="rounded-xl border bg-card p-6 space-y-4">
@@ -62,7 +60,6 @@ export function DashboardSkeleton() {
         ))}
       </div>
 
-      {/* Activity Skeleton */}
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-xl border bg-card p-6 space-y-4">
           <Skeleton className="h-6 w-32" />
@@ -92,12 +89,11 @@ export function DashboardSkeleton() {
       </div>
     </div>
   );
-}
+});
 
-export function TableSkeleton({ rows = 5, cols = 5 }: { rows?: number; cols?: number }) {
+export const TableSkeleton = React.memo(function TableSkeleton({ rows = 5, cols = 5 }: { rows?: number; cols?: number }) {
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Page Header Skeleton */}
+    <div className="space-y-6" role="status" aria-label="جاري تحميل الجدول">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <Skeleton className="h-8 w-48" />
@@ -106,27 +102,22 @@ export function TableSkeleton({ rows = 5, cols = 5 }: { rows?: number; cols?: nu
         <Skeleton className="h-10 w-32 rounded-lg" />
       </div>
 
-      {/* Toolbar */}
       <div className="flex items-center justify-between gap-4">
         <Skeleton className="h-10 w-64 rounded-lg" />
         <Skeleton className="h-10 w-24 rounded-lg" />
       </div>
 
-      {/* Table */}
       <div className="rounded-xl border overflow-hidden">
-        {/* Header */}
         <div className="bg-muted/30 border-b px-4 py-3 flex gap-4">
           {[...Array(cols)].map((_, i) => (
             <Skeleton key={i} className="h-4 flex-1" />
           ))}
         </div>
 
-        {/* Rows */}
         {[...Array(rows)].map((_, rowIndex) => (
           <div
             key={rowIndex}
             className="border-b px-4 py-4 flex items-center gap-4"
-            style={{ animationDelay: `${rowIndex * 50}ms` }}
           >
             {[...Array(cols)].map((_, colIndex) => (
               <div key={colIndex} className="flex-1">
@@ -147,7 +138,6 @@ export function TableSkeleton({ rows = 5, cols = 5 }: { rows?: number; cols?: nu
         ))}
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-between">
         <Skeleton className="h-4 w-32" />
         <div className="flex items-center gap-2">
@@ -158,12 +148,11 @@ export function TableSkeleton({ rows = 5, cols = 5 }: { rows?: number; cols?: nu
       </div>
     </div>
   );
-}
+});
 
-export function AnalyticsSkeleton() {
+export const AnalyticsSkeleton = React.memo(function AnalyticsSkeleton() {
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Header */}
+    <div className="space-y-6" role="status" aria-label="جاري تحميل التحليلات">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <Skeleton className="h-8 w-48" />
@@ -172,7 +161,6 @@ export function AnalyticsSkeleton() {
         <Skeleton className="h-10 w-40 rounded-lg" />
       </div>
 
-      {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="rounded-xl border bg-card p-6 space-y-3">
@@ -186,7 +174,6 @@ export function AnalyticsSkeleton() {
         ))}
       </div>
 
-      {/* Charts */}
       <div className="grid gap-4 lg:grid-cols-2">
         {[...Array(2)].map((_, i) => (
           <div key={i} className="rounded-xl border bg-card p-6 space-y-4">
@@ -199,7 +186,6 @@ export function AnalyticsSkeleton() {
         ))}
       </div>
 
-      {/* Charts Row 2 */}
       <div className="grid gap-4 lg:grid-cols-3">
         {[...Array(3)].map((_, i) => (
           <div key={i} className="rounded-xl border bg-card p-6 space-y-4">
@@ -210,12 +196,11 @@ export function AnalyticsSkeleton() {
       </div>
     </div>
   );
-}
+});
 
-export function SettingsSkeleton() {
+export const SettingsSkeleton = React.memo(function SettingsSkeleton() {
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Header */}
+    <div className="space-y-6" role="status" aria-label="جاري تحميل الإعدادات">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <Skeleton className="h-8 w-40" />
@@ -227,10 +212,8 @@ export function SettingsSkeleton() {
         </div>
       </div>
 
-      {/* Tabs */}
       <Skeleton className="h-10 w-full rounded-lg" />
 
-      {/* Content */}
       <div className="rounded-xl border bg-card p-6 space-y-6">
         <div className="space-y-1">
           <Skeleton className="h-6 w-32" />
@@ -245,7 +228,7 @@ export function SettingsSkeleton() {
       </div>
     </div>
   );
-}
+});
 
 export function LoadingSkeleton({ type = 'dashboard' }: { type?: 'dashboard' | 'table' | 'analytics' | 'settings' }) {
   switch (type) {

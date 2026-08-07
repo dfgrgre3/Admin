@@ -95,7 +95,7 @@ export interface Attachment {
 export interface Pricing {
   id: string;
   courseId: string;
-  type: 'FREE' | 'PAID' | 'SUBSCRIPTION' | 'BUNDLE' | 'ONE_TIME';
+  type: 'FREE' | 'ONE_TIME' | 'SUBSCRIPTION' | 'BUNDLE';
   amount: number;
   currencyCode: string;
   subscriptionDurationDays?: number | null;
@@ -136,8 +136,8 @@ export interface CreateCourseInput {
   seoTitle?: string;
   seoDescription?: string;
   seoKeywords?: string[];
-  prerequisitesText?: string;
-  targetAudience?: string;
+  prerequisitesText?: string | string[];
+  targetAudience?: string | string[];
   learningOutcomes?: string[];
   primaryInstructorId: string;
   categoryIds?: string[];
@@ -162,8 +162,8 @@ export interface UpdateCourseInput {
   seoTitle?: string;
   seoDescription?: string;
   seoKeywords?: string[];
-  prerequisitesText?: string;
-  targetAudience?: string;
+  prerequisitesText?: string | string[];
+  targetAudience?: string | string[];
   learningOutcomes?: string[];
   primaryInstructorId?: string;
   categoryIds?: string[];

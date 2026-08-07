@@ -14,7 +14,8 @@ export interface UserSegment {
   filters: Record<string, unknown>;
 }
 
-export function useBroadcastUsers() {
+export function useBroadcastUsers(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? true;
   const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
@@ -31,7 +32,8 @@ export function useBroadcastUsers() {
       const json = await response.json();
       return (json.data?.users || []) as UserModel[];
     },
-    staleTime: 60000, // Cache for 1 minute
+    staleTime: 5 * 60 * 1000,
+    enabled,
   });
 
   // Fetch predefined segments
@@ -49,7 +51,7 @@ export function useBroadcastUsers() {
         { id: "new", name: "مستخدمين جدد (آخر 30 يوم)", count: 0, filters: { createdAfter: "30d" } },
       ] as UserSegment[];
     },
-    enabled: !!usersData,
+    enabled: enabled && !!usersData,
   });
 
   // Filter users based on segment and search

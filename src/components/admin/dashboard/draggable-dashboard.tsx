@@ -19,7 +19,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
-import { m } from "framer-motion";
 import { usePremiumSounds } from "@/hooks/use-premium-sounds";
 
 interface SortableItemProps {
@@ -33,35 +32,30 @@ const SortableItem = React.memo(function SortableItem({ id, children }: Sortable
     listeners,
     setNodeRef,
     transform,
-    transition,
     isDragging,
   } = useSortable({ id });
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: "none",
     zIndex: isDragging ? 50 : "auto",
     position: "relative",
   };
 
   return (
     <div ref={setNodeRef} style={style} className="group relative" id={id}>
-      <div 
-        {...attributes} 
+      <button
+        {...attributes}
         {...listeners}
-        className="absolute -right-10 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity text-muted-foreground hover:text-primary z-20 hidden xl:block"
+        className="absolute -right-10 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-primary z-20 hidden xl:block"
+        aria-label={`نقل القسم ${id}`}
+        type="button"
       >
-        <GripVertical className="w-6 h-6" />
-      </div>
-      <m.div
-        animate={{ 
-          scale: isDragging ? 1.02 : 1,
-          boxShadow: isDragging ? "0 20px 50px rgba(0,0,0,0.2)" : "0 0 0 rgba(0,0,0,0)",
-        }}
-        transition={{ duration: 0.2 }}
-      >
+        <GripVertical className="w-6 h-6" aria-hidden="true" />
+      </button>
+      <div className={isDragging ? "opacity-90" : undefined}>
         {children}
-      </m.div>
+      </div>
     </div>
   );
 });
@@ -80,13 +74,11 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange }:
   const children = initialChildren || EMPTY_ARRAY;
   const { playSound } = usePremiumSounds();
 
-  // Memoize default order to prevent unnecessary recalculations
   const defaultOrder = React.useMemo(
     () => children.map((c: DashboardChild) => String(c.id)),
     [children]
   );
 
-  // Load saved layout from localStorage on mount
   const [items, setItems] = React.useState<string[]>(() => {
     if (typeof window === "undefined") return defaultOrder;
 
@@ -95,7 +87,6 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange }:
       if (saved) {
         const savedOrder = JSON.parse(saved) as string[];
         const currentIds = new Set(defaultOrder);
-        // Dedupe to defend against stale localStorage entries (e.g. previously-duplicated IDs)
         const validSavedOrder = Array.from(new Set(savedOrder.filter((id) => currentIds.has(id))));
         const newIds = defaultOrder.filter((id) => !validSavedOrder.includes(id));
         return [...validSavedOrder, ...newIds];
@@ -106,7 +97,6 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange }:
     return defaultOrder;
   });
 
-  // Persist cleaned-up order so stale duplicates don't reappear on next load
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -116,7 +106,6 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange }:
     }
   }, [items]);
 
-  // Sync items when children change (e.g. new sections added), but avoid infinite loops
   const childrenIds = React.useMemo(() => {
     const seen = new Set<string>();
     return children.map((c: DashboardChild) => c.id).filter((id) => {
@@ -129,14 +118,11 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange }:
   const itemsKey = items.join(",");
 
   React.useEffect(() => {
-    // Only update if IDs have actually changed
     if (childrenIdsKey !== itemsKey) {
-      // This is an intentional reconciliation between external (children) and local state
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setItems((prev) => {
         const currentIds = childrenIds;
         const existingIds = new Set(prev);
-        // Keep existing order for known IDs (deduped), append new ones at the end
         const validExisting: string[] = [];
         const seen = new Set<string>();
         for (const id of prev) {
@@ -146,7 +132,6 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange }:
           }
         }
         const newOnes = currentIds.filter((id) => !existingIds.has(id));
-        // If nothing changed, return prev to avoid re-render
         const result = [...validExisting, ...newOnes];
         if (result.length === prev.length && result.every((id, i) => id === prev[i])) {
           return prev;
@@ -168,11 +153,11 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange }:
     })
   );
 
-  const handleDragStart = () => {
+  const handleDragStart = React.useCallback(() => {
     playSound('open');
-  };
+  }, [playSound]);
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = React.useCallback((event: DragEndEvent) => {
     const { active, over } = event;
 
     if (active.id !== over?.id) {
@@ -187,9 +172,8 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange }:
     } else {
       playSound('close');
     }
-  };
+  }, [playSound, onOrderChange]);
 
-  // Reset layout to default order
   const resetLayout = React.useCallback(() => {
     const defaultOrder = children.map((c: DashboardChild) => String(c.id));
     setItems(defaultOrder);
@@ -198,15 +182,19 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange }:
     }
   }, [children]);
 
-  const orderedContents = items.map(id => children.find(c => c.id === id)).filter(Boolean);
+  const orderedContents = React.useMemo(
+    () => items.map(id => children.find(c => c.id === id)).filter(Boolean),
+    [items, children]
+  );
 
   return (
-    <>
+    <div role="region" aria-label="لوحة التحكم القابلة للترتيب">
       <div className="flex justify-end mb-4">
         <button
           onClick={resetLayout}
           className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           title="إعادة ترتيب الأقسام للوضع الافتراضي"
+          type="button"
         >
           إعادة الترتيب الافتراضي
         </button>
@@ -227,6 +215,6 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange }:
           </div>
         </SortableContext>
       </DndContext>
-    </>
+    </div>
   );
 }

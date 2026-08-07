@@ -132,36 +132,6 @@ export interface DashboardGoal {
 }
 
 /**
- * Build default dashboard goals when the backend does not provide them.
- */
-export function buildDefaultGoals(stats: {
-  newUsersThisWeek?: number;
-}, activity: {
-  studyMinutes?: number;
-}): DashboardGoal[] {
-  return [
-    {
-      id: "1",
-      title: "مستخدمين جدد",
-      current: stats.newUsersThisWeek ?? 0,
-      target: 1000,
-      unit: "مستخدم",
-      category: "users",
-      priority: "medium",
-    },
-    {
-      id: "2",
-      title: "دراسة مجمعة",
-      current: Math.round((activity.studyMinutes ?? 0) / 60),
-      target: 5000,
-      unit: "ساعة",
-      category: "engagement",
-      priority: "high",
-    },
-  ];
-}
-
-/**
  * Map raw recent-activity entries to the shape expected by the ActivityFeed widget.
  * Coerces `createdAt`/`timestamp` strings into Date objects and normalizes the
  * `type` field to the union expected by the widget.

@@ -32,6 +32,8 @@ interface SystemDiagnosticsSectionProps {
   errorCount?: number;
   lastUpdated?: Date | null;
   isFetching?: boolean;
+  isAuthenticated?: boolean;
+  sessionRole?: string;
   onRefresh?: () => void;
 }
 
@@ -53,6 +55,8 @@ export const SystemDiagnosticsSection = React.memo(function SystemDiagnosticsSec
   errorCount = 0,
   lastUpdated = null,
   isFetching = false,
+  isAuthenticated = false,
+  sessionRole,
   onRefresh,
 }: SystemDiagnosticsSectionProps) {
   const statusItems: StatusItem[] = React.useMemo(() => [
@@ -72,10 +76,14 @@ export const SystemDiagnosticsSection = React.memo(function SystemDiagnosticsSec
     },
     {
       label: "جلسة المسؤول",
-      value: "مصادقة نشطة",
-      healthy: true,
+      value: isAuthenticated ? "مصادقة نشطة" : "غير مصادقة",
+      healthy: isAuthenticated,
       icon: ShieldCheck,
-      detail: "تتحقق من الصلاحية تلقائياً",
+      detail: isAuthenticated
+        ? sessionRole
+          ? `الدور الحالي: ${sessionRole}`
+          : "تتحقق من الصلاحية تلقائياً"
+        : "يرجى إعادة تسجيل الدخول",
     },
     {
       label: "آخر مزامنة",
@@ -90,7 +98,7 @@ export const SystemDiagnosticsSection = React.memo(function SystemDiagnosticsSec
         ? new Intl.DateTimeFormat("ar-EG", { dateStyle: "medium" }).format(lastUpdated)
         : "—",
     },
-  ], [wsConnected, isError, errorCount, lastUpdated, isFetching]);
+  ], [wsConnected, isError, errorCount, lastUpdated, isFetching, isAuthenticated, sessionRole]);
 
   return (
     <ErrorBoundary fallback={<div className="text-gray-400 p-8 text-center font-bold">حدث خطأ في تحميل تشخيصات النظام</div>}>

@@ -7,14 +7,12 @@ import ClientLayoutProvider from '@/providers/client-layout-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ErrorBoundary from '@/components/error-boundary';
 import { HydrationFix } from '@/components/hydration-fix';
-import { LazyMotion, domAnimation } from 'framer-motion';
+import { LazyMotion, MotionConfig, domAnimation } from 'framer-motion';
 import { PerformanceProvider } from '@/components/providers/PerformanceProvider';
 import { ReactQueryPersistence } from '@/providers/react-query-persistence';
 import { PERFORMANCE_DEFAULTS } from '@/lib/performance-config';
 
-// Lazy load non-critical providers to reduce initial JS bundle size.
-// These are only needed after the user interacts with the app.
-const WebSocketProvider = lazy(() => 
+const WebSocketProvider = lazy(() =>
   import('@/contexts/websocket-context').then(mod => ({ default: mod.WebSocketProvider }))
 );
 
@@ -38,9 +36,8 @@ function makeQueryClient() {
         gcTime: PERFORMANCE_DEFAULTS.queryGcTimeMs,
         retry: 1,
         refetchOnWindowFocus: false,
-        refetchOnReconnect: true,
-        // Fresh cached data renders immediately; stale data revalidates in the background.
-        refetchOnMount: true,
+        refetchOnReconnect: false,
+        refetchOnMount: false,
         placeholderData: (previousData: unknown) => previousData,
         networkMode: 'online',
       },
@@ -73,9 +70,11 @@ export function GlobalProviders({ children, initialAuthHint }: GlobalProvidersPr
                   <NotificationsProvider>
                     <TooltipProvider>
                       <LazyMotion features={domAnimation} strict>
-                        <PerformanceProvider>
-                          {children}
-                        </PerformanceProvider>
+                        <MotionConfig reducedMotion="always">
+                          <PerformanceProvider>
+                            {children}
+                          </PerformanceProvider>
+                        </MotionConfig>
                       </LazyMotion>
                       <Toaster richColors closeButton position="top-center" />
                     </TooltipProvider>

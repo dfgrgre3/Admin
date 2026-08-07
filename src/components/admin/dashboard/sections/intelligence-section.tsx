@@ -55,7 +55,7 @@ interface IntelligenceSectionProps {
   }>;
   goals: DashboardGoal[];
   timeFilter: string;
-  onTimeFilterChange: (filter: "today" | "week") => void;
+  onTimeFilterChange: (filter: "today" | "week" | "month" | "year") => void;
   onRefresh: () => void;
   onOpenBroadcast: () => void;
   isFetching: boolean;
@@ -110,13 +110,15 @@ export const IntelligenceSection = React.memo(function IntelligenceSection({
             {[
               { id: "today", label: "اليوم" },
               { id: "week", label: "هذا الأسبوع" },
+              { id: "month", label: "هذا الشهر" },
+              { id: "year", label: "هذه السنة" },
             ].map((filter) => (
               <button
                 key={filter.id}
                 className={`rounded-lg px-3 py-2 text-sm font-bold transition-all ${timeFilter === filter.id ? "bg-primary text-white" : "text-muted-foreground hover:text-white hover:bg-white/5"}`}
                 onClick={() => {
                   playSound("click");
-                  onTimeFilterChange(filter.id as "today" | "week");
+                  onTimeFilterChange(filter.id as "today" | "week" | "month" | "year");
                 }}
               >
                 {filter.label}

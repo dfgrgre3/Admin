@@ -46,8 +46,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title, {
       body: payload.body,
-      icon: "/logo-tolo.jpg",
-      badge: "/logo-tolo.jpg",
+      icon: "/logo-tolo.webp",
+      badge: "/logo-tolo.webp",
       tag: payload.data && payload.data.id ? String(payload.data.id) : undefined,
       data: payload.data || {},
       actions,

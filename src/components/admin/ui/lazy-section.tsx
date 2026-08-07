@@ -69,7 +69,7 @@ export function LazySection({
 
   const defaultPlaceholder = placeholder ?? (
     <div
-      className="w-full animate-pulse rounded-2xl bg-muted/10"
+      className="w-full rounded-2xl bg-muted/10"
       style={minHeight ? { minHeight } : { minHeight: 200 }}
       aria-hidden="true"
     />
@@ -173,7 +173,7 @@ export function LazyList<T>({
   }, [allLoaded, items.length, rootMargin]);
 
   const fallback = placeholder ?? (
-    <div className="h-16 animate-pulse rounded-xl bg-muted/10" />
+    <div className="h-16 rounded-xl bg-muted/10" />
   );
 
   return (

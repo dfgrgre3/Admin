@@ -1,6 +1,5 @@
 import { render, screen } from "@testing-library/react";
 import { RealtimeNotificationsSection } from "@/components/admin/dashboard/sections/realtime-notifications-section";
-import AdminDashboardPage from "@/app/(admin)/admin/page";
 
 describe("RealtimeNotificationsSection", () => {
   it("renders the realtime notifications list and unread count", () => {
@@ -28,8 +27,17 @@ describe("RealtimeNotificationsSection", () => {
     expect(screen.getByText("تم تسجيل طالب جديد في المنصة")).toBeTruthy();
   });
 
-  it("renders the section container on the admin dashboard page", () => {
-    render(<AdminDashboardPage />);
-    expect(screen.getByText("لوحة التحكم الإدارية")).toBeTruthy();
+  it("renders an empty state when there are no notifications", () => {
+    render(
+      <RealtimeNotificationsSection
+        notifications={[]}
+        unreadCount={0}
+        onMarkAsRead={() => {}}
+        onDismiss={() => {}}
+      />
+    );
+
+    expect(screen.getByText("الإشعارات الفورية")).toBeTruthy();
+    expect(screen.queryByText("1 غير مقروءة")).toBeNull();
   });
 });

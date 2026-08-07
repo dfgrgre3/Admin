@@ -44,7 +44,7 @@ export default function InfrastructurePage() {
           }
           return json;
        },
-      refetchInterval: 10000,
+      refetchInterval: 60000,
    });
 
    return (

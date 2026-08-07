@@ -229,7 +229,7 @@ function LoginContent() {
           <div className="flex justify-center mb-6">
             <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-gradient-to-br from-orange-500 to-red-600 shadow-lg">
               <img
-                src="/logo-tolo.jpg"
+                src="/logo-tolo.webp"
                 alt="TOLO"
                 className="h-full w-full object-cover"
                 onError={(e) => {

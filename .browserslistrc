@@ -1,0 +1,5 @@
+# Modern browsers only — no polyfills for ES6+ features
+last 2 versions
+not dead
+not ie 11
+not op_mini all

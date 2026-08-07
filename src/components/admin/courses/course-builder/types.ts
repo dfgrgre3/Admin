@@ -7,7 +7,7 @@ import { z } from "zod";
 export type CourseStatus = "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "ARCHIVED";
 export type CourseLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 export type LessonType = "VIDEO" | "TEXT" | "AUDIO" | "FILE" | "EXTERNAL_LINK" | "INTERACTIVE_QUIZ";
-export type PriceType = "FREE" | "PAID" | "SUBSCRIPTION" | "BUNDLE" | "ONE_TIME";
+export type PriceType = "FREE" | "SUBSCRIPTION" | "BUNDLE" | "ONE_TIME";
 
 export interface CourseCategory {
   id: string;

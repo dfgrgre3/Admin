@@ -35,7 +35,7 @@ Avatar.displayName = "Avatar"
 const AvatarImage = React.forwardRef<
   HTMLImageElement,
   React.ImgHTMLAttributes<HTMLImageElement>
->(({ className, src, ...props }, ref) => {
+>(({ className, src, width = 64, height = 64, ...props }, ref) => {
   const { status, setStatus } = React.useContext(AvatarContext)
 
   React.useEffect(() => {
@@ -54,6 +54,8 @@ const AvatarImage = React.forwardRef<
     <img
       ref={ref}
       src={src}
+      width={width}
+      height={height}
       loading="lazy"
       decoding="async"
       className={cn("aspect-square h-full w-full object-cover", className)}

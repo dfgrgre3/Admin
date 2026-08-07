@@ -61,20 +61,16 @@ export function buildComprehensiveStats(payload: DashboardPayload = {}) {
   const stats = payload.stats ?? {};
   const activity = payload.activity ?? {};
 
-  const completionRate = typeof stats.completionRate === "number"
-    ? stats.completionRate
-    : (activity.studyMinutes && activity.examsTaken
-      ? Math.min(100, Math.round((activity.examsTaken / Math.max(1, activity.studyMinutes / 60)) * 10))
-      : 0);
+  const completionRate = Number(stats.completionRate ?? 0);
 
   return {
     totalUsers: Number(stats.totalUsers ?? 0),
-    activeStudents: Number(stats.activeStudents ?? stats.totalUsers ?? 0),
+    activeStudents: Number(stats.activeStudents ?? 0),
     totalTeachers: Number(stats.totalTeachers ?? 0),
     newUsersToday: Number(stats.newUsersToday ?? 0),
     newUsersThisWeek: Number(stats.newUsersThisWeek ?? 0),
     totalSubjects: Number(stats.totalSubjects ?? 0),
-    publishedCourses: Number(stats.publishedCourses ?? stats.totalSubjects ?? 0),
+    publishedCourses: Number(stats.publishedCourses ?? 0),
     reviewCourses: Number(stats.reviewCourses ?? 0),
     draftCourses: Number(stats.draftCourses ?? 0),
     totalExams: Number(stats.totalExams ?? 0),

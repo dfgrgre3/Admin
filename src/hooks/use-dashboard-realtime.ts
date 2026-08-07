@@ -16,9 +16,11 @@ const REFRESH_TRIGGERS = new Set([
 /**
  * Subscribe to admin WebSocket messages and trigger a debounced refetch.
  *
- * Previously every `admin_*` message caused an immediate full refetch of all
  * dashboard data. This hook debounces the refetch so a burst of notifications
  * only results in a single network request after the configured delay.
+ *
+ * Only explicit message types in {@link REFRESH_TRIGGERS} trigger a refetch
+ * (not every `admin_*` WebSocket event).
  *
  * @param refetch - The react-query `refetch` function.
  * @param delay   - Debounce window in ms (default 2000).
@@ -45,8 +47,7 @@ export function useDashboardRealtime(
         const type: string | undefined = data?.type;
         if (!type) return;
 
-        const shouldRefresh =
-          type.startsWith("admin_") || REFRESH_TRIGGERS.has(type);
+        const shouldRefresh = REFRESH_TRIGGERS.has(type);
 
         if (!shouldRefresh) return;
 

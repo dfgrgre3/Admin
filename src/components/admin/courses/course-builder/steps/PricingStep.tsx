@@ -21,7 +21,7 @@ import type { Pricing } from "../types";
 import { Section, Button, Input, Select, Badge, Alert, Card } from "../ui";
 
 const pricingSchema = z.object({
-  type: z.enum(["FREE", "PAID", "SUBSCRIPTION", "BUNDLE", "ONE_TIME"]),
+  type: z.enum(["FREE", "ONE_TIME", "SUBSCRIPTION", "BUNDLE"]),
   amount: z.coerce.number().min(0),
   currencyCode: z.string(),
   subscriptionDurationDays: z.coerce.number().min(1).optional().nullable(),
@@ -95,7 +95,7 @@ export const PricingStep: React.FC<PricingStepProps> = ({
   
   const addPricing = () => {
     append({
-      type: "PAID",
+      type: "ONE_TIME",
       amount: 0,
       currencyCode: "EGP",
       subscriptionDurationDays: null,
@@ -109,10 +109,9 @@ export const PricingStep: React.FC<PricingStepProps> = ({
   
   const typeLabels: Record<string, string> = {
     FREE: "مجاني",
-    PAID: "مدفوع (مرة واحدة)",
+    ONE_TIME: "مدفوع (مرة واحدة)",
     SUBSCRIPTION: "اشتراك",
     BUNDLE: "حزمة",
-    ONE_TIME: "دفع لمرة واحدة",
   };
   
   return (
@@ -166,10 +165,9 @@ export const PricingStep: React.FC<PricingStepProps> = ({
                           error={form.formState.errors.pricings?.[index]?.type?.message}
                         >
                           <option value="FREE">مجاني</option>
-                          <option value="PAID">مدفوع (مرة واحدة)</option>
+                          <option value="ONE_TIME">مدفوع (مرة واحدة)</option>
                           <option value="SUBSCRIPTION">اشتراك</option>
                           <option value="BUNDLE">حزمة</option>
-                          <option value="ONE_TIME">دفع لمرة واحدة</option>
                         </Select>
                       </div>
                       

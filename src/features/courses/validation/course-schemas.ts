@@ -35,11 +35,21 @@ export const coursePricingSchema = z.object({
 });
 
 export const courseSettingsSchema = z.object({
+  visibility: z.enum(["PUBLIC", "PRIVATE", "UNLISTED", "PASSWORD_PROTECTED"]).default("PUBLIC"),
+  is_featured: z.boolean().default(false),
+  requires_login: z.boolean().default(true),
   enrollment_capacity: z.coerce.number().min(0).optional(),
   allow_enrollment_after_full: z.boolean().default(false),
-  requires_login: z.boolean().default(true),
-  is_featured: z.boolean().default(false),
-  is_public: z.boolean().default(true),
+  enrollment_password: z.string().optional(),
+  drip_content_enabled: z.boolean().default(false),
+  require_previous_completion: z.boolean().default(false),
+  allow_certificate_download: z.boolean().default(true),
+  auto_complete_on_last_lesson: z.boolean().default(false),
+  show_student_count: z.boolean().default(true),
+  allow_reviews: z.boolean().default(true),
+  allow_discussion: z.boolean().default(true),
+  max_certificate_attempts: z.coerce.number().min(0).max(10).default(3),
+  certificate_passing_score: z.coerce.number().min(0).max(100).default(70),
 });
 
 export const courseContentSchema = z.object({

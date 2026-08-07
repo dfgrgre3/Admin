@@ -202,7 +202,7 @@ export function CourseContentView({
               <CourseCard
                 key={course.id}
                 course={course}
-                index={index}
+                priority={index < 4}
                 isSelected={selectedIds.includes(course.id)}
                 onSelect={canManageCourses ? handleSelect : undefined}
                 onEdit={

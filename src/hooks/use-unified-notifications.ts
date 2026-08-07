@@ -6,6 +6,7 @@ import { adminFetch } from "@/lib/api/admin-api";
 import { apiRoutes } from "@/lib/api/routes";
 import { useWebSocket } from "@/contexts/websocket-context";
 import { toast } from "sonner";
+import { PERFORMANCE_DEFAULTS } from "@/lib/performance-config";
 
 export type NotificationChannel = "in-app" | "email" | "sms" | "push";
 
@@ -73,7 +74,8 @@ export function useUnifiedNotifications(options: UseUnifiedNotificationsOptions 
       const data = await response.json();
       return (data.data?.broadcasts || data.broadcasts || []) as BroadcastMessage[];
     },
-    refetchInterval: isConnected ? false : 60000,
+    refetchInterval: isConnected ? false : PERFORMANCE_DEFAULTS.notificationsPollIntervalMs,
+    staleTime: PERFORMANCE_DEFAULTS.queryStaleTimeMs,
   });
 
   // Fetch notification stats
@@ -85,7 +87,9 @@ export function useUnifiedNotifications(options: UseUnifiedNotificationsOptions 
       const data = await response.json();
       return data.data || data;
     },
-    refetchInterval: 30000,
+    refetchInterval: isConnected ? false : PERFORMANCE_DEFAULTS.notificationsPollIntervalMs,
+    staleTime: PERFORMANCE_DEFAULTS.queryStaleTimeMs,
+    refetchOnWindowFocus: false,
   });
 
   // Send broadcast mutation

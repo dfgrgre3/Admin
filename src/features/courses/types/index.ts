@@ -148,6 +148,16 @@ export interface CourseDetails {
   requires_login?: boolean;
   is_featured?: boolean;
   is_public?: boolean;
+  enrollment_password?: string | null;
+  drip_content_enabled?: boolean;
+  require_previous_completion?: boolean;
+  allow_certificate_download?: boolean;
+  auto_complete_on_last_lesson?: boolean;
+  show_student_count?: boolean;
+  allow_reviews?: boolean;
+  allow_discussion?: boolean;
+  max_certificate_attempts?: number;
+  certificate_passing_score?: number;
   published_at?: string | null;
   archived_at?: string | null;
   created_at: string;
@@ -211,6 +221,16 @@ export interface CourseFormValues {
   requires_login?: boolean;
   is_featured?: boolean;
   is_public?: boolean;
+  enrollment_password?: string;
+  drip_content_enabled?: boolean;
+  require_previous_completion?: boolean;
+  allow_certificate_download?: boolean;
+  auto_complete_on_last_lesson?: boolean;
+  show_student_count?: boolean;
+  allow_reviews?: boolean;
+  allow_discussion?: boolean;
+  max_certificate_attempts?: number;
+  certificate_passing_score?: number;
   prerequisites_course_ids?: string[];
   learning_outcomes?: string[];
   requirements?: string[];
@@ -314,3 +334,137 @@ export interface ApiErrorPayload {
   details?: ApiErrorDetail[];
   request_id?: string;
 }
+
+export interface CourseOverviewStats {
+  total_enrollments: number;
+  active_enrollments: number;
+  active_students: number;
+  completed_count: number;
+  completion_rate: number;
+  dropoff_rate: number;
+  average_watch_time_seconds: number;
+  average_time_spent_seconds: number;
+  total_revenue: number;
+  net_revenue: number;
+  refunds_count: number;
+  refund_amount: number;
+  new_students: number;
+  conversion_rate: number;
+  bounce_rate: number;
+  average_rating: number;
+  reviews_count: number;
+  free_preview_completions: number;
+  free_preview_completion_rate: number;
+}
+
+export interface CourseOverviewSeries {
+  name: string;
+  enrollments: number;
+  revenue: number;
+  active: number;
+  completed: number;
+}
+
+export interface CourseOverviewDevice {
+  name: string;
+  value: number;
+  color: string;
+}
+
+export interface CourseOverviewDemographic {
+  name: string;
+  value: number;
+  color: string;
+}
+
+export interface CourseOverviewRecentReview {
+  id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+  user: {
+    id: string;
+    name: string;
+    avatar_url?: string | null;
+  };
+}
+
+export interface CourseOverviewCurriculumStats {
+  chapters_count: number;
+  lessons_count: number;
+  free_lessons_count: number;
+  total_duration_seconds: number;
+  total_duration_minutes: number;
+  total_duration_hours: number;
+  video_duration_seconds: number;
+}
+
+export interface CourseOverviewData {
+  course: {
+    id: string;
+    name: string;
+    name_ar?: string | null;
+    description?: string | null;
+    short_description?: string | null;
+    price: number;
+    currency?: string | null;
+    level: string;
+    language?: string;
+    status: CourseStatus;
+    visibility: CourseVisibility;
+    is_published: boolean;
+    is_active: boolean;
+    is_featured?: boolean;
+    thumbnail_url?: string | null;
+    promo_video_url?: string | null;
+    category_name?: string | null;
+    primary_instructor_name?: string | null;
+    primary_instructor_avatar_url?: string | null;
+    slug?: string | null;
+    enrollments_count: number;
+    lessons_count: number;
+    modules_count: number;
+    average_rating: number;
+    reviews_count: number;
+    revenue: number;
+    completion_rate: number;
+    total_duration_seconds: number;
+    published_at?: string | null;
+    created_at: string;
+    updated_at: string;
+    price_type: CoursePriceType;
+    can_edit: boolean;
+    can_publish: boolean;
+    can_archive: boolean;
+  };
+  stats: CourseOverviewStats;
+  curriculum_stats: CourseOverviewCurriculumStats;
+  engagement_series: CourseOverviewSeries[];
+  enrollment_series: CourseOverviewSeries[];
+  revenue_series: CourseOverviewSeries[];
+  device_breakdown: CourseOverviewDevice[];
+  demographic_breakdown: CourseOverviewDemographic[];
+  recent_reviews: CourseOverviewRecentReview[];
+  publish_checklist?: PublishChecklistItem[];
+  missing_publish_requirements?: string[];
+  request_id?: string;
+}
+
+export interface CourseOverviewResponse {
+  data?: CourseOverviewData;
+  stats?: CourseOverviewStats;
+  curriculum_stats?: CourseOverviewCurriculumStats;
+  engagement_series?: CourseOverviewSeries[];
+  enrollment_series?: CourseOverviewSeries[];
+  revenue_series?: CourseOverviewSeries[];
+  device_breakdown?: CourseOverviewDevice[];
+  demographic_breakdown?: CourseOverviewDemographic[];
+  recent_reviews?: CourseOverviewRecentReview[];
+  publish_checklist?: PublishChecklistItem[];
+  missing_publish_requirements?: string[];
+  request_id?: string;
+  success?: boolean;
+  message?: string;
+}
+
+export type CourseOverview = CourseOverviewResponse;
