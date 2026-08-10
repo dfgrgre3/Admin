@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { WifiOff, Clock } from "lucide-react";
 import { DashboardSkeleton } from "@/components/admin/ui/loading-skeleton";
 import { DraggableDashboard } from "@/components/admin/dashboard/draggable-dashboard";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
@@ -8,10 +9,17 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardHeader } from "@/components/admin/dashboard/dashboard-header";
 import { DashboardErrorBanner } from "@/components/admin/dashboard/dashboard-error-banner";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
+import { useNetworkStatus } from "@/hooks/use-network-status";
 
 const BroadcastModal = dynamic(() => import("@/components/admin/broadcast/broadcast-modal").then(mod => ({ default: mod.BroadcastModal })), {
   ssr: false,
   loading: () => null,
+});
+
+const TIME_FORMATTER = new Intl.DateTimeFormat("ar-EG", {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
 });
 
 export default function AdminDashboardPage() {
@@ -33,8 +41,11 @@ export default function AdminDashboardPage() {
     errors,
     sections,
     handleExport,
+    isExporting,
     handleRefresh,
   } = useDashboardData();
+
+  const isOnline = useNetworkStatus();
 
   if (isLoading) return <DashboardSkeleton />;
 
@@ -48,17 +59,45 @@ export default function AdminDashboardPage() {
         <DashboardHeader
           userName={user?.name ?? undefined}
           userRole={user?.role ? String(user.role) : undefined}
-          wsConnected={wsConnected}
-          isFetching={isFetching}
+          wsConnected={wsConnected && isOnline}
+          isFetching={isFetching && isOnline}
           lastUpdated={lastUpdated}
           onExport={handleExport}
           onRefresh={handleRefresh}
+          refreshDisabled={!isOnline}
+          isExporting={isExporting}
         />
+
+        {/* Offline Warning Banner */}
+        {!isOnline && (
+          <div
+            className="flex items-center gap-4 rounded-[2rem] border border-amber-500/30 bg-amber-500/10 px-6 py-4 text-amber-300"
+            role="alert"
+            aria-live="assertive"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20">
+              <WifiOff className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-black text-sm text-amber-200">انقطع الاتصال بالإنترنت</p>
+              <p className="text-xs text-amber-400 mt-0.5">
+                البيانات المعروضة آخر نسخة محفوظة
+                {lastUpdated && (
+                  <span className="inline-flex items-center gap-1 mr-2">
+                    <Clock className="h-3 w-3" aria-hidden="true" />
+                    {TIME_FORMATTER.format(lastUpdated)}
+                  </span>
+                )}
+                — ستُستأنف التحديثات تلقائياً عند استعادة الاتصال.
+              </p>
+            </div>
+          </div>
+        )}
 
         {isError && (
           <DashboardErrorBanner
             errorCount={errors.length}
-            isFetching={isFetching}
+            isFetching={isFetching && isOnline}
             onRefresh={handleRefresh}
           />
         )}

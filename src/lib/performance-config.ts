@@ -11,6 +11,13 @@ export const PERFORMANCE_DEFAULTS = {
   dashboardRealtimeDebounceMs: 30 * 1000,
   /** Polling fallback when WebSocket is disconnected. */
   notificationsPollIntervalMs: 120 * 1000,
+  /**
+   * Service health is the one dashboard slice that goes stale on its own, so it
+   * polls. The interval is deliberately coarse: each poll runs live probes
+   * against the database, cache, storage and queue backends.
+   */
+  healthStaleTimeMs: 60 * 1000,
+  healthRefetchIntervalMs: 60 * 1000,
 } as const;
 
 export function normalizePageSize(

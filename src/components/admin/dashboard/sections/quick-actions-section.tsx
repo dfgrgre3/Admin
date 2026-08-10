@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { useAnalyticsIntegration } from "@/hooks/use-analytics-integration";
 import {
   UserPlus,
   BookOpen,
@@ -50,6 +51,14 @@ interface QuickActionsSectionProps {
 export const QuickActionsSection = React.memo(function QuickActionsSection({
   playSound,
 }: QuickActionsSectionProps) {
+  const { trackEvent, startSession } = useAnalyticsIntegration();
+
+  const handleActionClick = React.useCallback((action: { title: string; href: string; icon: string }) => {
+    playSound("click");
+    startSession();
+    trackEvent("admin_dashboard_quick_action_clicked", { title: action.title, href: action.href, icon: action.icon });
+  }, [playSound, trackEvent, startSession]);
+
   return (
     <div className={STYLES.glass}>
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
@@ -79,7 +88,7 @@ export const QuickActionsSection = React.memo(function QuickActionsSection({
               key={i}
               href={action.href}
               onMouseEnter={() => playSound("hover")}
-              onClick={() => playSound("click")}
+              onClick={() => handleActionClick({ title: action.title, href: action.href, icon: action.icon.displayName || action.icon.name || "unknown" })}
               className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-black/10 p-4 transition-all hover:border-primary/40 hover:bg-primary/5"
             >
               <div className={cn("p-3 rounded-xl border border-white/5 group-hover:scale-110 transition-all", quickActionColorClasses[action.color] ?? quickActionColorClasses.blue)}>

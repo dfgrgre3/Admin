@@ -2,6 +2,8 @@
 
 import * as React from "react";
 
+import { adminApi } from "@/lib/api/admin-api";
+
 export interface ExportColumn<T = any> {
   header: string;
   accessor: string | ((row: T) => any);
@@ -103,143 +105,50 @@ export function useExport() {
   };
 }
 
-export function useDashboardExport(stats: any) {
-  const { exportToCSV, exportToJSON, isExporting } = useExport();
+/** Shape returned by POST /api/admin/dashboard/export. */
+interface DashboardExportResponse {
+  exportJobId: string;
+  status: string;
+  downloadUrl: string | null;
+  expiresAt: string;
+  rowCount: number;
+}
 
-  const exportDashboardData = React.useCallback(() => {
-    const data = [
-      {
-        category: "المستخدمين",
-        metric: "إجمالي المستخدمين",
-        value: stats.totalUsers || 0,
-      },
-      {
-        category: "المستخدمين",
-        metric: "الطلاب النشطون",
-        value: stats.activeStudents || 0,
-      },
-      {
-        category: "المستخدمين",
-        metric: "المدرّسون",
-        value: stats.totalTeachers || 0,
-      },
-      {
-        category: "المستخدمين",
-        metric: "مستخدمون جدد اليوم",
-        value: stats.newUsersToday || 0,
-      },
-      {
-        category: "المستخدمين",
-        metric: "مستخدمون جدد هذا الأسبوع",
-        value: stats.newUsersThisWeek || 0,
-      },
-      {
-        category: "الكورسات",
-        metric: "الكورسات المنشورة",
-        value: stats.publishedCourses || 0,
-      },
-      {
-        category: "الكورسات",
-        metric: "قيد المراجعة",
-        value: stats.reviewCourses || 0,
-      },
-      {
-        category: "الكورسات",
-        metric: "المسودات",
-        value: stats.draftCourses || 0,
-      },
-      {
-        category: "الامتحانات",
-        metric: "إجمالي الامتحانات",
-        value: stats.totalExams || 0,
-      },
-      {
-        category: "الامتحانات",
-        metric: "محاولات الاختبار",
-        value: stats.examsTaken || 0,
-      },
-      {
-        category: "الإيرادات",
-        metric: "الإيرادات اليومية",
-        value: stats.dailyRevenue || 0,
-      },
-      {
-        category: "الإيرادات",
-        metric: "الإيرادات الشهرية",
-        value: stats.monthlyRevenue || 0,
-      },
-      {
-        category: "الاشتراكات",
-        metric: "اشتراكات جديدة",
-        value: stats.newSubscriptions || 0,
-      },
-      {
-        category: "الاشتراكات",
-        metric: "اشتراكات ملغاة",
-        value: stats.cancelledSubscriptions || 0,
-      },
-      {
-        category: "العمليات",
-        metric: "طلبات معلقة",
-        value: stats.pendingOrders || 0,
-      },
-      {
-        category: "العمليات",
-        metric: "تذاكر مفتوحة",
-        value: stats.openTickets || 0,
-      },
-      {
-        category: "العمليات",
-        metric: "البلاغات",
-        value: stats.moderationQueue || 0,
-      },
-      {
-        category: "العمليات",
-        metric: "مهام تحتاج موافقة",
-        value: stats.pendingApprovals || 0,
-      },
-      {
-        category: "التفاعل",
-        metric: "معدل الإكمال",
-        value: `${Math.round(stats.completionRate || 0)}%`,
-      },
-      {
-        category: "التفاعل",
-        metric: "ساعات الدراسة",
-        value: Math.round((stats.studyMinutes || 0) / 60),
-      },
-    ];
+export function useDashboardExport(dateRange: { startDate: string; endDate: string }) {
+  const [isExporting, setIsExporting] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-    const columns: ExportColumn[] = [
-      { header: "الفئة", accessor: "category" },
-      { header: "المؤشر", accessor: "metric" },
-      { header: "القيمة", accessor: "value" },
-    ];
+  const exportDashboard = React.useCallback(
+    async (scope: string = "summary") => {
+      setIsExporting(true);
+      setError(null);
+      try {
+        const response = await adminApi.post<DashboardExportResponse>("/dashboard/export", {
+          exportScope: scope,
+          fileFormat: "csv",
+          dateRange,
+          includeChartsMetadata: false,
+          includeSensitiveFields: false,
+        });
 
-    exportToCSV(data, columns, "dashboard_report");
-  }, [stats, exportToCSV]);
+        const downloadUrl = response?.downloadUrl;
+        if (downloadUrl) {
+          const link = document.createElement("a");
+          link.href = downloadUrl;
+          link.download = `dashboard-${scope}-${dateRange.startDate}-${dateRange.endDate}.csv`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "فشل تصدير البيانات");
+        throw err;
+      } finally {
+        setIsExporting(false);
+      }
+    },
+    [dateRange]
+  );
 
-  const exportTopCourses = React.useCallback(() => {
-    if (!stats.topSellingCourses || stats.topSellingCourses.length === 0) {
-      return;
-    }
-
-    const columns: ExportColumn[] = [
-      { header: "اسم الكورس", accessor: "title" },
-      { header: "المبيعات", accessor: "sales" },
-      {
-        header: "الإيرادات",
-        accessor: (row: any) => `${row.revenue} ج.م`,
-      },
-    ];
-
-    exportToCSV(stats.topSellingCourses, columns, "top_courses");
-  }, [stats.topSellingCourses, exportToCSV]);
-
-  return {
-    isExporting,
-    exportDashboardData,
-    exportTopCourses,
-    exportToJSON,
-  };
+  return { exportDashboard, isExporting, error };
 }

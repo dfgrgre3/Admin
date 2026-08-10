@@ -433,6 +433,7 @@ export function mapDashboardPayload(raw: unknown): DashboardViewModel {
     publishedCourses: num(stats.publishedCourses, num(courses.publishedCourses)),
     reviewCourses: num(stats.reviewCourses, num(courses.reviewCourses)),
     draftCourses: num(stats.draftCourses, num(courses.draftCourses)),
+    archivedCourses: num(stats.archivedCourses, num(courses.archivedCourses)),
     dailyRevenue: num(stats.dailyRevenue, num(revenue.dailyRevenue)),
     monthlyRevenue: num(stats.monthlyRevenue, num(revenue.monthlyRevenue)),
     newSubscriptions: num(stats.newSubscriptions),

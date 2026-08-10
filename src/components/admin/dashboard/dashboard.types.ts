@@ -11,6 +11,7 @@ export interface DashboardStatsData {
   publishedCourses?: number;
   reviewCourses?: number;
   draftCourses?: number;
+  archivedCourses?: number;
   dailyRevenue?: number;
   monthlyRevenue?: number;
   newSubscriptions?: number;

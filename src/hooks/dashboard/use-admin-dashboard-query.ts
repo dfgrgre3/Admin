@@ -29,7 +29,7 @@ export function useAdminDashboardQuery(timeFilter: string): UseAdminDashboardQue
     staleTime: PERFORMANCE_DEFAULTS.queryStaleTimeMs,
     gcTime: PERFORMANCE_DEFAULTS.queryGcTimeMs,
     refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    refetchOnReconnect: true,
     retry: 1,
   });
 

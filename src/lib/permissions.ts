@@ -19,6 +19,32 @@ export const PERMISSIONS = {
 
   // Global / Dashboard
   DASHBOARD_VIEW: "dashboard:view",
+
+  // Dashboard widget-level permissions (mirror Go `PermDashboard*` constants).
+  // Each dashboard widget is gated independently so a role can get operational
+  // visibility without financial or system-internal visibility. A
+  // `dashboard:manage` grant covers every key below via permissionGrantMatches.
+  DASHBOARD_ACCESS: "dashboard:access",
+  DASHBOARD_VIEW_KPIS: "dashboard:view_kpis",
+  DASHBOARD_VIEW_LEARNING_METRICS: "dashboard:view_learning_metrics",
+  DASHBOARD_VIEW_FINANCIAL_METRICS: "dashboard:view_financial_metrics",
+  DASHBOARD_VIEW_SUPPORT_METRICS: "dashboard:view_support_metrics",
+  DASHBOARD_VIEW_CONTENT_METRICS: "dashboard:view_content_metrics",
+  DASHBOARD_VIEW_SYSTEM_HEALTH: "dashboard:view_system_health",
+  DASHBOARD_VIEW_RECENT_ACTIVITY: "dashboard:view_recent_activity",
+  DASHBOARD_VIEW_PENDING_ITEMS: "dashboard:view_pending_items",
+  DASHBOARD_VIEW_ALERTS: "dashboard:view_alerts",
+  DASHBOARD_VIEW_TOP_COURSES: "dashboard:view_top_courses",
+  DASHBOARD_VIEW_EXPORTS: "dashboard:view_exports",
+  DASHBOARD_VIEW_SENSITIVE: "dashboard:view_sensitive_metrics",
+  DASHBOARD_REFRESH_CACHE: "dashboard:refresh_cache",
+  DASHBOARD_EXPORT: "dashboard:export",
+  DASHBOARD_SAVE_FILTERS: "dashboard:save_filters",
+  DASHBOARD_DELETE_SAVED_FILTERS: "dashboard:delete_saved_filters",
+  DASHBOARD_APPLY_SAVED_FILTERS: "dashboard:apply_saved_filters",
+  DASHBOARD_ACKNOWLEDGE_ALERTS: "dashboard:acknowledge_alerts",
+  DASHBOARD_MANAGE: "dashboard:manage",
+
   ANALYTICS_VIEW: "analytics:view",
   REPORTS_VIEW: "reports:view",
   REPORTS_MANAGE: "reports:manage",
@@ -254,7 +280,14 @@ export function resolvePermissionInput(
 export function permissionGrantMatches(grant: string, required: Permission | string): boolean {
   const req = String(required);
   if (grant === req || grant === PERMISSIONS.ADMIN_BYPASS) return true;
-	if (grant.endsWith(":manage") && req === `${grant.slice(0, -":manage".length)}:view`) return true;
+  // A module-level manage grant includes read access to that same module and
+  // grants more specific submodule actions under the same module. Mirrors Go
+  // `PermissionGrantMatches` so e.g. `dashboard:manage` covers `dashboard:view_kpis`
+  // and `users:manage` covers `users:view:financial`.
+  if (grant.endsWith(":manage")) {
+    const module = grant.slice(0, -":manage".length);
+    if (req === `${module}:view` || req.startsWith(`${module}:`)) return true;
+  }
   if (grant === "own_subjects:manage" && (req === "subjects:manage" || req === "subjects:view" || req === "learning_paths:manage" || req === "learning_paths:view")) return true;
   if (grant === "subjects:manage" && (req === "subjects:manage" || req === "subjects:view" || req === "learning_paths:manage" || req === "learning_paths:view")) return true;
   if (grant === "subjects:view" && (req === "subjects:view" || req === "learning_paths:view")) return true;
@@ -325,6 +358,21 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.DASHBOARD_VIEW,
     PERMISSIONS.ANALYTICS_VIEW,
     PERMISSIONS.REPORTS_VIEW,
+    // Widget-level dashboard permissions (mirror Go getModeratorPermissions):
+    // operational visibility without financial or system-internal visibility.
+    PERMISSIONS.DASHBOARD_ACCESS,
+    PERMISSIONS.DASHBOARD_VIEW_KPIS,
+    PERMISSIONS.DASHBOARD_VIEW_LEARNING_METRICS,
+    PERMISSIONS.DASHBOARD_VIEW_CONTENT_METRICS,
+    PERMISSIONS.DASHBOARD_VIEW_SUPPORT_METRICS,
+    PERMISSIONS.DASHBOARD_VIEW_RECENT_ACTIVITY,
+    PERMISSIONS.DASHBOARD_VIEW_PENDING_ITEMS,
+    PERMISSIONS.DASHBOARD_VIEW_ALERTS,
+    PERMISSIONS.DASHBOARD_VIEW_TOP_COURSES,
+    PERMISSIONS.DASHBOARD_ACKNOWLEDGE_ALERTS,
+    PERMISSIONS.DASHBOARD_SAVE_FILTERS,
+    PERMISSIONS.DASHBOARD_DELETE_SAVED_FILTERS,
+    PERMISSIONS.DASHBOARD_APPLY_SAVED_FILTERS,
     PERMISSIONS.USERS_VIEW,
     PERMISSIONS.STUDENTS_VIEW,
     PERMISSIONS.TEACHERS_VIEW,
@@ -369,6 +417,14 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 
   SUPPORT: [
     PERMISSIONS.DASHBOARD_VIEW,
+    // Widget-level dashboard permissions (mirror Go getSupportPermissions):
+    // support sees the support queue widgets only.
+    PERMISSIONS.DASHBOARD_ACCESS,
+    PERMISSIONS.DASHBOARD_VIEW_SUPPORT_METRICS,
+    PERMISSIONS.DASHBOARD_VIEW_PENDING_ITEMS,
+    PERMISSIONS.DASHBOARD_VIEW_ALERTS,
+    PERMISSIONS.DASHBOARD_ACKNOWLEDGE_ALERTS,
+    PERMISSIONS.DASHBOARD_APPLY_SAVED_FILTERS,
     PERMISSIONS.USERS_VIEW,
     PERMISSIONS.STUDENTS_VIEW,
     PERMISSIONS.TEACHERS_VIEW,

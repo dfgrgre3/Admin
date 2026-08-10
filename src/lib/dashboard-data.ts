@@ -8,6 +8,7 @@ export interface DashboardStatsInput {
   publishedCourses?: number;
   reviewCourses?: number;
   draftCourses?: number;
+  archivedCourses?: number;
   totalExams?: number;
   totalResources?: number;
   activeChallenges?: number;
@@ -73,6 +74,7 @@ export function buildComprehensiveStats(payload: DashboardPayload = {}) {
     publishedCourses: Number(stats.publishedCourses ?? 0),
     reviewCourses: Number(stats.reviewCourses ?? 0),
     draftCourses: Number(stats.draftCourses ?? 0),
+    archivedCourses: Number(stats.archivedCourses ?? 0),
     totalExams: Number(stats.totalExams ?? 0),
     totalResources: Number(stats.totalResources ?? 0),
     activeChallenges: Number(stats.activeChallenges ?? 0),

@@ -13,6 +13,10 @@ interface DashboardHeaderProps {
   lastUpdated: Date | null;
   onExport: () => void;
   onRefresh: () => void;
+  /** When true the refresh button is visually disabled (e.g. while offline). */
+  refreshDisabled?: boolean;
+  /** When true the export request is in flight. */
+  isExporting?: boolean;
 }
 
 const dateFormatter = new Intl.DateTimeFormat("ar-EG", {
@@ -35,6 +39,8 @@ export const DashboardHeader = React.memo(function DashboardHeader({
   lastUpdated,
   onExport,
   onRefresh,
+  refreshDisabled = false,
+  isExporting = false,
 }: DashboardHeaderProps) {
   const formattedDate = React.useMemo(() => dateFormatter.format(new Date()), []);
 
@@ -76,6 +82,8 @@ export const DashboardHeader = React.memo(function DashboardHeader({
           variant="outline"
           size="lg"
           onClick={onExport}
+          loading={isExporting}
+          disabled={isExporting}
           icon={Download}
           className="h-14 px-6 rounded-2xl"
         >
@@ -86,6 +94,7 @@ export const DashboardHeader = React.memo(function DashboardHeader({
           size="lg"
           onClick={onRefresh}
           loading={isFetching}
+          disabled={refreshDisabled || isFetching}
           icon={RefreshCw}
           className="h-14 px-8 rounded-2xl"
         >
