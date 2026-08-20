@@ -62,6 +62,13 @@ export function useDashboardData() {
     PERFORMANCE_DEFAULTS.dashboardRealtimeDebounceMs,
   );
 
+  // Record the last successful data fetch time for the offline banner.
+  React.useEffect(() => {
+    if (!isLoading && !isError) {
+      setLastUpdated(new Date());
+    }
+  }, [isLoading, isError]);
+
   // The server-side export takes an explicit window, so the active time filter
   // is resolved into concrete dates rather than being re-derived on the server.
   const exportDateRange = React.useMemo(() => {

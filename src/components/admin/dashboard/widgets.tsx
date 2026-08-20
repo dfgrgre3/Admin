@@ -19,6 +19,7 @@ import {
   RefreshCw,
   ClipboardList,
   Megaphone,
+  type LucideIcon,
 } from "lucide-react";
 
 // Activity Feed Widget
@@ -46,7 +47,7 @@ interface ActivityFeedProps {
   className?: string;
 }
 
-const activityConfig: Record<ActivityItem["type"], { icon: React.ElementType; color: string; bg: string; label: string }> = {
+const activityConfig: Record<ActivityItem["type"], { icon: LucideIcon; color: string; bg: string; label: string }> = {
   user: { icon: Users, color: "text-blue-500", bg: "bg-blue-500/10", label: "مستخدم جديد" },
   exam: { icon: Target, color: "text-green-500", bg: "bg-green-500/10", label: "امتحان" },
   achievement: { icon: Award, color: "text-yellow-500", bg: "bg-yellow-500/10", label: "إنجاز" },
@@ -54,6 +55,7 @@ const activityConfig: Record<ActivityItem["type"], { icon: React.ElementType; co
   post: { icon: FileText, color: "text-cyan-500", bg: "bg-cyan-500/10", label: "منشور" },
   comment: { icon: MessageSquare, color: "text-pink-500", bg: "bg-pink-500/10", label: "تعليق" },
 };
+
 
 export const ActivityFeed = React.memo(function ActivityFeed({
   activities,
@@ -65,10 +67,17 @@ export const ActivityFeed = React.memo(function ActivityFeed({
   loading = false,
   className,
 }: ActivityFeedProps) {
-  const displayActivities = React.useMemo(
-    () => activities.slice(0, maxItems),
-    [activities, maxItems]
-  );
+  // Memoize display activities to prevent unnecessary re-renders
+  const displayActivities = React.useMemo(() => {
+    if (!activities || activities.length === 0) return [];
+    return activities.slice(0, maxItems);
+  }, [activities, maxItems]);
+
+  const isLoading = React.useMemo(() => loading, [loading]);
+  const isEmpty = React.useMemo(() => !isLoading && displayActivities.length === 0, [isLoading, displayActivities]);
+
+  // activityConfig is a module-level constant — no memoization needed
+  const configMemo = activityConfig;
 
   return (
     <AdminCard className={cn("flex flex-col h-full", className)}>
@@ -200,6 +209,7 @@ export const UpcomingEvents = React.memo(function UpcomingEvents({
 
   return (
     <div className={cn("admin-glass p-8 border-primary/10", className)}>
+      {/* Header with count badge */}
       <div className="flex items-center justify-between mb-8">
         <h3 className="font-black text-xl flex items-center gap-3">
           <Calendar className="h-6 w-6 text-primary" />
@@ -210,6 +220,7 @@ export const UpcomingEvents = React.memo(function UpcomingEvents({
         </div>
       </div>
 
+      {/* Events Grid */}
       <div className="space-y-4">
         {displayEvents.length === 0 ? (
           <div className="text-center py-10 text-gray-500 font-bold italic">لا توجد مواعيد قادمة حالياً...</div>
@@ -250,7 +261,7 @@ export const UpcomingEvents = React.memo(function UpcomingEvents({
 
                 {isToday && (
                   <div className="relative flex h-3 w-3">
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 animate-pulse"></span>
                   </div>
                 )}
               </div>

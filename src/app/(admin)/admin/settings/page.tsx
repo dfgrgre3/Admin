@@ -28,6 +28,17 @@ import { GeneralTab } from "./_components/tabs-general";
 import { FeaturesTab } from "./_components/tabs-features";
 import { SocialTab } from "./_components/tabs-social";
 import { EmailTab } from "./_components/tabs-email";
+import { EngagementTab } from "./_components/tabs-engagement";
+import { LimitsTab } from "./_components/tabs-limits";
+import { MaintenanceTab } from "./_components/tabs-maintenance";
+import { SecurityTab } from "./_components/tabs-security";
+import { PaymentsTab } from "./_components/tabs-payments";
+import { StorageTab } from "./_components/tabs-storage";
+import { PerformanceTab } from "./_components/tabs-performance";
+import { PrivacyTab } from "./_components/tabs-privacy";
+import { NotificationsSettingsTab } from "./_components/tabs-notifications";
+import { LocalizationTab } from "./_components/tabs-localization";
+import { ThemeTab } from "./_components/tabs-theme";
 import { useUIState } from "@/hooks/use-ui-state";
 
 // ============================================================
@@ -221,7 +232,18 @@ export default function AdminSettingsPage() {
             <TabsContent value="general"><GeneralTab form={form} /></TabsContent>
             <TabsContent value="features"><FeaturesTab form={form} /></TabsContent>
             <TabsContent value="social"><SocialTab form={form} /></TabsContent>
+            <TabsContent value="engagement"><EngagementTab form={form} /></TabsContent>
+            <TabsContent value="limits"><LimitsTab form={form} /></TabsContent>
+            <TabsContent value="maintenance"><MaintenanceTab form={form} /></TabsContent>
             <TabsContent value="email"><EmailTab form={form} /></TabsContent>
+            <TabsContent value="security"><SecurityTab form={form} /></TabsContent>
+            <TabsContent value="payments"><PaymentsTab form={form} /></TabsContent>
+            <TabsContent value="storage"><StorageTab form={form} /></TabsContent>
+            <TabsContent value="performance"><PerformanceTab form={form} /></TabsContent>
+            <TabsContent value="privacy"><PrivacyTab form={form} /></TabsContent>
+            <TabsContent value="notifications"><NotificationsSettingsTab form={form} /></TabsContent>
+            <TabsContent value="localization"><LocalizationTab form={form} /></TabsContent>
+            <TabsContent value="theme"><ThemeTab form={form} /></TabsContent>
           </Tabs>
         </form>
       </Form>

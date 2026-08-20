@@ -149,8 +149,8 @@ export const TeachersStep: React.FC<TeachersStepProps> = ({ courseId }) => {
                     <Badge variant="outline">{assignment.role}</Badge>
                   </td>
                   <td className="p-4">
-                    <Badge variant={assignment.instructor?.status === "active" ? "default" : "outline"}>
-                      {assignment.instructor?.status === "active" ? "نشط" : "غير نشط"}
+                    <Badge variant={assignment.instructor?.status === "APPROVED" ? "default" : "outline"}>
+                      {assignment.instructor?.status === "APPROVED" ? "نشط" : (assignment.instructor?.status || "غير معروف")}
                     </Badge>
                   </td>
                   <td className="p-4">
@@ -214,21 +214,10 @@ export const TeachersStep: React.FC<TeachersStepProps> = ({ courseId }) => {
                 )}
               />
               
-              <Controller
-                name="role"
-                control={form.control}
-                render={({ field }) => (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الدور</label>
-                    <select {...field} className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
-                      <option value="instructor">مدرس رئيسي</option>
-                      <option value="assistant">مساعد تدريس</option>
-                      <option value="reviewer">مراجع</option>
-                    </select>
-                  </div>
-                )}
-              />
-              
+              <Alert variant="default">
+                النظام الحالي يدعم مدرّساً رئيسياً واحداً لكل كورس. تعيين مدرس جديد سيستبدل المدرس الحالي.
+              </Alert>
+
               {availableTeachers.length === 0 && (
                 <Alert variant="default">
                   جميع المعلمين المتاحين معينين بالفعل لهذا الكورس

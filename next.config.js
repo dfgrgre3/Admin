@@ -111,12 +111,12 @@ const nextConfig = {
     minimumCacheTTL: 86400,
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
-    dangerouslyAllowSVG: process.env.ALLOW_SVG === 'true',
+    // Disabled for security - SVG files can contain malicious scripts
+    dangerouslyAllowSVG: false,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     // Performance optimizations
     unoptimized: process.env.NODE_ENV === 'development',
   },
-
 
   // Enable compression
   compress: true,
@@ -146,7 +146,6 @@ const nextConfig = {
 
   // Remove powered by header
   poweredByHeader: false,
-
 
   onDemandEntries: {
     maxInactiveAge: 60 * 60 * 1000,
@@ -213,120 +212,140 @@ const nextConfig = {
     return config;
   },
 
-  // Configure headers for better caching (production only to avoid dev issues)
+  // Configure headers for better caching and security
   async headers() {
-    // Only apply custom headers in production to avoid breaking dev mode
-    if (process.env.NODE_ENV !== 'production') {
-      return [];
-    }
+    // Security headers - always enabled for production
+    const isProduction = process.env.NODE_ENV === 'production';
 
+    // CSP policy - in production, always use strict CSP (no unsafe-inline/unsafe-eval)
+    // In development, only allow unsafe if ALLOW_UNSAFE_CSP is explicitly set
     const allowUnsafeCsp =
       process.env.ALLOW_UNSAFE_CSP === 'true' ||
       process.env.NEXT_PUBLIC_ALLOW_UNSAFE_CSP === 'true';
+    const useUnsafeCsp = !isProduction && allowUnsafeCsp;
 
-    const scriptSrc = [
-      "'self'",
-      ...(allowUnsafeCsp ? ["'unsafe-eval'", "'unsafe-inline'"] : []),
-      'https://www.youtube.com',
-      'https://www.youtube-nocookie.com',
-      'https://s.ytimg.com',
-    ].join(' ');
+    // In production with strict CSP, always return headers
+    // In development, only return headers if unsafe CSP is explicitly allowed
+    if (isProduction || useUnsafeCsp) {
+      const scriptSrc = [
+        "'self'",
+        ...(allowUnsafeCsp ? ["'unsafe-eval'", "'unsafe-inline'"] : []),
+        'https://www.youtube.com',
+        'https://www.youtube-nocookie.com',
+        'https://s.ytimg.com',
+      ].join(' ');
 
-    const styleSrc = [
-      "'self'",
-      ...(allowUnsafeCsp ? ["'unsafe-inline'"] : []),
-      'https://fonts.googleapis.com',
-    ].join(' ');
+      const styleSrc = [
+        "'self'",
+        ...(allowUnsafeCsp ? ["'unsafe-inline'"] : []),
+        'https://fonts.googleapis.com',
+      ].join(' ');
 
-    return [
-      {
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        source: '/fonts/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: '*',
-          },
-        ],
-      },
-      {
-        source: '/images/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=86400, stale-while-revalidate=604800',
-          },
-        ],
-      },
-      {
-        source: '/uploads/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=86400, stale-while-revalidate=604800',
-          },
-        ],
-      },
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on',
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              `script-src ${scriptSrc}`,
-              `style-src ${styleSrc}`,
-              "img-src 'self' https: data: blob:",
-              "font-src 'self' https://fonts.gstatic.com data:",
-              "connect-src 'self' https://*.tolo.app https://*.vercel.app wss: ws: http://127.0.0.1:*",
-              "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
-              "frame-ancestors 'none'",
-              "media-src 'self' https: blob:",
-              "object-src 'none'",
-              "base-uri 'self'",
-              "form-action 'self'",
-              "upgrade-insecure-requests",
-            ].join('; '),
-          },
-        ],
-      },
-    ];
+      return [
+        {
+          source: '/_next/static/:path*',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=31536000, immutable',
+            },
+          ],
+        },
+        {
+          source: '/fonts/:path*',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=31536000, immutable',
+            },
+            {
+              key: 'Access-Control-Allow-Origin',
+              value: '*',
+            },
+          ],
+        },
+        {
+          source: '/images/:path*',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=86400, stale-while-revalidate=604800',
+            },
+          ],
+        },
+        {
+          source: '/uploads/:path*',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'public, max-age=86400, stale-while-revalidate=604800',
+            },
+          ],
+        },
+        {
+          source: '/(.*)',
+          headers: [
+            {
+              key: 'X-Frame-Options',
+              value: 'DENY',
+            },
+            {
+              key: 'X-Content-Type-Options',
+              value: 'nosniff',
+            },
+            {
+              key: 'Referrer-Policy',
+              value: 'strict-origin-when-cross-origin',
+            },
+            {
+              key: 'X-DNS-Prefetch-Control',
+              value: 'on',
+            },
+            {
+              key: 'Strict-Transport-Security',
+              value: 'max-age=63072000; includeSubDomains; preload',
+            },
+            {
+              key: 'Permissions-Policy',
+              value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+            },
+            // Cross-Origin security headers (production only)
+            {
+              key: 'Cross-Origin-Opener-Policy',
+              value: 'same-origin',
+            },
+            {
+              key: 'Cross-Origin-Embedder-Policy',
+              value: 'require-corp',
+            },
+            {
+              key: 'Cross-Origin-Resource-Policy',
+              value: 'same-origin',
+            },
+            {
+              key: 'Content-Security-Policy',
+              value: [
+                "default-src 'self'",
+                `script-src ${scriptSrc}`,
+                `style-src ${styleSrc}`,
+                "img-src 'self' https: data: blob:",
+                "font-src 'self' https://fonts.gstatic.com data:",
+                "connect-src 'self' https://*.tolo.app https://*.vercel.app wss: ws: http://127.0.0.1:*",
+                "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
+                "frame-ancestors 'none'",
+                "media-src 'self' https: blob:",
+                "object-src 'none'",
+                "base-uri 'self'",
+                "form-action 'self'",
+                "upgrade-insecure-requests",
+              ].join('; '),
+            },
+          ],
+        },
+      ];
+    }
+
+    return [];
   },
 
   // Enable ISR revalidation

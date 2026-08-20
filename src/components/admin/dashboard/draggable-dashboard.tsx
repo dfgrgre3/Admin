@@ -43,11 +43,18 @@ const SortableItem = React.memo(function SortableItem({ id, children }: Sortable
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="group relative" id={id}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="group relative"
+      id={id}
+      role="article"
+      aria-label={`قسم ${id}`}
+    >
       <button
         {...attributes}
         {...listeners}
-        className="absolute -right-10 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-primary z-20 hidden xl:block"
+        className="absolute -right-10 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-primary z-20 hidden xl:block focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-lg"
         aria-label={`نقل القسم ${id}`}
         type="button"
       >
@@ -154,14 +161,13 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange }:
   );
 
   const handleDragStart = React.useCallback(() => {
-    playSound('open');
+    playSound("drag-start");
   }, [playSound]);
 
   const handleDragEnd = React.useCallback((event: DragEndEvent) => {
     const { active, over } = event;
 
     if (active.id !== over?.id) {
-      playSound('transition');
       setItems((currentItems) => {
         const oldIndex = currentItems.indexOf(active.id as string);
         const newIndex = currentItems.indexOf(over?.id as string);
@@ -169,8 +175,7 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange }:
         onOrderChange?.(newLayout);
         return newLayout;
       });
-    } else {
-      playSound('close');
+      playSound("drag-end");
     }
   }, [playSound, onOrderChange]);
 
@@ -188,17 +193,25 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange }:
   );
 
   return (
-    <div role="region" aria-label="لوحة التحكم القابلة للترتيب">
+    <div role="region" aria-label="لوحة التحكم القابلة للترتيب" aria-describedby="dashboard-layout-help">
+      {/* Layout Help Text (visually hidden) */}
+      <p id="dashboard-layout-help" className="sr-only">
+        يمكنك إعادة ترتيب الأقسام باستخدام أزرار النقل. استخدم زر إعادة الترتيب الافتراضي لاستعادة الترتيب الأصلي.
+      </p>
+
+      {/* Reset Layout Button */}
       <div className="flex justify-end mb-4">
         <button
           onClick={resetLayout}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          className="text-xs text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           title="إعادة ترتيب الأقسام للوضع الافتراضي"
           type="button"
+          aria-label="إعا��ة ترتيب الأقسام للوضع الافتراضي"
         >
           إعادة الترتيب الافتراضي
         </button>
       </div>
+
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -206,7 +219,7 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange }:
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={items} strategy={verticalListSortingStrategy}>
-          <div className="space-y-12">
+          <div className="space-y-12" aria-live="polite">
             {orderedContents.map((item) => (
               <SortableItem key={item!.id} id={item!.id}>
                 {item!.content}

@@ -64,49 +64,50 @@ export const VideosStep: React.FC<VideosStepProps> = ({
   const videoLessons = lessons.filter(l => l.type === "VIDEO");
   
   const handleUpload = useCallback(async (lessonId: string, file: File) => {
+    const lesson = lessons.find(l => l.id === lessonId);
+    if (!lesson) return;
+
     setIsUploading(true);
     setUploadProgress(prev => ({ ...prev, [lessonId]: 0 }));
-    
+
     try {
-      const result = await uploadVideo(lessonId, file, (progress) => {
+      const result = await uploadVideo(lesson.sectionId, lessonId, file, (progress) => {
         setUploadProgress(prev => ({ ...prev, [lessonId]: progress }));
       });
-      
+
       if (result) {
-        // Update lesson with video URL
-        const lesson = lessons.find(l => l.id === lessonId);
-        if (lesson) {
-          onChange({ 
-            ...draft, 
-            sections: draft.sections?.map((s: any) => ({
-              ...s,
-              lessons: s.lessons?.map((l: any) => 
-                l.id === lessonId ? { ...l, mediaUrl: result.videoUrl } : l
-              )
-            }))
-          });
-        }
+        onChange({
+          ...draft,
+          sections: draft.sections?.map((s: any) => ({
+            ...s,
+            lessons: s.lessons?.map((l: any) =>
+              l.id === lessonId ? { ...l, mediaUrl: result.videoUrl } : l
+            )
+          }))
+        });
       }
     } catch (err) {
       console.error("Video upload failed:", err);
-      alert("فشل رفع الفيديو. يرجى المحاولة مرة أخرى.");
+      alert(err instanceof Error ? err.message : "فشل رفع الفيديو. يرجى المحاولة مرة أخرى.");
     } finally {
       setIsUploading(false);
       setUploadProgress(prev => ({ ...prev, [lessonId]: 0 }));
     }
   }, [uploadVideo, lessons, draft, onChange]);
-  
+
   const handleDelete = useCallback(async (lessonId: string) => {
     if (!confirm("هل أنت متأكد من حذف هذا الفيديو؟")) return;
-    
+    const lesson = lessons.find(l => l.id === lessonId);
+    if (!lesson) return;
+
     try {
-      await deleteVideo(lessonId);
+      await deleteVideo(lesson.sectionId, lessonId);
       onChange({ ...draft });
     } catch (err) {
       console.error("Video delete failed:", err);
-      alert("فشل حذف الفيديو.");
+      alert(err instanceof Error ? err.message : "فشل حذف الفيديو.");
     }
-  }, [deleteVideo, draft, onChange]);
+  }, [deleteVideo, lessons, draft, onChange]);
   
   const handlePreview = useCallback((videoUrl: string) => {
     setShowPreview(videoUrl);

@@ -37,7 +37,7 @@ function warnMissingJwtSecret(context: string) {
   if (now - jwtSecretLastWarningAt < JWT_SECRET_WARNING_INTERVAL_MS) return;
   jwtSecretLastWarningAt = now;
   console.error(
-    `[middleware] ${context}: JWT_SECRET is missing or shorter than 32 characters — ` +
+    `[proxy] ${context}: JWT_SECRET is missing or shorter than 32 characters — ` +
     `protected routes fail closed (all /admin and /api/admin requests are rejected). ` +
     `Set a random 32+ char secret that matches the backend in your environment (e.g. .env.local / deploy env).`
   );
@@ -100,7 +100,7 @@ const isProtectedRoute = (req: NextRequest): boolean => {
   );
 };
 
-export async function middleware(req: NextRequest) {
+export default async function proxy(req: NextRequest) {
   if (!isProtectedRoute(req)) {
     return NextResponse.next();
   }

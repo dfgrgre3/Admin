@@ -5,11 +5,19 @@ import { PageHeader } from "@/components/admin/ui/page-header";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Play, Save, Plus, Trash2 } from "lucide-react";
+import { Play, Save, Plus, Trash2, Download, Clock, FileText } from "lucide-react";
 import {
   analyticsApi, REPORT_DATASETS, REPORT_OPERATORS,
   ReportFilter,
 } from "@/lib/api/analytics-api";
+import { exportToCSV, type ExportColumn } from "@/lib/export-utils";
+
+interface SavedReport {
+  id: string;
+  name: string;
+  spec: { dataset: string; columns: string[]; filters: ReportFilter[]; limit: number };
+  createdAt: string;
+}
 
 export default function ReportsBuilderPage() {
   const qc = useQueryClient();
@@ -20,6 +28,34 @@ export default function ReportsBuilderPage() {
   const [result, setResult] = React.useState<Record<string, unknown>[] | null>(null);
 
   const ds = REPORT_DATASETS.find((d) => d.value === dataset)!;
+
+  const { data: savedReportsData, isLoading: savedLoading } = useQuery({
+    queryKey: ["admin", "reports"],
+    queryFn: () => analyticsApi.getSavedReports?.() ?? Promise.resolve({ reports: [] as SavedReport[] }),
+  });
+  const savedReports: SavedReport[] = (savedReportsData as { reports?: SavedReport[] } | undefined)?.reports ?? [];
+
+  const deleteSavedMutation = useMutation({
+    mutationFn: (id: string) => analyticsApi.deleteReport?.(id) ?? Promise.resolve(),
+    onSuccess: () => { toast.success("تم حذف التقرير"); qc.invalidateQueries({ queryKey: ["admin", "reports"] }); },
+    onError: () => toast.error("فشل الحذف"),
+  });
+
+  const handleExportResult = () => {
+    if (!result || result.length === 0) { toast.error("لا توجد نتائج للتصدير"); return; }
+    const keys = Object.keys(result[0] ?? {});
+    const cols: ExportColumn<Record<string, unknown>>[] = keys.map((k) => ({ header: k, accessor: (row) => String(row[k] ?? "-") }));
+    exportToCSV(result, cols, `report-${dataset.toLowerCase()}`);
+    toast.success("تم تصدير التقرير");
+  };
+
+  const loadSavedReport = (report: SavedReport) => {
+    setDataset(report.spec.dataset);
+    setColumns(report.spec.columns);
+    setFilters(report.spec.filters);
+    setLimit(report.spec.limit);
+    toast.info(`تم تحميل التقرير: ${report.name}`);
+  };
 
   const runMutation = useMutation({
     mutationFn: () => analyticsApi.buildReport({ dataset, columns, filters, limit }),
@@ -87,13 +123,18 @@ export default function ReportsBuilderPage() {
           <div className="rounded-lg border p-4 space-y-3">
             <label className="text-sm font-medium">الحد الأقصى للصفوف: {limit}</label>
             <input type="range" min={10} max={1000} step={10} value={limit} onChange={(e) => setLimit(Number(e.target.value))} className="w-full" />
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <AdminButton onClick={() => runMutation.mutate()} disabled={runMutation.isPending || columns.length === 0}>
                 <Play className="mr-1 h-4 w-4" /> تشغيل
               </AdminButton>
               <AdminButton variant="outline" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
                 <Save className="mr-1 h-4 w-4" /> حفظ
               </AdminButton>
+              {result && result.length > 0 && (
+                <AdminButton variant="outline" onClick={handleExportResult}>
+                  <Download className="mr-1 h-4 w-4" /> تصدير CSV
+                </AdminButton>
+              )}
             </div>
           </div>
         </div>
@@ -120,6 +161,48 @@ export default function ReportsBuilderPage() {
           )}
         </div>
       </div>
+      {/* Saved Reports List */}
+      {(savedReports.length > 0 || savedLoading) && (
+        <div className="rounded-lg border p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-primary" />
+            <h3 className="font-bold text-sm">التقارير المحفوظة</h3>
+          </div>
+          {savedLoading ? (
+            <p className="text-xs text-muted-foreground">جاري التحميل...</p>
+          ) : (
+            <div className="space-y-2">
+              {savedReports.map((report) => (
+                <div key={report.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <div>
+                    <p className="text-sm font-bold">{report.name}</p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {new Date(report.createdAt).toLocaleDateString("ar-EG")}
+                      · {report.spec.dataset} · {report.spec.columns.length} عمود
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => loadSavedReport(report)}
+                      className="text-xs font-bold text-primary hover:underline"
+                    >
+                      تحميل
+                    </button>
+                    <button
+                      onClick={() => deleteSavedMutation.mutate(report.id)}
+                      disabled={deleteSavedMutation.isPending}
+                      className="text-xs font-bold text-red-500 hover:underline"
+                    >
+                      حذف
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

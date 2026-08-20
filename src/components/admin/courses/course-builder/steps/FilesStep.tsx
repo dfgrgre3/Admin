@@ -46,6 +46,8 @@ export const FilesStep: React.FC<FilesStepProps> = ({
     deleteFile,
     downloadFile,
     isLoading,
+    error,
+    clearError,
   } = useCourseBuilder({ courseId: draft?.id });
   
   const [selectedLessonId, setSelectedLessonId] = useState<string>("");
@@ -63,7 +65,7 @@ export const FilesStep: React.FC<FilesStepProps> = ({
       if (!attachment) throw new Error("Upload failed");
     } catch (err) {
       console.error("File upload failed:", err);
-      alert("فشل رفع الملف. يرجى المحاولة مرة أخرى.");
+      alert(err instanceof Error ? err.message : "فشل رفع الملف. يرجى المحاولة مرة أخرى.");
     } finally {
       setUploadingLessonId(null);
     }
@@ -130,6 +132,13 @@ export const FilesStep: React.FC<FilesStepProps> = ({
   return (
     <div className="space-y-6">
       <Section title="الملفات والمرفقات" description="رفع وتحميل وحذف الملفات المرفقة بالدروس" icon={<Paperclip className="w-5 h-5" />}>
+        {error && (
+          <Alert variant="destructive" onClose={clearError} className="mb-4">
+            <AlertCircle className="w-4 h-4" />
+            <span>{error.message}</span>
+          </Alert>
+        )}
+
         {isDirty && (
           <Alert variant="warning" className="mb-4">
             <AlertCircle className="w-4 h-4" />

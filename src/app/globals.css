@@ -391,3 +391,13 @@ h1, h2, h3, h4, h5, h6 { font-weight: 700; color: hsl(var(--foreground)); }
 .transition-all-300 {
   transition: none;
 }
+
+/* Lightweight dashboard home styles */
+.dashboard-home-shell { position: relative; isolation: isolate; padding-inline: 0.5rem; }
+.dashboard-hero { position: relative; overflow: hidden; padding: 1.5rem; border: 1px solid hsl(var(--border) / 0.8); border-radius: 1.5rem; background: hsl(var(--card)); box-shadow: 0 10px 28px hsl(220 28% 8% / 0.12); }
+.dashboard-hero-copy, .dashboard-hero > div { position: relative; z-index: 1; }
+.dashboard-title { letter-spacing: -0.035em; text-wrap: balance; }
+.dashboard-home-shell button:focus-visible, .dashboard-home-shell a:focus-visible { outline: 3px solid hsl(var(--ring) / 0.55); outline-offset: 3px; }
+.dashboard-home-shell .rounded-xl, .dashboard-home-shell .rounded-2xl { transition: none !important; }
+@media (max-width: 768px) { .dashboard-hero { align-items: stretch; gap: 1rem; border-radius: 1.25rem; } .dashboard-title { font-size: 2.25rem; } .dashboard-home-shell { padding-inline: 0; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

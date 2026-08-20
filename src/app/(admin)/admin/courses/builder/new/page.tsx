@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { courseBuilderApi } from "@/components/admin/courses/course-builder/api";
+import { draftApi } from "@/components/admin/courses/course-builder/api";
 import { Loader2 } from "lucide-react";
 
 export default function NewCourseBuilderPage() {
@@ -12,7 +12,7 @@ export default function NewCourseBuilderPage() {
   useEffect(() => {
     const createNew = async () => {
       try {
-        const response = await courseBuilderApi.createDraft({ status: "DRAFT" });
+        const response = await draftApi.createDraft({ status: "DRAFT" });
         if (response.data?.id) {
           router.push(`/admin/courses/builder/${response.data.id}`);
         } else if (response.error) {

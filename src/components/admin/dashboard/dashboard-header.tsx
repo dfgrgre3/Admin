@@ -43,13 +43,16 @@ export const DashboardHeader = React.memo(function DashboardHeader({
   isExporting = false,
 }: DashboardHeaderProps) {
   const formattedDate = React.useMemo(() => dateFormatter.format(new Date()), []);
+  const statusId = React.useId();
+  const dateId = React.useId();
 
   return (
-    <header className="flex flex-col md:flex-row items-center justify-between gap-6" role="banner">
-      <div className="space-y-3">
+    <header className="dashboard-hero flex flex-col md:flex-row items-center justify-between gap-6" role="banner" aria-label="لوحة التحكم الإدارية">
+      <div className="dashboard-hero-copy space-y-3">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-4xl font-black tracking-tight">لوحة التحكم الإدارية</h1>
+          <h1 className="dashboard-title text-4xl font-black tracking-tight">لوحة التحكم الإدارية</h1>
           <span
+            id={statusId}
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold",
               wsConnected
@@ -69,15 +72,15 @@ export const DashboardHeader = React.memo(function DashboardHeader({
             </span>
           )}
         </div>
-        <p className="text-gray-400 font-medium">مرحباً بك، {userName || "المسؤول"}. إليك نظرة شاملة على مستجدات المنصة التعليمية.</p>
-        <div className="flex items-center gap-2 text-sm text-gray-500" aria-label="التاريخ الحالي">
+        <p className="text-gray-400 font-medium" aria-label="تحية المستخدم">مرحباً بك، {userName || "المسؤول"}. إليك نظرة شاملة على مستجدات المن��ة التعليمية.</p>
+        <div className="flex items-center gap-2 text-sm text-gray-500" aria-labelledby={dateId}>
           <CalendarDays className="h-4 w-4" aria-hidden="true" />
-          <time className="font-semibold text-gray-400" dateTime={new Date().toISOString()}>
+          <time id={dateId} className="font-semibold text-gray-400" dateTime={new Date().toISOString()}>
             {formattedDate}
           </time>
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3" role="toolbar" aria-label="أدوات التحكم">
         <AdminButton
           variant="outline"
           size="lg"
@@ -86,6 +89,7 @@ export const DashboardHeader = React.memo(function DashboardHeader({
           disabled={isExporting}
           icon={Download}
           className="h-14 px-6 rounded-2xl"
+          aria-label="تصدير البيانات"
         >
           تصدير البيانات
         </AdminButton>
@@ -97,6 +101,7 @@ export const DashboardHeader = React.memo(function DashboardHeader({
           disabled={refreshDisabled || isFetching}
           icon={RefreshCw}
           className="h-14 px-8 rounded-2xl"
+          aria-label="تحديث البيانات"
         >
           تحديث البيانات
         </AdminButton>
@@ -109,6 +114,7 @@ export const DashboardHeader = React.memo(function DashboardHeader({
           )}
           role="status"
           aria-live="polite"
+          aria-atomic="true"
         >
           آخر تحديث: {isFetching
             ? "جاري التحديث..."
