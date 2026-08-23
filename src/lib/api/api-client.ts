@@ -179,11 +179,15 @@ class ApiClient {
     private resetAuthStore(): void {
         if (typeof window !== 'undefined') {
             useAuthStore.getState().reset();
+            // Clear the localStorage token mirror too — it's the only source
+            // buildAppUserWebSocketUrl() can read (access_token cookie is
+            // HttpOnly), so leaving stale tokens here lets a revoked session
+            // keep authenticating WebSocket connections after logout/reset.
             try {
                 window.localStorage.removeItem('accessToken');
                 window.localStorage.removeItem('refreshToken');
             } catch {
-                // Ignore localStorage cleanup failures
+                // Ignore storage errors (private browsing, quota, etc.)
             }
         }
     }
@@ -364,25 +368,25 @@ class ApiClient {
                     credentials: 'include',
                 });
 
-                if (!response.ok) {
-                    return false;
-                }
-
-                const data = await response.json().catch(() => null) as { accessToken?: string; refreshToken?: string } | null;
-                if (typeof window !== 'undefined' && data) {
+                if (response.ok && typeof window !== 'undefined') {
+                    // The access_token cookie is HttpOnly (by design — XSS-hardened),
+                    // which means WebSocket connections (buildAppUserWebSocketUrl) can
+                    // never read it via document.cookie and rely on this localStorage
+                    // mirror as their only viable auth source. Keep it in sync on every
+                    // successful refresh, or WS auth silently uses a stale token.
                     try {
-                        if (data.accessToken) {
-                            window.localStorage.setItem('accessToken', data.accessToken);
-                        }
-                        if (data.refreshToken) {
-                            window.localStorage.setItem('refreshToken', data.refreshToken);
-                        }
+                        const payload = await response.clone().json() as { data?: { accessToken?: string; refreshToken?: string }; accessToken?: string; refreshToken?: string };
+                        const accessToken = payload?.data?.accessToken ?? payload?.accessToken;
+                        const refreshTokenValue = payload?.data?.refreshToken ?? payload?.refreshToken;
+                        if (accessToken) window.localStorage.setItem('accessToken', accessToken);
+                        if (refreshTokenValue) window.localStorage.setItem('refreshToken', refreshTokenValue);
                     } catch {
-                        // Ignore localStorage failures
+                        // Non-fatal — the refresh itself succeeded via cookies; the
+                        // localStorage mirror just won't be updated this cycle.
                     }
                 }
 
-                return true;
+                return response.ok;
             } catch {
                 return false;
             } finally {

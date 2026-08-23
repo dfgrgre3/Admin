@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"name": "thanawy",
+			"path": "../thanawy"
+		},
+		{
+			"name": "admin",
+			"path": "."
+		},
+		{
+			"name": "backend",
+			"path": "../backend"
+		}
+	]
+}

@@ -144,6 +144,12 @@ async function handleProxy(
         },
       });
 
+      // Preserve download filenames for file responses (CSV exports, reports, ...)
+      const contentDisposition = response.headers.get('content-disposition');
+      if (contentDisposition) {
+        nextResponse.headers.set('Content-Disposition', contentDisposition);
+      }
+
       // Forward CSRF token if the backend refreshed it
       const csrfToken = response.headers.get('X-CSRF-Token');
       if (csrfToken) {

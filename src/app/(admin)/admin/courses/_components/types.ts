@@ -1,4 +1,6 @@
-export type CourseStatus = 'draft' | 'pending_review' | 'published' | 'archived';
+// Single source of truth: backend `common.CourseStatus` (UPPERCASE).
+export type { CourseStatus } from '@/features/courses/types';
+import type { CourseStatus } from '@/features/courses/types';
 
 export interface CourseTag {
   id: string;
@@ -9,18 +11,17 @@ export interface CourseTag {
 
 export interface CourseChangelogEntry {
   id: string;
-  subjectId: string;
+  courseId: string;
   userId: string;
-  fieldName: string;
-  oldValue: string | null;
-  newValue: string | null;
-  action: string;
+  field: string;
+  oldValue?: string | null;
+  newValue?: string | null;
   createdAt: string;
 }
 
 export interface CourseReviewComment {
   id: string;
-  subjectId: string;
+  courseId: string;
   reviewerId: string;
   comment: string;
   status: 'pending' | 'approved' | 'rejected';
@@ -93,15 +94,17 @@ export interface CourseCategory {
 }
 
 export const COURSE_STATUS_LABELS: Record<CourseStatus, string> = {
-  draft: 'مسودة',
-  pending_review: 'قيد المراجعة',
-  published: 'منشور',
-  archived: 'مؤرشف',
+  DRAFT: 'مسودة',
+  UNDER_REVIEW: 'قيد المراجعة',
+  PUBLISHED: 'منشور',
+  ARCHIVED: 'مؤرشف',
+  REJECTED: 'مرفوض',
 };
 
 export const COURSE_STATUS_COLORS: Record<CourseStatus, string> = {
-  draft: 'bg-gray-100 text-gray-700 border-gray-200',
-  pending_review: 'bg-amber-100 text-amber-700 border-amber-200',
-  published: 'bg-green-100 text-green-700 border-green-200',
-  archived: 'bg-red-100 text-red-700 border-red-200',
+  DRAFT: 'bg-gray-100 text-gray-700 border-gray-200',
+  UNDER_REVIEW: 'bg-amber-100 text-amber-700 border-amber-200',
+  PUBLISHED: 'bg-green-100 text-green-700 border-green-200',
+  ARCHIVED: 'bg-slate-100 text-slate-700 border-slate-200',
+  REJECTED: 'bg-red-100 text-red-700 border-red-200',
 };

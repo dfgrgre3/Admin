@@ -421,6 +421,7 @@ export const CourseBuilderWizard: React.FC<CourseBuilderWizardProps> = ({ course
                   lessons={lessons}
                   selectedChapterId={selectedChapterId}
                   onChapterChange={setSelectedChapterId}
+                  onRefreshLessons={loadLessons}
                   onPublish={handlePublish}
                 />
               )}

@@ -49,18 +49,11 @@ export default function CourseAnalyticsPage() {
   }, []);
 
   const performanceData = React.useMemo(() => {
-    if (analyticsData?.data?.monthlyData) {
-      return analyticsData.data.monthlyData;
-    }
-    return [
-      { name: "يناير", revenue: 4000, students: 240 },
-      { name: "فبراير", revenue: 3000, students: 198 },
-      { name: "مارس", revenue: 2000, students: 980 },
-      { name: "أبريل", revenue: 2780, students: 390 },
-      { name: "مايو", revenue: 1890, students: 480 },
-      { name: "يونيو", revenue: 2390, students: 380 },
-    ];
+    const monthly = analyticsData?.data?.monthlyData;
+    return Array.isArray(monthly) ? monthly : [];
   }, [analyticsData]);
+
+  const hasPerformanceData = performanceData.length > 0;
 
   const deviceData = React.useMemo(() => {
     if (Array.isArray(analyticsData?.data?.deviceData) && analyticsData.data.deviceData.length > 0) {
@@ -92,9 +85,15 @@ export default function CourseAnalyticsPage() {
   const stats = React.useMemo(() => ({
     totalRevenue: analyticsData?.data?.stats?.totalRevenue ?? 0,
     newStudents: analyticsData?.data?.stats?.newStudents ?? 0,
-    conversionRate: analyticsData?.data?.stats?.conversionRate ?? 0,
+    completionRate: analyticsData?.data?.stats?.completionRate ?? 0,
     watchTime: analyticsData?.data?.stats?.watchTime ?? 0,
+    studentsGrowth: analyticsData?.data?.stats?.growth?.students ?? 0,
+    revenueGrowth: analyticsData?.data?.stats?.growth?.revenue ?? 0,
   }), [analyticsData]);
+
+  // Growth badges are only meaningful once the aggregates have loaded.
+  const formatChange = (value: number) =>
+    `${value > 0 ? "+" : ""}${value.toLocaleString("ar-EG", { maximumFractionDigits: 1 })}%`;
 
   return (
     <div className="space-y-8" dir="rtl">
@@ -118,23 +117,25 @@ export default function CourseAnalyticsPage() {
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "إجمالي المبيعات", value: formatCurrency(stats.totalRevenue), change: "+12.5%", trend: "up", icon: DollarSign, color: "text-emerald-500" },
-          { label: "تسجيلات جديدة", value: stats.newStudents.toString(), change: "+18%", trend: "up", icon: Users, color: "text-blue-500" },
-          { label: "معدل التحويل", value: formatPercent(stats.conversionRate), change: "-2.4%", trend: "down", icon: TrendingUp, color: "text-violet-500" },
-          { label: "وقت المشاهدة", value: formatHours(stats.watchTime), change: "+5.4%", trend: "up", icon: BarChart3, color: "text-amber-500" },
+          { label: "الإيرادات المقدرة", value: formatCurrency(stats.totalRevenue), change: stats.revenueGrowth, icon: DollarSign, color: "text-emerald-500" },
+          { label: "تسجيلات جديدة (30 يوم)", value: stats.newStudents.toLocaleString("ar-EG"), change: stats.studentsGrowth, icon: Users, color: "text-blue-500" },
+          { label: "معدل الإكمال", value: formatPercent(stats.completionRate), change: null, icon: TrendingUp, color: "text-violet-500" },
+          { label: "وقت المشاهدة", value: formatHours(stats.watchTime), change: null, icon: BarChart3, color: "text-amber-500" },
         ].map((stat, i) => (
           <AdminCard key={i} className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className={cn("p-2 rounded-xl bg-muted/50", stat.color)}>
                 <stat.icon className="h-5 w-5" />
               </div>
-              <div className={cn(
-                "flex items-center text-[10px] font-black px-2 py-0.5 rounded-full",
-                stat.trend === "up" ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"
-              )}>
-                {stat.trend === "up" ? <ArrowUpRight className="ml-1 h-3 w-3" /> : <ArrowDownRight className="ml-1 h-3 w-3" />}
-                {stat.change}
-              </div>
+              {stat.change !== null && !isLoading && (
+                <div className={cn(
+                  "flex items-center text-[10px] font-black px-2 py-0.5 rounded-full",
+                  stat.change >= 0 ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500"
+                )}>
+                  {stat.change >= 0 ? <ArrowUpRight className="ml-1 h-3 w-3" /> : <ArrowDownRight className="ml-1 h-3 w-3" />}
+                  {formatChange(stat.change)}
+                </div>
+              )}
             </div>
             <p className="text-xs font-bold text-muted-foreground uppercase">{stat.label}</p>
             <h3 className="text-2xl font-black mt-1">{stat.value}</h3>
@@ -152,10 +153,14 @@ export default function CourseAnalyticsPage() {
             </div>
           </div>
           <div className="h-[350px]">
-            {mounted && !isLoading ? (
+            {isLoading || !mounted ? (
+              <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" />
+            ) : hasPerformanceData ? (
               <RevenueAreaChart data={performanceData} />
             ) : (
-              <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" />
+              <div className="h-full w-full flex items-center justify-center rounded-3xl bg-muted/20 text-xs font-bold text-muted-foreground">
+                لا توجد تسجيلات في الأشهر الأخيرة
+              </div>
             )}
           </div>
         </AdminCard>
@@ -202,12 +207,16 @@ export default function CourseAnalyticsPage() {
       {/* Student Activity / Engagement */}
       <LazySection minHeight={380} rootMargin="200px">
         <AdminCard className="p-6">
-          <h3 className="text-lg font-black mb-8">التفاعل مع الدروس</h3>
+          <h3 className="text-lg font-black mb-8">التسجيلات الشهرية</h3>
           <div className="h-[300px]">
-            {mounted && !isLoading ? (
+            {isLoading || !mounted ? (
+              <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" />
+            ) : hasPerformanceData ? (
               <EngagementBarChart data={performanceData} />
             ) : (
-              <div className="h-full w-full animate-pulse bg-muted/30 rounded-3xl" />
+              <div className="h-full w-full flex items-center justify-center rounded-3xl bg-muted/20 text-xs font-bold text-muted-foreground">
+                لا توجد تسجيلات في الأشهر الأخيرة
+              </div>
             )}
           </div>
         </AdminCard>

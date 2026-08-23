@@ -214,10 +214,6 @@ export const TeachersStep: React.FC<TeachersStepProps> = ({ courseId }) => {
                 )}
               />
               
-              <Alert variant="default">
-                النظام الحالي يدعم مدرّساً رئيسياً واحداً لكل كورس. تعيين مدرس جديد سيستبدل المدرس الحالي.
-              </Alert>
-
               {availableTeachers.length === 0 && (
                 <Alert variant="default">
                   جميع المعلمين المتاحين معينين بالفعل لهذا الكورس

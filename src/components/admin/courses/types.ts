@@ -31,7 +31,7 @@ export interface CourseBase {
   whatYouLearn?: string[] | null;
   createdAt?: string | null;
   updatedAt?: string | null;
-  status?: "draft" | "pending_review" | "published" | "archived" | string;
+  status?: "DRAFT" | "UNDER_REVIEW" | "PUBLISHED" | "ARCHIVED" | "REJECTED" | string;
   _count: {
     enrollments: number;
     topics: number;
@@ -89,6 +89,4 @@ export interface CourseActionCallbacks {
   onDelete?: (course: CourseBase) => void;
   onToggleStatus?: (course: CourseBase) => void;
   onToggleActive?: (course: CourseBase) => void;
-  onViewCurriculum?: (course: CourseBase) => void;
-  onViewAnalytics?: (course: CourseBase) => void;
 }

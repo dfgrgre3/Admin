@@ -14,18 +14,34 @@ interface UseAdminDashboardQueryResult {
   refetchAll: () => Promise<unknown>;
 }
 
+/**
+ * Canonical cache key for the admin dashboard query. Shared with
+ * `(admin)/layout.tsx` so the auth guard can warm the cache with exactly the
+ * same key/fn while the profile request is still in flight.
+ */
+export function adminDashboardQueryKey(timeFilter: string) {
+  return ["admin-dashboard", timeFilter] as const;
+}
+
+/**
+ * Raw fetcher for the dashboard payload. Exported so the auth guard can
+ * prefetch (warm) the cache before the page even mounts, collapsing the
+ * serial auth -> data waterfall into a single parallel round-trip.
+ */
+export async function fetchAdminDashboard(timeFilter: string): Promise<DashboardViewModel> {
+  const response = await adminFetch(`dashboard?time=${encodeURIComponent(timeFilter)}`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch dashboard data");
+  }
+  const json = await response.json();
+  const payload = (json.data ?? json) as Record<string, unknown>;
+  return mapDashboardPayload(payload);
+}
+
 export function useAdminDashboardQuery(timeFilter: string): UseAdminDashboardQueryResult {
   const query = useQuery({
-    queryKey: ["admin-dashboard", timeFilter],
-    queryFn: async () => {
-      const response = await adminFetch(`dashboard?time=${encodeURIComponent(timeFilter)}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch dashboard data");
-      }
-      const json = await response.json();
-      const payload = (json.data ?? json) as Record<string, unknown>;
-      return mapDashboardPayload(payload);
-    },
+    queryKey: adminDashboardQueryKey(timeFilter),
+    queryFn: () => fetchAdminDashboard(timeFilter),
     staleTime: PERFORMANCE_DEFAULTS.queryStaleTimeMs,
     gcTime: PERFORMANCE_DEFAULTS.queryGcTimeMs,
     refetchOnWindowFocus: false,

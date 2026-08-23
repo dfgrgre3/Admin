@@ -2,16 +2,14 @@
 
 import { instructorsApi } from "@/lib/api/instructors-api";
 import { courseApi } from "@/lib/api/course-api";
-import type { Teacher, ApiResponse } from "../types";
+import type { Teacher, TeacherAssignment, ApiResponse } from "../types";
 
 // ─── Teachers / Instructors ────────────────────────────────────────────────────
-// The Go backend has a real "add instructor to course with a role" domain
-// method (CourseService.AddInstructor / repo.AddCourseInstructor), but it is
-// not wired to any REST route yet — so multi-teacher assignment with roles
-// cannot be reached from the admin panel today. What *is* reachable is the
-// single `primaryInstructorId` field on Course itself, so that's what this
-// module wires up for real. See TeachersStep.tsx for the simplified UI that
-// matches this reality.
+// Real multi-teacher assignment via LmsInstructor (course_instructors_handler.go,
+// routes at /api/admin/courses/:id/instructors). The Go response only carries
+// {courseId, instructorId, role, permissions} — no joined instructor summary —
+// so `instructor` is filled in locally by matching against the already-loaded
+// teacher pool from getTeachers() rather than requiring a backend join.
 
 export const teachersApi = {
   async getTeachers(): Promise<ApiResponse<Teacher[]>> {
@@ -27,14 +25,26 @@ export const teachersApi = {
     return { data: teachers, error: undefined };
   },
 
-  /** Returns the course's current primary instructor id, or undefined if none set. */
-  async getPrimaryInstructorId(courseId: string): Promise<ApiResponse<string | undefined>> {
-    const response = await courseApi.getCourse(courseId);
-    return { data: response.course.primaryInstructorId || undefined, error: undefined };
+  async getCourseInstructors(courseId: string, teacherPool: Teacher[]): Promise<ApiResponse<TeacherAssignment[]>> {
+    const response = await courseApi.listCourseInstructors(courseId);
+    const assignments: TeacherAssignment[] = (response.instructors || []).map((row) => ({
+      id: row.instructorId,
+      courseId: row.courseId,
+      instructorId: row.instructorId,
+      role: row.role,
+      permissions: row.permissions || undefined,
+      instructor: teacherPool.find((t) => t.id === row.instructorId),
+    }));
+    return { data: assignments, error: undefined };
   },
 
-  async setPrimaryInstructor(courseId: string, instructorId: string): Promise<ApiResponse<void>> {
-    await courseApi.updateCourse(courseId, { primaryInstructorId: instructorId });
+  async assignInstructor(courseId: string, instructorId: string, role: string): Promise<ApiResponse<void>> {
+    await courseApi.addCourseInstructor(courseId, instructorId, role);
+    return { data: undefined, error: undefined };
+  },
+
+  async removeInstructor(courseId: string, instructorId: string): Promise<ApiResponse<void>> {
+    await courseApi.removeCourseInstructor(courseId, instructorId);
     return { data: undefined, error: undefined };
   },
 };

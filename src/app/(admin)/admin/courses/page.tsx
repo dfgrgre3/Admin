@@ -2,25 +2,43 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { Resolver } from "react-hook-form";
 import {
+  Download,
   Plus,
   Tags,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import { ConfirmDialog } from "@/components/admin/ui/confirm-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { CourseStats } from "@/components/admin/courses/dashboard-stats";
 import { CourseFilters } from "@/components/admin/courses/course-filters";
 import { CourseContentView } from "@/components/admin/courses/course-content-view";
 import { CourseBulkActions } from "@/components/admin/courses/course-bulk-actions";
 import { CoursePagination } from "@/components/admin/courses/course-pagination";
 import { CourseEmptyState } from "@/components/admin/courses/course-empty-state";
-import { cn, formatNumber, formatPrice } from "@/lib/utils";
 import { apiRoutes } from "@/lib/api/routes";
+import { parseContentDispositionFilename } from "@/lib/export-utils";
+import { useDebounce } from "@/hooks/use-debounce";
+import { cn } from "@/lib/utils";
 import { adminFetch } from "@/lib/api/admin-api";
 import { COURSE_PUBLIC_CACHE_PATHS } from "@/lib/public-cache/admin-cache-paths";
 import { requestPublicCacheRevalidation } from "@/lib/public-cache/revalidate-public";
@@ -28,8 +46,6 @@ import { usePermission } from "@/components/auth/PermissionGuard";
 import { readJsonOrThrow, throwIfApiError } from "@/lib/api/api-error-utils";
 import { PERMISSIONS } from "@/lib/permissions";
 import type { Course, CourseCategory } from "./_components/types";
-import { createCourseColumns } from "./_components/course-columns";
-import { CourseFormDialog, QuickCourseValues, quickCourseSchema, quickCourseDefaults } from "./_components/course-form-dialog";
 import { CategoryDialog, CategoryFormValues, categorySchema, defaultCategoryValues } from "./_components/category-dialog";
 
 function revalidateCoursePublicCache() {
@@ -77,9 +93,7 @@ export default function AdminCoursesPage() {
   const { hasPermission } = usePermission();
   const canManageCourses = hasPermission(PERMISSIONS.SUBJECTS_MANAGE);
 
-  const [quickCreateOpen, setQuickCreateOpen] = React.useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = React.useState(false);
-  const [editingCourse, setEditingCourse] = React.useState<Course | null>(null);
   const [editingCategory, setEditingCategory] = React.useState<CourseCategory | null>(null);
   const [deleteDialog, setDeleteDialog] = React.useState<{ open: boolean; id: string | null; }>({
     open: false,
@@ -89,7 +103,8 @@ export default function AdminCoursesPage() {
     open: boolean;
     id: string | null;
   }>({ open: false, id: null });
-  const [selectedCategoryId] = React.useState<string>("all");
+  const [assignTeacherDialog, setAssignTeacherDialog] = React.useState(false);
+  const [assignTeacherId, setAssignTeacherId] = React.useState("");
   const [page, setPage] = React.useState(1);
   const [limit, setLimit] = React.useState(12);
   const [search, setSearch] = React.useState("");
@@ -101,9 +116,39 @@ export default function AdminCoursesPage() {
   const [filterPriceType, setFilterPriceType] = React.useState("ALL");
   const [filterInstructor, setFilterInstructor] = React.useState("ALL");
   const [sortBy, setSortBy] = React.useState("newest");
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const deferredSearch = React.useDeferredValue(search);
+  // useDeferredValue only defers React's *render* priority — it does not
+  // coalesce the value over wall-clock time, so it settles almost immediately
+  // per keystroke with nothing else competing for scheduling. An actual
+  // debounce is required here since `deferredSearch` feeds the useQuery
+  // queryKey below and drives a real network request on every change.
+  const debouncedSearch = useDebounce(search, 300);
+  const deferredSearch = React.useDeferredValue(debouncedSearch);
+
+  const buildFilterParams = React.useCallback(() => {
+    const params = new URLSearchParams();
+    if (deferredSearch) params.set("search", deferredSearch);
+    if (filterLevel !== "ALL") params.set("level", filterLevel);
+    if (filterCategory !== "ALL") params.set("categoryId", filterCategory);
+    if (filterPriceType === "FREE") params.set("price", "0");
+    if (filterPriceType === "PAID") params.set("price", ">0");
+    if (filterInstructor !== "ALL") params.set("instructorId", filterInstructor);
+    // Backend validates status against UPPERCASE CourseStatus values
+    if (filterStatus !== "ALL") params.set("status", filterStatus);
+    if (sortBy !== "newest") params.set("sort", sortBy);
+    return params;
+  }, [
+    deferredSearch,
+    filterLevel,
+    filterCategory,
+    filterPriceType,
+    filterInstructor,
+    filterStatus,
+    sortBy]);
+
+  // Stats depend on the same filters (minus paging), so the serialized params
+  // double as the query key.
+  const statsParamsKey = React.useMemo(() => buildFilterParams().toString(), [buildFilterParams]);
 
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: [
@@ -112,7 +157,6 @@ export default function AdminCoursesPage() {
       page,
       limit,
       deferredSearch,
-      selectedCategoryId,
       filterLevel,
       filterStatus,
       filterCategory,
@@ -121,28 +165,15 @@ export default function AdminCoursesPage() {
       sortBy],
 
     queryFn: async () => {
-      const params = new URLSearchParams({
-        offset: String((page - 1) * limit),
-        limit: limit.toString()
-      });
-
-      if (deferredSearch) params.set("search", deferredSearch);
-      if (filterLevel !== "ALL") params.set("level", filterLevel);
-      if (filterCategory !== "ALL") params.set("categoryId", filterCategory);
-      if (filterPriceType === "FREE") params.set("price", "0");
-      if (filterPriceType === "PAID") params.set("price", ">0");
-      if (filterInstructor !== "ALL") params.set("instructorId", filterInstructor);
-
-      // Use the new status field for lifecycle filtering
-      if (filterStatus !== "ALL") params.set("status", filterStatus.toLowerCase());
-
-      // Add sorting parameter
-      if (sortBy !== "newest") params.set("sort", sortBy);
+      const params = buildFilterParams();
+      params.set("offset", String((page - 1) * limit));
+      params.set("limit", limit.toString());
 
       const response = await adminFetch(`${apiRoutes.admin.courses}?${params.toString()}`);
       if (!response.ok) throw new Error("فشل تحميل الدورات");
       return (await response.json()) as CoursesResponse;
     },
+    placeholderData: keepPreviousData,
     staleTime: 30_000
   });
 
@@ -154,18 +185,19 @@ export default function AdminCoursesPage() {
     return Math.max(1, Math.ceil((pagination.total || 0) / Math.max(limit, 1)));
   }, [pagination, limit]);
 
-  // Separate query for global stats (not limited to current page)
-  const { data: statsResponse } = useQuery({
-    queryKey: ["admin", "courses", "stats"],
+  // Global stats computed by the backend over the whole filtered set (not just the current page)
+  const { data: statsResponse, refetch: refetchStats } = useQuery({
+    queryKey: ["admin", "courses", "stats", statsParamsKey],
     queryFn: async () => {
-      try {
-        const response = await adminFetch(`${apiRoutes.admin.courses}?limit=1&stats=true`);
-        if (!response.ok) return null;
-        return (await response.json()) as CourseStatsResponse;
-      } catch {
-        return null;
-      }
+      const params = buildFilterParams();
+      const query = params.toString();
+      const response = await adminFetch(
+        query ? `${apiRoutes.admin.courseStats}?${query}` : apiRoutes.admin.courseStats);
+
+      if (!response.ok) throw new Error("فشل تحميل إحصائيات الدورات");
+      return (await response.json()) as CourseStatsResponse;
     },
+    placeholderData: keepPreviousData,
     staleTime: 60_000
   });
 
@@ -189,130 +221,37 @@ export default function AdminCoursesPage() {
     staleTime: 300_000
   });
 
-  const quickForm = useForm<QuickCourseValues>({
-    resolver: zodResolver(quickCourseSchema) as Resolver<QuickCourseValues>,
-    defaultValues: quickCourseDefaults
-  });
-
   const categoryForm = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema) as Resolver<CategoryFormValues>,
     defaultValues: defaultCategoryValues
   });
 
-  const selectedInstructorId = quickForm.watch("instructorId");
-  React.useEffect(() => {
-    if (!selectedInstructorId) return;
-    const teacher = teachers.find((t) => t.id === selectedInstructorId);
-    if (teacher) quickForm.setValue("instructorName", teacher.name);
-  }, [selectedInstructorId, teachers, quickForm]);
-
   React.useEffect(() => {
     setPage(1);
   }, [deferredSearch, filterLevel, filterStatus, filterCategory, filterPriceType, filterInstructor, sortBy]);
 
-  // Stats: prefer backend stats if available, fallback to pagination total + page data
+  // Stats come straight from the backend aggregate over the filtered set.
   const statsData = React.useMemo(() => {
     const backendStats = statsResponse?.data?.stats;
-    const pageEnrollments = courses.reduce((s, c) => s + (c._count?.enrollments || 0), 0);
-    const pageRevenue = courses.reduce((s, c) => s + c.price * (c._count?.enrollments || 0), 0);
-    const pagePublished = courses.filter((c) => c.isPublished).length;
-    const pageDraft = courses.filter((c) => !c.isPublished).length;
-    const pageArchived = courses.filter((c) => !c.isActive).length;
-    const pagePaid = courses.filter((c) => c.price > 0).length;
-    const pageFree = courses.filter((c) => c.price === 0).length;
-
     return {
-      totalEnrollments: backendStats?.totalEnrollments ?? pageEnrollments,
-      totalRevenue: backendStats?.totalRevenue ?? pageRevenue,
-      activeStudents: backendStats?.activeStudents ?? Math.round(pageEnrollments * 0.72),
-      avgCompletion: backendStats?.avgCompletion ?? 65,
-      totalCourses: backendStats?.totalCourses ?? pagination?.total ?? courses.length,
-      publishedCourses: backendStats?.publishedCourses ?? pagePublished,
-      draftCourses: backendStats?.draftCourses ?? pageDraft,
-      archivedCourses: backendStats?.archivedCourses ?? pageArchived,
-      privateCourses: backendStats?.draftCourses ?? pageDraft,
-      publicCourses: backendStats?.publishedCourses ?? pagePublished,
-      paidCourses: backendStats?.paidCourses ?? pagePaid,
-      freeCourses: backendStats?.freeCourses ?? pageFree,
+      totalEnrollments: backendStats?.totalEnrollments ?? 0,
+      totalRevenue: backendStats?.totalRevenue ?? 0,
+      activeStudents: backendStats?.activeStudents ?? 0,
+      avgCompletion: backendStats?.avgCompletion ?? 0,
+      totalCourses: backendStats?.totalCourses ?? pagination?.total ?? 0,
+      publishedCourses: backendStats?.publishedCourses ?? 0,
+      draftCourses: backendStats?.draftCourses ?? 0,
       growth: {
-        enrollments: backendStats?.growth?.enrollments ?? 12,
-        revenue: backendStats?.growth?.revenue ?? 8
+        enrollments: backendStats?.growth?.enrollments ?? 0,
+        revenue: backendStats?.growth?.revenue ?? 0
       }
     };
-  }, [courses, pagination, statsResponse]);
+  }, [pagination, statsResponse]);
 
-  const _openQuickCreate = (course?: Course) => {
-    if (course) {
-      setEditingCourse(course);
-      quickForm.reset({
-        name: course.name,
-        nameAr: course.nameAr || "",
-        code: course.code || "",
-        price: course.price || 0,
-        level: course.level as QuickCourseValues["level"] || "INTERMEDIATE",
-        instructorName: course.instructorName || "",
-        instructorId: course.instructorId || "",
-        categoryId: course.categoryId || "",
-        description: course.description || "",
-        isActive: course.isActive,
-        isPublished: course.isPublished,
-        durationHours: course.durationHours || 0,
-        requirements: course.requirements || "",
-        learningObjectives: course.learningObjectives || "",
-        thumbnailUrl: course.thumbnailUrl || "",
-        trailerUrl: course.trailerUrl || "",
-        slug: course.slug || "",
-        seoTitle: course.seoTitle || "",
-        seoDescription: course.seoDescription || "",
-        language: course.language || "ar",
-        isFeatured: course.isFeatured ?? false,
-        coursePrerequisites: course.coursePrerequisites?.join("\n") || "",
-        targetAudience: course.targetAudience?.join("\n") || "",
-        whatYouLearn: course.whatYouLearn?.join("\n") || ""
-      });
-    } else {
-      setEditingCourse(null);
-      quickForm.reset(quickCourseDefaults);
-    }
-    setQuickCreateOpen(true);
-  };
-
-  const handleQuickSubmit = async (values: QuickCourseValues) => {
-    setIsSubmitting(true);
-    try {
-      const method = editingCourse ? "PATCH" : "POST";
-      const payload = {
-        ...values,
-        ...(editingCourse ? { id: editingCourse.id } : {})
-      };
-      const response = await adminFetch(apiRoutes.admin.courses, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const result = await readJsonOrThrow<{
-        data?: { course?: { id?: string } };
-      }>(response, "تعذر حفظ بيانات الدورة");
-      const createdCourseId = result?.data?.course?.id as string | undefined;
-      toast.success(
-        editingCourse ?
-          "تم تحديث الدورة بنجاح" :
-          "تم إنشاء الدورة وسيتم توجيهك لإضافة المنهج الدراسي"
-      );
-      setQuickCreateOpen(false);
-      setEditingCourse(null);
-      quickForm.reset(quickCourseDefaults);
-      void revalidateCoursePublicCache().catch(() => {});
-      await refetch();
-      if (!editingCourse && createdCourseId) {
-        router.push(`/admin/courses/${createdCourseId}/curriculum`);
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء الاتصال بالخادم");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // Any mutation changes both the list and the aggregate counters.
+  const refreshCourses = React.useCallback(async () => {
+    await Promise.all([refetch(), refetchStats()]);
+  }, [refetch, refetchStats]);
 
   const handleDelete = async () => {
     if (!deleteDialog.id) return;
@@ -325,7 +264,7 @@ export default function AdminCoursesPage() {
       await throwIfApiError(response, "تعذر حذف الدورة");
       toast.success("تم حذف الدورة بنجاح");
       void revalidateCoursePublicCache().catch(() => {});
-      await refetch();
+      await refreshCourses();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء الاتصال بالخادم");
     } finally {
@@ -333,7 +272,7 @@ export default function AdminCoursesPage() {
     }
   };
 
-  const handleToggleStatus = async (course: Course | import("@/components/admin/courses/types").CourseBase) => {
+  const handleToggleStatus = React.useCallback(async (course: Course | import("@/components/admin/courses/types").CourseBase) => {
     try {
       const response = await adminFetch(apiRoutes.admin.courses, {
         method: "PATCH",
@@ -343,11 +282,11 @@ export default function AdminCoursesPage() {
       await throwIfApiError(response, "فشل تحديث الحالة");
       toast.success(course.isPublished ? "تم إخفاء الدورة" : "تم نشر الدورة بنجاح");
       void revalidateCoursePublicCache().catch(() => {});
-      await refetch();
+      await refreshCourses();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "فشل تحديث الحالة");
     }
-  };
+  }, [refreshCourses]);
 
   const handleCategorySubmit = async (values: CategoryFormValues) => {
     try {
@@ -365,7 +304,7 @@ export default function AdminCoursesPage() {
       categoryForm.reset(defaultCategoryValues);
       void revalidateCoursePublicCache().catch(() => {});
       await refetchCategories();
-      await refetch();
+      await refreshCourses();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء الاتصال بالخادم");
     }
@@ -383,7 +322,7 @@ export default function AdminCoursesPage() {
       toast.success("تم حذف التصنيف");
       void revalidateCoursePublicCache().catch(() => {});
       await refetchCategories();
-      await refetch();
+      await refreshCourses();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حدث خطأ أثناء الاتصال بالخادم");
     } finally {
@@ -391,7 +330,7 @@ export default function AdminCoursesPage() {
     }
   };
 
-  const handleDuplicate = async (course: Course | import("@/components/admin/courses/types").CourseBase) => {
+  const handleDuplicate = React.useCallback(async (course: Course | import("@/components/admin/courses/types").CourseBase) => {
     try {
       const response = await adminFetch(apiRoutes.admin.courseDuplicate, {
         method: "POST",
@@ -401,13 +340,13 @@ export default function AdminCoursesPage() {
       const result = await readJsonOrThrow<{ message?: string }>(response, "فشل الاستنساخ");
       toast.success(result.message || "تم استنساخ الدورة بنجاح");
       void revalidateCoursePublicCache().catch(() => {});
-      await refetch();
+      await refreshCourses();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حدث خطأ غير متوقع");
     }
-  };
+  }, [refreshCourses]);
 
-  const handleToggleActive = async (course: Course | import("@/components/admin/courses/types").CourseBase) => {
+  const handleToggleActive = React.useCallback(async (course: Course | import("@/components/admin/courses/types").CourseBase) => {
     try {
       const response = await adminFetch(apiRoutes.admin.courses, {
         method: "PATCH",
@@ -420,52 +359,75 @@ export default function AdminCoursesPage() {
       }
       toast.success(course.isActive ? "تم إيقاف الدورة" : "تم تفعيل الدورة بنجاح");
       void revalidateCoursePublicCache().catch(() => {});
-      await refetch();
+      await refreshCourses();
     } catch (error) {
       const err = error as Error;
       toast.error(err.message || "فشل تحديث الحالة");
     }
-  };
+  }, [refreshCourses]);
 
   const handleBatchAction = async (
-    action: "publish" | "unpublish" | "activate" | "deactivate" | "delete" | "archive" | "unarchive" | "assign_teacher" | "remove_teacher") => {
+    action: "publish" | "unpublish" | "activate" | "deactivate" | "delete" | "archive" | "unarchive" | "assign_teacher" | "remove_teacher",
+    teacherId?: string) => {
     if (selectedIds.length === 0) return;
     try {
       const response = await adminFetch(apiRoutes.admin.courseBatch, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: selectedIds, action })
+        body: JSON.stringify({ ids: selectedIds, action, ...(teacherId ? { teacherId } : {}) })
       });
       const result = await readJsonOrThrow<{ message?: string }>(response, "فشلت العملية الجماعية");
       toast.success(result.message || "تم تنفيذ العملية الجماعية");
       setSelectedIds([]);
       void revalidateCoursePublicCache().catch(() => {});
-      await refetch();
+      await refreshCourses();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حدث خطأ غير متوقع");
     }
   };
 
-  const handleExport = () => {
-    const params = new URLSearchParams();
-    if (deferredSearch) params.set("search", deferredSearch);
-    if (filterLevel !== "ALL") params.set("level", filterLevel);
-    if (filterCategory !== "ALL") params.set("categoryId", filterCategory);
-    if (filterStatus === "PUBLISHED") params.set("isPublished", "true");
-    else if (filterStatus === "DRAFT") params.set("isPublished", "false");
-    else if (filterStatus === "ACTIVE") params.set("isActive", "true");
-    else if (filterStatus === "INACTIVE") params.set("isActive", "false");
+  const [isExporting, setIsExporting] = React.useState(false);
 
-    const url = params.toString()
-      ? `${apiRoutes.admin.courseExport}?${params.toString()}`
-      : apiRoutes.admin.courseExport;
-    window.open(url, "_blank");
-  };
+  const handleExport = React.useCallback(async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const params = selectedIds.length > 0
+        ? new URLSearchParams({ ids: selectedIds.join(",") })
+        : buildFilterParams();
 
-  const columns = React.useMemo(
-    () => createCourseColumns({ router, canManageCourses, setDeleteDialog }),
-    [router, canManageCourses, setDeleteDialog]
-  );
+      const query = params.toString();
+      const response = await adminFetch(
+        query ? `${apiRoutes.admin.courseExport}?${query}` : apiRoutes.admin.courseExport
+      );
+      if (!response.ok) throw new Error("تعذر تصدير الدورات");
+
+      const disposition = response.headers.get("content-disposition");
+      const filename = parseContentDispositionFilename(
+        disposition,
+        `courses-export-${new Date().toISOString().slice(0, 10)}.csv`
+      );
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success(
+        selectedIds.length > 0
+          ? `تم تصدير ${selectedIds.length} دورة`
+          : "تم تصدير الدورات بنجاح"
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تعذر تصدير الدورات");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [isExporting, selectedIds, buildFilterParams]);
 
   const emptyState = (
     <CourseEmptyState onAddCourse={() => router.push("/admin/courses/new")} />
@@ -492,6 +454,15 @@ export default function AdminCoursesPage() {
             <AdminButton
               variant="outline"
               className="h-12 rounded-2xl px-6 font-black gap-2 bg-background/50 border-border/50"
+              onClick={handleExport}
+              disabled={isExporting}
+            >
+              <Download className={cn("h-4 w-4", isExporting && "animate-pulse")} />
+              {isExporting ? "جارٍ التصدير..." : "تصدير CSV"}
+            </AdminButton>
+            <AdminButton
+              variant="outline"
+              className="h-12 rounded-2xl px-6 font-black gap-2 bg-background/50 border-border/50"
               onClick={() => setCategoryDialogOpen(true)}
             >
               <Tags className="h-4 w-4" />
@@ -512,6 +483,13 @@ export default function AdminCoursesPage() {
       <CourseStats stats={statsData} />
 
       <CourseFilters
+        search={search}
+        level={filterLevel}
+        status={filterStatus}
+        category={filterCategory}
+        priceType={filterPriceType}
+        instructor={filterInstructor}
+        sort={sortBy}
         onSearch={setSearch}
         onFilterChange={(filters) => {
           setFilterLevel(filters.level);
@@ -525,8 +503,8 @@ export default function AdminCoursesPage() {
         currentView={view}
         categories={categories}
         teachers={teachers}
-        onRefresh={() => refetch()}
-        onAddCourse={() => setQuickCreateOpen(true)}
+        onRefresh={() => void refreshCourses()}
+        onAddCourse={() => router.push("/admin/courses/new")}
         totalCount={pagination?.total ?? courses.length}
         isLoading={isFetching} />
 
@@ -538,9 +516,13 @@ export default function AdminCoursesPage() {
         onDeactivate={() => handleBatchAction("deactivate")}
         onDelete={() => handleBatchAction("delete")}
         onExport={handleExport}
+        isExporting={isExporting}
         onArchive={() => handleBatchAction("archive")}
         onUnarchive={() => handleBatchAction("unarchive")}
-        onAssignTeacher={() => handleBatchAction("assign_teacher")}
+        onAssignTeacher={() => {
+          setAssignTeacherId("");
+          setAssignTeacherDialog(true);
+        }}
         onRemoveTeacher={() => handleBatchAction("remove_teacher")}
         onClear={() => setSelectedIds([])}
       />
@@ -551,25 +533,16 @@ export default function AdminCoursesPage() {
         courses={courses}
         emptyState={emptyState}
         canManageCourses={canManageCourses}
-        columns={columns}
-        pagination={pagination}
-        totalPages={totalPages}
-        page={page}
-        limit={limit}
-        setPage={setPage}
-        setLimit={setLimit}
+        selectedIds={selectedIds}
         setSelectedIds={setSelectedIds}
-        handleBatchAction={handleBatchAction}
         handleDuplicate={handleDuplicate}
         handleToggleStatus={handleToggleStatus}
         handleToggleActive={handleToggleActive}
-        handleExport={handleExport}
-        refetch={refetch}
         router={router}
         setDeleteDialog={setDeleteDialog}
       />
 
-      {view === "grid" && (
+      {courses.length > 0 && (
         <CoursePagination
           page={page}
           totalPages={totalPages}
@@ -579,24 +552,6 @@ export default function AdminCoursesPage() {
           onLimitChange={setLimit}
         />
       )}
-
-      <CourseFormDialog
-        open={quickCreateOpen}
-        onOpenChange={(open) => {
-          setQuickCreateOpen(open);
-          if (!open) {
-            setEditingCourse(null);
-            quickForm.reset(quickCourseDefaults);
-          }
-        }}
-        editingCourse={editingCourse}
-        isSubmitting={isSubmitting}
-        teachers={teachers}
-        categories={categories}
-        quickForm={quickForm}
-        onSubmit={handleQuickSubmit}
-        onFullEditor={(courseId) => router.push(`/admin/courses/${courseId}`)}
-      />
 
       <CategoryDialog
         open={categoryDialogOpen}
@@ -614,7 +569,60 @@ export default function AdminCoursesPage() {
           setCategoryDeleteDialog({ open: true, id: category.id });
           setCategoryDialogOpen(false);
         }}
+        categories={categories}
+        onEditCategory={(category) => {
+          setEditingCategory(category);
+          categoryForm.reset({
+            name: category.name,
+            slug: category.slug ?? "",
+            icon: category.icon ?? "",
+            description: category.description ?? ""
+          });
+        }}
+        onNewCategory={() => {
+          setEditingCategory(null);
+          categoryForm.reset(defaultCategoryValues);
+        }}
       />
+
+      <Dialog open={assignTeacherDialog} onOpenChange={setAssignTeacherDialog}>
+        <DialogContent dir="rtl" className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>تعيين معلم للدورات المحددة</DialogTitle>
+            <DialogDescription>
+              سيتم تعيين المعلم المختار لعدد {selectedIds.length} دورة.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Select value={assignTeacherId} onValueChange={setAssignTeacherId}>
+            <SelectTrigger className="h-11 rounded-xl">
+              <SelectValue placeholder="اختر معلمًا" />
+            </SelectTrigger>
+            <SelectContent>
+              {teachers.map((teacher) => (
+                <SelectItem key={teacher.id} value={teacher.id}>
+                  {teacher.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <DialogFooter>
+            <AdminButton variant="ghost" onClick={() => setAssignTeacherDialog(false)}>
+              إلغاء
+            </AdminButton>
+            <AdminButton
+              disabled={!assignTeacherId}
+              onClick={async () => {
+                setAssignTeacherDialog(false);
+                await handleBatchAction("assign_teacher", assignTeacherId);
+              }}
+            >
+              تعيين المعلم
+            </AdminButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={deleteDialog.open}

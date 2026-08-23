@@ -12,8 +12,6 @@ import {
   Plus,
   SlidersHorizontal,
   ArrowUpDown,
-  Keyboard,
-  Tag,
   User,
   DollarSign,
 } from "lucide-react";
@@ -30,6 +28,13 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface CourseFiltersProps {
+  search: string;
+  level: string;
+  status: string;
+  category: string;
+  priceType: string;
+  instructor: string;
+  sort: string;
   onSearch: (query: string) => void;
   onFilterChange: (filters: { level: string; status: string; category: string }) => void;
   onPriceTypeChange?: (priceType: string) => void;
@@ -52,6 +57,13 @@ interface ActiveFilterChip {
 }
 
 export function CourseFilters({
+  search,
+  level,
+  status,
+  category,
+  priceType,
+  instructor,
+  sort,
   onSearch,
   onFilterChange,
   onPriceTypeChange,
@@ -66,13 +78,6 @@ export function CourseFilters({
   isLoading,
   onSortChange,
 }: CourseFiltersProps) {
-  const [search, setSearch] = React.useState("");
-  const [level, setLevel] = React.useState("ALL");
-  const [status, setStatus] = React.useState("ALL");
-  const [category, setCategory] = React.useState("ALL");
-  const [priceType, setPriceType] = React.useState("ALL");
-  const [instructor, setInstructor] = React.useState("ALL");
-  const [sort, setSort] = React.useState("newest");
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [showFilters, setShowFilters] = React.useState(false);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
@@ -89,36 +94,28 @@ export function CourseFilters({
   // Build active filter chips
   const activeChips: ActiveFilterChip[] = React.useMemo(() => {
     const chips: ActiveFilterChip[] = [];
-    if (search) chips.push({ key: "search", label: `بحث: "${search}"`, onRemove: () => { setSearch(""); onSearch(""); } });
+    if (search) chips.push({ key: "search", label: `بحث: "${search}"`, onRemove: () => onSearch("") });
     if (level !== "ALL") {
       const levelLabels: Record<string, string> = { BEGINNER: "مبتدئ", INTERMEDIATE: "متوسط", ADVANCED: "متقدم" };
-      chips.push({ key: "level", label: `المستوى: ${levelLabels[level] ?? level}`, onRemove: () => { setLevel("ALL"); onFilterChange({ level: "ALL", status, category }); } });
+      chips.push({ key: "level", label: `المستوى: ${levelLabels[level] ?? level}`, onRemove: () => onFilterChange({ level: "ALL", status, category }) });
     }
     if (status !== "ALL") {
-      const statusLabels: Record<string, string> = { draft: "مسودة", pending_review: "قيد المراجعة", published: "منشور", archived: "مؤرشف" };
-      chips.push({ key: "status", label: `الحالة: ${statusLabels[status] ?? status}`, onRemove: () => { setStatus("ALL"); onFilterChange({ level, status: "ALL", category }); } });
+      const statusLabels: Record<string, string> = { DRAFT: "مسودة", UNDER_REVIEW: "قيد المراجعة", PUBLISHED: "منشور", ARCHIVED: "مؤرشف", REJECTED: "مرفوض" };
+      chips.push({ key: "status", label: `الحالة: ${statusLabels[status] ?? status}`, onRemove: () => onFilterChange({ level, status: "ALL", category }) });
     }
     if (category !== "ALL") {
       const cat = categories.find((c) => c.id === category);
-      chips.push({ key: "category", label: `التصنيف: ${cat?.name ?? category}`, onRemove: () => { setCategory("ALL"); onFilterChange({ level, status, category: "ALL" }); } });
+      chips.push({ key: "category", label: `التصنيف: ${cat?.name ?? category}`, onRemove: () => onFilterChange({ level, status, category: "ALL" }) });
     }
     if (priceType !== "ALL") {
-      chips.push({ key: "price", label: priceType === "FREE" ? "مجانية" : "مدفوعة", onRemove: () => { setPriceType("ALL"); onPriceTypeChange?.("ALL"); } });
+      chips.push({ key: "price", label: priceType === "FREE" ? "مجانية" : "مدفوعة", onRemove: () => onPriceTypeChange?.("ALL") });
     }
     if (instructor !== "ALL") {
       const teacher = teachers.find((t) => t.id === instructor);
-      chips.push({ key: "instructor", label: `المدرس: ${teacher?.name ?? instructor}`, onRemove: () => { setInstructor("ALL"); onInstructorChange?.("ALL"); } });
+      chips.push({ key: "instructor", label: `المدرس: ${teacher?.name ?? instructor}`, onRemove: () => onInstructorChange?.("ALL") });
     }
     return chips;
   }, [search, level, status, category, priceType, instructor, categories, teachers, onFilterChange, onPriceTypeChange, onInstructorChange, onSearch]);
-
-  // Debounced search
-  React.useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      onSearch(search);
-    }, 300);
-    return () => window.clearTimeout(timeout);
-  }, [search, onSearch]);
 
   // Keyboard shortcuts
   React.useEffect(() => {
@@ -133,31 +130,19 @@ export function CourseFilters({
         e.preventDefault();
         onViewChange(currentView === "grid" ? "list" : "grid");
       }
-      // Ctrl/Cmd + N: Add new course
-      if ((e.ctrlKey || e.metaKey) && e.key === "n") {
-        e.preventDefault();
-        onAddCourse();
-      }
       // Escape: Clear search
       if (e.key === "Escape" && document.activeElement === searchInputRef.current) {
         e.preventDefault();
-        setSearch("");
+        onSearch("");
         searchInputRef.current?.blur();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentView, onViewChange, onAddCourse]);
+  }, [currentView, onViewChange, onSearch]);
 
   const handleReset = () => {
-    setSearch("");
-    setLevel("ALL");
-    setStatus("ALL");
-    setCategory("ALL");
-    setPriceType("ALL");
-    setInstructor("ALL");
-    setSort("newest");
     onSearch("");
     onFilterChange({ level: "ALL", status: "ALL", category: "ALL" });
     onPriceTypeChange?.("ALL");
@@ -182,12 +167,12 @@ export function CourseFilters({
             ref={searchInputRef}
             placeholder="بحث عن دورة أو كود أو محاضر..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => onSearch(e.target.value)}
             className="h-11 pr-12 rounded-xl border-border/60 bg-background/80 backdrop-blur-sm focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all"
           />
           {search ? (
             <button
-              onClick={() => setSearch("")}
+              onClick={() => onSearch("")}
               className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-muted-foreground/20 flex items-center justify-center hover:bg-muted-foreground/30 transition-colors"
             >
               <X className="h-3 w-3" />
@@ -342,10 +327,7 @@ export function CourseFilters({
 
               <Select
                 value={level}
-                onValueChange={(val) => {
-                  setLevel(val);
-                  onFilterChange({ level: val, status, category });
-                }}
+                onValueChange={(val) => onFilterChange({ level: val, status, category })}
               >
                 <SelectTrigger className="w-36 h-10 rounded-xl bg-background/70 text-xs font-bold border-border/60">
                   <SelectValue placeholder="المستوى" />
@@ -360,29 +342,24 @@ export function CourseFilters({
 
               <Select
                 value={status}
-                onValueChange={(val) => {
-                  setStatus(val);
-                  onFilterChange({ level, status: val, category });
-                }}
+                onValueChange={(val) => onFilterChange({ level, status: val, category })}
               >
                 <SelectTrigger className="w-36 h-10 rounded-xl bg-background/70 text-xs font-bold border-border/60">
                   <SelectValue placeholder="الحالة" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
                   <SelectItem value="ALL" className="font-bold text-xs">كل الحالات</SelectItem>
-                  <SelectItem value="draft" className="font-bold text-xs">مسودة</SelectItem>
-                  <SelectItem value="pending_review" className="font-bold text-xs">قيد المراجعة</SelectItem>
-                  <SelectItem value="published" className="font-bold text-xs">منشور</SelectItem>
-                  <SelectItem value="archived" className="font-bold text-xs">مؤرشف</SelectItem>
+                  <SelectItem value="DRAFT" className="font-bold text-xs">مسودة</SelectItem>
+                  <SelectItem value="UNDER_REVIEW" className="font-bold text-xs">قيد المراجعة</SelectItem>
+                  <SelectItem value="PUBLISHED" className="font-bold text-xs">منشور</SelectItem>
+                  <SelectItem value="ARCHIVED" className="font-bold text-xs">مؤرشف</SelectItem>
+                  <SelectItem value="REJECTED" className="font-bold text-xs">مرفوض</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select
                 value={category}
-                onValueChange={(val) => {
-                  setCategory(val);
-                  onFilterChange({ level, status, category: val });
-                }}
+                onValueChange={(val) => onFilterChange({ level, status, category: val })}
               >
                 <SelectTrigger className="w-40 h-10 rounded-xl bg-background/70 text-xs font-bold border-border/60">
                   <SelectValue placeholder="التصنيف" />
@@ -401,10 +378,7 @@ export function CourseFilters({
               {onPriceTypeChange && (
                 <Select
                   value={priceType}
-                  onValueChange={(val) => {
-                    setPriceType(val);
-                    onPriceTypeChange(val);
-                  }}
+                  onValueChange={onPriceTypeChange}
                 >
                   <SelectTrigger className="w-32 h-10 rounded-xl bg-background/70 text-xs font-bold border-border/60">
                     <div className="flex items-center gap-1.5">
@@ -424,10 +398,7 @@ export function CourseFilters({
               {onInstructorChange && teachers.length > 0 && (
                 <Select
                   value={instructor}
-                  onValueChange={(val) => {
-                    setInstructor(val);
-                    onInstructorChange(val);
-                  }}
+                  onValueChange={onInstructorChange}
                 >
                   <SelectTrigger className="w-40 h-10 rounded-xl bg-background/70 text-xs font-bold border-border/60">
                     <div className="flex items-center gap-1.5">
@@ -450,10 +421,7 @@ export function CourseFilters({
               {onSortChange && (
                 <Select
                   value={sort}
-                  onValueChange={(val) => {
-                     setSort(val);
-                     onSortChange(val);
-                  }}
+                  onValueChange={onSortChange}
                 >
                   <SelectTrigger className="w-40 h-10 rounded-xl bg-background/70 text-xs font-bold border-border/60">
                     <div className="flex items-center gap-1.5">

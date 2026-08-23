@@ -76,7 +76,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: .kilo/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:

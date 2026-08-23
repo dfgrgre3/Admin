@@ -20,7 +20,9 @@ export default async function EditCoursePage({ params }: EditCoursePageProps) {
   const { id } = await params;
   const cookieHeader = (await cookies()).toString();
   const [coursePayload, categories, teachers, allCoursesPayload] = await Promise.all([
-    apiClient.get<any>(`/courses/${id}`).catch(() => null),
+    apiClient.get<any>(`/admin/courses/${id}`, {
+      headers: { Cookie: cookieHeader },
+    }).catch(() => null),
     apiClient.get<any[]>("/categories?type=COURSE").catch(() => []),
     apiClient.get<any[]>("/teachers").catch(() => []),
     apiClient.get<unknown>("/admin/subjects?limit=100", {

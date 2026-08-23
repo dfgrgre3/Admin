@@ -139,7 +139,7 @@ export default function CourseWorkflowPage() {
 
   const restoreCourse = useMutation({
     mutationFn: async () => {
-      const res = await adminFetch(apiRoutes.admin.courseRestore(courseId), {
+      const res = await adminFetch(apiRoutes.admin.courseUnarchive(courseId), {
         method: "POST",
       });
       await throwIfApiError(res, "فشل استعادة الدورة");
@@ -167,7 +167,12 @@ export default function CourseWorkflowPage() {
     onError: () => toast.error("فشل إضافة التعليق"),
   });
 
-  const status: CourseStatus = courseData?.status || "draft";
+  const rawStatus: string | undefined = courseData?.status;
+  const normalizedStatus = rawStatus ? rawStatus.toUpperCase() : undefined;
+  const status: CourseStatus =
+    normalizedStatus && normalizedStatus in COURSE_STATUS_LABELS
+      ? (normalizedStatus as CourseStatus)
+      : "DRAFT";
   const isPending = submitReview.isPending || approveCourse.isPending || rejectCourse.isPending || archiveCourse.isPending || restoreCourse.isPending || addComment.isPending;
 
   if (isLoading) {
@@ -205,7 +210,7 @@ export default function CourseWorkflowPage() {
           إجراءات سير العمل
         </h3>
         <div className="flex flex-wrap gap-3">
-          {status === "draft" && (
+          {status === "DRAFT" && (
             <AdminButton
               onClick={() => submitReview.mutate()}
               disabled={isPending}
@@ -216,7 +221,7 @@ export default function CourseWorkflowPage() {
             </AdminButton>
           )}
 
-          {status === "pending_review" && (
+          {status === "UNDER_REVIEW" && (
             <>
               <AdminButton
                 onClick={() => approveCourse.mutate()}
@@ -238,7 +243,7 @@ export default function CourseWorkflowPage() {
             </>
           )}
 
-          {status === "published" && (
+          {status === "PUBLISHED" && (
             <AdminButton
               onClick={() => archiveCourse.mutate()}
               disabled={isPending}
@@ -250,7 +255,7 @@ export default function CourseWorkflowPage() {
             </AdminButton>
           )}
 
-          {status === "archived" && (
+          {status === "ARCHIVED" && (
             <AdminButton
               onClick={() => restoreCourse.mutate()}
               disabled={isPending}
@@ -264,7 +269,7 @@ export default function CourseWorkflowPage() {
 
         {/* Workflow diagram */}
         <div className="mt-6 flex items-center gap-2 overflow-x-auto pb-2">
-          {(["draft", "pending_review", "published", "archived"] as CourseStatus[]).map((s, i) => (
+          {(["DRAFT", "UNDER_REVIEW", "PUBLISHED", "ARCHIVED"] as CourseStatus[]).map((s, i) => (
             <React.Fragment key={s}>
               <div
                 className={`flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold ${
@@ -364,7 +369,7 @@ export default function CourseWorkflowPage() {
                 <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold">{entry.fieldName}</span>
+                    <span className="text-sm font-bold">{entry.field}</span>
                     <span className="text-xs text-muted-foreground">
                       {new Date(entry.createdAt).toLocaleString("ar-EG")}
                     </span>

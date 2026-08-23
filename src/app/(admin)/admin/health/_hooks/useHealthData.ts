@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { HealthData, TimeRange } from "../_types/health";
 import { adminFetch } from "@/lib/api/admin-api";
+import { parseContentDispositionFilename } from "@/lib/export-utils";
 
 export interface ExportedHealthReport {
   blob: Blob;
@@ -27,13 +28,10 @@ export function useHealthData(timeRange: TimeRange, autoRefresh: boolean) {
 }
 
 function parseFilename(header: string | null): string {
-  if (!header) return `health-report-${new Date().toISOString().split("T")[0]}.csv`;
-
-  const utf8Match = header.match(/filename\*=UTF-8''([^;]+)/i);
-  if (utf8Match?.[1]) return decodeURIComponent(utf8Match[1]);
-
-  const filenameMatch = header.match(/filename="?([^";]+)"?/i);
-  return filenameMatch?.[1] ?? `health-report-${new Date().toISOString().split("T")[0]}.csv`;
+  return parseContentDispositionFilename(
+    header,
+    `health-report-${new Date().toISOString().split("T")[0]}.csv`
+  );
 }
 
 export function useExportHealthReport() {

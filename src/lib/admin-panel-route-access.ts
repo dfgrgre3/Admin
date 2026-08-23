@@ -112,6 +112,23 @@ export const ADMIN_API_RULES: ReadonlyArray<{
     { pattern: /^\/api\/admin\/tickets/, view: PERMISSIONS.TICKETS_VIEW, manage: PERMISSIONS.TICKETS_MANAGE },
     { pattern: /^\/api\/admin\/audit-logs/, view: PERMISSIONS.AUDIT_LOGS_VIEW },
     { pattern: /^\/api\/admin\/automations/, view: PERMISSIONS.ADMIN_BYPASS },
+    // Dashboard sub-routes are gated per-widget on the Go backend (each calls
+    // `dashboardRequire` with its own `PermDashboard*` constant), so the proxy
+    // gate must mirror that instead of demanding the coarse `dashboard:view`
+    // for every path — otherwise an admin holding only the granular grant
+    // (e.g. `dashboard:view_alerts`) gets a 403 here before the request ever
+    // reaches the backend that would have allowed it.
+    { pattern: /^\/api\/admin\/dashboard\/alerts\/[^/]+\/acknowledge/, view: PERMISSIONS.DASHBOARD_ACKNOWLEDGE_ALERTS },
+    { pattern: /^\/api\/admin\/dashboard\/alerts/, view: PERMISSIONS.DASHBOARD_VIEW_ALERTS },
+    { pattern: /^\/api\/admin\/dashboard\/pending-actions/, view: PERMISSIONS.DASHBOARD_VIEW_PENDING_ITEMS },
+    { pattern: /^\/api\/admin\/dashboard\/system-health/, view: PERMISSIONS.DASHBOARD_VIEW_SYSTEM_HEALTH },
+    { pattern: /^\/api\/admin\/dashboard\/recent-activities/, view: PERMISSIONS.DASHBOARD_VIEW_RECENT_ACTIVITY },
+    { pattern: /^\/api\/admin\/dashboard\/top-courses/, view: PERMISSIONS.DASHBOARD_VIEW_TOP_COURSES },
+    { pattern: /^\/api\/admin\/dashboard\/export/, view: PERMISSIONS.DASHBOARD_EXPORT },
+    { pattern: /^\/api\/admin\/dashboard\/refresh/, view: PERMISSIONS.DASHBOARD_REFRESH_CACHE },
+    { pattern: /^\/api\/admin\/dashboard\/saved-filters\/[^/]+/, view: PERMISSIONS.DASHBOARD_APPLY_SAVED_FILTERS, manage: PERMISSIONS.DASHBOARD_DELETE_SAVED_FILTERS },
+    { pattern: /^\/api\/admin\/dashboard\/saved-filters/, view: PERMISSIONS.DASHBOARD_APPLY_SAVED_FILTERS, manage: PERMISSIONS.DASHBOARD_SAVE_FILTERS },
+    { pattern: /^\/api\/admin\/dashboard\/(?:summary|time-series)/, view: PERMISSIONS.DASHBOARD_ACCESS },
     { pattern: /^\/api\/admin\/dashboard/, view: PERMISSIONS.DASHBOARD_VIEW },
     // Course/media editors upload through the admin upload endpoints.
     { pattern: /^\/api\/admin\/upload(?:\/.*)?$/, view: PERMISSIONS.RESOURCES_VIEW, manage: PERMISSIONS.RESOURCES_MANAGE },

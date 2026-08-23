@@ -179,11 +179,12 @@ export default function CourseDetailLayout({ children }: CourseLayoutProps) {
               <Badge variant="outline" className="rounded-full px-4 border-primary/20 bg-primary/5 text-primary font-bold">
                 ID: {course?.id?.slice(0, 8)}
               </Badge>
-              {course?.isPublished ? (
-                <Badge className="rounded-full px-4 bg-emerald-500/10 text-emerald-500 border-emerald-500/20 font-black">منشورة</Badge>
-              ) : (
-                <Badge className="rounded-full px-4 bg-orange-500/10 text-orange-500 border-orange-500/20 font-black">مسودة</Badge>
-              )}
+              <CourseStatusBadge
+                status={course?.status}
+                isPublished={course?.isPublished}
+                isActive={course?.isActive}
+                className="px-4 py-1 font-black"
+              />
             </div>
 
             <div>

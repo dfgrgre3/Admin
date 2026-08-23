@@ -100,6 +100,26 @@ const isProtectedRoute = (req: NextRequest): boolean => {
   );
 };
 
+/**
+ * Builds the "session expired" redirect used both when a token refresh
+ * request fails outright and when it succeeds but no usable access token
+ * could be extracted from the response — same destination, same params,
+ * same cookie cleanup either way.
+ */
+function buildSessionExpiredRedirect(req: NextRequest): NextResponse {
+  const url = new URL("/admin-login", req.url);
+  url.searchParams.set("redirect", req.nextUrl.pathname);
+  url.searchParams.set("error", "session_expired");
+  const redirectRes = NextResponse.redirect(url);
+  redirectRes.cookies.delete("access_token");
+  redirectRes.cookies.delete("refresh_token");
+  return redirectRes;
+}
+
+export async function middleware(req: NextRequest) {
+  return proxy(req);
+}
+
 export default async function proxy(req: NextRequest) {
   if (!isProtectedRoute(req)) {
     return NextResponse.next();
@@ -151,11 +171,10 @@ export default async function proxy(req: NextRequest) {
 
       if (refreshRes.ok) {
         // Parse cookies from backend refresh response and forward them to the client.
-        // Single pass: append Set-Cookie headers AND extract the new access_token
-        // in one loop (avoiding an O(2n) traversal).
         const setCookies = refreshRes.headers.getSetCookie();
+        let newToken: string | null = null;
+
         if (setCookies && setCookies.length > 0) {
-          let newToken: string | null = null;
           for (const setCookieHeader of setCookies) {
             nextResponse.headers.append("Set-Cookie", setCookieHeader);
             const match = setCookieHeader.match(/^access_token=([^;]+)/);
@@ -163,27 +182,27 @@ export default async function proxy(req: NextRequest) {
               newToken = decodeURIComponent(match[1]);
             }
           }
-          if (!newToken) {
-            // Fallback: read from body if cookie header didn't contain the token
+        }
+
+        if (!newToken) {
+          // Fallback: read from body if cookie header didn't contain the token
+          try {
             const data = await refreshRes.json();
             newToken = data?.data?.accessToken || data?.accessToken || null;
+          } catch (_e) {
+            newToken = null;
           }
-          if (newToken) {
-            const result = await verifyAccessToken(newToken);
-            payload = result.payload;
-          }
-        } else {
-          shouldRefresh = false;
+        }
+
+        if (newToken) {
+          const result = await verifyAccessToken(newToken);
+          payload = result.payload;
+        } else if (!payload) {
+          return buildSessionExpiredRedirect(req);
         }
       } else {
         // If refresh fails, clear invalid tokens and redirect to login
-        const url = new URL("/admin-login", req.url);
-        url.searchParams.set("redirect", req.nextUrl.pathname);
-        url.searchParams.set("error", "session_expired");
-        const redirectRes = NextResponse.redirect(url);
-        redirectRes.cookies.delete("access_token");
-        redirectRes.cookies.delete("refresh_token");
-        return redirectRes;
+        return buildSessionExpiredRedirect(req);
       }
     } catch (_err) {
       // Network error during refresh, allow request to fail gracefully in UI or return error

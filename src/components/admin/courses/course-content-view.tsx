@@ -84,17 +84,6 @@ interface CourseContentViewProps {
   setDeleteDialog: (dialog: { open: boolean; id: string | null }) => void;
   selectedIds?: string[];
   setSelectedIds?: React.Dispatch<React.SetStateAction<string[]>>;
-  // Legacy props kept for backward compatibility
-  columns?: unknown;
-  pagination?: unknown;
-  totalPages?: number;
-  page?: number;
-  limit?: number;
-  setPage?: (page: number) => void;
-  setLimit?: (limit: number) => void;
-  handleBatchAction?: (action: "publish" | "unpublish" | "activate" | "deactivate" | "delete") => void;
-  handleExport?: () => void;
-  refetch?: () => void;
 }
 
 export function CourseContentView({
@@ -133,6 +122,17 @@ export function CourseContentView({
       setSelectedIds(allIds);
     }
   }, [courses, selectedIds, setSelectedIds]);
+
+  // Stable callbacks so the memoized card/row components can skip re-renders.
+  const handleEdit = React.useCallback(
+    (course: CourseBase) => router.push(`/admin/courses/${course.id}/edit`),
+    [router]
+  );
+
+  const handleDelete = React.useCallback(
+    (course: CourseBase) => setDeleteDialog({ open: true, id: course.id }),
+    [setDeleteDialog]
+  );
 
   const allSelected = courses.length > 0 && courses.every((c) => selectedIds.includes(c.id));
   const someSelected = selectedIds.length > 0 && !allSelected;
@@ -205,17 +205,9 @@ export function CourseContentView({
                 priority={index < 4}
                 isSelected={selectedIds.includes(course.id)}
                 onSelect={canManageCourses ? handleSelect : undefined}
-                onEdit={
-                  canManageCourses
-                    ? (c) => router.push(`/admin/courses/${c.id}/edit`)
-                    : undefined
-                }
+                onEdit={canManageCourses ? handleEdit : undefined}
                 onDuplicate={canManageCourses ? handleDuplicate : undefined}
-                onDelete={
-                  canManageCourses
-                    ? (c) => setDeleteDialog({ open: true, id: c.id })
-                    : undefined
-                }
+                onDelete={canManageCourses ? handleDelete : undefined}
                 onToggleStatus={canManageCourses ? handleToggleStatus : undefined}
                 onToggleActive={canManageCourses ? handleToggleActive : undefined}
               />
@@ -289,17 +281,9 @@ export function CourseContentView({
             index={index}
             isSelected={selectedIds.includes(course.id)}
             onSelect={canManageCourses ? handleSelect : undefined}
-            onEdit={
-              canManageCourses
-                ? (c) => router.push(`/admin/courses/${c.id}/edit`)
-                : undefined
-            }
+            onEdit={canManageCourses ? handleEdit : undefined}
             onDuplicate={canManageCourses ? handleDuplicate : undefined}
-            onDelete={
-              canManageCourses
-                ? (c) => setDeleteDialog({ open: true, id: c.id })
-                : undefined
-            }
+            onDelete={canManageCourses ? handleDelete : undefined}
             onToggleStatus={canManageCourses ? handleToggleStatus : undefined}
             onToggleActive={canManageCourses ? handleToggleActive : undefined}
           />

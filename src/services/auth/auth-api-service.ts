@@ -94,12 +94,17 @@ export const authApiService = {
     } catch {
       // Ignore errors — always clear client state
     } finally {
+      // The auth store reset only clears in-memory Zustand state — it never
+      // touches localStorage. Clear the token mirror here too, or a revoked
+      // session's tokens survive logout and keep authenticating WebSocket
+      // connections (access_token cookie is HttpOnly, so build-ws-url.ts's
+      // only real fallback is this localStorage copy).
       if (typeof window !== 'undefined') {
         try {
           window.localStorage.removeItem('accessToken');
           window.localStorage.removeItem('refreshToken');
         } catch {
-          // Ignore localStorage cleanup failures
+          // Ignore storage errors (private browsing, quota, etc.)
         }
       }
     }

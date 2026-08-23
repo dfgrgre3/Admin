@@ -8,7 +8,7 @@ import {
 } from "@/app/(admin)/admin/courses/_components/types";
 
 interface CourseStatusBadgeProps {
-  status?: CourseStatus;
+  status?: CourseStatus | string | null;
   isPublished?: boolean;
   isActive?: boolean;
   className?: string;
@@ -16,7 +16,8 @@ interface CourseStatusBadgeProps {
 
 /**
  * Displays a colored badge for the course lifecycle status.
- * Falls back to deriving status from isPublished/isActive for legacy data.
+ * Normalizes the incoming value to the backend UPPERCASE CourseStatus set and
+ * falls back to deriving status from isPublished/isActive for legacy rows.
  */
 export function CourseStatusBadge({
   status,
@@ -24,8 +25,15 @@ export function CourseStatusBadge({
   isActive,
   className,
 }: CourseStatusBadgeProps) {
+  const normalized = status ? status.toUpperCase() : undefined;
   const resolvedStatus: CourseStatus =
-    status ?? (isActive === false ? "archived" : isPublished ? "published" : "draft");
+    normalized && normalized in COURSE_STATUS_LABELS
+      ? (normalized as CourseStatus)
+      : isActive === false
+      ? "ARCHIVED"
+      : isPublished
+      ? "PUBLISHED"
+      : "DRAFT";
 
   return (
     <span

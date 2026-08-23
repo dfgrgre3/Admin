@@ -236,8 +236,10 @@ export const apiRoutes = {
     courseDuplicate: '/api/admin/courses/duplicate',
     courseBatch: '/api/admin/courses/batch',
     courseExport: '/api/admin/courses/export',
+    courseStats: '/api/admin/courses/stats',
     courseExportJob: (jobId: string) => `/api/admin/courses/export/${jobId}`,
     courseStudents: (courseId: string) => `/api/admin/courses/${courseId}/students`,
+    courseOverviewStats: (courseId: string) => `/api/admin/courses/${courseId}/overview-stats`,
     courseOverview: (courseId: string) => `/api/admin/courses/${courseId}/overview`,
     courseAnalytics: (courseId: string) => `/api/admin/courses/${courseId}/analytics`,
     courseCurriculum: (courseId: string) => `/api/admin/courses/${courseId}/curriculum`,
@@ -262,8 +264,8 @@ export const apiRoutes = {
     courseApprove: (courseId: string) => `/api/admin/courses/${courseId}/approve`,
     courseReject: (courseId: string) => `/api/admin/courses/${courseId}/reject`,
     courseArchive: (courseId: string) => `/api/admin/courses/${courseId}/archive`,
-    courseRestore: (courseId: string) => `/api/admin/courses/${courseId}/restore`,
-    reviewQueue: '/api/admin/courses/review-queue',
+    courseUnarchive: (courseId: string) => `/api/admin/courses/${courseId}/unarchive`,
+    reviewQueue: '/api/admin/courses/pending-review',
     courseChangelogV2: (courseId: string) => `/api/admin/courses/${courseId}/changelog`,
 
     // Course tags

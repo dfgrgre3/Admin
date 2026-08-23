@@ -120,6 +120,14 @@ export interface Enrollment {
   updatedAt: string;
 }
 
+export interface CourseInstructor {
+  courseId: string;
+  instructorId: string;
+  role: string;
+  permissions?: Record<string, unknown> | null;
+  createdAt: string;
+}
+
 export interface CreateCourseInput {
   title: string;
   slug: string;
@@ -353,6 +361,28 @@ export const courseApi = {
     });
   },
 
+  // Video transcript (SRT/VTT) — powers the student player's searchable-transcript panel.
+  uploadLessonTranscript: async (lessonId: string, data: { content: string; format?: 'srt' | 'vtt'; language?: string }) => {
+    return apiClient.post<{ id: string; lessonId: string; format: string; content: string; language: string }>(
+      `/api/admin/courses/lessons/${lessonId}/transcript`,
+      data
+    );
+  },
+
+  deleteLessonTranscript: async (lessonId: string) => {
+    return apiClient.delete<{ message: string }>(`/api/admin/courses/lessons/${lessonId}/transcript`);
+  },
+
+  // Lesson attachments (files) — metadata-only; the raw file itself is uploaded
+  // separately via the generic /api/admin/upload endpoint first.
+  addLessonAttachment: async (courseId: string, sectionId: string, lessonId: string, data: { title: string; fileUrl: string; fileType?: string; fileSize?: number }) => {
+    return apiClient.post<{ attachment: Attachment }>(`/api/admin/courses/${courseId}/sections/${sectionId}/lessons/${lessonId}/attachments`, data);
+  },
+
+  deleteLessonAttachment: async (courseId: string, sectionId: string, lessonId: string, attachmentId: string) => {
+    return apiClient.delete<{ message: string }>(`/api/admin/courses/${courseId}/sections/${sectionId}/lessons/${lessonId}/attachments/${attachmentId}`);
+  },
+
   // Enrollment Management
   enrollUser: async (courseId: string, userId: string) => {
     return apiClient.post<{ enrollment: Enrollment }>(`/api/admin/courses/${courseId}/enrollments`, {
@@ -380,6 +410,22 @@ export const courseApi = {
     return apiClient.get<{ enrollments: Enrollment[]; pagination: { page: number; limit: number; total: number } }>(
     `/api/admin/courses/${courseId}/enrollments?${params.toString()}`
     );
+  },
+
+  // Instructor Management (multi-teacher assignment)
+  listCourseInstructors: async (courseId: string) => {
+    return apiClient.get<{ instructors: CourseInstructor[] }>(`/api/admin/courses/${courseId}/instructors`);
+  },
+
+  addCourseInstructor: async (courseId: string, instructorId: string, role?: string) => {
+    return apiClient.post<{ instructors: CourseInstructor[] }>(`/api/admin/courses/${courseId}/instructors`, {
+      instructorId,
+      role,
+    });
+  },
+
+  removeCourseInstructor: async (courseId: string, instructorId: string) => {
+    return apiClient.delete<{ message: string }>(`/api/admin/courses/${courseId}/instructors/${instructorId}`);
   },
 
   // Pricing Management

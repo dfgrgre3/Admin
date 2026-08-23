@@ -25,6 +25,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCourseBuilder } from "../hooks";
 import { lessonSchema, type Lesson, type Chapter, type LessonFormData } from "../types";
+import { lessonsApi } from "../api/lessons-api";
+import { Upload, Trash } from "lucide-react";
 
 
 const lessonTypeIcons: Record<string, React.ReactNode> = {
@@ -152,6 +154,99 @@ const LessonCard: React.FC<{
   );
 };
 
+// Uploads/replaces an SRT or VTT transcript for an existing (already-saved)
+// lesson — only meaningful once the lesson has an id, so it only renders
+// while editing, not while creating a brand-new lesson. Powers the student
+// player's searchable-transcript sidebar tab.
+const TranscriptUpload: React.FC<{ lessonId: string }> = ({ lessonId }) => {
+  const [status, setStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // Guards against setState after unmount (e.g. the edit modal is closed
+  // mid-upload) — belt-and-suspenders alongside the `key={lesson.id}` on
+  // LessonForm, which already remounts this component on lesson switches.
+  const isMountedRef = React.useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+
+    const format = file.name.toLowerCase().endsWith(".vtt") ? "vtt" : "srt";
+    setStatus("uploading");
+    setErrorMessage(null);
+
+    try {
+      const content = await file.text();
+      const result = await lessonsApi.uploadTranscript(lessonId, content, format);
+      if (result.error) throw new Error(result.error);
+      if (!isMountedRef.current) return;
+      setFileName(file.name);
+      setStatus("success");
+    } catch (err) {
+      if (!isMountedRef.current) return;
+      setStatus("error");
+      setErrorMessage(err instanceof Error ? err.message : "فشل رفع نص الفيديو");
+    }
+  };
+
+  const handleDelete = async () => {
+    setStatus("uploading");
+    try {
+      await lessonsApi.deleteTranscript(lessonId);
+      if (!isMountedRef.current) return;
+      setFileName(null);
+      setStatus("idle");
+    } catch (err) {
+      if (!isMountedRef.current) return;
+      setStatus("error");
+      setErrorMessage(err instanceof Error ? err.message : "فشل حذف نص الفيديو");
+    }
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        نص الفيديو (Transcript) — ملف SRT أو VTT
+      </label>
+      <div className="flex items-center gap-3">
+        <label className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+          <Upload className="w-4 h-4" />
+          {status === "uploading" ? "جارٍ الرفع..." : "اختر ملف .srt أو .vtt"}
+          <input
+            type="file"
+            accept=".srt,.vtt,text/vtt"
+            className="hidden"
+            disabled={status === "uploading"}
+            onChange={handleFileChange}
+          />
+        </label>
+        {status === "success" && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700 dark:text-red-400"
+          >
+            <Trash className="w-3.5 h-3.5" /> حذف النص المرفوع
+          </button>
+        )}
+      </div>
+      {status === "success" && fileName && (
+        <p className="mt-1.5 text-sm text-emerald-600 dark:text-emerald-400">تم رفع "{fileName}" بنجاح.</p>
+      )}
+      {status === "error" && errorMessage && (
+        <p className="mt-1.5 text-sm text-red-500">{errorMessage}</p>
+      )}
+    </div>
+  );
+};
+
 const LessonForm: React.FC<{
   lesson?: Lesson | null;
   chapterId: string;
@@ -237,7 +332,11 @@ const LessonForm: React.FC<{
           placeholder="https://example.com/video.mp4"
         />
       </div>
-      
+
+      {lesson?.id && form.watch("type") === "VIDEO" && (
+        <TranscriptUpload lessonId={lesson.id} />
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">المدة (بالثواني)</label>
@@ -496,6 +595,7 @@ export const LessonsStep: React.FC<{
               </button>
             </div>
             <LessonForm
+              key={editingLesson?.id ?? "new"}
               lesson={editingLesson}
               chapterId={selectedChapterId}
               lessonTypes={lessonTypes}

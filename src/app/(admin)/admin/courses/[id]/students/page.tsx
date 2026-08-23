@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/select";
 import { apiRoutes } from "@/lib/api/routes";
 import { adminFetch } from "@/lib/api/admin-api";
-import { cn, formatPrice } from "@/lib/utils";
+import { parseContentDispositionFilename } from "@/lib/export-utils";
+import { cn } from "@/lib/utils";
 import {
   Users,
   Search,
@@ -25,10 +26,8 @@ import {
   TrendingUp,
   Award,
   Clock,
-  ChevronLeft,
   Mail,
   Calendar,
-  ArrowUpRight,
 } from "lucide-react";
 
 interface Student {
@@ -37,10 +36,9 @@ interface Student {
   email: string;
   enrolledAt: string;
   progress: number;
-  lastActive: string;
+  lastActive: string | null;
   completedLessons: number;
   totalLessons: number;
-  grade?: number;
   status: "active" | "inactive" | "completed";
 }
 
@@ -62,11 +60,12 @@ export default function CourseStudentsPage() {
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("all");
   const [page, setPage] = React.useState(1);
-  const [limit, setLimit] = React.useState(20);
+  const [isExporting, setIsExporting] = React.useState(false);
+  const limit = 20;
 
   const deferredSearch = React.useDeferredValue(search);
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: [
       "admin",
       "courses",
@@ -103,29 +102,56 @@ export default function CourseStudentsPage() {
   }, [pagination]);
 
   const statsData = React.useMemo(() => {
-    const total = students.length;
+    const total = pagination?.total ?? students.length;
     const active = students.filter((s) => s.status === "active").length;
     const completed = students.filter((s) => s.status === "completed").length;
     const avgProgress =
-      total > 0
-        ? Math.round(students.reduce((sum, s) => sum + s.progress, 0) / total)
+      students.length > 0
+        ? Math.round(
+            students.reduce((sum, s) => sum + s.progress, 0) / students.length
+          )
         : 0;
     return { total, active, completed, avgProgress };
-  }, [students]);
+  }, [pagination, students]);
 
   React.useEffect(() => {
     setPage(1);
   }, [deferredSearch, statusFilter]);
 
-  const handleExport = () => {
-    window.open(
-      `${apiRoutes.admin.courseStudents(courseId)}/export?${new URLSearchParams({
-        search: deferredSearch,
-        status: statusFilter,
-      }).toString()}`,
-      "_blank"
-    );
-  };
+  const handleExport = React.useCallback(async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (deferredSearch) params.set("search", deferredSearch);
+      if (statusFilter !== "all") params.set("status", statusFilter);
+
+      const query = params.toString();
+      const endpoint = `${apiRoutes.admin.courseStudents(courseId)}/export`;
+      const response = await adminFetch(query ? `${endpoint}?${query}` : endpoint);
+      if (!response.ok) throw new Error("تعذر تصدير قائمة الطلاب");
+
+      const filename = parseContentDispositionFilename(
+        response.headers.get("content-disposition"),
+        `course-students-${new Date().toISOString().slice(0, 10)}.csv`
+      );
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("تم تصدير قائمة الطلاب");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حدث خطأ غير متوقع");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [courseId, deferredSearch, isExporting, statusFilter]);
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -141,9 +167,10 @@ export default function CourseStudentsPage() {
           variant="outline"
           className="gap-2 rounded-xl h-11 px-6 font-bold"
           onClick={handleExport}
+          disabled={isExporting}
         >
           <Download className="h-4 w-4" />
-          تصدير CSV
+          {isExporting ? "جارٍ التصدير..." : "تصدير CSV"}
         </AdminButton>
       </div>
 
@@ -333,7 +360,9 @@ export default function CourseStudentsPage() {
                     <td className="p-4">
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Calendar className="h-3 w-3" />
-                        {new Date(student.lastActive).toLocaleDateString("ar-EG")}
+                        {student.lastActive
+                          ? new Date(student.lastActive).toLocaleDateString("ar-EG")
+                          : "لا يوجد نشاط"}
                       </div>
                     </td>
                     <td className="p-4">

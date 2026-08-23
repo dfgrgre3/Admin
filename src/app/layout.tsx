@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import { Alexandria } from 'next/font/google';
-import { cookies } from 'next/headers';
 import { GlobalProviders } from '@/providers';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { SWRegistration } from '@/components/sw-registration';
@@ -39,9 +38,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const hasAuthToken = cookieStore.has('access_token') || cookieStore.has('refresh_token') || cookieStore.has('session_id');
-
+  // NOTE: This layout intentionally does NOT call `cookies()`/`headers()`.
+  // Calling a Request–time (dynamic) API in the root layout forces the *entire*
+  // App Router tree to render dynamically on every request, which disables
+  // static caching and `<Link>` prefetching — the main cause of slow navigation
+  // and repeated re-renders. Session presence is instead detected client-side
+  // in `AuthProvider` (cookie / localStorage token), while the edge middleware
+  // remains the authoritative security gate for `/admin*` and `/api/admin`.
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning className="efficiency-mode">
       <head>
@@ -59,7 +62,7 @@ export default async function RootLayout({
           disableTransitionOnChange
           storageKey="tolo-theme"
         >
-          <GlobalProviders initialAuthHint={hasAuthToken}>
+          <GlobalProviders>
             {children}
           </GlobalProviders>
         </ThemeProvider>

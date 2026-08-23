@@ -66,4 +66,14 @@ export const lessonsApi = {
     await courseApi.reorderLessons(courseId, sectionId, lessonIds);
     return this.getLessons(courseId, sectionId);
   },
+
+  async uploadTranscript(lessonId: string, content: string, format: "srt" | "vtt", language = "ar"): Promise<ApiResponse<void>> {
+    await courseApi.uploadLessonTranscript(lessonId, { content, format, language });
+    return { data: undefined, error: undefined };
+  },
+
+  async deleteTranscript(lessonId: string): Promise<ApiResponse<void>> {
+    await courseApi.deleteLessonTranscript(lessonId);
+    return { data: undefined, error: undefined };
+  },
 };

@@ -27,6 +27,7 @@ interface CourseBulkActionsProps {
   onDeactivate?: () => void;
   onDelete: () => void;
   onExport?: () => void;
+  isExporting?: boolean;
   onArchive?: () => void;
   onUnarchive?: () => void;
   onAssignTeacher?: () => void;
@@ -43,6 +44,7 @@ export function CourseBulkActions({
   onDeactivate,
   onDelete,
   onExport,
+  isExporting,
   onArchive,
   onUnarchive,
   onAssignTeacher,
@@ -184,9 +186,10 @@ export function CourseBulkActions({
                 size="sm"
                 className="h-8 rounded-xl text-[11px] font-bold gap-1.5"
                 onClick={onExport}
+                disabled={isExporting}
               >
-                <Download className="h-3.5 w-3.5" />
-                تصدير
+                <Download className={cn("h-3.5 w-3.5", isExporting && "animate-pulse")} />
+                {isExporting ? "جارٍ التصدير..." : "تصدير"}
               </AdminButton>
             )}
 

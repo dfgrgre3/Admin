@@ -6,6 +6,8 @@ import { z } from "zod";
 import {
   Pencil,
   Plus,
+  Trash2,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -51,6 +53,9 @@ export interface CategoryDialogProps {
   categoryForm: UseFormReturn<CategoryFormValues>;
   onSubmit: (values: CategoryFormValues) => Promise<void>;
   onDeleteRequest: (category: CourseCategory) => void;
+  categories: CourseCategory[];
+  onEditCategory: (category: CourseCategory) => void;
+  onNewCategory: () => void;
 }
 
 export function CategoryDialog({
@@ -60,6 +65,9 @@ export function CategoryDialog({
   categoryForm,
   onSubmit,
   onDeleteRequest,
+  categories,
+  onEditCategory,
+  onNewCategory,
 }: CategoryDialogProps) {
   return (
     <Dialog
@@ -70,12 +78,73 @@ export function CategoryDialog({
         <div className="p-6 sm:p-8" dir="rtl">
           <DialogHeader className="space-y-2 text-right">
             <DialogTitle className="text-2xl font-black">
-              {editingCategory ? "تعديل تصنيف" : "إضافة تصنيف جديد"}
+              {editingCategory ? "تعديل تصنيف" : "إدارة التصنيفات"}
             </DialogTitle>
             <p className="text-sm text-muted-foreground">
               استخدم التصنيفات لتنظيم دوراتك في مجموعات منطقية.
             </p>
           </DialogHeader>
+
+          <div className="mt-6 rounded-2xl border bg-muted/10 p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-black text-muted-foreground">
+                التصنيفات الحالية ({categories.length})
+              </p>
+              {editingCategory &&
+                <AdminButton
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  icon={X}
+                  onClick={onNewCategory}>
+                  إلغاء التعديل
+                </AdminButton>
+              }
+            </div>
+
+            {categories.length === 0 ?
+              <p className="mt-3 text-sm text-muted-foreground">لا توجد تصنيفات بعد.</p> :
+              <ul className="mt-3 max-h-52 space-y-2 overflow-y-auto pl-1">
+                {categories.map((category) =>
+                  <li
+                    key={category.id}
+                    className={`flex items-center justify-between gap-3 rounded-xl border bg-background px-3 py-2 ${
+                      editingCategory?.id === category.id ? "border-primary" : ""
+                    }`}>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold">{category.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {category.coursesCount ?? 0} دورة
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <AdminButton
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        icon={Pencil}
+                        onClick={() => {
+                          onEditCategory(category);
+                        }}>
+                        تعديل
+                      </AdminButton>
+                      <AdminButton
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        icon={Trash2}
+                        className="text-red-500 hover:bg-red-500/10"
+                        onClick={() => {
+                          onDeleteRequest(category);
+                        }}>
+                        حذف
+                      </AdminButton>
+                    </div>
+                  </li>
+                )}
+              </ul>
+            }
+          </div>
 
           <Form {...categoryForm}>
             <form

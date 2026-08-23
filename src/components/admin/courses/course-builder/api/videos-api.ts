@@ -3,7 +3,7 @@
 import { lessonsApi } from "./lessons-api";
 import type { ApiResponse, Lesson } from "../types";
 
-interface UploadResult {
+export interface UploadResult {
   fileUrl: string;
   fileKey: string;
   fileName: string;
@@ -30,7 +30,7 @@ async function ensureCsrfCookie(): Promise<void> {
 /** Raw multipart upload with real progress reporting via XMLHttpRequest —
  * apiClient's fetch wrapper has no upload-progress hook, and the video/file
  * upload zones need one for the progress bar to mean anything. */
-async function uploadWithProgress(file: File, context: string, category: string, onProgress?: (pct: number) => void): Promise<UploadResult> {
+export async function uploadWithProgress(file: File, context: string, category: string, onProgress?: (pct: number) => void): Promise<UploadResult> {
   await ensureCsrfCookie();
 
   return new Promise((resolve, reject) => {

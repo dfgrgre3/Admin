@@ -98,7 +98,7 @@ function formatPrice(amount: number, currency = "SAR"): string {
 }
 
 // --- Main Component (Optimized for Raw Performance) ---
-export function CourseCard({
+export const CourseCard = React.memo(function CourseCard({
   course,
   onEdit,
   onDuplicate,
@@ -425,4 +425,4 @@ export function CourseCard({
       </AlertDialog>
     </>
   );
-}
+});

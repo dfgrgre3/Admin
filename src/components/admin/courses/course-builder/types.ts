@@ -4,7 +4,7 @@ import { z } from "zod";
 
 // ─── Backend Model Types (matching LMS models) ────────────────────────────────
 
-export type CourseStatus = "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "ARCHIVED";
+export type CourseStatus = "DRAFT" | "UNDER_REVIEW" | "PUBLISHED" | "ARCHIVED" | "REJECTED";
 export type CourseLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 export type LessonType = "VIDEO" | "TEXT" | "AUDIO" | "FILE" | "EXTERNAL_LINK" | "INTERACTIVE_QUIZ";
 export type PriceType = "FREE" | "SUBSCRIPTION" | "BUNDLE" | "ONE_TIME";

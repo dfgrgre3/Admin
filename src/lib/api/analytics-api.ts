@@ -59,9 +59,13 @@ export interface ChurnAlert {
 export const analyticsApi = {
   buildReport: (spec: ReportSpec) => adminApi.post<ReportResult>("/reports/build", spec),
   listReports: () => adminApi.get<SavedReport[]>("/reports"),
+  // The reports-builder UI consumes `{ reports: SavedReport[] }`; the backend
+  // returns a bare array, so wrap it here to keep the two shapes aligned.
+  getSavedReports: async () => ({ reports: await adminApi.get<SavedReport[]>("/reports") }),
   saveReport: (body: { name: string; description?: string; spec: ReportSpec; isPublic?: boolean }) =>
     adminApi.post<SavedReport>("/reports", body),
   runReport: (id: string) => adminApi.post<ReportResult>(`/reports/${id}/run`, {}),
+  deleteReport: (id: string) => adminApi.delete<void>(`/reports/${id}`),
 
   getHeatmap: (videoKey: string, duration?: number) =>
     adminApi.get<{ videoKey: string; bucketSec: number; totalEvents: number; buckets: HeatmapBucket[] }>(

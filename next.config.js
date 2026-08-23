@@ -5,6 +5,16 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 
 const nextConfig = {
   output: 'standalone',
+  // Keep heavy Node-only logging dependencies external to server bundles.
+  // Bundling winston / @elastic/elasticsearch into per-route server chunks
+  // slowed builds and cold starts of API routes that transitively import the
+  // logger. They are still traced into `output: standalone`, so deployments
+  // keep working; they are simply required from node_modules at runtime.
+  serverExternalPackages: [
+    'winston',
+    'winston-elasticsearch',
+    '@elastic/elasticsearch',
+  ],
   // Enable React strict mode for better performance
   reactStrictMode: true,
   turbopack: {

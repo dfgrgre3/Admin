@@ -31,6 +31,25 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * Determines whether a session token exists, so `AuthProvider` can skip the
+ * `/api/auth/me` fetch for visitors who were never logged in. The real
+ * `access_token` cookie is HttpOnly (unreadable from JS by design), so this
+ * checks the localStorage mirror the API client keeps in sync on login/
+ * refresh/logout instead — the same source `build-ws-url.ts` relies on for
+ * WebSocket auth. Absence doesn't guarantee no session (localStorage can be
+ * cleared independently), so this is a hint, not a guarantee: it only skips
+ * the fetch, it never blocks it.
+ */
+function hasClientSessionToken(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return Boolean(window.localStorage.getItem('accessToken'));
+  } catch {
+    return false;
+  }
+}
+
 export function AuthProvider({
   children,
   initialAuthHint,
@@ -73,7 +92,8 @@ export function AuthProvider({
       }
     };
 
-    if (initialAuthHint) {
+    const shouldFetch = initialAuthHint !== undefined ? initialAuthHint : hasClientSessionToken();
+    if (shouldFetch) {
       fetchUser();
     } else {
       finishLoading();

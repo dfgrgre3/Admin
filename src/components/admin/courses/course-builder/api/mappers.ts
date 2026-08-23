@@ -68,9 +68,10 @@ export const lessonToLesson = (lesson: ApiLesson): Lesson => ({
   createdAt: lesson.createdAt,
   updatedAt: lesson.updatedAt,
   attachments: lesson.attachments || [],
-  // The backend does not yet return subtitles or interactive-quiz links on the
-  // lesson payload (no endpoint links exams to lessons either — see exams-api.ts),
-  // so these stay empty rather than being faked.
+  // The backend does not yet return interactive-quiz links on the lesson
+  // payload (no endpoint links exams to lessons either — see exams-api.ts),
+  // and subtitles have no dedicated model, so these stay empty rather than
+  // being faked. Attachments (above) are real — see files-api.ts.
   subtitles: [],
   quizzes: [],
 } as any);

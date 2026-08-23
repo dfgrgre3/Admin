@@ -9,10 +9,8 @@ interface Options {
   courseIdRef: MutableRefObject<string | undefined>;
 }
 
-/** The backend only stores a single `primaryInstructorId` on the course (no
- * multi-teacher table is wired to any route — see api/teachers-api.ts), so
- * `courseTeachers` here is always 0 or 1 entries. The "role" argument on
- * assignTeacher is accepted for UI compatibility but is not persisted. */
+/** Real multi-teacher assignment against LmsInstructor (see api/teachers-api.ts).
+ * `courseTeachers` can now hold any number of assigned instructors with roles. */
 export function useTeachers({ handleError, courseIdRef }: Options) {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [courseTeachers, setCourseTeachers] = useState<TeacherAssignment[]>([]);
@@ -22,58 +20,48 @@ export function useTeachers({ handleError, courseIdRef }: Options) {
       const response = await teachersApi.getTeachers();
       if (response.error) throw new Error(response.error);
       setTeachers(response.data || []);
+      return response.data || [];
     } catch (err) {
       handleError(err, "فشل تحميل المعلمين");
+      return [];
     }
   }, [handleError]);
 
-  const buildAssignment = useCallback((instructorId: string | undefined, pool: Teacher[]): TeacherAssignment[] => {
-    if (!instructorId) return [];
-    const instructor = pool.find((t) => t.id === instructorId);
-    return [{
-      id: instructorId,
-      courseId: courseIdRef.current || "",
-      instructorId,
-      role: "المدرس الرئيسي",
-      instructor,
-    }];
-  }, [courseIdRef]);
-
   const loadCourseTeachers = useCallback(async (id: string) => {
     try {
-      const response = await teachersApi.getPrimaryInstructorId(id);
+      const response = await teachersApi.getCourseInstructors(id, teachers);
       if (response.error) throw new Error(response.error);
-      setCourseTeachers(buildAssignment(response.data, teachers));
+      setCourseTeachers(response.data || []);
     } catch (err) {
       handleError(err, "فشل تحميل معلمي الكورس");
     }
-  }, [handleError, teachers, buildAssignment]);
+  }, [handleError, teachers]);
 
-  const assignTeacher = useCallback(async (instructorId: string, _role: string) => {
+  const assignTeacher = useCallback(async (instructorId: string, role: string) => {
     const id = courseIdRef.current;
     if (!id) throw new Error("لا يوجد معرف كورس");
 
     try {
-      const response = await teachersApi.setPrimaryInstructor(id, instructorId);
+      const response = await teachersApi.assignInstructor(id, instructorId, role);
       if (response.error) throw new Error(response.error);
-      setCourseTeachers(buildAssignment(instructorId, teachers));
+      await loadCourseTeachers(id);
     } catch (err) {
       handleError(err, "فشل تعيين المدرس");
     }
-  }, [handleError, teachers, buildAssignment, courseIdRef]);
+  }, [handleError, loadCourseTeachers, courseIdRef]);
 
-  const removeTeacher = useCallback(async (_instructorId: string) => {
+  const removeTeacher = useCallback(async (instructorId: string) => {
     const id = courseIdRef.current;
     if (!id) throw new Error("لا يوجد معرف كورس");
 
     try {
-      const response = await teachersApi.setPrimaryInstructor(id, "");
+      const response = await teachersApi.removeInstructor(id, instructorId);
       if (response.error) throw new Error(response.error);
-      setCourseTeachers([]);
+      await loadCourseTeachers(id);
     } catch (err) {
       handleError(err, "فشل إزالة المدرس");
     }
-  }, [handleError, courseIdRef]);
+  }, [handleError, loadCourseTeachers, courseIdRef]);
 
   return { teachers, courseTeachers, loadTeachers, loadCourseTeachers, assignTeacher, removeTeacher };
 }

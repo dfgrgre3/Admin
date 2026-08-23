@@ -6,7 +6,6 @@ export { CourseListItem } from "./course-list-item";
 export { CourseFilters } from "./course-filters";
 export { CourseStats } from "./dashboard-stats";
 export { CourseContentView } from "./course-content-view";
-export { CoursePreviewPanel } from "./course-preview-panel";
 export { CourseBulkActions } from "./course-bulk-actions";
 export { CoursePagination } from "./course-pagination";
 export { CourseEmptyState } from "./course-empty-state";

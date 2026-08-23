@@ -1,27 +1,37 @@
 "use client";
 
+import { courseApi } from "@/lib/api/course-api";
 import type { Attachment, ApiResponse } from "../types";
-import { unsupported } from "./mappers";
+import { uploadWithProgress } from "./videos-api";
 
 // ─── Files / Attachments ────────────────────────────────────────────────────────
-// The Go backend does have an AddLessonAttachment handler, but the route it is
-// registered under (`POST /courses/lessons/attachments`) never captures a
-// lesson id — the handler reads `c.Param("id")` from a URL that has no `:id`
-// segment, so it always resolves to an empty SubTopicID. There's also no
-// list/delete/download endpoint for lesson attachments. Until that route is
-// fixed and completed on the backend, this stays an honest "not supported"
-// rather than silently uploading files that vanish on reload.
+// Upload goes through the generic /api/admin/upload storage endpoint (same as
+// videos), then the resulting URL/size/type are saved as an attachment row via
+// the real Go backend routes on the hexagonal Course/Section/Lesson model
+// (POST/DELETE .../courses/:id/sections/:sectionId/lessons/:lessonId/attachments).
+// List comes back embedded on the lesson itself (Lesson.attachments), same as
+// the video mediaUrl pattern — no separate list endpoint is needed.
 
 export const filesApi = {
-  async uploadFile(): Promise<ApiResponse<Attachment>> {
-    return unsupported<Attachment>("رفع الملفات المرفقة بالدروس");
+  async uploadFile(
+    courseId: string,
+    sectionId: string,
+    lessonId: string,
+    file: File,
+    onProgress?: (pct: number) => void
+  ): Promise<ApiResponse<Attachment>> {
+    const uploaded = await uploadWithProgress(file, "lesson-attachment", "document", onProgress);
+    const response = await courseApi.addLessonAttachment(courseId, sectionId, lessonId, {
+      title: file.name,
+      fileUrl: uploaded.fileUrl,
+      fileType: uploaded.mimeType,
+      fileSize: uploaded.fileSize,
+    });
+    return { data: response.attachment, error: undefined };
   },
 
-  async deleteFile(): Promise<ApiResponse<void>> {
-    return unsupported<void>("حذف الملفات المرفقة");
-  },
-
-  async downloadFile(): Promise<Blob> {
-    throw new Error("تحميل الملفات المرفقة غير مدعوم حالياً من الخادم");
+  async deleteFile(courseId: string, sectionId: string, lessonId: string, attachmentId: string): Promise<ApiResponse<void>> {
+    await courseApi.deleteLessonAttachment(courseId, sectionId, lessonId, attachmentId);
+    return { data: undefined, error: undefined };
   },
 };

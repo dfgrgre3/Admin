@@ -465,6 +465,19 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* Keep the page scrollbar visible while any Radix popup (Dialog / AlertDialog /
+   Command palette / BroadcastModal ...) is open.
+   Radix mounts `react-remove-scroll`, which injects
+   `body[data-scroll-locked] { overflow: hidden !important; }` — that makes the
+   browser's page scrollbar vanish on every popup. Since `html` already reserves
+   the gutter above (`scrollbar-gutter: stable`), we only need to re-show the
+   scrollbar. Higher specificity + `!important` wins against the runtime-injected
+   style. Background scrolling is still locked by react-remove-scroll's event
+   blocking/focus-trap, so this is only a visual fix. */
+html body[data-scroll-locked] {
+  overflow-y: scroll !important;
+}
+
 /* Better image defaults */
 img,
 video,

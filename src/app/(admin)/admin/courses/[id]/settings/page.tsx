@@ -44,7 +44,7 @@ import { apiRoutes } from "@/lib/api/routes";
 import { adminFetch } from "@/lib/api/admin-api";
 import { AdminCard } from "@/components/admin/ui/admin-card";
 import { AdminButton } from "@/components/admin/ui/admin-button";
-import { Badge } from "@/components/ui/badge";
+import { CourseStatusBadge } from "@/components/admin/courses/status-badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -351,17 +351,7 @@ export default function CourseSettingsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge
-            variant="outline"
-            className={cn(
-              "px-4 py-1.5 font-black",
-              course.status === "PUBLISHED"
-                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-            )}
-          >
-            {course.status === "PUBLISHED" ? "منشورة" : course.status === "DRAFT" ? "مسودة" : course.status}
-          </Badge>
+          <CourseStatusBadge status={course.status} className="px-4 py-1.5 font-black" />
         </div>
       </div>
 

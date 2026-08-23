@@ -1,10 +1,16 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/admin/layout/admin-layout";
 import { useAuth } from "@/contexts/auth-context";
 import { isStaffAdminPanelRole } from "@/lib/auth/admin-panel-roles";
 import { getRequiredPermissionForAdminPath } from "@/lib/admin-panel-route-access";
 import { hasPermission } from "@/lib/permissions";
+import {
+  adminDashboardQueryKey,
+  fetchAdminDashboard,
+} from "@/hooks/dashboard/use-admin-dashboard-query";
+import { PERFORMANCE_DEFAULTS } from "@/lib/performance-config";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
@@ -13,6 +19,25 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const hasRedirected = useRef(false);
+  const queryClient = useQueryClient();
+
+  // Warm the dashboard cache in parallel with the profile request (`/me`).
+  // Previously the page could only mount AFTER auth resolved, and only then
+  // fired its own data fetch — two serial round-trips on every cold load.
+  // Prefetching here collapses them into one: when the page mounts, react-query
+  // serves the warmed entry (staleTime keeps it fresh) and paints immediately.
+  // An unauthorized user simply produces a silent 403 from this prefetch —
+  // the API remains the permission authority and nothing renders from it.
+  useEffect(() => {
+    const warmKey = adminDashboardQueryKey("today");
+    if (queryClient.getQueryData(warmKey)) return;
+    void queryClient.prefetchQuery({
+      queryKey: warmKey,
+      queryFn: () => fetchAdminDashboard("today"),
+      staleTime: PERFORMANCE_DEFAULTS.queryStaleTimeMs,
+      gcTime: PERFORMANCE_DEFAULTS.queryGcTimeMs,
+    });
+  }, [queryClient]);
 
   useEffect(() => {
     if (isLoading) return;

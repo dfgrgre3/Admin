@@ -129,8 +129,10 @@ export default function CourseGeneralPage() {
 
   const statusLabels: Record<string, string> = {
     DRAFT: "مسودة",
+    UNDER_REVIEW: "قيد المراجعة",
     PUBLISHED: "منشورة",
     ARCHIVED: "مؤرشفة",
+    REJECTED: "مرفوضة",
   };
 
   const visibilityLabels: Record<string, string> = {

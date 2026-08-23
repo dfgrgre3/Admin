@@ -114,6 +114,34 @@ interface DashboardExportResponse {
   rowCount: number;
 }
 
+/**
+ * Extracts a filename from a Content-Disposition response header, handling
+ * both RFC 6266's percent-encoded `filename*=UTF-8''...` form and the plain
+ * `filename="..."` form. Only the encoded form should ever be decoded — a
+ * literal "%" in a plain filename is not an escape sequence, and blindly
+ * running decodeURIComponent on it throws and discards an already-downloaded
+ * response. Falls back to `defaultFilename` when the header is absent or
+ * doesn't match either form.
+ */
+export function parseContentDispositionFilename(
+  header: string | null,
+  defaultFilename: string
+): string {
+  if (!header) return defaultFilename;
+
+  const encodedMatch = /filename\*=UTF-8''([^";]+)/i.exec(header);
+  if (encodedMatch?.[1]) {
+    try {
+      return decodeURIComponent(encodedMatch[1]);
+    } catch {
+      return defaultFilename;
+    }
+  }
+
+  const plainMatch = /filename="?([^";]+)"?/i.exec(header);
+  return plainMatch?.[1] ?? defaultFilename;
+}
+
 export function useDashboardExport(dateRange: { startDate: string; endDate: string }) {
   const [isExporting, setIsExporting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);

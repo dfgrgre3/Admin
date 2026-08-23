@@ -33,63 +33,72 @@ interface FilesStepProps {
   lessons: Lesson[];
   onChange: (data: Partial<any>) => void;
   isDirty: boolean;
+  selectedChapterId?: string;
+  onRefreshLessons?: (chapterId: string) => Promise<void> | void;
 }
 
-export const FilesStep: React.FC<FilesStepProps> = ({ 
-  draft, 
-  lessons, 
-  onChange, 
-  isDirty 
+export const FilesStep: React.FC<FilesStepProps> = ({
+  draft,
+  lessons,
+  onChange,
+  isDirty,
+  selectedChapterId,
+  onRefreshLessons,
 }) => {
   const {
     uploadFile,
     deleteFile,
-    downloadFile,
     isLoading,
     error,
     clearError,
   } = useCourseBuilder({ courseId: draft?.id });
-  
+
   const [selectedLessonId, setSelectedLessonId] = useState<string>("");
   const [uploadingLessonId, setUploadingLessonId] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement>>({});
-  
+
   // Filter lessons that have attachments
   const lessonsWithAttachments = lessons.filter(l => l.attachments && l.attachments.length > 0);
   const allLessons = lessons.filter(l => l.type !== "VIDEO" || true); // All lessons can have attachments
-  
+
+  const refreshLessons = useCallback(async () => {
+    if (selectedChapterId && onRefreshLessons) {
+      await onRefreshLessons(selectedChapterId);
+    }
+  }, [selectedChapterId, onRefreshLessons]);
+
   const handleUpload = useCallback(async (lessonId: string, file: File) => {
+    if (!draft?.id || !selectedChapterId) return;
     setUploadingLessonId(lessonId);
     try {
-      const attachment = await uploadFile(lessonId, file);
+      const attachment = await uploadFile(draft.id, selectedChapterId, lessonId, file);
       if (!attachment) throw new Error("Upload failed");
+      await refreshLessons();
     } catch (err) {
       console.error("File upload failed:", err);
       alert(err instanceof Error ? err.message : "فشل رفع الملف. يرجى المحاولة مرة أخرى.");
     } finally {
       setUploadingLessonId(null);
     }
-  }, [uploadFile]);
-  
-  const handleDelete = useCallback(async (attachmentId: string) => {
+  }, [uploadFile, refreshLessons, draft?.id, selectedChapterId]);
+
+  const handleDelete = useCallback(async (lessonId: string, attachmentId: string) => {
+    if (!draft?.id || !selectedChapterId) return;
     if (!confirm("هل أنت متأكد من حذف هذا الملف؟")) return;
-    
+
     try {
-      await deleteFile(attachmentId);
+      await deleteFile(draft.id, selectedChapterId, lessonId, attachmentId);
+      await refreshLessons();
     } catch (err) {
       console.error("File delete failed:", err);
       alert("فشل حذف الملف.");
     }
-  }, [deleteFile]);
-  
-  const handleDownload = useCallback(async (attachmentId: string, fileName: string) => {
-    try {
-      await downloadFile(attachmentId);
-    } catch (err) {
-      console.error("File download failed:", err);
-      alert("فشل تحميل الملف.");
-    }
-  }, [downloadFile]);
+  }, [deleteFile, refreshLessons, draft?.id, selectedChapterId]);
+
+  const handleDownload = useCallback((fileUrl: string) => {
+    if (typeof window === "undefined" || !fileUrl) return;
+    window.open(fileUrl, "_blank", "noopener,noreferrer");
+  }, []);
   
   const getFileIcon = (fileType?: string | null) => {
     if (!fileType) return <FileText className="w-5 h-5" />;
@@ -201,8 +210,8 @@ interface FileLessonCardProps {
   lesson: Lesson;
   uploading: boolean;
   onUpload: (lessonId: string, file: File) => void;
-  onDelete: (attachmentId: string) => void;
-  onDownload: (attachmentId: string, fileName: string) => void;
+  onDelete: (lessonId: string, attachmentId: string) => void;
+  onDownload: (fileUrl: string) => void;
   onDrag: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent, lessonId: string) => void;
   onFileSelect: (e: React.ChangeEvent<HTMLInputElement>, lessonId: string) => void;
@@ -355,7 +364,7 @@ const FileLessonCard: React.FC<FileLessonCardProps> = ({
                   <div className="flex items-center gap-1">
                     <Tooltip content="تحميل">
                       <button
-                        onClick={() => onDownload(attachment.id, attachment.title)}
+                        onClick={() => onDownload(attachment.fileUrl)}
                         className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
                         aria-label="تحميل الملف"
                       >
@@ -364,7 +373,7 @@ const FileLessonCard: React.FC<FileLessonCardProps> = ({
                     </Tooltip>
                     <Tooltip content="حذف">
                       <button
-                        onClick={() => onDelete(attachment.id)}
+                        onClick={() => onDelete(lesson.id, attachment.id)}
                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                         aria-label="حذف الملف"
                       >

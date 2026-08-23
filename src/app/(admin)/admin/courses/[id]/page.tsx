@@ -6,7 +6,6 @@ import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import {
   Users,
-  TrendingUp,
   DollarSign,
   Clock,
   CheckCircle2,
@@ -24,22 +23,18 @@ import {
   BarChart3,
   Sparkles,
   ChevronLeft,
-  ChevronRight,
   Video,
   Tag,
   Calendar,
   Activity,
   Target,
   Award,
-  TrendingDown,
   Eye,
-  Download,
   Share2,
   RefreshCw,
   MessageSquare,
   GraduationCap,
   Timer,
-  Percent,
 } from "lucide-react";
 import { apiRoutes } from "@/lib/api/routes";
 import { adminFetch } from "@/lib/api/admin-api";
@@ -96,20 +91,23 @@ interface CurriculumStats {
   totalDurationMinutes: number;
 }
 
-interface ActivityItem {
-  id: string;
-  type: "enrollment" | "completion" | "review" | "update";
-  message: string;
-  timestamp: string;
-  user?: string;
+interface OverviewTimelinePoint {
+  weekStart: string;
+  enrollments: number;
+  revenue: number;
+  active: number;
+  completed: number;
 }
 
-interface StudentEngagement {
-  totalStudents: number;
+interface OverviewStats {
+  totalEnrollments: number;
   activeStudents: number;
+  completedStudents: number;
   completionRate: number;
-  averageTimeSpent: number;
   dropoffRate: number;
+  totalRevenue: number;
+  growth: { enrollments: number };
+  timeline: OverviewTimelinePoint[];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -129,25 +127,12 @@ function computeReadiness(course: CourseData, stats: CurriculumStats | null) {
   return { checks, score, passed, total: checks.length };
 }
 
-function generateChartData(enrollments: number) {
-  const base = Math.max(1, Math.floor(enrollments / 7));
-  const weeks = ["الأسبوع 1", "الأسبوع 2", "الأسبوع 3", "الأسبوع 4", "الأسبوع 5", "الأسبوع 6", "الأسبوع 7"];
-  const variance = [0.7, 0.85, 1.0, 0.9, 1.1, 0.95, 1.2];
-  return weeks.map((name, i) => ({
-    name,
-    enrollments: Math.round(base * variance[i]!),
-    revenue: Math.round(base * variance[i]! * 45),
-  }));
-}
-
-function generateEngagementData(enrollments: number) {
-  const base = Math.max(1, Math.floor(enrollments / 7));
-  const weeks = ["الأسبوع 1", "الأسبوع 2", "الأسبوع 3", "الأسبوع 4", "الأسبوع 5", "الأسبوع 6", "الأسبوع 7"];
-  const variance = [0.6, 0.75, 0.9, 0.85, 1.0, 0.92, 1.1];
-  return weeks.map((name, i) => ({
-    name,
-    active: Math.round(base * variance[i]! * 0.8),
-    completed: Math.round(base * variance[i]! * 0.3),
+// The backend returns 7 chronological weekly buckets; label them for the chart.
+function toChartData(timeline: OverviewTimelinePoint[] | undefined) {
+  return (timeline ?? []).map((point, index) => ({
+    name: `الأسبوع ${index + 1}`,
+    enrollments: point.enrollments,
+    revenue: point.revenue,
   }));
 }
 
@@ -356,6 +341,18 @@ export default function CourseOverviewPage() {
     staleTime: 60_000,
   });
 
+  // جلب إحصائيات الاشتراكات الحقيقية (أرقام وسلسلة زمنية من الباك إند)
+  const { data: overviewStats } = useQuery({
+    queryKey: ["admin", "courses", courseId, "overview-stats"],
+    queryFn: async (): Promise<OverviewStats | null> => {
+      const response = await adminFetch(apiRoutes.admin.courseOverviewStats(courseId));
+      if (!response.ok) return null;
+      const result = await response.json();
+      return result.data?.stats || result.stats || null;
+    },
+    staleTime: 60_000,
+  });
+
   const course = courseData;
   const curriculumStats = curriculumData;
   const reviews = reviewsData?.reviews || [];
@@ -364,17 +361,17 @@ export default function CourseOverviewPage() {
   if (isCourseLoading || isCurriculumLoading) return <OverviewSkeleton />;
   if (!course) return null;
 
-  const enrollments = course._count?.enrollments || 0;
-  const totalRevenue = enrollments * (course.price || 0);
-  const chartData = generateChartData(enrollments);
-  const engagementData = generateEngagementData(enrollments);
+  const enrollments = overviewStats?.totalEnrollments ?? course._count?.enrollments ?? 0;
+  const totalRevenue = overviewStats?.totalRevenue ?? enrollments * (course.price || 0);
+  const chartData = toChartData(overviewStats?.timeline);
   const { checks, score } = computeReadiness(course, curriculumStats || null);
-  const completionRate = score >= 80 ? 72 : score >= 60 ? 55 : 38;
+  const completionRate = overviewStats?.completionRate ?? 0;
+  const enrollmentsGrowth = overviewStats?.growth?.enrollments ?? 0;
   const avgRating = typeof course.rating === "number" ? course.rating.toFixed(1) : "—";
   const reviewsCount = course._count?.reviews || reviews.length || 0;
   const totalDurationMinutes = curriculumStats?.totalDurationMinutes || 0;
-  const activeStudents = Math.floor(enrollments * 0.65);
-  const dropoffRate = Math.floor(Math.random() * 15) + 5;
+  const activeStudents = overviewStats?.activeStudents ?? 0;
+  const dropoffRate = overviewStats?.dropoffRate ?? 0;
 
   const navigate = (sub: string) => router.push(`/admin/courses/${courseId}/${sub}`);
 
@@ -392,22 +389,22 @@ export default function CourseOverviewPage() {
             icon={Users}
             iconBg="bg-blue-500/15"
             iconColor="text-blue-500"
-            trend={{ value: "+12%", positive: true }}
+            trend={overviewStats ? { value: `${enrollmentsGrowth > 0 ? "+" : ""}${enrollmentsGrowth}%`, positive: enrollmentsGrowth >= 0 } : undefined}
             onClick={() => navigate("students")}
           />
           <StatCard
-            label="صافي الأرباح"
+            label="الإيرادات المقدرة"
             value={formatPrice(totalRevenue)}
             icon={DollarSign}
             iconBg="bg-emerald-500/15"
             iconColor="text-emerald-500"
-            trend={{ value: "+8.5%", positive: true }}
+            trend={overviewStats ? { value: `${enrollmentsGrowth > 0 ? "+" : ""}${enrollmentsGrowth}%`, positive: enrollmentsGrowth >= 0 } : undefined}
             onClick={() => navigate("pricing")}
           />
           <StatCard
             label="معدل الإكمال"
             value={`${completionRate}%`}
-            subLabel="متوسط تقديمي"
+            subLabel="متوسط تقدم المشتركين"
             icon={Clock}
             iconBg="bg-violet-500/15"
             iconColor="text-violet-500"
@@ -429,7 +426,7 @@ export default function CourseOverviewPage() {
           <StatCard
             label="الطلاب النشطين"
             value={activeStudents.toLocaleString("ar-EG")}
-            subLabel={`${Math.round((activeStudents / Math.max(enrollments, 1)) * 100)}% من الإجمالي`}
+            subLabel={`${dropoffRate}% لم يبدأوا بعد`}
             icon={Activity}
             iconBg="bg-cyan-500/15"
             iconColor="text-cyan-500"
