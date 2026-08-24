@@ -310,6 +310,10 @@ export const apiRoutes = {
     payments: '/api/admin/payments',
     dunning: '/api/admin/dunning',
 
+    // Invoices
+    invoices: '/api/admin/invoices',
+    invoiceById: (id: string) => `/api/admin/invoices/${id}`,
+
     // Coupons
     coupons: '/api/admin/coupons',
     couponById: (id: string) => `/api/admin/coupons/${id}`,

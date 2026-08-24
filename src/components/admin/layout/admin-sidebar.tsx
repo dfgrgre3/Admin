@@ -424,7 +424,7 @@ const financialNavItems: SidebarNavItem[] = [
     permission: "ANALYTICS_VIEW",
   },
   {
-    title: "الفواتير",
+    title: "الاشتراك والفواتير",
     href: "/admin/invoices",
     icon: FileText,
     color: "bg-cyan-600",

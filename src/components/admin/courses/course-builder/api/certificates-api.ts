@@ -1,25 +1,41 @@
 "use client";
 
+import { adminApi } from "@/lib/api/admin-api";
+import { courseApi } from "@/lib/api/course-api";
 import type { CertificateTemplate, ApiResponse } from "../types";
-import { unsupported } from "./mappers";
+
+interface CertificateTemplateApiItem {
+  id: string;
+  name: string;
+  templateHtml: string;
+  isDefault: boolean;
+}
 
 // ─── Certificate templates ──────────────────────────────────────────────────────
-// There is no CertificateTemplate domain model or route in the Go backend —
-// Course only has a free-text `certificateTemplate` string field and a
-// `hasCertificate` flag (both already wired for real in draft-api.ts /
-// SEOStep's sibling fields). A template *library* to pick from does not
-// exist server-side yet, so this stays honestly unsupported.
+// Real shared, global library via LmsCertificateTemplate
+// (certificate_template_handler.go, routes at /api/admin/certificates/templates).
+// Course.certificateTemplate already existed as a free-text column no UI ever
+// wrote raw text into — it's repurposed here to hold a template id instead.
 
 export const certificatesApi = {
   async getCertificateTemplates(): Promise<ApiResponse<CertificateTemplate[]>> {
-    return unsupported<CertificateTemplate[]>("قوالب الشهادات");
+    const response = await adminApi.get<{ templates?: CertificateTemplateApiItem[] }>("/certificates/templates");
+    const templates: CertificateTemplate[] = (response.templates || []).map((t) => ({
+      id: t.id,
+      name: t.name,
+      templateHtml: t.templateHtml,
+      isDefault: t.isDefault,
+    }));
+    return { data: templates, error: undefined };
   },
 
-  async assignCertificateTemplate(): Promise<ApiResponse<null>> {
-    return unsupported<null>("تعيين قالب الشهادة");
+  async assignCertificateTemplate(courseId: string, templateId: string): Promise<ApiResponse<void>> {
+    await courseApi.updateCourse(courseId, { certificateTemplate: templateId, hasCertificate: true });
+    return { data: undefined, error: undefined };
   },
 
-  async removeCertificateTemplate(): Promise<ApiResponse<void>> {
-    return unsupported<void>("إزالة قالب الشهادة");
+  async removeCertificateTemplate(courseId: string): Promise<ApiResponse<void>> {
+    await courseApi.updateCourse(courseId, { certificateTemplate: null, hasCertificate: false });
+    return { data: undefined, error: undefined };
   },
 };

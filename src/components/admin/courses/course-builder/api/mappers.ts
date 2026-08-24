@@ -1,7 +1,7 @@
 "use client";
 
-import type { Course, Section, Lesson as ApiLesson } from "@/lib/api/course-api";
-import type { CourseDraft, Chapter, Lesson } from "../types";
+import type { Course, Section, Lesson as ApiLesson, CourseAssignment } from "@/lib/api/course-api";
+import type { CourseDraft, Chapter, Lesson, Assignment } from "../types";
 
 // ─── Backend → Course Builder model mappers ───────────────────────────────────
 // These adapt the Go LMS response shapes (Course/Section/Lesson from
@@ -68,13 +68,24 @@ export const lessonToLesson = (lesson: ApiLesson): Lesson => ({
   createdAt: lesson.createdAt,
   updatedAt: lesson.updatedAt,
   attachments: lesson.attachments || [],
+  examId: lesson.examId || undefined,
   // The backend does not yet return interactive-quiz links on the lesson
-  // payload (no endpoint links exams to lessons either — see exams-api.ts),
-  // and subtitles have no dedicated model, so these stay empty rather than
-  // being faked. Attachments (above) are real — see files-api.ts.
+  // payload, and subtitles have no dedicated model, so these stay empty
+  // rather than being faked. Attachments and the exam link (above) are real
+  // — see files-api.ts and exams-api.ts.
   subtitles: [],
   quizzes: [],
 } as any);
+
+export const assignmentToAssignment = (row: CourseAssignment): Assignment => ({
+  id: row.id,
+  title: row.title,
+  description: row.description ?? undefined,
+  dueDate: row.dueDate ?? undefined,
+  maxScore: row.maxScore,
+  courseId: row.courseId,
+  lessonId: row.lessonId ?? undefined,
+});
 
 /** Standard "not supported by the backend yet" response for a feature that has
  * no reachable endpoint. Keeping a single helper makes every such gap read

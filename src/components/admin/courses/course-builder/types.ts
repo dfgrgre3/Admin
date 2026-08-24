@@ -72,6 +72,7 @@ export interface Lesson {
   attachments?: Attachment[];
   subtitles?: Subtitle[];
   quizzes?: InteractiveQuiz[];
+  examId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -120,6 +121,7 @@ export interface Assignment {
   dueDate?: string | null;
   maxScore: number;
   courseId?: string;
+  lessonId?: string | null;
 }
 
 export interface CertificateTemplate {

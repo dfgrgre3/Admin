@@ -1,8 +1,9 @@
 "use client";
 
 import { adminApi } from "@/lib/api/admin-api";
-import type { Exam, ApiResponse } from "../types";
-import { unsupported } from "./mappers";
+import { courseApi } from "@/lib/api/course-api";
+import type { Exam, Lesson, ApiResponse } from "../types";
+import { lessonToLesson } from "./mappers";
 
 interface ExamApiItem {
   id: string;
@@ -13,10 +14,10 @@ interface ExamApiItem {
 }
 
 // ─── Exams ──────────────────────────────────────────────────────────────────────
-// Listing is real (GET /api/admin/exams). Exams in this backend belong to a
-// Subject, not a Course or Lesson — there is no field anywhere to record
-// "this exam is linked to this lesson" — so linking/unlinking stays
-// unsupported until the backend grows that relation.
+// Listing is real (GET /api/admin/exams) — exams still belong to a legacy
+// Subject, not a Course. Linking is now real too: LmsLesson.examId is a loose
+// reference to that same Exam table (course_lesson_exam_handler.go, routes at
+// .../lessons/:lessonId/exam), one exam per lesson.
 
 export const examsApi = {
   async getExams(): Promise<ApiResponse<Exam[]>> {
@@ -33,11 +34,13 @@ export const examsApi = {
     return { data: exams, error: undefined };
   },
 
-  async linkExam(): Promise<ApiResponse<null>> {
-    return unsupported<null>("ربط الاختبارات بالدروس");
+  async linkExam(courseId: string, sectionId: string, lessonId: string, examId: string): Promise<ApiResponse<Lesson>> {
+    const response = await courseApi.linkLessonExam(courseId, sectionId, lessonId, examId);
+    return { data: lessonToLesson(response.lesson), error: undefined };
   },
 
-  async unlinkExam(): Promise<ApiResponse<void>> {
-    return unsupported<void>("فك ربط الاختبارات");
+  async unlinkExam(courseId: string, sectionId: string, lessonId: string): Promise<ApiResponse<void>> {
+    await courseApi.unlinkLessonExam(courseId, sectionId, lessonId);
+    return { data: undefined, error: undefined };
   },
 };

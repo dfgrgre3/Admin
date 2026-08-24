@@ -62,6 +62,7 @@ export interface Lesson {
   attachments?: Attachment[];
   subtitles?: Subtitle[];
   quizzes?: InteractiveQuiz[];
+  examId?: string | null;
 }
 
 export interface Subtitle {
@@ -120,6 +121,18 @@ export interface Enrollment {
   updatedAt: string;
 }
 
+export interface CourseAssignment {
+  id: string;
+  courseId: string;
+  lessonId?: string | null;
+  title: string;
+  description?: string | null;
+  dueDate?: string | null;
+  maxScore: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CourseInstructor {
   courseId: string;
   instructorId: string;
@@ -162,7 +175,7 @@ export interface UpdateCourseInput {
   language?: string;
   estimatedDurationMins?: number;
   hasCertificate?: boolean;
-  certificateTemplate?: string;
+  certificateTemplate?: string | null;
   maxStudents?: number;
   isFeatured?: boolean;
   isTrending?: boolean;
@@ -383,6 +396,15 @@ export const courseApi = {
     return apiClient.delete<{ message: string }>(`/api/admin/courses/${courseId}/sections/${sectionId}/lessons/${lessonId}/attachments/${attachmentId}`);
   },
 
+  // Lesson exam link (one exam per lesson).
+  linkLessonExam: async (courseId: string, sectionId: string, lessonId: string, examId: string) => {
+    return apiClient.post<{ lesson: Lesson }>(`/api/admin/courses/${courseId}/sections/${sectionId}/lessons/${lessonId}/exam`, { examId });
+  },
+
+  unlinkLessonExam: async (courseId: string, sectionId: string, lessonId: string) => {
+    return apiClient.delete<{ message: string }>(`/api/admin/courses/${courseId}/sections/${sectionId}/lessons/${lessonId}/exam`);
+  },
+
   // Enrollment Management
   enrollUser: async (courseId: string, userId: string) => {
     return apiClient.post<{ enrollment: Enrollment }>(`/api/admin/courses/${courseId}/enrollments`, {
@@ -426,6 +448,27 @@ export const courseApi = {
 
   removeCourseInstructor: async (courseId: string, instructorId: string) => {
     return apiClient.delete<{ message: string }>(`/api/admin/courses/${courseId}/instructors/${instructorId}`);
+  },
+
+  // Assignment Management (course-scoped catalog + lesson linking)
+  listCourseAssignments: async (courseId: string) => {
+    return apiClient.get<{ assignments: CourseAssignment[] }>(`/api/admin/courses/${courseId}/assignments`);
+  },
+
+  createCourseAssignment: async (courseId: string, data: { title: string; description?: string; dueDate?: number; maxScore?: number }) => {
+    return apiClient.post<{ assignment: CourseAssignment }>(`/api/admin/courses/${courseId}/assignments`, data);
+  },
+
+  deleteCourseAssignment: async (courseId: string, assignmentId: string) => {
+    return apiClient.delete<{ message: string }>(`/api/admin/courses/${courseId}/assignments/${assignmentId}`);
+  },
+
+  linkAssignment: async (courseId: string, assignmentId: string, lessonId: string) => {
+    return apiClient.post<{ assignment: CourseAssignment }>(`/api/admin/courses/${courseId}/assignments/${assignmentId}/link`, { lessonId });
+  },
+
+  unlinkAssignment: async (courseId: string, assignmentId: string) => {
+    return apiClient.delete<{ message: string }>(`/api/admin/courses/${courseId}/assignments/${assignmentId}/link`);
   },
 
   // Pricing Management

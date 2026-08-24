@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
-import { 
-  Link2, 
-  Unlink2, 
-  Search, 
+import {
+  Link2,
+  Unlink2,
+  Search,
   Loader2,
   AlertCircle,
   CheckCircle,
@@ -12,6 +12,7 @@ import {
   Clock,
   HelpCircle,
   Calendar,
+  Trash2,
 } from "lucide-react";
 import { useCourseBuilder } from "../hooks";
 import type { Assignment, Lesson } from "../types";
@@ -24,59 +25,100 @@ interface AssignmentsStepProps {
   isDirty: boolean;
 }
 
-export const AssignmentsStep: React.FC<AssignmentsStepProps> = ({ 
-  draft, 
-  lessons, 
-  onChange, 
-  isDirty 
+export const AssignmentsStep: React.FC<AssignmentsStepProps> = ({
+  draft,
+  lessons,
+  onChange,
+  isDirty,
 }) => {
   const {
     assignments,
     loadAssignments,
+    createAssignment,
+    deleteAssignment,
     linkAssignment,
     unlinkAssignment,
     isLoading,
     error,
     clearError,
   } = useCourseBuilder({ courseId: draft?.id });
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLessonId, setSelectedLessonId] = useState<string>("");
-  
+  const [newTitle, setNewTitle] = useState("");
+  const [newMaxScore, setNewMaxScore] = useState("100");
+  const [newDueDate, setNewDueDate] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+
   useEffect(() => {
     loadAssignments(draft?.id);
   }, [draft?.id, loadAssignments]);
-  
-  const filteredAssignments = assignments.filter(a => 
-    a.title.toLowerCase().includes(searchQuery.toLowerCase())
+
+  // Only assignments not already linked to a lesson are offered for linking —
+  // an assignment already linked must be unlinked first, so re-linking it to
+  // a different lesson is always an explicit, visible action.
+  const filteredAssignments = assignments.filter(a =>
+    !a.lessonId && a.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
+
+  const handleCreate = useCallback(async () => {
+    if (!draft?.id || !newTitle.trim()) return;
+    setIsCreating(true);
+    try {
+      const maxScore = Number(newMaxScore);
+      await createAssignment(draft.id, {
+        title: newTitle.trim(),
+        maxScore: Number.isFinite(maxScore) && maxScore > 0 ? maxScore : undefined,
+        dueDate: newDueDate ? Math.floor(new Date(newDueDate).getTime() / 1000) : undefined,
+      });
+      setNewTitle("");
+      setNewMaxScore("100");
+      setNewDueDate("");
+    } catch (err) {
+      console.error("Failed to create assignment:", err);
+    } finally {
+      setIsCreating(false);
+    }
+  }, [draft?.id, newTitle, newMaxScore, newDueDate, createAssignment]);
+
   const handleLink = useCallback(async (assignmentId: string) => {
     if (!selectedLessonId) {
       alert("يرجى اختيار درس أولاً");
       return;
     }
+    if (!draft?.id) return;
     try {
-      await linkAssignment(selectedLessonId, assignmentId);
+      await linkAssignment(draft.id, assignmentId, selectedLessonId);
       onChange({ ...draft });
     } catch (err) {
       console.error("Failed to link assignment:", err);
     }
   }, [selectedLessonId, linkAssignment, draft, onChange]);
-  
-  const handleUnlink = useCallback(async (lessonId: string) => {
+
+  const handleUnlink = useCallback(async (assignmentId: string) => {
     if (!confirm("هل أنت متأكد من فك ربط هذا الواجب؟")) return;
+    if (!draft?.id) return;
     try {
-      await unlinkAssignment(lessonId);
+      await unlinkAssignment(draft.id, assignmentId);
       onChange({ ...draft });
     } catch (err) {
       console.error("Failed to unlink assignment:", err);
     }
   }, [unlinkAssignment, draft, onChange]);
-  
-  // Find which lessons have assignments linked
-  // Note: This would need backend support to track lesson-assignment links
-  const lessonsWithAssignments = lessons.filter(l => false); // Placeholder
+
+  const handleDelete = useCallback(async (assignmentId: string) => {
+    if (!confirm("هل أنت متأكد من حذف هذا الواجب نهائياً من قائمة الواجبات؟")) return;
+    if (!draft?.id) return;
+    try {
+      await deleteAssignment(draft.id, assignmentId);
+    } catch (err) {
+      console.error("Failed to delete assignment:", err);
+    }
+  }, [deleteAssignment, draft?.id]);
+
+  // Assignments that are currently linked to a lesson, resolved to that lesson.
+  const linkedAssignments = assignments.filter(a => !!a.lessonId);
+  const lessonById = new Map(lessons.map(l => [l.id, l]));
   
   return (
     <div className="space-y-6">
@@ -112,7 +154,33 @@ export const AssignmentsStep: React.FC<AssignmentsStepProps> = ({
                 />
               </div>
             </div>
-            
+
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <Input
+                placeholder="عنوان واجب جديد..."
+                value={newTitle}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTitle(e.target.value)}
+                className="flex-1 min-w-[200px]"
+              />
+              <Input
+                type="number"
+                min={1}
+                placeholder="النقاط القصوى"
+                value={newMaxScore}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewMaxScore(e.target.value)}
+                className="w-32"
+              />
+              <Input
+                type="date"
+                value={newDueDate}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewDueDate(e.target.value)}
+                className="w-40"
+              />
+              <Button onClick={handleCreate} disabled={isCreating || !newTitle.trim()}>
+                {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : "إضافة واجب"}
+              </Button>
+            </div>
+
             {isLoading && assignments.length === 0 ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
@@ -121,7 +189,7 @@ export const AssignmentsStep: React.FC<AssignmentsStepProps> = ({
               <EmptyState
                 icon={<HelpCircle className="w-12 h-12 text-gray-300" />}
                 title="لا توجد واجبات"
-                description="لا توجد واجبات متاحة في النظام حالياً"
+                description="أضف واجباً جديداً من الحقل أعلاه"
               />
             ) : (
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -131,7 +199,7 @@ export const AssignmentsStep: React.FC<AssignmentsStepProps> = ({
                       <TableHead>الواجب</TableHead>
                       <TableHead>النقاط القصوى</TableHead>
                       <TableHead>تاريخ التسليم</TableHead>
-                      <TableHead className="w-24">إجراء</TableHead>
+                      <TableHead className="w-40">إجراء</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -159,16 +227,28 @@ export const AssignmentsStep: React.FC<AssignmentsStepProps> = ({
                           )}
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleLink(assignment.id)}
-                            disabled={isLoading || !selectedLessonId}
-                            className="w-full"
-                          >
-                            <Link2 className="w-3.5 h-3.5" />
-                            ربط
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleLink(assignment.id)}
+                              disabled={isLoading || !selectedLessonId}
+                              className="flex-1"
+                            >
+                              <Link2 className="w-3.5 h-3.5" />
+                              ربط
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(assignment.id)}
+                              disabled={isLoading}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              aria-label="حذف الواجب"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -181,10 +261,10 @@ export const AssignmentsStep: React.FC<AssignmentsStepProps> = ({
           {/* Linked Assignments */}
           <div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-              الواجبات المرتبطة ({lessonsWithAssignments.length})
+              الواجبات المرتبطة ({linkedAssignments.length})
             </h3>
-            
-            {lessonsWithAssignments.length === 0 ? (
+
+            {linkedAssignments.length === 0 ? (
               <EmptyState
                 icon={<Unlink2 className="w-12 h-12 text-gray-300" />}
                 title="لا توجد واجبات مرتبطة"
@@ -193,21 +273,34 @@ export const AssignmentsStep: React.FC<AssignmentsStepProps> = ({
               />
             ) : (
               <div className="space-y-3">
-                {lessonsWithAssignments.map(lesson => (
-                  <div key={lesson.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-gray-900 dark:text-white">{lesson.title}</span>
+                {linkedAssignments.map(assignment => {
+                  const lesson = assignment.lessonId ? lessonById.get(assignment.lessonId) : undefined;
+                  return (
+                    <div key={assignment.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-gray-900 dark:text-white">{assignment.title}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-700 dark:text-gray-300 truncate pr-2">
+                          {lesson?.title || "درس غير معروف"}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleUnlink(assignment.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Unlink2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      لا توجد واجبات مرتبطة حالياً
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
         </div>
-        
+
         {/* Lesson Selector */}
         <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

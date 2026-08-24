@@ -17,18 +17,18 @@ export function useCertificates(handleError: (err: unknown, defaultMessage: stri
     }
   }, [handleError]);
 
-  const assignCertificateTemplate = useCallback(async (_templateId: string) => {
+  const assignCertificateTemplate = useCallback(async (courseId: string, templateId: string) => {
     try {
-      const response = await certificatesApi.assignCertificateTemplate();
+      const response = await certificatesApi.assignCertificateTemplate(courseId, templateId);
       if (response.error) throw new Error(response.error);
     } catch (err) {
       handleError(err, "فشل تعيين قالب الشهادة");
     }
   }, [handleError]);
 
-  const removeCertificateTemplate = useCallback(async () => {
+  const removeCertificateTemplate = useCallback(async (courseId: string) => {
     try {
-      const response = await certificatesApi.removeCertificateTemplate();
+      const response = await certificatesApi.removeCertificateTemplate(courseId);
       if (response.error) throw new Error(response.error);
     } catch (err) {
       handleError(err, "فشل إزالة قالب الشهادة");

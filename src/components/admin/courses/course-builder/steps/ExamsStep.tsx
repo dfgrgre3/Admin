@@ -21,13 +21,22 @@ interface ExamsStepProps {
   lessons: Lesson[];
   onChange: (data: Partial<any>) => void;
   isDirty: boolean;
+  selectedChapterId?: string;
+  onRefreshLessons?: (chapterId: string) => Promise<void> | void;
+  /** Merges a partial update into the wizard's shared `lessons` list without a
+   * network round-trip. Preferred over `onRefreshLessons` for link/unlink,
+   * since linkExam/unlinkExam already return the updated lesson. */
+  onPatchLesson?: (lessonId: string, patch: Partial<Lesson>) => void;
 }
 
-export const ExamsStep: React.FC<ExamsStepProps> = ({ 
-  draft, 
-  lessons, 
-  onChange, 
-  isDirty 
+export const ExamsStep: React.FC<ExamsStepProps> = ({
+  draft,
+  lessons,
+  onChange,
+  isDirty,
+  selectedChapterId,
+  onRefreshLessons,
+  onPatchLesson,
 }) => {
   const {
     exams,
@@ -38,43 +47,64 @@ export const ExamsStep: React.FC<ExamsStepProps> = ({
     error,
     clearError,
   } = useCourseBuilder({ courseId: draft?.id });
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLessonId, setSelectedLessonId] = useState<string>("");
-  
+
   useEffect(() => {
     loadExams(draft?.id);
   }, [draft?.id, loadExams]);
-  
-  const filteredExams = exams.filter(e => 
+
+  const filteredExams = exams.filter(e =>
     e.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
+
+  // Fallback for when the wizard hasn't wired the cheaper local patch in
+  // (onPatchLesson) — still correct, just a full network refetch.
+  const refreshLessons = useCallback(async () => {
+    if (selectedChapterId && onRefreshLessons) {
+      await onRefreshLessons(selectedChapterId);
+    }
+  }, [selectedChapterId, onRefreshLessons]);
+
   const handleLink = useCallback(async (examId: string) => {
     if (!selectedLessonId) {
       alert("يرجى اختيار درس أولاً");
       return;
     }
+    if (!draft?.id || !selectedChapterId) return;
     try {
-      await linkExam(selectedLessonId, examId);
+      const updatedLesson = await linkExam(draft.id, selectedChapterId, selectedLessonId, examId);
+      if (onPatchLesson && updatedLesson) {
+        onPatchLesson(selectedLessonId, { examId: updatedLesson.examId ?? examId });
+      } else {
+        await refreshLessons();
+      }
       onChange({ ...draft });
     } catch (err) {
       console.error("Failed to link exam:", err);
     }
-  }, [selectedLessonId, linkExam, draft, onChange]);
-  
+  }, [selectedLessonId, linkExam, draft, onChange, selectedChapterId, onPatchLesson, refreshLessons]);
+
   const handleUnlink = useCallback(async (lessonId: string) => {
     if (!confirm("هل أنت متأكد من فك ربط هذا الاختبار؟")) return;
+    if (!draft?.id || !selectedChapterId) return;
     try {
-      await unlinkExam(lessonId);
+      await unlinkExam(draft.id, selectedChapterId, lessonId);
+      if (onPatchLesson) {
+        onPatchLesson(lessonId, { examId: undefined });
+      } else {
+        await refreshLessons();
+      }
       onChange({ ...draft });
     } catch (err) {
       console.error("Failed to unlink exam:", err);
     }
-  }, [unlinkExam, draft, onChange]);
-  
-  // Find which lessons have exams linked
-  const lessonsWithExams = lessons.filter(l => (l.quizzes?.length ?? 0) > 0);
+  }, [unlinkExam, draft, onChange, selectedChapterId, onPatchLesson, refreshLessons]);
+
+  // Find which lessons have exams linked, and resolve each to its Exam record.
+  const lessonsWithExams = lessons.filter(l => !!l.examId);
+  const examById = new Map(exams.map(e => [e.id, e]));
   
   return (
     <div className="space-y-6">
@@ -190,29 +220,29 @@ export const ExamsStep: React.FC<ExamsStepProps> = ({
               />
             ) : (
               <div className="space-y-3">
-                {lessonsWithExams.map(lesson => (
-                  <div key={lesson.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-gray-900 dark:text-white">{lesson.title}</span>
-                      <Badge variant="outline">{lesson.quizzes?.length || 0} اختبار</Badge>
+                {lessonsWithExams.map(lesson => {
+                  const exam = lesson.examId ? examById.get(lesson.examId) : undefined;
+                  return (
+                    <div key={lesson.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-gray-900 dark:text-white">{lesson.title}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-700 dark:text-gray-300 truncate pr-2">
+                          {exam?.title || "اختبار غير معروف"}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleUnlink(lesson.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Unlink2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     </div>
-                    <ul className="space-y-1">
-                      {lesson.quizzes?.map(quiz => (
-                        <li key={quiz.id} className="flex items-center justify-between text-sm">
-                          <span className="text-gray-700 dark:text-gray-300 truncate pr-2">{quiz.question}</span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleUnlink(lesson.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Unlink2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

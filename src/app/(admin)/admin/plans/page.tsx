@@ -66,6 +66,7 @@ interface SubscriptionPlan {
   interval: "MONTHLY" | "YEARLY" | "FOREVER";
   isActive: boolean;
   features: string[];
+  groupKey?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -79,6 +80,7 @@ const planSchema = z.object({
   interval: z.enum(["MONTHLY", "YEARLY", "FOREVER"]),
   isActive: z.boolean(),
   features: z.string().optional(),
+  groupKey: z.string().optional(),
 });
 
 type PlanFormValues = z.infer<typeof planSchema>;
@@ -134,6 +136,7 @@ export default function AdminPlansPage() {
       interval: "MONTHLY",
       isActive: true,
       features: "",
+      groupKey: "",
     },
   });
 
@@ -154,6 +157,7 @@ export default function AdminPlansPage() {
         features: values.features
           ? values.features.split("\n").map((f) => f.trim()).filter(Boolean)
           : [],
+        groupKey: values.groupKey || "",
       };
       if (editingPlan) {
         body.id = editingPlan.id;
@@ -220,6 +224,7 @@ export default function AdminPlansPage() {
         interval: plan.interval,
         isActive: plan.isActive,
         features: Array.isArray(plan.features) ? plan.features.join("\n") : "",
+        groupKey: plan.groupKey && plan.groupKey !== plan.id ? plan.groupKey : "",
       });
     } else {
       setEditingPlan(null);
@@ -232,6 +237,7 @@ export default function AdminPlansPage() {
         interval: "MONTHLY",
         isActive: true,
         features: "",
+        groupKey: "",
       });
     }
     setDialogOpen(true);
@@ -248,6 +254,23 @@ export default function AdminPlansPage() {
   };
 
   const plansList = Array.isArray(plans) ? plans : [];
+
+  // One representative plan per group, excluding the plan currently being
+  // edited, so an admin picks a target tier to link to without seeing
+  // duplicate rows for plans that already share a group.
+  const linkablePlans = React.useMemo(() => {
+    const seen = new Set<string>();
+    const result: SubscriptionPlan[] = [];
+    for (const p of plansList) {
+      if (editingPlan && p.id === editingPlan.id) continue;
+      const key = p.groupKey || p.id;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(p);
+    }
+    return result;
+  }, [plansList, editingPlan]);
+
   const filteredPlans = plansList.filter((p) => {
     const matchesSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -615,6 +638,42 @@ export default function AdminPlansPage() {
                     )}
                   />
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name="groupKey"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-black text-[10px] uppercase tracking-widest opacity-60">
+                        ربط بخطة أخرى (اختياري)
+                      </FormLabel>
+                      <Select
+                        onValueChange={(v) => field.onChange(v === "__none__" ? "" : v)}
+                        value={field.value || "__none__"}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="rounded-xl border-white/10 bg-white/5 h-12">
+                            <SelectValue placeholder="بدون ربط" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="rounded-xl border-white/10">
+                          <SelectItem value="__none__" className="font-bold cursor-pointer">
+                            بدون ربط (خطة مستقلة)
+                          </SelectItem>
+                          {linkablePlans.map((p) => (
+                            <SelectItem key={p.id} value={p.groupKey || p.id} className="font-bold cursor-pointer">
+                              {p.nameAr} — {intervalLabels[p.interval]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[10px] text-muted-foreground font-medium px-1">
+                        اربط هذه الخطة بخطة أخرى بنفس الفئة (مثلاً: نفس الباقة بسعر شهري وآخر سنوي) ليظهرا معاً كخيارَي دورة فوترة واحدة أمام المستخدم.
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={form.control}

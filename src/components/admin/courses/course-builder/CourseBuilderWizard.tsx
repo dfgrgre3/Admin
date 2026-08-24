@@ -75,6 +75,7 @@ export const CourseBuilderWizard: React.FC<CourseBuilderWizardProps> = ({ course
     loadCourseTeachers,
     loadChapters,
     loadLessons,
+    patchLesson,
     loadPricing,
     loadCertificateTemplates,
     loadExams,
@@ -422,6 +423,7 @@ export const CourseBuilderWizard: React.FC<CourseBuilderWizardProps> = ({ course
                   selectedChapterId={selectedChapterId}
                   onChapterChange={setSelectedChapterId}
                   onRefreshLessons={loadLessons}
+                  onPatchLesson={patchLesson}
                   onPublish={handlePublish}
                 />
               )}

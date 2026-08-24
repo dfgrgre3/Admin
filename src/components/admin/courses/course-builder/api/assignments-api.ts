@@ -1,24 +1,38 @@
 "use client";
 
+import { courseApi } from "@/lib/api/course-api";
 import type { Assignment, ApiResponse } from "../types";
-import { unsupported } from "./mappers";
+import { assignmentToAssignment } from "./mappers";
 
 // ─── Assignments ────────────────────────────────────────────────────────────────
-// There is no Assignment domain model, table, or route anywhere in the Go
-// backend — the Next.js proxy at /api/admin/assignments forwards to a Go
-// endpoint that does not exist. Student assignments/homework are not a
-// feature of the backend yet, so this stays honestly unsupported end to end.
+// Real course-scoped assignment catalog via LmsAssignment (course_assignment_handler.go,
+// routes at /api/admin/courses/:id/assignments[...]). One assignment can be
+// linked to at most one lesson (LmsAssignment.lessonId); linking/unlinking
+// leaves the assignment in the course's catalog either way.
 
 export const assignmentsApi = {
-  async getAssignments(): Promise<ApiResponse<Assignment[]>> {
-    return unsupported<Assignment[]>("إدارة الواجبات");
+  async getAssignments(courseId: string): Promise<ApiResponse<Assignment[]>> {
+    const response = await courseApi.listCourseAssignments(courseId);
+    return { data: (response.assignments || []).map(assignmentToAssignment), error: undefined };
   },
 
-  async linkAssignment(): Promise<ApiResponse<null>> {
-    return unsupported<null>("ربط الواجبات بالدروس");
+  async createAssignment(courseId: string, data: { title: string; description?: string; dueDate?: number; maxScore?: number }): Promise<ApiResponse<Assignment>> {
+    const response = await courseApi.createCourseAssignment(courseId, data);
+    return { data: assignmentToAssignment(response.assignment), error: undefined };
   },
 
-  async unlinkAssignment(): Promise<ApiResponse<void>> {
-    return unsupported<void>("فك ربط الواجبات");
+  async deleteAssignment(courseId: string, assignmentId: string): Promise<ApiResponse<void>> {
+    await courseApi.deleteCourseAssignment(courseId, assignmentId);
+    return { data: undefined, error: undefined };
+  },
+
+  async linkAssignment(courseId: string, assignmentId: string, lessonId: string): Promise<ApiResponse<Assignment>> {
+    const response = await courseApi.linkAssignment(courseId, assignmentId, lessonId);
+    return { data: assignmentToAssignment(response.assignment), error: undefined };
+  },
+
+  async unlinkAssignment(courseId: string, assignmentId: string): Promise<ApiResponse<void>> {
+    await courseApi.unlinkAssignment(courseId, assignmentId);
+    return { data: undefined, error: undefined };
   },
 };

@@ -60,6 +60,50 @@ export interface DunningRecord {
   createdAt: string;
 }
 
+export interface InvoicePayment {
+  id: string;
+  amount: number;
+  currency: string;
+  status: "pending" | "completed" | "failed" | "refunded" | "cancelled";
+  method: string;
+  reference: string;
+  completedAt?: string;
+  externalTxnId?: string;
+}
+
+export interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  pdfUrl: string;
+  createdAt: string;
+  updatedAt: string;
+  payment: InvoicePayment;
+  planName?: string;
+  user?: {
+    id: string;
+    name?: string;
+    email: string;
+    avatar?: string;
+  };
+}
+
+export interface InvoiceListResponse {
+  invoices: Invoice[];
+  summary: {
+    totalInvoices: number;
+    totalAmount: number;
+    paidCount: number;
+    pendingCount: number;
+    failedCount: number;
+  };
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 export interface TaxReport {
   country: string;
   taxName: string;
@@ -89,6 +133,10 @@ export const billingApi = {
   payAffiliate: (id: string) => adminApi.post<{ success: boolean; paid: number; count: number }>(`/affiliates/${id}/pay`, {}),
 
   listDunning: () => adminApi.get<DunningRecord[]>("/dunning"),
+
+  listInvoices: (params?: { page?: number; limit?: number; search?: string; status?: string }) =>
+    adminApi.get<InvoiceListResponse>("/invoices", params),
+  getInvoice: (id: string) => adminApi.get<Invoice>(`/invoices/${id}`),
 
   getTaxReport: (from: string, to: string) =>
     adminApi.get<TaxReport>("/reports/tax", { from, to }),

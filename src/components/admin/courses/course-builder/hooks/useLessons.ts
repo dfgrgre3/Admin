@@ -104,6 +104,14 @@ export function useLessons({ handleError, courseIdRef }: Options) {
     }
   }, [handleError, lessons, loadLessons]);
 
+  /** Merges a partial update into one already-loaded lesson without a network
+   * round-trip — for callers (e.g. exam linking) that already got the
+   * updated lesson back from their own mutation and just need the wizard's
+   * shared `lessons` list to reflect it. */
+  const patchLesson = useCallback((lessonId: string, patch: Partial<Lesson>) => {
+    setLessons((prev) => prev.map((lesson) => (lesson.id === lessonId ? { ...lesson, ...patch } : lesson)));
+  }, []);
+
   const reorderLessons = useCallback(async (sectionId: string, lessonIds: string[]) => {
     try {
       const courseId = requireCourseId();
@@ -115,5 +123,5 @@ export function useLessons({ handleError, courseIdRef }: Options) {
     }
   }, [handleError]);
 
-  return { lessons, loadLessons, createLesson, updateLesson, deleteLesson, duplicateLesson, reorderLessons };
+  return { lessons, loadLessons, createLesson, updateLesson, deleteLesson, duplicateLesson, patchLesson, reorderLessons };
 }

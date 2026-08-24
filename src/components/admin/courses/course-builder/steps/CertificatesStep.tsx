@@ -49,18 +49,20 @@ export const CertificatesStep: React.FC<CertificatesStepProps> = ({
   const hasCertificate = draft?.hasCertificate;
   
   const handleAssign = useCallback(async (templateId: string) => {
+    if (!draft?.id) return;
     try {
-      await assignCertificateTemplate(templateId);
+      await assignCertificateTemplate(draft.id, templateId);
       onChange({ ...draft, certificateTemplate: templateId, hasCertificate: true });
     } catch (err) {
       console.error("Failed to assign certificate:", err);
     }
   }, [assignCertificateTemplate, draft, onChange]);
-  
+
   const handleRemove = useCallback(async () => {
+    if (!draft?.id) return;
     if (!confirm("هل أنت متأكد من إزالة قالب الشهادة؟")) return;
     try {
-      await removeCertificateTemplate();
+      await removeCertificateTemplate(draft.id);
       onChange({ ...draft, certificateTemplate: null, hasCertificate: false });
     } catch (err) {
       console.error("Failed to remove certificate:", err);
