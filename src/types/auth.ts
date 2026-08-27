@@ -81,8 +81,13 @@ export interface ResetPasswordResponse {
 }
 
 export interface Verify2FARequest {
-  ticket?: string;
-  userId?: string;
+  /**
+   * The opaque MFA ticket issued by the login response (`data.ticket`). The Go
+   * handler binds `{ticket, code}` with both fields required, so this is not
+   * optional — it was previously typed as optional alongside a `userId`
+   * alternative, which let callers send a body the backend always rejected.
+   */
+  ticket: string;
   code: string;
   rememberMe?: boolean;
 }

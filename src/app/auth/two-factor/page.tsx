@@ -37,10 +37,12 @@ export default function TwoFactorPage() {
  */
 function TwoFactorContent() {
   const searchParams = useSearchParams();
-  const userId = searchParams.get('userId') || '';
-  const redirectTo = searchParams.get('redirect') || '/dashboard';
+  // The login response returns an opaque MFA `ticket`; it was historically put
+  // on the URL as `userId`, so both names are accepted here.
+  const ticket = searchParams.get('ticket') || searchParams.get('userId') || '';
+  const redirectTo = searchParams.get('redirect') || '/admin';
 
-  const flow = useTwoFactorVerify({ userId, redirectTo });
+  const flow = useTwoFactorVerify({ ticket, redirectTo });
 
   const {
     register,
@@ -52,7 +54,7 @@ function TwoFactorContent() {
     defaultValues: { code: '' },
   });
 
-  if (!userId) {
+  if (!ticket) {
     return <TwoFactorInvalidState />;
   }
 

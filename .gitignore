@@ -62,3 +62,8 @@ check_ports.py
 pg_test.txt
 ports_output.txt
 *.py
+
+# local route-coverage audit artifacts (untracked working files)
+/_audit_tmp.js
+/route-inventory.txt
+/route-urls.txt

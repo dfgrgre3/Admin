@@ -6,7 +6,12 @@ import { useVerify2FA } from "@/hooks/auth/use-verify-2fa";
 import type { TwoFactorFormValues } from "@/lib/validations/auth-two-factor";
 
 interface UseTwoFactorVerifyOptions {
-  userId: string;
+  /**
+   * The opaque MFA ticket issued by the login response. The Go handler
+   * (`mfa_handler.go` VerifyMFA) binds `{ticket, code}` with both fields
+   * required, so this value — not a user id — is what must be submitted.
+   */
+  ticket: string;
   redirectTo: string;
 }
 
@@ -15,7 +20,7 @@ interface UseTwoFactorVerifyOptions {
  * the resend countdown, and the verified→redirect transition. Extracted so
  * the page component stays focused on composing its states.
  */
-export function useTwoFactorVerify({ userId, redirectTo }: UseTwoFactorVerifyOptions) {
+export function useTwoFactorVerify({ ticket, redirectTo }: UseTwoFactorVerifyOptions) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -47,8 +52,8 @@ export function useTwoFactorVerify({ userId, redirectTo }: UseTwoFactorVerifyOpt
   }, [countdown, canResend]);
 
   const onSubmit = async (data: TwoFactorFormValues) => {
-    if (!userId) {
-      setErrorMessage("معرف المستخدم غير موجود");
+    if (!ticket) {
+      setErrorMessage("طلب التحقق غير صالح");
       return;
     }
 
@@ -56,7 +61,7 @@ export function useTwoFactorVerify({ userId, redirectTo }: UseTwoFactorVerifyOpt
     setErrorMessage(null);
 
     try {
-      await verify2FAMutation.mutateAsync({ userId, code: data.code, rememberMe: true });
+      await verify2FAMutation.mutateAsync({ ticket, code: data.code, rememberMe: true });
     } catch {
       // Error is handled by onError callback
     } finally {

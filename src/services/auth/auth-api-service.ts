@@ -21,6 +21,28 @@ interface MeResponse {
   user?: Record<string, unknown>;
 }
 
+/**
+ * Keeps the localStorage token mirror in sync after a successful login/MFA
+ * verification. The `access_token` cookie is HttpOnly, so `build-ws-url.ts`
+ * (WebSocket auth) and `auth-context.tsx` (session hint) have no other way to
+ * see the token. `apiClient.refreshToken()` already does this on every refresh;
+ * the login paths must too, otherwise the mirror only ever appears after the
+ * first token rotation.
+ */
+function storeTokenMirror(accessToken?: unknown, refreshToken?: unknown): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (typeof accessToken === 'string' && accessToken) {
+      window.localStorage.setItem('accessToken', accessToken);
+    }
+    if (typeof refreshToken === 'string' && refreshToken) {
+      window.localStorage.setItem('refreshToken', refreshToken);
+    }
+  } catch {
+    // Ignore storage errors (private browsing, quota, etc.)
+  }
+}
+
 export const authApiService = {
   /** Fetch current authenticated user */
   async fetchMe(): Promise<AuthUser | null> {
@@ -53,6 +75,7 @@ export const authApiService = {
             userId: payload.ticket || payload.userId || data.userId,
           };
         }
+        storeTokenMirror(payload.accessToken ?? data.accessToken, payload.refreshToken ?? data.refreshToken);
         return { success: true };
       }
 
@@ -110,18 +133,27 @@ export const authApiService = {
     }
   },
 
-  /** Verify 2FA token */
-  async verify2FA(userId: string, token: string, rememberMe?: boolean): Promise<AuthResult> {
+  /**
+   * Verify an MFA code.
+   *
+   * `ticket` is the opaque `mfa_ticket:<id>` handle returned by `login()` (it is
+   * carried through the UI under the historical name `userId`). The Go handler
+   * (`mfa_handler.go` VerifyMFA) binds `{ticket, code}` with both fields
+   * `binding:"required"`, so any other field names produce a 400.
+   */
+  async verify2FA(ticket: string, code: string, rememberMe?: boolean): Promise<AuthResult> {
     try {
       const res = await apiClient.fetch(apiRoutes.auth.verify2FA, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, token, rememberMe }),
+        body: JSON.stringify({ ticket, code, rememberMe }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
+        const payload = data.data || {};
+        storeTokenMirror(payload.accessToken ?? data.accessToken, payload.refreshToken ?? data.refreshToken);
         return { success: true };
       }
 

@@ -20,7 +20,7 @@ interface AuthContextType {
     }
   ) => Promise<{success: boolean; error?: string; message?: string; autoLoggedIn?: boolean;}>;
   logout: (allDevices?: boolean) => Promise<void>;
-  verify2FA: (userId: string, token: string, rememberMe?: boolean) => Promise<{success: boolean; error?: string;}>;
+  verify2FA: (ticket: string, code: string, rememberMe?: boolean) => Promise<{success: boolean; error?: string;}>;
   refreshUser: (options?: {clearOnFailure?: boolean;}) => Promise<boolean>;
   forgotPassword: (email: string) => Promise<{success: boolean; error?: string; message?: string;}>;
   resetPassword: (token: string, newPassword: string) => Promise<{success: boolean; error?: string;}>;
@@ -48,6 +48,24 @@ function hasClientSessionToken(): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * Mirrors `isProtectedRoute` in `src/middleware.ts`. The edge middleware never
+ * lets an unauthenticated request reach these paths, so if the browser is
+ * rendering one of them a session cookie *must* exist — regardless of what
+ * localStorage says. Without this, a valid HttpOnly session whose localStorage
+ * mirror is absent (fresh login, cleared storage, another tab's logout) is
+ * treated as "no session" and every admin page bounces to `/admin-login`.
+ */
+function isProtectedAdminPath(pathname: string): boolean {
+  if (pathname === '/admin-login' || pathname.startsWith('/admin-login/')) return false;
+  return (
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/coupons') ||
+    pathname.startsWith('/revenue') ||
+    pathname.startsWith('/subjects')
+  );
 }
 
 export function AuthProvider({
@@ -92,7 +110,16 @@ export function AuthProvider({
       }
     };
 
-    const shouldFetch = initialAuthHint !== undefined ? initialAuthHint : hasClientSessionToken();
+    // Resolution order:
+    //  1. `initialAuthHint` — a server-computed cookie check, when a Server
+    //     Component supplies one (most accurate, no localStorage dependency).
+    //  2. Protected pathname — middleware guarantees a session cookie exists
+    //     here, so always verify with `/api/auth/me`.
+    //  3. localStorage mirror — best-effort hint for public pages.
+    const shouldFetch =
+      initialAuthHint === true ||
+      (typeof window !== 'undefined' && isProtectedAdminPath(window.location.pathname)) ||
+      (initialAuthHint === undefined && hasClientSessionToken());
     if (shouldFetch) {
       fetchUser();
     } else {
@@ -155,14 +182,34 @@ export function AuthProvider({
     router.replace('/admin-login');
   }, [resetStore, router]);
 
-  const verify2FA = useCallback(async (userId: string, token: string, rememberMe?: boolean) => {
+  const verify2FA = useCallback(async (ticket: string, code: string, rememberMe?: boolean) => {
     try {
-      return await authApiService.verify2FA(userId, token, rememberMe);
+      const result = await authApiService.verify2FA(ticket, code, rememberMe);
+      if (!result.success) {
+        return result;
+      }
+
+      // The Go MFA response carries only {id, email, name, role} — no
+      // permissions/status — so the authoritative profile has to come from
+      // `/api/auth/me`, exactly as the password path does. Without this the
+      // store never gets a user and the login page's redirect effect never
+      // fires after a successful MFA challenge.
+      const mappedUser = await authApiService.fetchMe();
+
+      if (mappedUser) {
+        if (!isStaffAdminPanelRole(mappedUser.role)) {
+          await authApiService.logout();
+          return { success: false, error: 'ليس لديك صلاحيات الوصول إلى لوحة التحكم' };
+        }
+        setUser(mappedUser);
+      }
+
+      return { success: true };
     } catch (err) {
       logger.error('2FA verification error:', err);
       return { success: false, error: 'رمز التحقق غير صحيح' };
     }
-  }, []);
+  }, [setUser]);
 
   const refreshUser = useCallback(async (options?: {clearOnFailure?: boolean;}) => {
     try {

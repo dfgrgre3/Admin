@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ErrorInfo } from 'react';
 import { logger } from '@/lib/logger';
+import { apiClient } from '@/lib/api/api-client';
 import { buildAppUserWebSocketUrl } from '@/lib/realtime/build-ws-url';
 import { useAuth } from './auth-context';
 
@@ -52,6 +53,10 @@ class WebSocketErrorBoundary extends React.Component<
 // WebSocket is enabled: the Go backend serves the realtime endpoint at /api/ws.
 const WEBSOCKET_ENABLED = true;
 
+// Bound the reconnect loop: without a ceiling a permanently failing endpoint
+// keeps retrying for the whole session.
+const MAX_RECONNECT_ATTEMPTS = 5;
+
 export function WebSocketProvider({ children, userId }: {children: React.ReactNode;userId?: string;}) {
   const { user } = useAuth();
   const currentUserId = userId || user?.id;
@@ -98,15 +103,33 @@ export function WebSocketProvider({ children, userId }: {children: React.ReactNo
     let ws: WebSocket | null = null;
     let reconnectAttempts = 0;
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
+    // A handshake rejected with 401 closes without ever firing `onopen`. The
+    // access_token cookie is HttpOnly, so the URL is built from the localStorage
+    // mirror, which goes stale whenever the Next.js middleware rotates tokens
+    // server-side. Refresh once in that case instead of hammering /api/ws.
+    let didRefreshForAuth = false;
 
-    const connect = () => {
-      if (!WEBSOCKET_ENABLED || !currentUserId) return;
+    const connect = async () => {
+      if (cancelled || !WEBSOCKET_ENABLED || !currentUserId) return;
 
       try {
-        const wsUrl = buildAppUserWebSocketUrl(currentUserId);
+        let wsUrl = buildAppUserWebSocketUrl(currentUserId);
         if (!wsUrl) return;
 
+        // No token in the URL means the mirror is missing entirely: the backend
+        // would reject with `missing_token`. Try to populate it first.
+        if (!wsUrl.includes('access_token=') && !didRefreshForAuth) {
+          didRefreshForAuth = true;
+          const refreshed = await apiClient.refreshSession();
+          if (cancelled) return;
+          if (!refreshed) return;
+          wsUrl = buildAppUserWebSocketUrl(currentUserId);
+          if (!wsUrl) return;
+        }
+
         ws = new WebSocket(wsUrl);
+        let opened = false;
 
         const connectionTimeout = setTimeout(() => {
           if (ws && ws.readyState === WebSocket.CONNECTING) {
@@ -120,9 +143,11 @@ export function WebSocketProvider({ children, userId }: {children: React.ReactNo
             ws?.close();
             return;
           }
+          opened = true;
           setIsConnected(true);
           setSocket(ws);
           reconnectAttempts = 0;
+          didRefreshForAuth = false;
         };
 
         ws.onmessage = (event) => {
@@ -141,12 +166,28 @@ export function WebSocketProvider({ children, userId }: {children: React.ReactNo
           clearTimeout(connectionTimeout);
           setIsConnected(false);
           setSocket(null);
-          if (WEBSOCKET_ENABLED && event.code !== 1000) {
-            reconnectAttempts++;
-            const delay = Math.min(3000 * Math.pow(2, reconnectAttempts - 1), 30000);
-            logger.info(`WebSocket disconnected, attempting reconnection #${reconnectAttempts} in ${delay}ms`);
-            reconnectTimeout = setTimeout(connect, delay);
+          if (cancelled || !WEBSOCKET_ENABLED || event.code === 1000) return;
+
+          // Never opened => the handshake itself was rejected (most likely 401
+          // from a stale token). Rotate the token once and retry immediately.
+          if (!opened && !didRefreshForAuth) {
+            didRefreshForAuth = true;
+            void apiClient.refreshSession().then((refreshed) => {
+              if (cancelled || !refreshed) return;
+              void connect();
+            });
+            return;
           }
+
+          if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+            logger.info('WebSocket reconnection abandoned after repeated failures');
+            return;
+          }
+
+          reconnectAttempts++;
+          const delay = Math.min(3000 * Math.pow(2, reconnectAttempts - 1), 30000);
+          logger.info(`WebSocket disconnected, attempting reconnection #${reconnectAttempts} in ${delay}ms`);
+          reconnectTimeout = setTimeout(() => void connect(), delay);
         };
 
         ws.onerror = () => {
@@ -162,9 +203,10 @@ export function WebSocketProvider({ children, userId }: {children: React.ReactNo
       }
     };
 
-    connect();
+    void connect();
 
     return () => {
+      cancelled = true;
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
       if (ws) {
         ws.onerror = null;

@@ -397,6 +397,16 @@ class ApiClient {
         return this.refreshPromise;
     }
 
+    /**
+     * Refresh the session cookies (and the localStorage token mirror).
+     * Exposed for the WebSocket layer: the handshake cannot go through
+     * executeFetch, so it has no other way to rotate an expired token before
+     * connecting.
+     */
+    public refreshSession(): Promise<boolean> {
+        return this.refreshToken();
+    }
+
     public get<T>(endpoint: string, options?: FetchOptions): Promise<T> {
         return this.request<T>(endpoint, { ...options, method: 'GET' });
     }

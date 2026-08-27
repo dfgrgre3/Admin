@@ -30,36 +30,45 @@ export async function adminLoginApi(
     };
   }
 
+  // The Go backend wraps every success payload in `{success, data}`
+  // (`response.Success`), and the Next proxy (`api/auth/_utils.ts`
+  // `backendJsonResponse`) forwards it verbatim. `apiClient.fetch` returns the
+  // raw Response, so — unlike `apiClient.request` — it does not unwrap the
+  // envelope. Read through `data` here, keeping the flat shape as a fallback.
+  const payload = (result.data ?? result) as Record<string, unknown>;
+
   // Check if MFA is required
-  if (result.mfaRequired) {
+  if (payload.mfaRequired) {
     return {
       success: true,
       status: 'mfa_required',
       data: {
-        mfaToken: result.ticket,
+        mfaToken: payload.ticket as string,
         expiresIn: 300, // 5 minutes
         redirectUrl: '/auth/two-factor',
       },
     };
   }
 
+  const user = (payload.user ?? {}) as Record<string, unknown>;
+
   return {
     success: true,
     status: 'authenticated',
     data: {
-      accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
+      accessToken: payload.accessToken as string,
+      refreshToken: payload.refreshToken as string,
       tokenType: 'Bearer',
       expiresIn: 900, // 15 minutes
       user: {
-        id: result.user.id,
-        name: result.user.name,
-        email: result.user.email,
-        username: result.user.username || result.user.email,
-        avatarUrl: result.user.avatar || null,
-        isActive: result.user.status === 'active',
-        roles: [result.user.role],
-        permissions: result.user.permissions || [],
+        id: user.id as string,
+        name: user.name as string,
+        email: user.email as string,
+        username: (user.username as string) || (user.email as string),
+        avatarUrl: (user.avatar as string) || null,
+        isActive: user.status === 'active',
+        roles: [user.role as string],
+        permissions: (user.permissions as string[]) || [],
       },
     },
   };
@@ -156,23 +165,30 @@ export async function verify2FAApi(
     };
   }
 
+  // Same `{success, data}` envelope as the login response — see the note in
+  // `adminLoginApi`. Note the Go MFA payload's `user` carries only
+  // {id, email, name, role}; callers that need permissions/status must follow
+  // up with `/api/auth/me`.
+  const payload = (result.data ?? result) as Record<string, unknown>;
+  const user = (payload.user ?? {}) as Record<string, unknown>;
+
   return {
     success: true,
     status: 'authenticated',
     data: {
-      accessToken: result.accessToken,
-      refreshToken: result.refreshToken || '',
+      accessToken: payload.accessToken as string,
+      refreshToken: (payload.refreshToken as string) || '',
       tokenType: 'Bearer',
       expiresIn: 900,
       user: {
-        id: result.user.id,
-        name: result.user.name,
-        email: result.user.email,
-        username: result.user.username || result.user.email,
-        avatarUrl: result.user.avatar || null,
+        id: user.id as string,
+        name: user.name as string,
+        email: user.email as string,
+        username: (user.username as string) || (user.email as string),
+        avatarUrl: (user.avatar as string) || null,
         isActive: true,
-        roles: [result.user.role],
-        permissions: result.user.permissions || [],
+        roles: [user.role as string],
+        permissions: (user.permissions as string[]) || [],
       },
     },
   };

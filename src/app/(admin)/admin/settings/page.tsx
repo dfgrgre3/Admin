@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { PageHeader } from "@/components/admin/ui/page-header";
 import { AdminButton } from "@/components/admin/ui/admin-button";
 import { Input } from "@/components/ui/input";
@@ -24,22 +25,29 @@ import { apiRoutes } from "@/lib/api/routes";
 import { cn } from "@/lib/utils";
 import { settingsSchema, getSafeSettings, type SettingsFormValues, type TabConfig } from "./_components/types";
 import { SettingsIconButton } from "./_components/shared";
-import { GeneralTab } from "./_components/tabs-general";
-import { FeaturesTab } from "./_components/tabs-features";
-import { SocialTab } from "./_components/tabs-social";
-import { EmailTab } from "./_components/tabs-email";
-import { EngagementTab } from "./_components/tabs-engagement";
-import { LimitsTab } from "./_components/tabs-limits";
-import { MaintenanceTab } from "./_components/tabs-maintenance";
-import { SecurityTab } from "./_components/tabs-security";
-import { PaymentsTab } from "./_components/tabs-payments";
-import { StorageTab } from "./_components/tabs-storage";
-import { PerformanceTab } from "./_components/tabs-performance";
-import { PrivacyTab } from "./_components/tabs-privacy";
-import { NotificationsSettingsTab } from "./_components/tabs-notifications";
-import { LocalizationTab } from "./_components/tabs-localization";
-import { ThemeTab } from "./_components/tabs-theme";
 import { useUIState } from "@/hooks/use-ui-state";
+
+// ============================================================
+// Tab content is code-split: each tab's chunk downloads only
+// when that tab is opened, instead of all 14 loading upfront.
+// ============================================================
+const tabLoading = () => <div className="h-64 animate-pulse rounded-2xl bg-white/5" />;
+
+const GeneralTab = dynamic(() => import("./_components/tabs-general").then((m) => m.GeneralTab), { loading: tabLoading });
+const FeaturesTab = dynamic(() => import("./_components/tabs-features").then((m) => m.FeaturesTab), { loading: tabLoading });
+const SocialTab = dynamic(() => import("./_components/tabs-social").then((m) => m.SocialTab), { loading: tabLoading });
+const EmailTab = dynamic(() => import("./_components/tabs-email").then((m) => m.EmailTab), { loading: tabLoading });
+const EngagementTab = dynamic(() => import("./_components/tabs-engagement").then((m) => m.EngagementTab), { loading: tabLoading });
+const LimitsTab = dynamic(() => import("./_components/tabs-limits").then((m) => m.LimitsTab), { loading: tabLoading });
+const MaintenanceTab = dynamic(() => import("./_components/tabs-maintenance").then((m) => m.MaintenanceTab), { loading: tabLoading });
+const SecurityTab = dynamic(() => import("./_components/tabs-security").then((m) => m.SecurityTab), { loading: tabLoading });
+const PaymentsTab = dynamic(() => import("./_components/tabs-payments").then((m) => m.PaymentsTab), { loading: tabLoading });
+const StorageTab = dynamic(() => import("./_components/tabs-storage").then((m) => m.StorageTab), { loading: tabLoading });
+const PerformanceTab = dynamic(() => import("./_components/tabs-performance").then((m) => m.PerformanceTab), { loading: tabLoading });
+const PrivacyTab = dynamic(() => import("./_components/tabs-privacy").then((m) => m.PrivacyTab), { loading: tabLoading });
+const NotificationsSettingsTab = dynamic(() => import("./_components/tabs-notifications").then((m) => m.NotificationsSettingsTab), { loading: tabLoading });
+const LocalizationTab = dynamic(() => import("./_components/tabs-localization").then((m) => m.LocalizationTab), { loading: tabLoading });
+const ThemeTab = dynamic(() => import("./_components/tabs-theme").then((m) => m.ThemeTab), { loading: tabLoading });
 
 // ============================================================
 // Tab configuration
@@ -229,21 +237,21 @@ export default function AdminSettingsPage() {
               ))}
             </TabsList>
 
-            <TabsContent value="general"><GeneralTab form={form} /></TabsContent>
-            <TabsContent value="features"><FeaturesTab form={form} /></TabsContent>
-            <TabsContent value="social"><SocialTab form={form} /></TabsContent>
-            <TabsContent value="engagement"><EngagementTab form={form} /></TabsContent>
-            <TabsContent value="limits"><LimitsTab form={form} /></TabsContent>
-            <TabsContent value="maintenance"><MaintenanceTab form={form} /></TabsContent>
-            <TabsContent value="email"><EmailTab form={form} /></TabsContent>
-            <TabsContent value="security"><SecurityTab form={form} /></TabsContent>
-            <TabsContent value="payments"><PaymentsTab form={form} /></TabsContent>
-            <TabsContent value="storage"><StorageTab form={form} /></TabsContent>
-            <TabsContent value="performance"><PerformanceTab form={form} /></TabsContent>
-            <TabsContent value="privacy"><PrivacyTab form={form} /></TabsContent>
-            <TabsContent value="notifications"><NotificationsSettingsTab form={form} /></TabsContent>
-            <TabsContent value="localization"><LocalizationTab form={form} /></TabsContent>
-            <TabsContent value="theme"><ThemeTab form={form} /></TabsContent>
+            <TabsContent value="general">{activeTab === "general" && <GeneralTab form={form} />}</TabsContent>
+            <TabsContent value="features">{activeTab === "features" && <FeaturesTab form={form} />}</TabsContent>
+            <TabsContent value="social">{activeTab === "social" && <SocialTab form={form} />}</TabsContent>
+            <TabsContent value="engagement">{activeTab === "engagement" && <EngagementTab form={form} />}</TabsContent>
+            <TabsContent value="limits">{activeTab === "limits" && <LimitsTab form={form} />}</TabsContent>
+            <TabsContent value="maintenance">{activeTab === "maintenance" && <MaintenanceTab form={form} />}</TabsContent>
+            <TabsContent value="email">{activeTab === "email" && <EmailTab form={form} />}</TabsContent>
+            <TabsContent value="security">{activeTab === "security" && <SecurityTab form={form} />}</TabsContent>
+            <TabsContent value="payments">{activeTab === "payments" && <PaymentsTab form={form} />}</TabsContent>
+            <TabsContent value="storage">{activeTab === "storage" && <StorageTab form={form} />}</TabsContent>
+            <TabsContent value="performance">{activeTab === "performance" && <PerformanceTab form={form} />}</TabsContent>
+            <TabsContent value="privacy">{activeTab === "privacy" && <PrivacyTab form={form} />}</TabsContent>
+            <TabsContent value="notifications">{activeTab === "notifications" && <NotificationsSettingsTab form={form} />}</TabsContent>
+            <TabsContent value="localization">{activeTab === "localization" && <LocalizationTab form={form} />}</TabsContent>
+            <TabsContent value="theme">{activeTab === "theme" && <ThemeTab form={form} />}</TabsContent>
           </Tabs>
         </form>
       </Form>

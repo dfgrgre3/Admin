@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Search, Menu, LogOut, Moon, Sun, ChevronLeft, Settings, Shield, Users, Trophy, AlertCircle, CheckCircle, Info, X, CheckCheck, Bot } from "lucide-react";
+import { Bell, Search, Menu, LogOut, Moon, Sun, ChevronLeft, Settings, Shield, UserCog, Users, Trophy, AlertCircle, CheckCircle, Info, X, CheckCheck, Bot } from "lucide-react";
 import { IconButton } from "@/components/admin/ui/admin-button";
 import { AdminBadge } from "@/components/admin/ui/admin-badge";
 import { SearchInput } from "@/components/admin/ui/admin-input";
@@ -493,6 +493,12 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/admin/profile" className="cursor-pointer">
+                <UserCog className="ml-2 h-4 w-4" />
+                الملف الشخصي
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/admin/settings" className="cursor-pointer">
                 <Settings className="ml-2 h-4 w-4" />

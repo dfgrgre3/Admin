@@ -38,12 +38,19 @@ export function useLogin(options?: UseLoginOptions) {
             return;
           }
           
-          // Redirect to MFA page
-          const redirectUrl = result.data?.redirectUrl || '/admin/auth/two-factor';
-          const targetUrl = options?.redirectTo 
-            ? `${redirectUrl}?redirect=${encodeURIComponent(options.redirectTo)}`
-            : redirectUrl;
-          router.push(targetUrl);
+          // Redirect to MFA page. The ticket must travel with the redirect —
+          // `/auth/two-factor` renders its invalid-request state without it, and
+          // the Go `VerifyMFA` handler requires it in the request body.
+          const redirectUrl = result.data?.redirectUrl || '/auth/two-factor';
+          const params = new URLSearchParams();
+          if (result.data?.mfaToken) {
+            params.set('ticket', result.data.mfaToken);
+          }
+          if (options?.redirectTo) {
+            params.set('redirect', options.redirectTo);
+          }
+          const query = params.toString();
+          router.push(query ? `${redirectUrl}?${query}` : redirectUrl);
           return;
         }
 
@@ -70,8 +77,10 @@ export function useLogin(options?: UseLoginOptions) {
         // Invalidate all queries to refresh data
         await queryClient.invalidateQueries();
 
-        // Redirect to dashboard or specified path
-        const redirectPath = options?.redirectTo || '/admin/dashboard';
+        // Redirect to the admin home or the specified path. `/admin/dashboard`
+        // does not exist in the App Router tree — the admin landing page is
+        // `src/app/(admin)/admin/page.tsx`, i.e. `/admin`.
+        const redirectPath = options?.redirectTo || '/admin';
         router.push(redirectPath);
         
         options?.onSuccess?.();
