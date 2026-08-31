@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
@@ -11,6 +12,9 @@ interface PageHeaderProps {
   badge?: string;
   eyebrow?: string;
   meta?: React.ReactNode;
+  icon?: LucideIcon;
+  accentColor?: string;
+  actions?: React.ReactNode;
 }
 
 export function PageHeader({
@@ -21,7 +25,11 @@ export function PageHeader({
   badge,
   eyebrow,
   meta,
+  icon: Icon,
+  accentColor,
+  actions,
 }: PageHeaderProps) {
+  const finalActions = actions ?? children;
   return (
     <div
       className={cn(
@@ -37,6 +45,16 @@ export function PageHeader({
             </p>
           )}
           <div className="flex flex-wrap items-center gap-3">
+            {Icon && (
+              <div
+                className={cn(
+                  "flex h-12 w-12 items-center justify-center rounded-2xl border border-border shadow-sm",
+                  accentColor ?? "bg-primary/10 text-primary"
+                )}
+              >
+                <Icon className="h-6 w-6" />
+              </div>
+            )}
             <h1 className="text-2xl font-black tracking-tight sm:text-3xl">{title}</h1>
             {badge && (
               <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
@@ -51,9 +69,9 @@ export function PageHeader({
           )}
           {meta && <div className="flex flex-wrap items-center gap-2">{meta}</div>}
         </div>
-        {children && (
+        {finalActions && (
           <div className="flex flex-wrap items-center gap-2 lg:max-w-[45%] lg:justify-end">
-            {children}
+            {finalActions}
           </div>
         )}
       </div>

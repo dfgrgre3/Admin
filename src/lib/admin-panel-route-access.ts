@@ -9,6 +9,7 @@ export const ADMIN_PATH_RULES: ReadonlyArray<{ pattern: RegExp; permission: Perm
   { pattern: /^\/admin\/users\/permissions/, permission: PERMISSIONS.USERS_MANAGE },
   { pattern: /^\/admin\/users\/(?:new|create)$/, permission: PERMISSIONS.USERS_MANAGE },
   { pattern: /^\/admin\/users\/[^/]+\/(?:edit|permissions)$/, permission: PERMISSIONS.USERS_MANAGE },
+  { pattern: /^\/admin\/users\/[^/]+\/activity$/, permission: PERMISSIONS.USERS_VIEW_ACTIVITY },
   { pattern: /^\/admin\/users\/[^/]+$/, permission: PERMISSIONS.USERS_VIEW },
   { pattern: /^\/admin\/users\/?$/, permission: PERMISSIONS.USERS_VIEW },
   { pattern: /^\/admin\/students/, permission: PERMISSIONS.STUDENTS_VIEW },
@@ -17,7 +18,12 @@ export const ADMIN_PATH_RULES: ReadonlyArray<{ pattern: RegExp; permission: Perm
   { pattern: /^\/admin\/assignments/, permission: PERMISSIONS.ASSIGNMENTS_VIEW },
   { pattern: /^\/admin\/taxes/, permission: PERMISSIONS.TAXES_VIEW },
   { pattern: /^\/admin\/instructors/, permission: PERMISSIONS.TEACHERS_VIEW },
-  { pattern: /^\/admin\/live/, permission: PERMISSIONS.LIVE_MONITOR_VIEW },
+  // live-sessions must precede the generic `/admin/live` prefix, otherwise the
+  // prefix shadows it and the page gets LIVE_MONITOR_VIEW instead of the
+  // intended SUBJECTS_MANAGE (first-match-wins ordering).
+  { pattern: /^\/admin\/live-sessions/, permission: PERMISSIONS.SUBJECTS_MANAGE },
+  { pattern: /^\/admin\/live-chat/, permission: PERMISSIONS.LIVE_MONITOR_VIEW },
+  { pattern: /^\/admin\/live(?:\/|$)/, permission: PERMISSIONS.LIVE_MONITOR_VIEW },
   { pattern: /^\/admin\/health/, permission: PERMISSIONS.LIVE_MONITOR_VIEW },
   { pattern: /^\/admin\/monitoring-security/, permission: PERMISSIONS.LIVE_MONITOR_VIEW },
   { pattern: /^\/admin\/analytics/, permission: PERMISSIONS.ANALYTICS_VIEW },
@@ -26,7 +32,6 @@ export const ADMIN_PATH_RULES: ReadonlyArray<{ pattern: RegExp; permission: Perm
   { pattern: /^\/admin\/reports/, permission: PERMISSIONS.REPORTS_VIEW },
   { pattern: /^\/admin\/course-categories/, permission: PERMISSIONS.SUBJECTS_VIEW },
   { pattern: /^\/admin\/question-bank/, permission: PERMISSIONS.EXAMS_VIEW },
-  { pattern: /^\/admin\/live-sessions/, permission: PERMISSIONS.SUBJECTS_MANAGE },
   { pattern: /^\/admin\/(?:media|lessons|assignments|course-bundles)/, permission: PERMISSIONS.SUBJECTS_VIEW },
   { pattern: /^\/admin\/landing/, permission: PERMISSIONS.SETTINGS_VIEW },
   { pattern: /^\/admin\/courses/, permission: PERMISSIONS.SUBJECTS_VIEW },
@@ -58,6 +63,56 @@ export const ADMIN_PATH_RULES: ReadonlyArray<{ pattern: RegExp; permission: Perm
   { pattern: /^\/admin\/tickets/, permission: PERMISSIONS.TICKETS_VIEW },
   { pattern: /^\/admin\/audit-logs/, permission: PERMISSIONS.AUDIT_LOGS_VIEW },
   { pattern: /^\/admin\/automations/, permission: PERMISSIONS.ADMIN_BYPASS },
+  // ─────────────────────────────────────────────────────────────────────────
+  // Coverage-audit additions (scripts/check-admin-route-coverage.ts):
+  // these routes previously fell through to the ADMIN_BYPASS (*:*) default,
+  // silently locking out granular admins (or widening unreviewed routes to
+  // full bypass). Mapped to the domain permission matching their backend
+  // module; revisit individually if a page needs a narrower grant.
+  // ─────────────────────────────────────────────────────────────────────────
+  // Roles & permissions management
+  { pattern: /^\/admin\/roles/, permission: PERMISSIONS.ROLES_VIEW },
+  // Parents
+  { pattern: /^\/admin\/parents/, permission: PERMISSIONS.PARENTS_VIEW },
+  // User hub extras
+  { pattern: /^\/admin\/user-sessions/, permission: PERMISSIONS.USERS_VIEW_SESSIONS },
+  { pattern: /^\/admin\/user-groups/, permission: PERMISSIONS.USERS_VIEW },
+  { pattern: /^\/admin\/profile/, permission: PERMISSIONS.DASHBOARD_VIEW }, // self-service
+  // Attendance / grades / exams data
+  { pattern: /^\/admin\/attendance/, permission: PERMISSIONS.STUDENTS_VIEW },
+  { pattern: /^\/admin\/grade-center/, permission: PERMISSIONS.EXAMS_VIEW },
+  { pattern: /^\/admin\/(?:exam-attempts|exam-results)/, permission: PERMISSIONS.EXAMS_VIEW },
+  { pattern: /^\/admin\/anti-cheat/, permission: PERMISSIONS.LIVE_MONITOR_VIEW },
+  { pattern: /^\/admin\/certificates/, permission: PERMISSIONS.SUBJECTS_VIEW },
+  { pattern: /^\/admin\/course-tags/, permission: PERMISSIONS.SUBJECTS_VIEW },
+  // Files / media
+  { pattern: /^\/admin\/(?:file-manager|recordings|archive|trash)/, permission: PERMISSIONS.RESOURCES_VIEW },
+  // Community / content
+  { pattern: /^\/admin\/comments/, permission: PERMISSIONS.COMMENTS_VIEW },
+  { pattern: /^\/admin\/questions/, permission: PERMISSIONS.FORUM_VIEW },
+  { pattern: /^\/admin\/articles/, permission: PERMISSIONS.BLOG_VIEW },
+  // Support
+  { pattern: /^\/admin\/(?:contact-messages|queue-management)/, permission: PERMISSIONS.TICKETS_VIEW },
+  { pattern: /^\/admin\/faq/, permission: PERMISSIONS.FAQS_MANAGE },
+  // Payments / finance
+  { pattern: /^\/admin\/(?:failed-payments|payment-logs|transactions|refunds)/, permission: PERMISSIONS.ANALYTICS_VIEW },
+  { pattern: /^\/admin\/payment-gateways/, permission: PERMISSIONS.SETTINGS_VIEW },
+  { pattern: /^\/admin\/wallet/, permission: PERMISSIONS.USERS_VIEW_FINANCIAL },
+  { pattern: /^\/admin\/instructor-payouts/, permission: PERMISSIONS.TEACHERS_VIEW },
+  // Marketing & outbound comms
+  { pattern: /^\/admin\/(?:campaigns|promotions|referral|banners)/, permission: PERMISSIONS.MARKETING_VIEW },
+  { pattern: /^\/admin\/(?:email|email-templates|sms|push-notifications)/, permission: PERMISSIONS.NOTIFICATIONS_MANAGE },
+  // Gamification
+  { pattern: /^\/admin\/badges/, permission: PERMISSIONS.ACHIEVEMENTS_VIEW },
+  // CMS / site content
+  { pattern: /^\/admin\/(?:cms|pages|homepage-sections)/, permission: PERMISSIONS.SETTINGS_VIEW },
+  // Platform ops / infrastructure / technical logs
+  { pattern: /^\/admin\/(?:cache-management|feature-flags|integrations|maintenance-mode|scheduled-tasks|webhooks|api-logs|system-logs|data-import-export|currency|timezone|translation)/, permission: PERMISSIONS.SETTINGS_VIEW },
+  // Audit / activity visibility
+  { pattern: /^\/admin\/(?:activity-log|global-activity|security-logs|login-attempts)/, permission: PERMISSIONS.AUDIT_LOGS_VIEW },
+  // Self-service / informational
+  { pattern: /^\/admin\/(?:about|help-center)/, permission: PERMISSIONS.DASHBOARD_VIEW },
+  { pattern: /^\/admin\/waiting-room/, permission: PERMISSIONS.LIVE_MONITOR_VIEW },
   { pattern: /^\/admin\/?$/, permission: PERMISSIONS.DASHBOARD_VIEW },
 ];
 
@@ -93,6 +148,7 @@ export const ADMIN_API_RULES: ReadonlyArray<{
     { pattern: /^\/api\/admin\/learning-paths/, view: PERMISSIONS.SUBJECTS_VIEW, manage: PERMISSIONS.SUBJECTS_MANAGE },
     { pattern: /^\/api\/admin\/books/, view: PERMISSIONS.BOOKS_VIEW, manage: PERMISSIONS.BOOKS_MANAGE },
     { pattern: /^\/api\/admin\/exams/, view: PERMISSIONS.EXAMS_VIEW, manage: PERMISSIONS.EXAMS_MANAGE },
+    { pattern: /^\/api\/admin\/anti-cheat/, view: PERMISSIONS.LIVE_MONITOR_VIEW, manage: PERMISSIONS.LIVE_MONITOR_VIEW },
     { pattern: /^\/api\/admin\/resources/, view: PERMISSIONS.RESOURCES_VIEW, manage: PERMISSIONS.RESOURCES_MANAGE },
     { pattern: /^\/api\/admin\/ai/, view: PERMISSIONS.AI_MANAGE },
     { pattern: /^\/api\/admin\/challenges/, view: PERMISSIONS.CHALLENGES_VIEW, manage: PERMISSIONS.CHALLENGES_MANAGE },
@@ -132,6 +188,14 @@ export const ADMIN_API_RULES: ReadonlyArray<{
     { pattern: /^\/api\/admin\/dashboard/, view: PERMISSIONS.DASHBOARD_VIEW },
     // Course/media editors upload through the admin upload endpoints.
     { pattern: /^\/api\/admin\/upload(?:\/.*)?$/, view: PERMISSIONS.RESOURCES_VIEW, manage: PERMISSIONS.RESOURCES_MANAGE },
+    // Coverage-audit additions (scripts/check-admin-route-coverage.ts):
+    // previously unmatched → silently required admin:bypass (*:*).
+    { pattern: /^\/api\/admin\/admin-invitations(?:\/.*)?$/, view: PERMISSIONS.USERS_MANAGE, manage: PERMISSIONS.USERS_MANAGE },
+    { pattern: /^\/api\/admin\/assignments/, view: PERMISSIONS.ASSIGNMENTS_VIEW, manage: PERMISSIONS.ASSIGNMENTS_MANAGE },
+    { pattern: /^\/api\/admin\/lessons/, view: PERMISSIONS.SUBJECTS_VIEW, manage: PERMISSIONS.SUBJECTS_MANAGE },
+    { pattern: /^\/api\/admin\/orders/, view: PERMISSIONS.ANALYTICS_VIEW },
+    { pattern: /^\/api\/admin\/payments/, view: PERMISSIONS.ANALYTICS_VIEW },
+    { pattern: /^\/api\/admin\/taxes/, view: PERMISSIONS.TAXES_VIEW, manage: PERMISSIONS.TAXES_MANAGE },
   ];
 
 function isWriteMethod(method: string): boolean {

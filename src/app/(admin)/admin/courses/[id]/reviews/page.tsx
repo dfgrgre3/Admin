@@ -13,9 +13,6 @@ import {
   Eye,
   EyeOff,
   MoreVertical,
-  ChevronDown,
-  ChevronUp,
-  Reply,
   User,
   Calendar,
 } from "lucide-react";
@@ -45,22 +42,6 @@ type CourseReview = {
     name: string;
     email: string;
   };
-  comments?: CourseComment[];
-};
-
-type CourseComment = {
-  id: string;
-  reviewId: string;
-  userId: string;
-  comment: string;
-  isVisible: boolean;
-  createdAt: string;
-  updatedAt: string;
-  user?: {
-    id: string;
-    name: string;
-    email: string;
-  };
 };
 
 type ReviewsResponse = {
@@ -79,11 +60,9 @@ export default function CourseReviewsPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
-  const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set());
-  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: string | null; type: 'review' | 'comment' }>({
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: string | null }>({
     open: false,
     id: null,
-    type: 'review'
   });
 
   const { data: reviewsData, isLoading, refetch } = useQuery({
@@ -104,12 +83,8 @@ export default function CourseReviewsPage() {
 
   // Toggle review visibility
   const toggleVisibilityMutation = useMutation({
-    mutationFn: async ({ id, isVisible, type }: { id: string; isVisible: boolean; type: 'review' | 'comment' }) => {
-      const endpoint = type === 'review' 
-        ? `${apiRoutes.admin.courses}/${courseId}/reviews`
-        : `${apiRoutes.admin.courses}/reviews/comments/${id}`;
-      
-      const response = await adminFetch(endpoint, {
+    mutationFn: async ({ id, isVisible }: { id: string; isVisible: boolean }) => {
+      const response = await adminFetch(`${apiRoutes.admin.courses}/${courseId}/reviews`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, isVisible: !isVisible }),
@@ -126,14 +101,10 @@ export default function CourseReviewsPage() {
     },
   });
 
-  // Delete review/comment
+  // Delete review
   const deleteMutation = useMutation({
-    mutationFn: async ({ id, type }: { id: string; type: 'review' | 'comment' }) => {
-      const endpoint = type === 'review'
-        ? `${apiRoutes.admin.courses}/${courseId}/reviews`
-        : `${apiRoutes.admin.courses}/reviews/comments/${id}`;
-      
-      const response = await adminFetch(endpoint, {
+    mutationFn: async ({ id }: { id: string }) => {
+      const response = await adminFetch(`${apiRoutes.admin.courses}/${courseId}/reviews`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
@@ -143,25 +114,13 @@ export default function CourseReviewsPage() {
     },
     onSuccess: () => {
       toast.success("تم الحذف بنجاح");
-      setDeleteDialog({ open: false, id: null, type: 'review' });
+      setDeleteDialog({ open: false, id: null });
       refetch();
     },
     onError: () => {
       toast.error("فشل الحذف");
     },
   });
-
-  const toggleExpand = (reviewId: string) => {
-    setExpandedReviews((prev) => {
-      const next = new Set(prev);
-      if (next.has(reviewId)) {
-        next.delete(reviewId);
-      } else {
-        next.add(reviewId);
-      }
-      return next;
-    });
-  };
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }).map((_, i) => (
@@ -257,7 +216,6 @@ export default function CourseReviewsPage() {
                         onClick={() => toggleVisibilityMutation.mutate({
                           id: review.id,
                           isVisible: review.isVisible,
-                          type: 'review'
                         })}
                       >
                         {review.isVisible ? (
@@ -274,7 +232,7 @@ export default function CourseReviewsPage() {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-red-500"
-                        onClick={() => setDeleteDialog({ open: true, id: review.id, type: 'review' })}
+                        onClick={() => setDeleteDialog({ open: true, id: review.id })}
                       >
                         <Trash2 className="h-4 w-4 ml-2" />
                         حذف التقييم
@@ -295,87 +253,6 @@ export default function CourseReviewsPage() {
                     {review.isVisible ? "مرئي للطلاب" : "مخفي"}
                   </Badge>
                 </div>
-
-                {/* Comments Section */}
-                {review.comments && review.comments.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-border/50">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleExpand(review.id)}
-                      className="text-xs font-black gap-1"
-                    >
-                      <Reply className="h-3 w-3" />
-                      {review.comments.length} رد
-                      {expandedReviews.has(review.id) ? (
-                        <ChevronUp className="h-3 w-3" />
-                      ) : (
-                        <ChevronDown className="h-3 w-3" />
-                      )}
-                    </Button>
-
-                    {expandedReviews.has(review.id) && (
-                      <div className="mt-3 space-y-3">
-                        {review.comments.map((comment) => (
-                          <div
-                            key={comment.id}
-                            className="rounded-xl border border-border/30 bg-muted/20 p-4"
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <User className="h-3 w-3 text-muted-foreground" />
-                                  <span className="text-xs font-bold">
-                                    {comment.user?.name || "مستخدم"}
-                                  </span>
-                                  <span className="text-[10px] text-muted-foreground">
-                                    {formatDate(comment.createdAt)}
-                                  </span>
-                                </div>
-                                <p className="text-xs font-medium">{comment.comment}</p>
-                              </div>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-6 w-6">
-                                    <MoreVertical className="h-3 w-3" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="start">
-                                  <DropdownMenuItem
-                                    onClick={() => toggleVisibilityMutation.mutate({
-                                      id: comment.id,
-                                      isVisible: comment.isVisible,
-                                      type: 'comment'
-                                    })}
-                                  >
-                                    {comment.isVisible ? (
-                                      <>
-                                        <EyeOff className="h-3 w-3 ml-2" />
-                                        إخفاء
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Eye className="h-3 w-3 ml-2" />
-                                        إظهار
-                                      </>
-                                    )}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    className="text-red-500"
-                                    onClick={() => setDeleteDialog({ open: true, id: comment.id, type: 'comment' })}
-                                  >
-                                    <Trash2 className="h-3 w-3 ml-2" />
-                                    حذف
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
               </CardContent>
             </Card>
           ))
@@ -410,13 +287,10 @@ export default function CourseReviewsPage() {
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         open={deleteDialog.open}
-        onOpenChange={(open) => setDeleteDialog({ open, id: open ? deleteDialog.id : null, type: deleteDialog.type })}
-        onConfirm={() => deleteMutation.mutate({ id: deleteDialog.id!, type: deleteDialog.type })}
-        title={deleteDialog.type === 'review' ? "حذف التقييم" : "حذف الرد"}
-        description={deleteDialog.type === 'review' 
-          ? "سيتم حذف التقييم وجميع الردود المرتبطة به بشكل دائم. هذه العملية لا يمكن التراجع عنها."
-          : "سيتم حذف هذا الرد بشكل دائم. هذه العملية لا يمكن التراجع عنها."
-        }
+        onOpenChange={(open) => setDeleteDialog({ open, id: open ? deleteDialog.id : null })}
+        onConfirm={() => deleteMutation.mutate({ id: deleteDialog.id! })}
+        title="حذف التقييم"
+        description="سيتم حذف التقييم بشكل دائم. هذه العملية لا يمكن التراجع عنها."
         confirmText="حذف"
         variant="destructive"
       />

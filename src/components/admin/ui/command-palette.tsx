@@ -20,6 +20,10 @@ import {
   ArrowRight,
   Loader2,
   Bot,
+  ListChecks,
+  Activity,
+  ShieldCheck,
+  Cpu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePremiumSounds } from "@/hooks/use-premium-sounds";
@@ -90,6 +94,10 @@ export function CommandPalette() {
     // AI Commands
     { id: "ai-briefing", title: "استدعاء الملخص الذكي", description: "تحليل AI فوري للحالة الراهنة", group: "الأوامر العليا (AI)", icon: Bot, onSelect: () => router.push("/admin/ai") },
     { id: "ai-fix-curriculum", title: "اقتراح تحسينات المنهج", description: "تحليل الثغرات في المحتوى", group: "الأوامر العليا (AI)", icon: Target, onSelect: () => router.push("/admin/ai?tab=studio") },
+    { id: "ai-assistants", title: "إدارة المساعدين الذكيين", description: "تهيئة وتكوين نماذج الذكاء الاصطناعي", group: "الأوامر العليا (AI)", icon: Cpu, onSelect: () => router.push("/admin/ai/assistants") },
+    { id: "ai-content-review", title: "مراجعة محتوى الذكاء", description: "طابور المراجعة البشرية للتوليدات", group: "الأوامر العليا (AI)", icon: ListChecks, onSelect: () => router.push("/admin/ai/content-review") },
+    { id: "ai-logs", title: "سجلات نشاط الذكاء", description: "تتبع الاستدعاءات والأداء", group: "الأوامر العليا (AI)", icon: Activity, onSelect: () => router.push("/admin/ai/logs") },
+    { id: "ai-moderation", title: "الرقابة الذكية التلقائية", description: "مراجعة البلاغات والمحتوى المخالف", group: "الأوامر العليا (AI)", icon: ShieldCheck, onSelect: () => router.push("/admin/ai/moderation") },
     
     // System
     { id: "sys-settings", title: "بروتوكولات النظام", description: "تعديل إعدادات المملكة", group: "النظام", icon: Settings, onSelect: () => router.push("/admin/settings") },

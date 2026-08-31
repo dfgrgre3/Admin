@@ -6,12 +6,13 @@ import { useAuthStore, type AuthUser } from '@/lib/auth/auth-store';
 import { logger } from '@/lib/logger';
 import { authApiService } from '@/services/auth/auth-api-service';
 import { isStaffAdminPanelRole } from '@/lib/auth/admin-panel-roles';
+import { hasAccessTokenMirror } from '@/lib/auth/token-mirror';
 
 interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string, rememberMe?: boolean) => Promise<{success: boolean; requires2FA?: boolean; userId?: string; error?: string;}>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<{success: boolean; requires2FA?: boolean; userId?: string; error?: string; accountLocked?: boolean; lockoutMinutes?: number;}>;
   register: (
     data: {
       email: string;
@@ -35,28 +36,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
  * Determines whether a session token exists, so `AuthProvider` can skip the
  * `/api/auth/me` fetch for visitors who were never logged in. The real
  * `access_token` cookie is HttpOnly (unreadable from JS by design), so this
- * checks the localStorage mirror the API client keeps in sync on login/
+ * checks the in-memory mirror the API client keeps in sync on login/
  * refresh/logout instead — the same source `build-ws-url.ts` relies on for
- * WebSocket auth. Absence doesn't guarantee no session (localStorage can be
- * cleared independently), so this is a hint, not a guarantee: it only skips
- * the fetch, it never blocks it.
+ * WebSocket auth. Being memory-only, it never survives a fresh page load in
+ * a new tab (see token-mirror.ts), so this is a same-tab hint only, not a
+ * guarantee: it only skips the fetch, it never blocks it.
  */
 function hasClientSessionToken(): boolean {
-  if (typeof window === 'undefined') return false;
-  try {
-    return Boolean(window.localStorage.getItem('accessToken'));
-  } catch {
-    return false;
-  }
+  return hasAccessTokenMirror();
 }
 
 /**
  * Mirrors `isProtectedRoute` in `src/middleware.ts`. The edge middleware never
  * lets an unauthenticated request reach these paths, so if the browser is
  * rendering one of them a session cookie *must* exist — regardless of what
- * localStorage says. Without this, a valid HttpOnly session whose localStorage
- * mirror is absent (fresh login, cleared storage, another tab's logout) is
- * treated as "no session" and every admin page bounces to `/admin-login`.
+ * the in-memory token mirror says. Without this, a valid HttpOnly session
+ * whose mirror is empty (fresh page load in a new tab, another tab's logout)
+ * is treated as "no session" and every admin page bounces to `/admin-login`.
  */
 function isProtectedAdminPath(pathname: string): boolean {
   if (pathname === '/admin-login' || pathname.startsWith('/admin-login/')) return false;
@@ -112,10 +108,10 @@ export function AuthProvider({
 
     // Resolution order:
     //  1. `initialAuthHint` — a server-computed cookie check, when a Server
-    //     Component supplies one (most accurate, no localStorage dependency).
+    //     Component supplies one (most accurate, no client-storage dependency).
     //  2. Protected pathname — middleware guarantees a session cookie exists
     //     here, so always verify with `/api/auth/me`.
-    //  3. localStorage mirror — best-effort hint for public pages.
+    //  3. In-memory token mirror — best-effort, same-tab-only hint for public pages.
     const shouldFetch =
       initialAuthHint === true ||
       (typeof window !== 'undefined' && isProtectedAdminPath(window.location.pathname)) ||

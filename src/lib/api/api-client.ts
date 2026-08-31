@@ -6,6 +6,7 @@ import { performanceMonitor } from '../metrics/performance';
 import { buildRuntimeApiUrl } from './config';
 import { errorService } from '@/lib/logging/error-service';
 import { useAuthStore } from '@/lib/auth/auth-store';
+import { setAccessTokenMirror, clearAccessTokenMirror } from '@/lib/auth/token-mirror';
 
 // The import graph is acyclic and verified:
 //   api-client → error-service → safe-client-utils → api/config → utils
@@ -179,16 +180,11 @@ class ApiClient {
     private resetAuthStore(): void {
         if (typeof window !== 'undefined') {
             useAuthStore.getState().reset();
-            // Clear the localStorage token mirror too — it's the only source
+            // Clear the in-memory token mirror too — it's the only source
             // buildAppUserWebSocketUrl() can read (access_token cookie is
-            // HttpOnly), so leaving stale tokens here lets a revoked session
+            // HttpOnly), so leaving a stale token here lets a revoked session
             // keep authenticating WebSocket connections after logout/reset.
-            try {
-                window.localStorage.removeItem('accessToken');
-                window.localStorage.removeItem('refreshToken');
-            } catch {
-                // Ignore storage errors (private browsing, quota, etc.)
-            }
+            clearAccessTokenMirror();
         }
     }
 
@@ -371,18 +367,18 @@ class ApiClient {
                 if (response.ok && typeof window !== 'undefined') {
                     // The access_token cookie is HttpOnly (by design — XSS-hardened),
                     // which means WebSocket connections (buildAppUserWebSocketUrl) can
-                    // never read it via document.cookie and rely on this localStorage
+                    // never read it via document.cookie and rely on this in-memory
                     // mirror as their only viable auth source. Keep it in sync on every
-                    // successful refresh, or WS auth silently uses a stale token.
+                    // successful refresh, or WS auth silently uses a stale token. The
+                    // refresh token itself is never mirrored client-side — only the
+                    // HttpOnly cookie carries it.
                     try {
-                        const payload = await response.clone().json() as { data?: { accessToken?: string; refreshToken?: string }; accessToken?: string; refreshToken?: string };
+                        const payload = await response.clone().json() as { data?: { accessToken?: string }; accessToken?: string };
                         const accessToken = payload?.data?.accessToken ?? payload?.accessToken;
-                        const refreshTokenValue = payload?.data?.refreshToken ?? payload?.refreshToken;
-                        if (accessToken) window.localStorage.setItem('accessToken', accessToken);
-                        if (refreshTokenValue) window.localStorage.setItem('refreshToken', refreshTokenValue);
+                        if (accessToken) setAccessTokenMirror(accessToken);
                     } catch {
                         // Non-fatal — the refresh itself succeeded via cookies; the
-                        // localStorage mirror just won't be updated this cycle.
+                        // in-memory mirror just won't be updated this cycle.
                     }
                 }
 
@@ -398,7 +394,7 @@ class ApiClient {
     }
 
     /**
-     * Refresh the session cookies (and the localStorage token mirror).
+     * Refresh the session cookies (and the in-memory token mirror).
      * Exposed for the WebSocket layer: the handshake cannot go through
      * executeFetch, so it has no other way to rotate an expired token before
      * connecting.

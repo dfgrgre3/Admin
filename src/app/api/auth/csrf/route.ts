@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       origin: request.headers.get('origin')
     });
 
-    const response = await fetch(`${BACKEND_URL}/api/auth/csrf`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/auth/csrf`, {
       method: 'GET',
       credentials: 'include',
       signal: AbortSignal.timeout(10_000),

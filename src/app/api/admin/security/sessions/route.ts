@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     if (permissionError) return permissionError;
 
     const response = await fetch(
-      `${BACKEND_URL}/api/admin/security/sessions`,
+      `${BACKEND_URL}/api/v1/admin/security/sessions`,
       {
         method: 'GET',
         headers: {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       sessionId?: string;
     };
 
-    let targetUrl = `${BACKEND_URL}/api/admin/security/sessions`;
+    let targetUrl = `${BACKEND_URL}/api/v1/admin/security/sessions`;
     if (action === 'revoke' && sessionId) {
       targetUrl = `${targetUrl}/${sessionId}/revoke`;
     } else if (action === 'revoke-others') {

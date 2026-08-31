@@ -10,7 +10,7 @@ export async function GET(
     const resolvedParams = await params;
     const path = resolvedParams.path ? resolvedParams.path.join('/') : '';
     const { search } = new URL(request.url);
-    const targetUrl = `${BACKEND_URL}/api/exams${path ? '/' + path : ''}${search}`;
+    const targetUrl = `${BACKEND_URL}/api/v1/exams${path ? '/' + path : ''}${search}`;
 
     const response = await fetch(targetUrl, {
       method: 'GET',
@@ -48,7 +48,7 @@ export async function POST(
     const resolvedParams = await params;
     const path = resolvedParams.path ? resolvedParams.path.join('/') : '';
     const { search } = new URL(request.url);
-    const targetUrl = `${BACKEND_URL}/api/exams${path ? '/' + path : ''}${search}`;
+    const targetUrl = `${BACKEND_URL}/api/v1/exams${path ? '/' + path : ''}${search}`;
     const body = await request.text();
 
     const postHeaders = new Headers({

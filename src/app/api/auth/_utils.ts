@@ -27,7 +27,7 @@ export async function proxyLoginRequest(
 
   logger.info('Login proxy request received', { source, bodyLength: body.length });
   try {
-    const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/auth/login`, {
       method: 'POST',
       headers,
       body,

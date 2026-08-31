@@ -206,7 +206,7 @@ export function DraggableDashboard({ children: initialChildren, onOrderChange }:
           className="text-xs text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           title="إعادة ترتيب الأقسام للوضع الافتراضي"
           type="button"
-          aria-label="إعا��ة ترتيب الأقسام للوضع الافتراضي"
+          aria-label="إعادة ترتيب الأقسام للوضع الافتراضي"
         >
           إعادة الترتيب الافتراضي
         </button>

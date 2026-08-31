@@ -245,6 +245,230 @@ export function TabsPageSkeleton() {
   );
 }
 
+/** Analytics-specific skeleton with KPIs, insights, filters and charts */
+export function AnalyticsDashboardSkeleton() {
+  return (
+    <div className="space-y-8 pb-20" dir="rtl">
+      {/* Header with actions */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-4 w-96 max-w-full" />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-10 w-28 rounded-xl" />
+          <Skeleton className="h-10 w-28 rounded-xl" />
+          <Skeleton className="h-10 w-32 rounded-xl" />
+        </div>
+      </div>
+
+      {/* AI Insights banner */}
+      <div className="rounded-3xl border border-border bg-gradient-to-l from-primary/10 via-primary/5 to-transparent p-6">
+        <div className="flex items-start gap-4">
+          <Skeleton className="h-12 w-12 rounded-2xl shrink-0" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-4 w-full max-w-2xl" />
+            <Skeleton className="h-4 w-3/4 max-w-xl" />
+          </div>
+          <Skeleton className="h-9 w-24 rounded-xl hidden md:block" />
+        </div>
+      </div>
+
+      {/* Filters bar */}
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Skeleton className="h-10 w-40 rounded-xl" />
+          <Skeleton className="h-10 w-32 rounded-xl" />
+          <Skeleton className="h-10 w-32 rounded-xl" />
+          <Skeleton className="h-10 flex-1 min-w-[200px] rounded-xl" />
+        </div>
+      </div>
+
+      {/* KPI cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-2xl border border-border bg-card p-6 space-y-3"
+            style={{ animationDelay: `${i * 80}ms` }}
+          >
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-10 w-10 rounded-xl" />
+              <Skeleton className="h-6 w-16 rounded-full" />
+            </div>
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-3 w-full" />
+          </div>
+        ))}
+      </div>
+
+      {/* Primary charts row */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 rounded-3xl border border-border bg-card p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-8 w-24 rounded-lg" />
+          </div>
+          <Skeleton className="h-[320px] w-full rounded-2xl" />
+        </div>
+        <div className="rounded-3xl border border-border bg-card p-6 space-y-4">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-[200px] w-full rounded-full mx-auto" />
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Skeleton className="h-3 w-3 rounded-full" />
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-4 w-12" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Secondary charts row */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-3xl border border-border bg-card p-6 space-y-4"
+            style={{ animationDelay: `${i * 100}ms` }}
+          >
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-5 w-36" />
+              <Skeleton className="h-8 w-20 rounded-lg" />
+            </div>
+            <Skeleton className="h-[240px] w-full rounded-2xl" />
+          </div>
+        ))}
+      </div>
+
+      {/* Table skeleton */}
+      <div className="rounded-3xl border border-border bg-card overflow-hidden">
+        <div className="border-b p-4 flex items-center justify-between">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-9 w-28 rounded-xl" />
+        </div>
+        <div className="flex gap-4 bg-muted/40 px-4 py-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className={cn("h-4", i === 0 ? "w-32" : "w-24 flex-1")} />
+          ))}
+        </div>
+        {Array.from({ length: 5 }).map((_, rowIndex) => (
+          <div
+            key={rowIndex}
+            className="flex gap-4 border-b px-4 py-4 last:border-0"
+            style={{ animationDelay: `${rowIndex * 60}ms` }}
+          >
+            {Array.from({ length: 5 }).map((_, colIndex) => (
+              <Skeleton
+                key={colIndex}
+                className={cn("h-4", colIndex === 0 ? "w-32" : "w-24 flex-1")}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Analytics sub-page skeleton (used by courses/retention/sales/students/teachers) */
+export function AnalyticsSubPageSkeleton({ chartCount = 2 }: { chartCount?: number }) {
+  return (
+    <div className="space-y-8 pb-20" dir="rtl">
+      {/* Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-56" />
+          <Skeleton className="h-4 w-80" />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-10 w-28 rounded-xl" />
+          <Skeleton className="h-10 w-28 rounded-xl" />
+          <Skeleton className="h-10 w-32 rounded-xl" />
+        </div>
+      </div>
+
+      {/* AI Insights banner */}
+      <div className="rounded-3xl border border-border bg-gradient-to-l from-primary/10 via-primary/5 to-transparent p-6">
+        <div className="flex items-start gap-4">
+          <Skeleton className="h-12 w-12 rounded-2xl shrink-0" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-4 w-full max-w-2xl" />
+            <Skeleton className="h-4 w-3/4 max-w-xl" />
+          </div>
+        </div>
+      </div>
+
+      {/* KPI cards - 4 to 8 cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-2xl border border-border bg-card p-5 space-y-3"
+            style={{ animationDelay: `${i * 60}ms` }}
+          >
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-9 w-9 rounded-xl" />
+              <Skeleton className="h-5 w-14 rounded-full" />
+            </div>
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-7 w-24" />
+          </div>
+        ))}
+      </div>
+
+      {/* Charts grid */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {Array.from({ length: chartCount }).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-3xl border border-border bg-card p-6 space-y-4"
+            style={{ animationDelay: `${i * 100}ms` }}
+          >
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-5 w-36" />
+              <Skeleton className="h-8 w-20 rounded-lg" />
+            </div>
+            <Skeleton className="h-[280px] w-full rounded-2xl" />
+          </div>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div className="rounded-3xl border border-border bg-card overflow-hidden">
+        <div className="border-b p-4 flex items-center justify-between">
+          <Skeleton className="h-5 w-36" />
+          <Skeleton className="h-9 w-28 rounded-xl" />
+        </div>
+        <div className="flex gap-4 bg-muted/40 px-4 py-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className={cn("h-4", i === 0 ? "w-32" : "w-24 flex-1")} />
+          ))}
+        </div>
+        {Array.from({ length: 6 }).map((_, rowIndex) => (
+          <div
+            key={rowIndex}
+            className="flex gap-4 border-b px-4 py-4 last:border-0"
+            style={{ animationDelay: `${rowIndex * 50}ms` }}
+          >
+            {Array.from({ length: 4 }).map((_, colIndex) => (
+              <Skeleton
+                key={colIndex}
+                className={cn("h-4", colIndex === 0 ? "w-32" : "w-24 flex-1")}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** Generic fallback for any page type */
 export function GenericPageSkeleton() {
   return (

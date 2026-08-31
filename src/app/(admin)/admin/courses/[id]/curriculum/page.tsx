@@ -1129,7 +1129,32 @@ export default function CourseCurriculumPage() {
   };
 
   const addLesson = (chapterId: string) => {
-    setChapters((current) => addLessonToChapters(current, chapterId));
+    const newLesson: Lesson = {
+      id: `new-lesson-${Date.now()}`,
+      name: "درس جديد",
+      order: 0,
+      type: "VIDEO",
+      videoUrl: "",
+      duration: 0,
+      durationMinutes: 0,
+      isFree: false,
+      description: "",
+      attachments: [],
+      examId: null,
+    };
+    setChapters((current) =>
+      current.map((chapter) => {
+        if (chapter.id !== chapterId) return chapter;
+        return {
+          ...chapter,
+          subTopics: [
+            ...chapter.subTopics,
+            { ...newLesson, order: chapter.subTopics.length },
+          ],
+        };
+      })
+    );
+    setEditingLesson({ lesson: newLesson, chapterId });
   };
 
   const deleteLesson = (chapterId: string, lessonId: string) => {
@@ -1184,7 +1209,13 @@ export default function CourseCurriculumPage() {
 
   const handleOpenInteractiveQuestions = (lesson: Lesson) => {
     setInteractiveQuestionsDialog({ lessonId: lesson.id, lessonName: lesson.name });
-    fetchInteractiveQuestions(lesson.id);
+    // Don't hit the API for lessons that haven't been saved yet (new-xxx IDs).
+    // They have no DB record so the backend returns 500.
+    if (!lesson.id.startsWith("new-")) {
+      fetchInteractiveQuestions(lesson.id);
+    } else {
+      setInteractiveQuestions([]);
+    }
   };
 
   const handleCreateInteractiveQuestion = async (question: Omit<InteractiveQuestion, "id" | "lessonId">) => {
@@ -1409,7 +1440,7 @@ export default function CourseCurriculumPage() {
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase">نوع الدرس</Label>
                 <Select
-                  value={editingLesson?.lesson.type}
+                  value={editingLesson?.lesson.type || ""}
                   onValueChange={(value: LessonType) =>
                     setEditingLesson((current) =>
                       current ? { ...current, lesson: { ...current.lesson, type: value } } : null

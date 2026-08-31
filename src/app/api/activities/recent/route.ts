@@ -3,7 +3,7 @@ import { BACKEND_URL, backendJsonResponse, upstreamAuthHeaders } from '@/app/api
 
 export async function GET(request: NextRequest) {
   const { search } = new URL(request.url);
-  const targetUrl = `${BACKEND_URL}/api/activities/recent${search}`;
+  const targetUrl = `${BACKEND_URL}/api/v1/activities/recent${search}`;
   
   try {
     const response = await fetch(targetUrl, {

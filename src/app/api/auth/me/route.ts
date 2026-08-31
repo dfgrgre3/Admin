@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   for (const origin of backendOriginCandidates()) {
     try {
-      const response = await fetch(`${origin}/api/auth/me`, {
+      const response = await fetch(`${origin}/api/v1/auth/me`, {
         method: 'GET',
         headers,
         credentials: 'include',

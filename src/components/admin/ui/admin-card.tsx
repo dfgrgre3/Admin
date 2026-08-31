@@ -33,6 +33,7 @@ interface AdminCardProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof cardVariants> {
   interactive?: boolean;
+  noPadding?: boolean;
 }
 
 export function AdminCard({
@@ -40,6 +41,7 @@ export function AdminCard({
   variant,
   size,
   interactive = false,
+  noPadding = false,
   children,
   ...props
 }: AdminCardProps) {
@@ -48,6 +50,7 @@ export function AdminCard({
       className={cn(
         cardVariants({ variant, size }),
         interactive && "cursor-pointer",
+        noPadding && "p-0",
         className
       )}
       {...props}
@@ -68,7 +71,7 @@ interface StatsCardProps {
     isPositive: boolean;
     label?: string;
   };
-  color?: "default" | "violet" | "fuchsia" | "rose" | "amber" | "purple" | "blue" | "green" | "yellow" | "red" | "slate";
+  color?: "default" | "violet" | "fuchsia" | "rose" | "amber" | "purple" | "blue" | "green" | "emerald" | "yellow" | "red" | "slate";
   className?: string;
 }
 
@@ -81,6 +84,7 @@ const colorClasses = {
   purple: "text-purple-500",
   blue: "text-blue-500",
   green: "text-emerald-500",
+  emerald: "text-emerald-500",
   yellow: "text-amber-500",
   red: "text-red-500",
   slate: "text-slate-500",
@@ -88,7 +92,7 @@ const colorClasses = {
 
 type ColorKey = keyof typeof colorClasses;
 
-const iconBgClasses = {
+const iconBgClasses: Record<ColorKey, string> = {
   default: "bg-primary/10",
   violet: "bg-violet-500/10",
   fuchsia: "bg-fuchsia-500/10",
@@ -97,6 +101,7 @@ const iconBgClasses = {
   purple: "bg-purple-500/10",
   blue: "bg-blue-500/10",
   green: "bg-emerald-500/10",
+  emerald: "bg-emerald-500/10",
   yellow: "bg-amber-500/10",
   red: "bg-red-500/10",
   slate: "bg-slate-500/10",
@@ -120,7 +125,7 @@ export function AdminStatsCard({
       )}
     >
       {/* Dynamic Glow Effect */}
-      <div 
+      <div
         className={cn(
           "absolute -right-8 -top-8 h-32 w-32 rounded-full blur-3xl opacity-20",
           color === "violet" && "bg-violet-500",
@@ -129,12 +134,12 @@ export function AdminStatsCard({
           color === "amber" && "bg-amber-500",
           color === "purple" && "bg-purple-500",
           color === "blue" && "bg-blue-500",
-          color === "green" && "bg-emerald-500",
+          (color === "green" || color === "emerald") && "bg-emerald-500",
           color === "yellow" && "bg-amber-500",
           color === "red" && "bg-red-500",
           color === "slate" && "bg-slate-500",
           color === "default" && "bg-primary"
-        )} 
+        )}
       />
       
       <div className="relative">

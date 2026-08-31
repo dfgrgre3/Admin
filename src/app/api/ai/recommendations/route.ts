@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
     headers.delete('origin');
 
-    const response = await fetch(`${BACKEND_URL}/api/ai/recommendations?limit=${limit}&force=${force}`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/ai/recommendations?limit=${limit}&force=${force}`, {
       method: 'GET',
       headers,
       credentials: 'include'
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
     headers.delete('origin');
 
-    const response = await fetch(`${BACKEND_URL}/api/ai/recommendations/track`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/ai/recommendations/track`, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),

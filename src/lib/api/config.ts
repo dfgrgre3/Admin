@@ -34,7 +34,8 @@ export function getBackendOrigin(): string {
 }
 
 export function getBackendApiBaseUrl(): string {
-  return `${getBackendOrigin()}/api`;
+  // Backend routes are versioned at /api/v1 (internal/infrastructure/api/*_routes.go).
+  return `${getBackendOrigin()}/api/v1`;
 }
 
 export function getRuntimeApiBaseUrl(): string {

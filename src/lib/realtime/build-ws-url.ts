@@ -1,3 +1,5 @@
+import { getAccessTokenMirror } from '@/lib/auth/token-mirror';
+
 /**
  * Single place for browser WebSocket URL to `/api/ws` (notifications + future live payloads).
  * The WebSocket endpoint is served by the backend API server, not the Next.js frontend.
@@ -36,49 +38,14 @@ export function buildAppUserWebSocketUrl(userId: string): string {
     host = apiUrl;
   }
 
-  // Get access token from cookies for WebSocket authentication.
-  // The browser's WebSocket API cannot set custom headers, so we pass the token as a query parameter.
-  // Cookies may be HttpOnly or blocked on cross-origin WS connections, so fall back to localStorage.
-  const accessToken = getAccessTokenFromCookie() || getAccessTokenFromStorage();
+  // Get the access token for WebSocket authentication. The real access_token
+  // cookie is HttpOnly by design (unreadable via document.cookie, and not
+  // reliably forwarded on a cross-origin WS handshake either), and the
+  // browser WebSocket API cannot send custom headers — so the only viable
+  // path is this in-memory mirror, passed as a query parameter. It is never
+  // persisted to localStorage; see token-mirror.ts for why.
+  const accessToken = getAccessTokenMirror();
   const tokenParam = accessToken ? `&access_token=${encodeURIComponent(accessToken)}` : '';
 
-  return `${wsProtocol}//${host}/api/ws?userId=${encodeURIComponent(userId)}${tokenParam}`;
-}
-
-function getAccessTokenFromStorage(): string | null {
-  if (typeof window === 'undefined') return null;
-
-  try {
-    return window.localStorage.getItem('accessToken');
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Extract access token from cookies for WebSocket authentication.
- * WebSocket connections cannot send custom headers, so we pass the token as a query parameter.
- */
-function getAccessTokenFromCookie(): string | null {
-  if (typeof document === 'undefined') return null;
-
-  const nameEQ = "access_token=";
-  const ca = document.cookie.split(';');
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i];
-    if (!c) continue;
-    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-  }
-
-  // Fallback: try __session cookie
-  const sessionNameEQ = "__session=";
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i];
-    if (!c) continue;
-    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-    if (c.indexOf(sessionNameEQ) === 0) return c.substring(sessionNameEQ.length, c.length);
-  }
-
-  return null;
+  return `${wsProtocol}//${host}/api/v1/ws?userId=${encodeURIComponent(userId)}${tokenParam}`;
 }

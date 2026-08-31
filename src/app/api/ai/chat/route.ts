@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     postHeaders.delete('origin');
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/ai/chat`, {
+      const response = await fetch(`${BACKEND_URL}/api/v1/ai/chat`, {
         method: 'POST',
         headers: postHeaders,
         body: JSON.stringify(backendPayload),
@@ -162,7 +162,7 @@ async function handleStreamingRequest(request: NextRequest, payload: any) {
     // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
     streamHeaders.delete('origin');
 
-    const response = await fetch(`${backendUrl}/api/ai/chat`, {
+    const response = await fetch(`${backendUrl}/api/v1/ai/chat`, {
       method: 'POST',
       headers: streamHeaders,
       body: JSON.stringify(payload),
@@ -233,7 +233,7 @@ export async function GET(request: NextRequest) {
       // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
       getHeaders.delete('origin');
 
-      const response = await fetch(`${backendUrl}/api/ai/conversations`, {
+      const response = await fetch(`${backendUrl}/api/v1/ai/conversations`, {
         method: 'GET',
         headers: getHeaders,
         credentials: 'include'
@@ -264,7 +264,7 @@ export async function GET(request: NextRequest) {
       // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
       getConvHeaders.delete('origin');
 
-      const response = await fetch(`${backendUrl}/api/ai/conversation/${conversationId}`, {
+      const response = await fetch(`${backendUrl}/api/v1/ai/conversation/${conversationId}`, {
         method: 'GET',
         headers: getConvHeaders,
         credentials: 'include'
@@ -315,7 +315,7 @@ export async function DELETE(request: NextRequest) {
     // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
     deleteHeaders.delete('origin');
 
-    const response = await fetch(`${backendUrl}/api/ai/conversation/${conversationId}`, {
+    const response = await fetch(`${backendUrl}/api/v1/ai/conversation/${conversationId}`, {
       method: 'DELETE',
       headers: deleteHeaders,
       credentials: 'include'

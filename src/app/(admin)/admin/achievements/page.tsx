@@ -1,95 +1,192 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { PageHeader } from "@/components/admin/ui/page-header";
 import { AdminButton } from "@/components/admin/ui/admin-button";
-import { AdminStatsCard } from "@/components/admin/ui/admin-card";
-import { Plus, Trophy, RefreshCw, Award, Star, Zap, Medal } from "lucide-react";
-import { toast } from "sonner";
 import { AdminConfirm } from "@/components/admin/ui/admin-confirm";
 import { TableSkeleton } from "@/components/admin/ui/loading-skeleton";
+import { Plus, RefreshCw, Download, Upload, Trophy, History, Award, Users, Sparkles, Activity } from "lucide-react";
+import { toast } from "sonner";
+import { motion } from "framer-motion";
+
 import { AchievementTable } from "./AchievementTable";
 import { AchievementFormDialog } from "./AchievementFormDialog";
-import { Achievement } from "./types";
-import { m } from "framer-motion";
+import { AchievementStats } from "./_components/achievement-stats";
+import { GrantAchievementDialog } from "./_components/grant-achievement-dialog";
+import {
+  AchievementGrid,
+  AchievementViewToggle,
+} from "./_components/achievement-grid-view";
+import type { Achievement } from "./_lib/types";
+import {
+  useAchievements,
+  useCreateAchievement,
+  useDeleteAchievement,
+  useToggleAchievementSecret,
+  useDuplicateAchievement,
+  useBulkDeleteAchievements,
+} from "./_hooks/use-achievements";
+import { convertToCSV, downloadFile } from "./_lib/utils";
 
-import { apiRoutes } from "@/lib/api/routes";
-import { adminFetch } from "@/lib/api/admin-api";
-import { logger } from '@/lib/logger';
+type ViewMode = "table" | "grid";
 
 export default function AdminAchievementsPage() {
-  const [achievements, setAchievements] = React.useState<Achievement[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const [view, setView] = React.useState<ViewMode>("table");
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editingAchievement, setEditingAchievement] = React.useState<Achievement | null>(null);
-  const [deleteDialog, setDeleteDialog] = React.useState<{
+  const [deleteDialog, setDeleteDialog] = React.useState<{ open: boolean; id: string | null }>({
+    open: false,
+    id: null,
+  });
+  const [bulkDeleteDialog, setBulkDeleteDialog] = React.useState<{
     open: boolean;
-    id: string | null;
-  }>({ open: false, id: null });
+    ids: string[];
+  }>({ open: false, ids: [] });
+  const [grantDialog, setGrantDialog] = React.useState<{ open: boolean; achievement: Achievement | null }>({
+    open: false,
+    achievement: null,
+  });
 
-  const fetchAchievements = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await adminFetch(apiRoutes.admin.achievements);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setAchievements(data.data || []);
-    } catch (error) {
-      logger.error("Error fetching achievements:", error);
-      toast.error("حدث خطأ أثناء جلب سجلات الأوسمة.");
-      setAchievements([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    fetchAchievements();
-  }, [fetchAchievements]);
+  const { data: achievements = [], isLoading, refetch } = useAchievements();
+  const createMutation = useCreateAchievement();
+  const deleteMutation = useDeleteAchievement();
+  const toggleSecretMutation = useToggleAchievementSecret();
+  const duplicateMutation = useDuplicateAchievement();
+  const bulkDeleteMutation = useBulkDeleteAchievements();
 
   const handleOpenDialog = (achievement?: Achievement) => {
     setEditingAchievement(achievement || null);
     setDialogOpen(true);
   };
 
-  const handleDeleteRequest = (id: string) => {
-    setDeleteDialog({ open: true, id });
-  };
+  const handleDeleteRequest = (id: string) => setDeleteDialog({ open: true, id });
 
   const handleDelete = async () => {
     if (!deleteDialog.id) return;
-
     try {
-      const response = await adminFetch(apiRoutes.admin.achievements, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: deleteDialog.id }),
-      });
-
-      if (response.ok) {
-        toast.success("تم حذف الوسام بنجاح");
-        fetchAchievements();
-      } else {
-        toast.error("حدث خطأ أثناء حذف الوسام");
-      }
-    } catch (error) {
-      logger.error("Error deleting achievement:", error);
-      toast.error("حدث خطأ أثناء حذف الوسام");
+      await deleteMutation.mutateAsync(deleteDialog.id);
     } finally {
       setDeleteDialog({ open: false, id: null });
     }
   };
 
+  const handleBulkDeleteRequest = (ids: string[]) => {
+    if (ids.length === 0) return;
+    setBulkDeleteDialog({ open: true, ids });
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await bulkDeleteMutation.mutateAsync(bulkDeleteDialog.ids);
+    } finally {
+      setBulkDeleteDialog({ open: false, ids: [] });
+    }
+  };
+
+  const handleToggleSecret = (achievement: Achievement) => {
+    toggleSecretMutation.mutate({ id: achievement.id, isSecret: !achievement.isSecret });
+  };
+
+  const handleDuplicate = (achievement: Achievement) => duplicateMutation.mutate(achievement);
+
+  const handleGrant = (achievement: Achievement) =>
+    setGrantDialog({ open: true, achievement });
+
+  const handleExportCSV = () => {
+    if (achievements.length === 0) {
+      toast.error("لا توجد أوسمة للتصدير");
+      return;
+    }
+    const csv = convertToCSV(achievements, [
+      { key: "key", label: "المفتاح" },
+      { key: "title", label: "العنوان" },
+      { key: "description", label: "الوصف" },
+      { key: "icon", label: "الأيقونة" },
+      { key: "rarity", label: "فئة التميز" },
+      { key: "category", label: "التصنيف" },
+      { key: "difficulty", label: "الصعوبة" },
+      { key: "xpReward", label: "مكافأة النقاط" },
+      { key: "isSecret", label: "مخفي" },
+      { key: "unlockedCount", label: "عدد الحاصلين" },
+      { key: "criteria", label: "الشرط" },
+    ]);
+    downloadFile(
+      csv,
+      `achievements-${new Date().toISOString().split("T")[0]}.csv`,
+      "text/csv;charset=utf-8"
+    );
+    toast.success(`تم تصدير ${achievements.length} وسام بصيغة CSV`);
+  };
+
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const imported = JSON.parse(e.target?.result as string);
+        if (!Array.isArray(imported)) throw new Error("تنسيق الملف غير صالح");
+
+        let importedCount = 0;
+        let failedCount = 0;
+        for (const achievement of imported) {
+          try {
+            await createMutation.mutateAsync(achievement);
+            importedCount++;
+          } catch {
+            failedCount++;
+          }
+        }
+
+        if (importedCount > 0) {
+          toast.success(`تم استيراد ${importedCount} وسام بنجاح`);
+          refetch();
+        }
+        if (failedCount > 0) {
+          toast.error(`فشل استيراد ${failedCount} وسام`);
+        }
+      } catch {
+        toast.error("فشل في قراءة ملف الاستيراد");
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = "";
+  };
+
   return (
-    <div className="space-y-10 pb-20" dir="rtl">
+    <div className="space-y-8 pb-20" dir="rtl">
       <PageHeader
         title="نظام الأوسمة والتقدير"
         description="إدارة الأوسمة التعليمية، تكريم الطلاب المتميزين، ومنح إنجازات التفوق للمستخدمين والطلاب."
       >
-        <div className="flex items-center gap-3">
-          <AdminButton variant="outline" icon={RefreshCw} onClick={fetchAchievements} loading={loading}>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Link href="/admin/achievements/history">
+            <AdminButton variant="outline" icon={History}>
+              سجل المنح
+            </AdminButton>
+          </Link>
+          <AdminButton variant="outline" icon={Download} onClick={handleExportCSV}>
+            تصدير CSV
+          </AdminButton>
+          <div className="relative">
+            <input
+              type="file"
+              accept=".json"
+              onChange={handleImport}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+            <AdminButton variant="outline" icon={Upload}>
+              استيراد أوسمة
+            </AdminButton>
+          </div>
+          <AdminButton
+            variant="outline"
+            icon={RefreshCw}
+            onClick={() => refetch()}
+            loading={isLoading}
+          >
             تحديث السجلات
           </AdminButton>
           <AdminButton icon={Plus} onClick={() => handleOpenDialog()}>
@@ -98,63 +195,65 @@ export default function AdminAchievementsPage() {
         </div>
       </PageHeader>
 
-      {/* Stats Summary */}
-      <div className="grid gap-6 md:grid-cols-4">
-        <AdminStatsCard
-          title="إجمالي الأوسمة"
-          value={achievements.length}
-          description="وسام تعليمي متاح"
-          icon={Medal}
-          color="blue"
-        />
-        <AdminStatsCard
-          title="الأوسمة المعلنة"
-          value={achievements.filter(a => !a.isSecret).length}
-          description="وسام ظاهر للطلاب"
-          icon={Award}
-          color="green"
-        />
-        <AdminStatsCard
-          title="فئات التميز"
-          value={achievements.filter(a => a.rarity === "rare" || a.rarity === "epic" || a.rarity === "legendary").length}
-          description="أوسمة بمستويات متقدمة"
-          icon={Star}
-          color="purple"
-        />
-        <AdminStatsCard
-          title="مكافآت النقاط"
-          value={achievements.reduce((sum, a) => sum + (a.xpReward || 0), 0).toLocaleString()}
-          description="إجمالي النقاط المتاحة"
-          icon={Zap}
-          color="yellow"
-        />
-      </div>
+      <AchievementStats achievements={achievements} />
 
-      <m.div
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="admin-glass p-1 rounded-[2.5rem] border border-white/10 overflow-hidden"
       >
-        {loading ? (
+        <div className="flex items-center justify-between px-6 pt-5">
+          <div className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-amber-500" />
+            <h2 className="font-black text-lg uppercase tracking-widest">سجل الأوسمة</h2>
+            <span className="text-xs font-bold text-muted-foreground">
+              ({achievements.length} وسام)
+            </span>
+          </div>
+          <AchievementViewToggle view={view} onViewChange={setView} />
+        </div>
+
+        {isLoading ? (
           <TableSkeleton rows={8} cols={7} />
-        ) : (
+        ) : view === "table" ? (
           <AchievementTable
             achievements={achievements}
             onEdit={handleOpenDialog}
             onDelete={handleDeleteRequest}
+            onDuplicate={handleDuplicate}
+            onToggleSecret={handleToggleSecret}
+            onBulkDelete={handleBulkDeleteRequest}
+            onGrant={handleGrant}
+            onRefresh={() => refetch()}
+          />
+        ) : (
+          <AchievementGrid
+            achievements={achievements}
+            onEdit={handleOpenDialog}
+            onDelete={handleDeleteRequest}
+            onDuplicate={handleDuplicate}
+            onToggleSecret={handleToggleSecret}
+            onGrant={handleGrant}
           />
         )}
-      </m.div>
+      </motion.div>
 
       <AchievementFormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         editingAchievement={editingAchievement}
         onSuccess={() => {
-          fetchAchievements();
+          refetch();
           setDialogOpen(false);
           setEditingAchievement(null);
         }}
+      />
+
+      <GrantAchievementDialog
+        open={grantDialog.open}
+        onOpenChange={(open) => setGrantDialog({ open, achievement: grantDialog.achievement })}
+        achievement={grantDialog.achievement}
+        onSuccess={() => refetch()}
       />
 
       <AdminConfirm
@@ -165,6 +264,18 @@ export default function AdminAchievementsPage() {
         confirmText="تأكيد الحذف"
         variant="destructive"
         onConfirm={handleDelete}
+        loading={deleteMutation.isPending}
+      />
+
+      <AdminConfirm
+        open={bulkDeleteDialog.open}
+        onOpenChange={(open) => setBulkDeleteDialog({ open, ids: [] })}
+        title={`حذف ${bulkDeleteDialog.ids.length} وسام`}
+        description="هل أنت متأكد من حذف جميع الأوسمة المحددة؟ لا يمكن التراجع عن هذا الإجراء."
+        confirmText="حذف الكل"
+        variant="destructive"
+        onConfirm={handleBulkDelete}
+        loading={bulkDeleteMutation.isPending}
       />
     </div>
   );

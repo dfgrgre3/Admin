@@ -106,37 +106,4 @@ export default [
       ],
     },
   },
-  // Jest / Vitest globals for test files
-  {
-    files: ["**/*.test.{js,jsx,ts,tsx}", "**/*.spec.{js,jsx,ts,tsx}", "**/tests/**/*.{js,jsx,ts,tsx}"],
-    languageOptions: {
-      globals: {
-        ...globals.browser,
-        ...globals.node,
-        jest: "readonly",
-        describe: "readonly",
-        it: "readonly",
-        test: "readonly",
-        expect: "readonly",
-        beforeEach: "readonly",
-        afterEach: "readonly",
-        beforeAll: "readonly",
-        afterAll: "readonly",
-        vi: "readonly",
-        vitest: "readonly",
-      },
-    },
-    rules: {
-      // Disable base no-unused-vars in favor of TypeScript version
-      "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": [
-        "warn",
-        {
-          argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_",
-          caughtErrorsIgnorePattern: "^_",
-        },
-      ],
-    },
-  },
 ];

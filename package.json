@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node --max-old-space-size=4096 ./node_modules/next/dist/bin/next dev",
+    "dev": "node --max-old-space-size=4096 ./node_modules/next/dist/bin/next dev --turbo",
+    "dev:webpack": "node --max-old-space-size=4096 ./node_modules/next/dist/bin/next dev",
     "dev:turbo": "next dev --turbo",
     "clear-cache": "node -e \"require('fs').rmSync('.next/cache', {recursive: true, force: true})\"",
     "build": "next build",
@@ -15,10 +16,7 @@
     "perf": "node scripts/check-server.js && npx lighthouse http://localhost:3000 --chrome-flags='--headless --disable-dev-shm-usage --no-sandbox --disable-setuid-sandbox --ignore-certificate-errors --allow-insecure-localhost' --output=json --output-path=./lighthouse-results.json --only-categories=performance",
     "check:env": "tsx scripts/check-environment.ts",
     "check:errors": "tsx scripts/comprehensive-error-check.ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:e2e": "playwright test",
-    "test:all": "npm run test && npm run test:e2e"
+    "check:admin-routes": "tsx scripts/check-admin-route-coverage.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1050.0",
@@ -99,11 +97,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^9.0.0",
-    "@playwright/test": "^1.59.1",
     "@tailwindcss/postcss": "^4.1.18",
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
     "@types/chart.js": "^2.9.41",
     "@types/node": "^22.19.13",
     "@types/qrcode": "^1.5.6",
@@ -118,15 +112,12 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^14.0.0",
-    "jest-websocket-mock": "^2.5.0",
-    "jsdom": "^26.1.0",
     "knip": "^6.7.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
     "tailwindcss-animate": "^1.0.7",
     "tsx": "^4.21.0",
-    "typescript": "^5.7.3",
-    "vitest": "^4.1.5"
+    "typescript": "^5.7.3"
   },
   "overrides": {
     "import-in-the-middle": "^2.0.1",

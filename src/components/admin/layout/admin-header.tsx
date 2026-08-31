@@ -364,7 +364,10 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
         {/* Notifications */}
         <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
           <DropdownMenuTrigger asChild>
-            <button className="relative h-9 w-9 rounded-lg flex items-center justify-center hover:bg-accent transition-colors">
+            <button
+              className="relative h-9 w-9 rounded-lg flex items-center justify-center hover:bg-accent transition-colors"
+              aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
+            >
               <Bell className="h-4.5 w-4.5" />
               {unreadCount > 0 && (
                 <span className="absolute -left-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground animate-in zoom-in">

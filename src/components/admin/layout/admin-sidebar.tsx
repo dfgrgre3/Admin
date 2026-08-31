@@ -160,6 +160,13 @@ const mainNavItems: SidebarNavItem[] = [
     permission: "USERS_MANAGE",
   },
   {
+    title: "الأدوار والصلاحيات",
+    href: "/admin/roles",
+    icon: Shield,
+    color: "bg-emerald-600",
+    permission: "ROLES_VIEW",
+  },
+  {
     title: "المعلمين",
     href: "/admin/teachers",
     icon: GraduationCap,
@@ -293,6 +300,34 @@ const contentNavItems: SidebarNavItem[] = [
     href: "/admin/ai",
     icon: Bot,
     color: "bg-orange-500",
+    permission: "AI_MANAGE",
+  },
+  {
+    title: "↳ إدارة المساعدين",
+    href: "/admin/ai/assistants",
+    icon: Bot,
+    color: "bg-violet-500",
+    permission: "AI_MANAGE",
+  },
+  {
+    title: "↳ مراجعة المحتوى",
+    href: "/admin/ai/content-review",
+    icon: ClipboardList,
+    color: "bg-orange-600",
+    permission: "AI_MANAGE",
+  },
+  {
+    title: "↳ سجلات الذكاء",
+    href: "/admin/ai/logs",
+    icon: ScrollText,
+    color: "bg-blue-500",
+    permission: "AI_MANAGE",
+  },
+  {
+    title: "↳ الرقابة الذكية",
+    href: "/admin/ai/moderation",
+    icon: Shield,
+    color: "bg-rose-500",
     permission: "AI_MANAGE",
   },
 ];

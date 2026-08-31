@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
     headers.delete('origin');
 
-    const response = await fetch(`${BACKEND_URL}/api/admin/users/bulk-send-message`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/admin/users/bulk-send-message`, {
       method: 'POST',
       headers,
       body: JSON.stringify(backendPayload),

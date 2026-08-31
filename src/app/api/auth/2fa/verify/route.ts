@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Request body is empty' }, { status: 400 });
     }
 
-    const targetUrl = `${BACKEND_URL}/api/auth/mfa/verify`;
+    const targetUrl = `${BACKEND_URL}/api/v1/auth/mfa/verify`;
 
     const headers = new Headers({
       'Content-Type': 'application/json',

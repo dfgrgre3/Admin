@@ -161,7 +161,7 @@ export default async function proxy(req: NextRequest) {
   if (shouldRefresh && refreshToken) {
     const backendUrl = getBackendOrigin();
     try {
-      const refreshRes = await fetch(`${backendUrl}/api/auth/refresh`, {
+      const refreshRes = await fetch(`${backendUrl}/api/v1/auth/refresh`, {
         method: "POST",
         headers: {
           "Cookie": `refresh_token=${refreshToken}`,

@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { BACKEND_URL, backendJsonResponse, upstreamAuthHeaders } from '@/app/api/auth/_utils';
 
 export async function GET(request: NextRequest) {
-  const targetUrl = `${BACKEND_URL}/api/settings/preferences`;
+  const targetUrl = `${BACKEND_URL}/api/v1/settings/preferences`;
   
   try {
     const response = await fetch(targetUrl, {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const targetUrl = `${BACKEND_URL}/api/settings/preferences`;
+  const targetUrl = `${BACKEND_URL}/api/v1/settings/preferences`;
   const body = await request.arrayBuffer();
 
   const headers = new Headers({

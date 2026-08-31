@@ -39,7 +39,7 @@ export function SettingsTab({
 }: {
   user: UserDetails;
   setEditedUser: (u: Partial<UserDetails>) => void;
-  handleUpdate: () => Promise<void>;
+  handleUpdate: () => void | Promise<void>;
   setIsEditing: (e: boolean) => void;
   saving?: boolean;
 }) {

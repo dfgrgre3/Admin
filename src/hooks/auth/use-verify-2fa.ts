@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { verify2FAApi } from '@/lib/api/admin-auth';
 import { type Verify2FARequest, type Verify2FAResponse } from '@/types/auth';
+import { setAccessTokenMirror } from '@/lib/auth/token-mirror';
 
 interface UseVerify2FAOptions {
   onSuccess?: () => void;
@@ -26,11 +27,10 @@ export function useVerify2FA(options?: UseVerify2FAOptions) {
           });
         }
         
-        // Store tokens
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('accessToken', result.data.accessToken);
-          localStorage.setItem('refreshToken', result.data.refreshToken);
-        }
+        // Mirror the access token in memory for WebSocket auth. Never
+        // persisted to localStorage — see token-mirror.ts. The refresh token
+        // is never mirrored client-side.
+        setAccessTokenMirror(result.data.accessToken);
         
         // Invalidate all queries to refresh data
         queryClient.invalidateQueries();

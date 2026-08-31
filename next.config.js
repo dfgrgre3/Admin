@@ -61,6 +61,13 @@ const nextConfig = {
       '@radix-ui/react-dropdown-menu',
       '@radix-ui/react-tabs',
       '@radix-ui/react-select',
+      '@radix-ui/react-popover',
+      '@radix-ui/react-tooltip',
+      '@radix-ui/react-switch',
+      '@radix-ui/react-alert-dialog',
+      'recharts',
+      'framer-motion',
+      'sonner',
     ],
     // Only the static `/uploads/:path*` rewrite is proxied by Next itself, and it
     // is read-only. API uploads go through route handlers in `src/app/api`, which

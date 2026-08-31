@@ -92,6 +92,7 @@ export interface AdminUsersQuery {
   subscriptionExpiresTo?: string;
   paymentStatus?: string;
   includeDeleted?: boolean;
+  isNew?: boolean;
   isOnline?: boolean;
   walletMin?: number;
   walletMax?: number;

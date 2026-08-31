@@ -5,6 +5,7 @@ import { adminLoginApi } from '@/lib/api/admin-auth';
 import { type AdminLoginRequest, type AdminLoginResponse } from '@/types/auth';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
+import { setAccessTokenMirror } from '@/lib/auth/token-mirror';
 
 interface UseLoginOptions {
   redirectTo?: string;
@@ -61,14 +62,11 @@ export function useLogin(options?: UseLoginOptions) {
           });
         }
 
-        // Persist tokens for WebSocket authentication when cookies are unavailable.
-        if (typeof window !== 'undefined' && result.data) {
-          if (result.data.accessToken) {
-            window.localStorage.setItem('accessToken', result.data.accessToken);
-          }
-          if (result.data.refreshToken) {
-            window.localStorage.setItem('refreshToken', result.data.refreshToken);
-          }
+        // Mirror the access token in memory for WebSocket auth (the real
+        // access_token cookie is HttpOnly). Never persisted to localStorage —
+        // see token-mirror.ts. The refresh token is never mirrored client-side.
+        if (result.data?.accessToken) {
+          setAccessTokenMirror(result.data.accessToken);
         }
 
         // Success - refresh user data

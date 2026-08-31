@@ -111,7 +111,7 @@ async function handleProxy(
 
   for (const origin of origins) {
     try {
-      const targetUrl = `${origin}/api/${path}${search}`;
+      const targetUrl = `${origin}/api/v1/${path}${search}`;
       logger.info('API proxy request', { source: 'api/catch-all', method: request.method, path });
 
       const response = await fetch(targetUrl, {

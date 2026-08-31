@@ -17,6 +17,16 @@ interface AdminLoginCredentialsStepProps {
   showPassword: boolean;
   onToggleShowPassword: () => void;
   onSubmit: () => void;
+  rememberMe: boolean;
+  onToggleRememberMe: () => void;
+  /** Seconds left in an active account lockout, or null when not locked. */
+  lockoutSecondsLeft: number | null;
+}
+
+function formatLockoutTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 /** First step of the admin/staff login flow — email + password credentials. */
@@ -28,7 +38,11 @@ export default function AdminLoginCredentialsStep({
   showPassword,
   onToggleShowPassword,
   onSubmit,
+  rememberMe,
+  onToggleRememberMe,
+  lockoutSecondsLeft,
 }: AdminLoginCredentialsStepProps) {
+  const isLocked = Boolean(lockoutSecondsLeft && lockoutSecondsLeft > 0);
   return (
     <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-gray-950 p-10 shadow-lg">
       <div className="absolute top-0 right-0 p-8 opacity-10">
@@ -44,7 +58,19 @@ export default function AdminLoginCredentialsStep({
         <p className="text-gray-400 text-lg leading-relaxed">يرجى إدخال بيانات الاعتماد الخاصة بالنظام للوصول إلى لوحة التحكم</p>
       </div>
 
-      {errorStatus && (
+      {isLocked && (
+        <div className="mb-8 flex items-center gap-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5 text-amber-400">
+          <ShieldAlert className="h-6 w-6 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold">تم قفل الحساب مؤقتًا بسبب محاولات دخول فاشلة متكررة.</p>
+            <p className="text-xs font-bold mt-1 tabular-nums">
+              يمكنك المحاولة مرة أخرى بعد: {formatLockoutTime(lockoutSecondsLeft as number)}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {!isLocked && errorStatus && (
         <div className="mb-8 flex items-center gap-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-5 text-red-400">
           <AlertCircle className="h-6 w-6 flex-shrink-0" />
           <p className="text-sm font-semibold">{errorStatus}</p>
@@ -95,14 +121,28 @@ export default function AdminLoginCredentialsStep({
           {errors.password && <p className="mr-2 mt-2 text-xs font-bold text-red-500/90 tracking-wide">{errors.password.message}</p>}
         </div>
 
+        <label className="mr-2 flex items-center gap-3 select-none cursor-pointer w-fit">
+          <input
+            type="checkbox"
+            checked={rememberMe}
+            onChange={onToggleRememberMe}
+            className="h-4 w-4 rounded border-white/20 bg-white/[0.03] accent-red-600 focus:ring-2 focus:ring-red-500/30"
+          />
+          <span className="text-sm font-semibold text-gray-400">
+            تذكرني لمدة 90 يومًا على هذا الجهاز
+          </span>
+        </label>
+
         <div className="pt-2">
           <button
             onClick={onSubmit}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isLocked}
             className="w-full rounded-[1.25rem] bg-gradient-to-r from-red-600 to-orange-600 px-6 py-5 font-black text-white shadow-lg disabled:opacity-70"
           >
             {isSubmitting ? (
               <Loader2 className="mx-auto h-7 w-7 animate-spin" />
+            ) : isLocked ? (
+              <span className="text-lg">الحساب مقفل مؤقتًا</span>
             ) : (
               <div className="flex items-center justify-center gap-3">
                 <span className="text-lg">تأكيد الهوية والدخول</span>

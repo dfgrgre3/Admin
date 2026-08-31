@@ -14,6 +14,17 @@ import type {
   AdminAgentCommandResponse,
   AdminAgentExecuteResponse,
   AdminAgentCommandContext,
+  Assistant,
+  AssistantOverview,
+  AIContentReviewItem,
+  ContentReviewStats,
+  ContentReviewStatus,
+  AILogEntry,
+  AILogStats,
+  ModerationCase,
+  ModerationStats,
+  ModerationRule,
+  ModerationCaseStatus,
 } from './types';
 import { adminFetch } from '@/lib/api/admin-api';
 import { apiClient } from '@/lib/api/api-client';
@@ -374,6 +385,246 @@ class UnifiedAIClient {
    */
   async getSimplifiedData(): Promise<AdminAiPayload> {
     return apiClient.get<AdminAiPayload>('/admin/ai');
+  }
+
+  // ── المساعدون الذكيون (Assistants) ─────────────────────
+
+  async getAssistants(): Promise<{ assistants: Assistant[]; overview: AssistantOverview }> {
+    const response = await adminFetch('/admin/ai/assistants');
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({}));
+      throw new Error((errBody as any).error || `HTTP ${response.status}`);
+    }
+    const json = await response.json();
+    return (json.data || json) as { assistants: Assistant[]; overview: AssistantOverview };
+  }
+
+  async getAssistant(id: string): Promise<Assistant> {
+    const response = await adminFetch(`/admin/ai/assistants/${id}`);
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({}));
+      throw new Error((errBody as any).error || `HTTP ${response.status}`);
+    }
+    const json = await response.json();
+    return (json.data || json) as Assistant;
+  }
+
+  async updateAssistant(id: string, payload: Partial<Assistant>): Promise<AIResponse> {
+    const response = await adminFetch(`/admin/ai/assistants/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'فشل تحديث المساعد');
+    }
+    return result;
+  }
+
+  async toggleAssistantStatus(id: string, status: string): Promise<AIResponse> {
+    const response = await adminFetch(`/admin/ai/assistants/${id}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'فشل تغيير حالة المساعد');
+    }
+    return result;
+  }
+
+  async testAssistant(id: string, prompt: string): Promise<{ response: string; durationMs: number }> {
+    const response = await adminFetch(`/admin/ai/assistants/${id}/test`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'فشل اختبار المساعد');
+    }
+    return (result.data || result) as { response: string; durationMs: number };
+  }
+
+  // ── مراجعة المحتوى (Content Review Queue) ─────────────
+
+  async getContentReviewQueue(params?: {
+    status?: ContentReviewStatus;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{ items: AIContentReviewItem[]; stats: ContentReviewStats; total: number }> {
+    const query = new URLSearchParams();
+    if (params?.status) query.set('status', params.status);
+    if (params?.search) query.set('search', params.search);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.pageSize) query.set('pageSize', String(params.pageSize));
+
+    const url = `/admin/ai/content-review${query.toString() ? `?${query.toString()}` : ''}`;
+    const response = await adminFetch(url);
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({}));
+      throw new Error((errBody as any).error || `HTTP ${response.status}`);
+    }
+    const json = await response.json();
+    return (json.data || json) as { items: AIContentReviewItem[]; stats: ContentReviewStats; total: number };
+  }
+
+  async getContentReviewItem(id: string): Promise<AIContentReviewItem> {
+    const response = await adminFetch(`/admin/ai/content-review/${id}`);
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({}));
+      throw new Error((errBody as any).error || `HTTP ${response.status}`);
+    }
+    const json = await response.json();
+    return (json.data || json) as AIContentReviewItem;
+  }
+
+  async reviewContentItem(id: string, decision: ContentReviewStatus, notes?: string): Promise<AIResponse> {
+    const response = await adminFetch(`/admin/ai/content-review/${id}/decide`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decision, notes }),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'فشل اتخاذ قرار المراجعة');
+    }
+    return result;
+  }
+
+  async reassignReviewItem(id: string, reviewerId: string): Promise<AIResponse> {
+    const response = await adminFetch(`/admin/ai/content-review/${id}/assign`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reviewerId }),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'فشل إعادة تعيين المراجع');
+    }
+    return result;
+  }
+
+  // ── سجلات الذكاء الاصطناعي (AI Logs) ──────────────────
+
+  async getAILogs(params?: {
+    status?: string;
+    action?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<{ logs: AILogEntry[]; stats: AILogStats; total: number }> {
+    const query = new URLSearchParams();
+    if (params?.status && params.status !== 'all') query.set('status', params.status);
+    if (params?.action && params.action !== 'all') query.set('action', params.action);
+    if (params?.search) query.set('search', params.search);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.pageSize) query.set('pageSize', String(params.pageSize));
+    if (params?.startDate) query.set('startDate', params.startDate);
+    if (params?.endDate) query.set('endDate', params.endDate);
+
+    const url = `/admin/ai/logs${query.toString() ? `?${query.toString()}` : ''}`;
+    const response = await adminFetch(url);
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({}));
+      throw new Error((errBody as any).error || `HTTP ${response.status}`);
+    }
+    const json = await response.json();
+    return (json.data || json) as { logs: AILogEntry[]; stats: AILogStats; total: number };
+  }
+
+  async exportAILogs(params?: { startDate?: string; endDate?: string }): Promise<Blob> {
+    const query = new URLSearchParams();
+    if (params?.startDate) query.set('startDate', params.startDate);
+    if (params?.endDate) query.set('endDate', params.endDate);
+    const url = `/admin/ai/logs/export${query.toString() ? `?${query.toString()}` : ''}`;
+    const response = await adminFetch(url);
+    if (!response.ok) {
+      throw new Error(`فشل تصدير السجلات: HTTP ${response.status}`);
+    }
+    return response.blob();
+  }
+
+  // ── الرقابة الذكية (Smart Moderation) ──────────────────
+
+  async getModerationCases(params?: {
+    status?: ModerationCaseStatus;
+    severity?: string;
+    reason?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{ cases: ModerationCase[]; stats: ModerationStats; total: number }> {
+    const query = new URLSearchParams();
+    if (params?.status) query.set('status', params.status);
+    if (params?.severity && params.severity !== 'all') query.set('severity', params.severity);
+    if (params?.reason && params.reason !== 'all') query.set('reason', params.reason);
+    if (params?.search) query.set('search', params.search);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.pageSize) query.set('pageSize', String(params.pageSize));
+
+    const url = `/admin/ai/moderation${query.toString() ? `?${query.toString()}` : ''}`;
+    const response = await adminFetch(url);
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({}));
+      throw new Error((errBody as any).error || `HTTP ${response.status}`);
+    }
+    const json = await response.json();
+    return (json.data || json) as { cases: ModerationCase[]; stats: ModerationStats; total: number };
+  }
+
+  async decideModerationCase(id: string, decision: 'approve' | 'reject' | 'escalate', resolution: string): Promise<AIResponse> {
+    const response = await adminFetch(`/admin/ai/moderation/${id}/decide`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decision, resolution }),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'فشل اتخاذ قرار الرقابة');
+    }
+    return result;
+  }
+
+  async getModerationRules(): Promise<{ rules: ModerationRule[] }> {
+    const response = await adminFetch('/admin/ai/moderation/rules');
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({}));
+      throw new Error((errBody as any).error || `HTTP ${response.status}`);
+    }
+    const json = await response.json();
+    return (json.data || json) as { rules: ModerationRule[] };
+  }
+
+  async upsertModerationRule(rule: Partial<ModerationRule>): Promise<AIResponse> {
+    const response = await adminFetch('/admin/ai/moderation/rules', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(rule),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'فشل حفظ القاعدة');
+    }
+    return result;
+  }
+
+  async toggleModerationRule(id: string, enabled: boolean): Promise<AIResponse> {
+    const response = await adminFetch(`/admin/ai/moderation/rules/${id}/toggle`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled }),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'فشل تغيير حالة القاعدة');
+    }
+    return result;
   }
 }
 

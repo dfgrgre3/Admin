@@ -36,7 +36,7 @@ class PDFService {
       throw new Error("Invoice ID is required");
     }
 
-    const url = `${this.baseUrl}/api/invoices/${encodeURIComponent(invoiceId)}/pdf`;
+    const url = `${this.baseUrl}/api/v1/invoices/${encodeURIComponent(invoiceId)}/pdf`;
 
     try {
       const response = await fetch(url, {
@@ -70,7 +70,7 @@ class PDFService {
       throw new Error("Report ID is required");
     }
 
-    const url = `${this.baseUrl}/api/admin/reports/${encodeURIComponent(reportId)}/export?format=pdf`;
+    const url = `${this.baseUrl}/api/v1/admin/reports/${encodeURIComponent(reportId)}/export?format=pdf`;
 
     try {
       const response = await fetch(url, {

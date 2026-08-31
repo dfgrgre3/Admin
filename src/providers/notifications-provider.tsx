@@ -202,12 +202,12 @@ export function NotificationsProvider({ children }: NotificationsProviderProps) 
       fetchNotifications(true);
     }
 
-    // Poll for notifications every 60 seconds as a fallback for WebSocket
+    // Only fallback poll when WebSocket is completely disconnected and user is authenticated
     const pollInterval = setInterval(() => {
       if (!isAuthLoading && isAuthenticated && !isConnected) {
         fetchNotifications(true);
       }
-    }, 60000);
+    }, 120000); // 2 minutes fallback interval
 
     return () => {
       clearInterval(pollInterval);

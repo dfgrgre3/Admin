@@ -17,20 +17,21 @@ import type {
   AdminAgentCommandContext,
   AdminAgentCommandResponse,
   AdminAgentExecuteResponse,
+  Assistant,
+  AssistantOverview,
+  AIContentReviewItem,
+  ContentReviewStats,
+  ContentReviewStatus,
+  AILogEntry,
+  AILogStats,
+  ModerationCase,
+  ModerationStats,
+  ModerationRule,
+  ModerationCaseStatus,
 } from './types';
 
 // ─── مفاتيح Cache موحدة ──────────────────────────────────
-
-export const aiKeys = {
-  all: ['ai'] as const,
-  dashboard: ['ai', 'dashboard'] as const,
-  simplified: ['ai', 'simplified'] as const,
-  suggestions: (context?: string) => ['ai', 'suggestions', context] as const,
-  tips: ['ai', 'tips'] as const,
-  recommendations: ['ai', 'recommendations'] as const,
-  chat: (conversationId?: string) => ['ai', 'chat', conversationId] as const,
-  agent: ['ai', 'agent'] as const,
-} as const;
+// (انظر aiKeys الموحّد في نهاية الملف — يحتوي جميع المفاتيح المركزية)
 
 // ─── Hook: بيانات لوحة التحكم AI ─────────────────────────
 
@@ -223,6 +224,218 @@ export function useAIDataAnalysisRefresh(options?: UseMutationOptions<AIDataAnal
 
 // ─── التصدير الموحد ──────────────────────────────────────
 
+export const aiKeys = {
+  all: ['ai'] as const,
+  dashboard: ['ai', 'dashboard'] as const,
+  simplified: ['ai', 'simplified'] as const,
+  suggestions: (context?: string) => ['ai', 'suggestions', context] as const,
+  tips: ['ai', 'tips'] as const,
+  recommendations: ['ai', 'recommendations'] as const,
+  chat: (conversationId?: string) => ['ai', 'chat', conversationId] as const,
+  agent: ['ai', 'agent'] as const,
+  assistants: ['ai', 'assistants'] as const,
+  assistant: (id: string) => ['ai', 'assistants', id] as const,
+  contentReview: (params?: Record<string, unknown>) => ['ai', 'content-review', params] as const,
+  aiLogs: (params?: Record<string, unknown>) => ['ai', 'logs', params] as const,
+  moderation: (params?: Record<string, unknown>) => ['ai', 'moderation', params] as const,
+  moderationRules: ['ai', 'moderation', 'rules'] as const,
+} as const;
+
+// ─── Hooks: المساعدون الذكيون (Assistants) ────────────────
+
+export function useAIAssistants(options?: UseQueryOptions<{ assistants: Assistant[]; overview: AssistantOverview }>) {
+  return useQuery<{ assistants: Assistant[]; overview: AssistantOverview }>({
+    queryKey: aiKeys.assistants,
+    queryFn: () => aiClient.getAssistants(),
+    staleTime: 60_000,
+    retry: 2,
+    ...options,
+  });
+}
+
+export function useAIAssistant(id: string, options?: UseQueryOptions<Assistant>) {
+  return useQuery<Assistant>({
+    queryKey: aiKeys.assistant(id),
+    queryFn: () => aiClient.getAssistant(id),
+    enabled: !!id,
+    staleTime: 60_000,
+    retry: 1,
+    ...options,
+  });
+}
+
+export function useAIUpdateAssistant(options?: UseMutationOptions<AIResponse, Error, { id: string; payload: Partial<Assistant> }>) {
+  const queryClient = useQueryClient();
+  return useMutation<AIResponse, Error, { id: string; payload: Partial<Assistant> }>({
+    mutationFn: ({ id, payload }) => aiClient.updateAssistant(id, payload),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai', 'assistants'] });
+    },
+    ...options,
+  });
+}
+
+export function useAIToggleAssistant(options?: UseMutationOptions<AIResponse, Error, { id: string; status: string }>) {
+  const queryClient = useQueryClient();
+  return useMutation<AIResponse, Error, { id: string; status: string }>({
+    mutationFn: ({ id, status }) => aiClient.toggleAssistantStatus(id, status),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai', 'assistants'] });
+    },
+    ...options,
+  });
+}
+
+export function useAITestAssistant(options?: UseMutationOptions<{ response: string; durationMs: number }, Error, { id: string; prompt: string }>) {
+  return useMutation<{ response: string; durationMs: number }, Error, { id: string; prompt: string }>({
+    mutationFn: ({ id, prompt }) => aiClient.testAssistant(id, prompt),
+    ...options,
+  });
+}
+
+// ─── Hooks: مراجعة المحتوى (Content Review) ──────────────
+
+export function useAIContentReview(
+  params?: { status?: ContentReviewStatus; search?: string; page?: number; pageSize?: number },
+  options?: UseQueryOptions<{ items: AIContentReviewItem[]; stats: ContentReviewStats; total: number }>
+) {
+  return useQuery<{ items: AIContentReviewItem[]; stats: ContentReviewStats; total: number }>({
+    queryKey: aiKeys.contentReview(params as Record<string, unknown>),
+    queryFn: () => aiClient.getContentReviewQueue(params),
+    staleTime: 30_000,
+    retry: 2,
+    ...options,
+  });
+}
+
+export function useAIReviewItem(id: string, options?: UseQueryOptions<AIContentReviewItem>) {
+  return useQuery<AIContentReviewItem>({
+    queryKey: ['ai', 'content-review', 'item', id],
+    queryFn: () => aiClient.getContentReviewItem(id),
+    enabled: !!id,
+    staleTime: 30_000,
+    ...options,
+  });
+}
+
+export function useAIReviewDecide(options?: UseMutationOptions<AIResponse, Error, { id: string; decision: ContentReviewStatus; notes?: string }>) {
+  const queryClient = useQueryClient();
+  return useMutation<AIResponse, Error, { id: string; decision: ContentReviewStatus; notes?: string }>({
+    mutationFn: ({ id, decision, notes }) => aiClient.reviewContentItem(id, decision, notes),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai', 'content-review'] });
+      queryClient.invalidateQueries({ queryKey: aiKeys.dashboard });
+    },
+    ...options,
+  });
+}
+
+export function useAIReassignReview(options?: UseMutationOptions<AIResponse, Error, { id: string; reviewerId: string }>) {
+  const queryClient = useQueryClient();
+  return useMutation<AIResponse, Error, { id: string; reviewerId: string }>({
+    mutationFn: ({ id, reviewerId }) => aiClient.reassignReviewItem(id, reviewerId),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai', 'content-review'] });
+    },
+    ...options,
+  });
+}
+
+// ─── Hooks: سجلات الذكاء الاصطناعي (AI Logs) ─────────────
+
+export interface AILogsParams {
+  status?: string;
+  action?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+  startDate?: string;
+  endDate?: string;
+}
+
+export function useAILogs(
+  params?: AILogsParams,
+  options?: UseQueryOptions<{ logs: AILogEntry[]; stats: AILogStats; total: number }>
+) {
+  return useQuery<{ logs: AILogEntry[]; stats: AILogStats; total: number }>({
+    queryKey: aiKeys.aiLogs(params as Record<string, unknown>),
+    queryFn: () => aiClient.getAILogs(params),
+    staleTime: 15_000,
+    retry: 2,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+}
+
+// ─── Hooks: الرقابة الذكية (Moderation) ───────────────────
+
+export interface ModerationParams {
+  status?: ModerationCaseStatus;
+  severity?: string;
+  reason?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export function useAIModeration(
+  params?: ModerationParams,
+  options?: UseQueryOptions<{ cases: ModerationCase[]; stats: ModerationStats; total: number }>
+) {
+  return useQuery<{ cases: ModerationCase[]; stats: ModerationStats; total: number }>({
+    queryKey: aiKeys.moderation(params as Record<string, unknown>),
+    queryFn: () => aiClient.getModerationCases(params),
+    staleTime: 15_000,
+    retry: 2,
+    ...options,
+  });
+}
+
+export function useAIDecideModeration(options?: UseMutationOptions<AIResponse, Error, { id: string; decision: 'approve' | 'reject' | 'escalate'; resolution: string }>) {
+  const queryClient = useQueryClient();
+  return useMutation<AIResponse, Error, { id: string; decision: 'approve' | 'reject' | 'escalate'; resolution: string }>({
+    mutationFn: ({ id, decision, resolution }) => aiClient.decideModerationCase(id, decision, resolution),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai', 'moderation'] });
+    },
+    ...options,
+  });
+}
+
+export function useAIModerationRules(options?: UseQueryOptions<{ rules: ModerationRule[] }>) {
+  return useQuery<{ rules: ModerationRule[] }>({
+    queryKey: aiKeys.moderationRules,
+    queryFn: () => aiClient.getModerationRules(),
+    staleTime: 60_000,
+    retry: 2,
+    ...options,
+  });
+}
+
+export function useAIUpsertModerationRule(options?: UseMutationOptions<AIResponse, Error, Partial<ModerationRule>>) {
+  const queryClient = useQueryClient();
+  return useMutation<AIResponse, Error, Partial<ModerationRule>>({
+    mutationFn: (rule) => aiClient.upsertModerationRule(rule),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: aiKeys.moderationRules });
+    },
+    ...options,
+  });
+}
+
+export function useAIToggleModerationRule(options?: UseMutationOptions<AIResponse, Error, { id: string; enabled: boolean }>) {
+  const queryClient = useQueryClient();
+  return useMutation<AIResponse, Error, { id: string; enabled: boolean }>({
+    mutationFn: ({ id, enabled }) => aiClient.toggleModerationRule(id, enabled),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: aiKeys.moderationRules });
+    },
+    ...options,
+  });
+}
+
+// ─── التصدير الموحد ──────────────────────────────────────
+
 export const aiHooks = {
   useDashboard: useAIDashboard,
   useSimplifiedData: useAISimplifiedData,
@@ -232,4 +445,19 @@ export const aiHooks = {
   useExecuteAction: useAIExecuteAction,
   useAdminAgent: useAIAdminAgent,
   useAdminAgentExecute: useAIAdminAgentExecute,
+  useAssistants: useAIAssistants,
+  useAssistant: useAIAssistant,
+  useUpdateAssistant: useAIUpdateAssistant,
+  useToggleAssistant: useAIToggleAssistant,
+  useTestAssistant: useAITestAssistant,
+  useContentReview: useAIContentReview,
+  useReviewItem: useAIReviewItem,
+  useReviewDecide: useAIReviewDecide,
+  useReassignReview: useAIReassignReview,
+  useAILogs,
+  useModeration: useAIModeration,
+  useDecideModeration: useAIDecideModeration,
+  useModerationRules: useAIModerationRules,
+  useUpsertModerationRule: useAIUpsertModerationRule,
+  useToggleModerationRule: useAIToggleModerationRule,
 } as const;

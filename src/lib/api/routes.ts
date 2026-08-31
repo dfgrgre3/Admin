@@ -255,6 +255,14 @@ export const apiRoutes = {
     courseChangelog: (courseId: string) => `/api/admin/courses/${courseId}/changelog`,
     courseProjects: (courseId: string) => `/api/admin/courses/${courseId}/projects`,
     courseReviews: (courseId: string) => `/api/admin/courses/${courseId}/reviews`,
+    // Q&A lives on the legacy Subject/CourseReview backend routes (the ones
+    // the real student-facing site actually reads/writes), not the
+    // hexagonal /api/admin/courses/:id/... routes used above for reviews —
+    // there is no hexagonal Q&A model. courseQuestions/deleteQuestion/
+    // deleteAnswer proxy straight to those public/protected paths.
+    courseQuestions: (courseId: string) => `/api/courses/${courseId}/questions`,
+    deleteQuestion: (questionId: string) => `/api/questions/${questionId}`,
+    deleteAnswer: (answerId: string) => `/api/answers/${answerId}`,
     coursePricing: (courseId: string) => `/api/admin/courses/${courseId}/pricing`,
     courseTeachers: (courseId: string) => `/api/admin/courses/${courseId}/teachers`,
     subjectCurriculum: (subjectId: string) => `/api/admin/subjects/${subjectId}/curriculum`,
@@ -286,6 +294,12 @@ export const apiRoutes = {
 
     // Exams
     exams: '/api/admin/exams',
+
+    // Anti-Cheat (مكافحة الغش)
+    antiCheat: '/api/admin/anti-cheat',
+    antiCheatStats: '/api/admin/anti-cheat/stats',
+    antiCheatFlag: (id: string) => `/api/admin/anti-cheat/flags/${id}`,
+    antiCheatEvents: '/api/admin/anti-cheat/events',
 
     // Categories
     courseCategories: '/api/admin/course-categories',
@@ -445,6 +459,21 @@ export const apiRoutes = {
 
     // Audit Logs
     auditLogs: '/api/admin/audit-logs',
+
+    // Roles & Permissions (custom RBAC — additive on top of the base user.role
+    // enum; assigning a user to a custom role here only ever ADDS permissions,
+    // it cannot restrict a user below their enum role's defaults)
+    roles: '/api/admin/roles',
+    roleById: (id: string) => `/api/admin/roles/${id}`,
+    permissions: '/api/admin/permissions',
+    permissionGroups: '/api/admin/permissions/groups',
+    rolePermissions: (id: string) => `/api/admin/roles/${id}/permissions`,
+    assignRolePermissions: (id: string) => `/api/admin/roles/${id}/permissions/assign`,
+    removeRolePermissions: (id: string) => `/api/admin/roles/${id}/permissions/remove`,
+    replaceRolePermissions: (id: string) => `/api/admin/roles/${id}/permissions/replace`,
+    roleUsers: (id: string) => `/api/admin/roles/${id}/users`,
+    assignRoleUsers: (id: string) => `/api/admin/roles/${id}/users/assign`,
+    removeRoleUsers: (id: string) => `/api/admin/roles/${id}/users/remove`,
 
     // Database
     databasePartitions: '/api/admin/database-partitions',

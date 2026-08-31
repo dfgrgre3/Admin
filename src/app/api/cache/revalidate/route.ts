@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
   headers.delete('origin');
 
-  const me = await fetch(`${BACKEND_URL}/api/auth/me`, {
+  const me = await fetch(`${BACKEND_URL}/api/v1/auth/me`, {
     headers,
     cache: "no-store",
   });
@@ -47,7 +47,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "فشل التحقق من الجلسة" }, { status: 502 });
   }
 
-  const role = payload.user?.role;
+  const user = payload.user || (payload as any).data?.user;
+  const role = user?.role;
+  console.log("[DEBUG revalidate] role from /auth/me:", role, "full user:", user);
   if (
     role !== "ADMIN" &&
     role !== "SUPER_ADMIN" &&

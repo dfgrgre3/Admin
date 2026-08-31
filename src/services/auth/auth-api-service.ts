@@ -1,6 +1,7 @@
 import { apiRoutes } from '@/lib/api/routes';
 import { apiClient } from '@/lib/api/api-client';
 import { mapApiUserToAuthUser, type AuthUser } from '@/lib/auth/auth-store';
+import { setAccessTokenMirror, clearAccessTokenMirror } from '@/lib/auth/token-mirror';
 
 interface AuthResult {
   success: boolean;
@@ -11,6 +12,21 @@ interface AuthResult {
 interface LoginResult extends AuthResult {
   requires2FA?: boolean;
   userId?: string;
+  accountLocked?: boolean;
+  lockoutMinutes?: number;
+}
+
+/**
+ * Parses the backend's `ACCOUNT_LOCKED:<minutes>` error prefix (see
+ * auth_service_lockout.go / auth_handler.go Login) into a minutes count, so
+ * the login UI can show a dedicated lockout countdown instead of a generic
+ * error string.
+ */
+function parseAccountLockedError(message: unknown): number | null {
+  if (typeof message !== 'string') return null;
+  const match = message.match(/^ACCOUNT_LOCKED:(\d+)$/);
+  const minutes = match?.[1];
+  return minutes ? parseInt(minutes, 10) : null;
 }
 
 interface RegisterResult extends AuthResult {
@@ -22,24 +38,21 @@ interface MeResponse {
 }
 
 /**
- * Keeps the localStorage token mirror in sync after a successful login/MFA
- * verification. The `access_token` cookie is HttpOnly, so `build-ws-url.ts`
- * (WebSocket auth) and `auth-context.tsx` (session hint) have no other way to
- * see the token. `apiClient.refreshToken()` already does this on every refresh;
- * the login paths must too, otherwise the mirror only ever appears after the
- * first token rotation.
+ * Keeps the in-memory access-token mirror in sync after a successful
+ * login/MFA verification. The `access_token` cookie is HttpOnly, so
+ * `build-ws-url.ts` (WebSocket auth) and `auth-context.tsx` (session hint)
+ * have no other way to see the token. `apiClient.refreshToken()` already
+ * does this on every refresh; the login paths must too, otherwise the
+ * mirror only ever appears after the first token rotation. See
+ * `token-mirror.ts` for why this is memory-only, not localStorage.
+ *
+ * The refresh token is never mirrored client-side — nothing in the browser
+ * needs to read it, it only ever needs to be sent back as the HttpOnly
+ * cookie the backend already manages.
  */
-function storeTokenMirror(accessToken?: unknown, refreshToken?: unknown): void {
-  if (typeof window === 'undefined') return;
-  try {
-    if (typeof accessToken === 'string' && accessToken) {
-      window.localStorage.setItem('accessToken', accessToken);
-    }
-    if (typeof refreshToken === 'string' && refreshToken) {
-      window.localStorage.setItem('refreshToken', refreshToken);
-    }
-  } catch {
-    // Ignore storage errors (private browsing, quota, etc.)
+function storeTokenMirror(accessToken?: unknown): void {
+  if (typeof accessToken === 'string' && accessToken) {
+    setAccessTokenMirror(accessToken);
   }
 }
 
@@ -75,8 +88,18 @@ export const authApiService = {
             userId: payload.ticket || payload.userId || data.userId,
           };
         }
-        storeTokenMirror(payload.accessToken ?? data.accessToken, payload.refreshToken ?? data.refreshToken);
+        storeTokenMirror(payload.accessToken ?? data.accessToken);
         return { success: true };
+      }
+
+      const lockoutMinutes = parseAccountLockedError(data.error);
+      if (lockoutMinutes !== null) {
+        return {
+          success: false,
+          accountLocked: true,
+          lockoutMinutes,
+          error: `تم قفل الحساب مؤقتًا بسبب محاولات دخول فاشلة متكررة. حاول مرة أخرى بعد ${lockoutMinutes} دقيقة.`,
+        };
       }
 
       return { success: false, error: data.error || 'فشل تسجيل الدخول' };
@@ -118,18 +141,11 @@ export const authApiService = {
       // Ignore errors — always clear client state
     } finally {
       // The auth store reset only clears in-memory Zustand state — it never
-      // touches localStorage. Clear the token mirror here too, or a revoked
-      // session's tokens survive logout and keep authenticating WebSocket
-      // connections (access_token cookie is HttpOnly, so build-ws-url.ts's
-      // only real fallback is this localStorage copy).
-      if (typeof window !== 'undefined') {
-        try {
-          window.localStorage.removeItem('accessToken');
-          window.localStorage.removeItem('refreshToken');
-        } catch {
-          // Ignore storage errors (private browsing, quota, etc.)
-        }
-      }
+      // touches the token mirror. Clear it here too, or a revoked session's
+      // token survives logout and keeps authenticating WebSocket connections
+      // (access_token cookie is HttpOnly, so build-ws-url.ts's only real
+      // fallback is this mirror).
+      clearAccessTokenMirror();
     }
   },
 
@@ -153,7 +169,7 @@ export const authApiService = {
 
       if (res.ok) {
         const payload = data.data || {};
-        storeTokenMirror(payload.accessToken ?? data.accessToken, payload.refreshToken ?? data.refreshToken);
+        storeTokenMirror(payload.accessToken ?? data.accessToken);
         return { success: true };
       }
 

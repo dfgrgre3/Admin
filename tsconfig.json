@@ -12,9 +12,6 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noEmit": true,
-    "types": [
-      "vitest/globals"
-    ],
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",

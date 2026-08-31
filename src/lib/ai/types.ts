@@ -272,3 +272,220 @@ export interface AdminAgentCommandResponse {
 export interface AdminAgentExecuteResponse extends AdminAgentCommandResponse {
   status: 'completed' | 'blocked';
 }
+
+// ─── المساعدون الذكيون (AI Assistants) ─────────────────────
+export type AssistantType =
+  | 'copilot'
+  | 'content_studio'
+  | 'tutor'
+  | 'moderator'
+  | 'grader'
+  | 'forecast';
+
+export type AssistantStatus = 'active' | 'idle' | 'disabled' | 'training';
+
+export interface AssistantCapability {
+  id: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+  usageCount: number;
+  successRate: number;
+}
+
+export interface AssistantUsagePoint {
+  date: string;
+  calls: number;
+  tokens: number;
+  successRate: number;
+}
+
+export interface Assistant {
+  id: string;
+  type: AssistantType;
+  name: string;
+  nameEn: string;
+  description: string;
+  descriptionEn: string;
+  status: AssistantStatus;
+  model: string;
+  provider: AIProvider;
+  temperature: number;
+  maxTokens: number;
+  systemPrompt: string;
+  capabilities: AssistantCapability[];
+  usageHistory: AssistantUsagePoint[];
+  totalCalls: number;
+  totalTokens: number;
+  averageLatencyMs: number;
+  lastUsedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AssistantOverview {
+  totalAssistants: number;
+  activeAssistants: number;
+  totalCallsToday: number;
+  totalCallsThisWeek: number;
+  totalTokensThisWeek: number;
+  averageSuccessRate: number;
+  topPerformer: Assistant | null;
+  needsAttention: Assistant[];
+}
+
+// ─── مراجعة المحتوى (Content Review Queue) ─────────────────
+export type ContentReviewStatus =
+  | 'pending_review'
+  | 'in_review'
+  | 'approved'
+  | 'rejected'
+  | 'needs_revision';
+
+export type ContentReviewPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface AIContentReviewItem {
+  id: string;
+  title: string;
+  type: string;
+  status: ContentReviewStatus;
+  priority: ContentReviewPriority;
+  preview: string;
+  fullContent: string;
+  author: { id: string; name: string; email: string };
+  subject: string;
+  aiScore: number;
+  aiFlags: string[];
+  aiSuggestion: string;
+  reviewer: { id: string; name: string } | null;
+  createdAt: string;
+  updatedAt: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ContentReviewStats {
+  pending: number;
+  inReview: number;
+  approved: number;
+  rejected: number;
+  needsRevision: number;
+  averageAiScore: number;
+  urgentCount: number;
+}
+
+// ─── سجلات الذكاء الاصطناعي (AI Logs) ─────────────────────
+export type AILogStatus = 'success' | 'error' | 'warning' | 'info';
+
+export type AILogAction =
+  | 'copilot'
+  | 'generate_content'
+  | 'review_content'
+  | 'execute_action'
+  | 'agent_command'
+  | 'agent_execute'
+  | 'chat'
+  | 'moderation'
+  | 'grading'
+  | 'forecast';
+
+export interface AILogEntry {
+  id: string;
+  action: AILogAction;
+  status: AILogStatus;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userRole: string;
+  prompt: string;
+  response: string;
+  tokensUsed: number;
+  modelUsed: string;
+  durationMs: number;
+  errorMessage?: string;
+  ip: string;
+  userAgent: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface AILogStats {
+  totalLogs: number;
+  successRate: number;
+  averageDurationMs: number;
+  totalTokensUsed: number;
+  errorsToday: number;
+  callsByAction: Record<string, number>;
+  callsByModel: Record<string, number>;
+  timelineByDay: Array<{ date: string; success: number; error: number; warning: number }>;
+}
+
+// ─── الرقابة الذكية (Smart Moderation) ──────────────────────
+export type ModerationCaseStatus =
+  | 'pending'
+  | 'auto_approved'
+  | 'auto_rejected'
+  | 'escalated'
+  | 'human_reviewing'
+  | 'resolved';
+
+export type ModerationSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+export type ModerationReason =
+  | 'spam'
+  | 'profanity'
+  | 'hate_speech'
+  | 'sexual_content'
+  | 'violence'
+  | 'personal_info'
+  | 'misinformation'
+  | 'cheating'
+  | 'off_topic'
+  | 'plagiarism'
+  | 'other';
+
+export interface ModerationCase {
+  id: string;
+  contentType: 'comment' | 'post' | 'message' | 'profile' | 'submission' | 'review';
+  contentId: string;
+  contentPreview: string;
+  authorId: string;
+  authorName: string;
+  authorEmail: string;
+  reason: ModerationReason;
+  severity: ModerationSeverity;
+  confidence: number;
+  status: ModerationCaseStatus;
+  aiExplanation: string;
+  flaggedKeywords: string[];
+  reviewerId: string | null;
+  reviewerName: string | null;
+  resolution: string | null;
+  createdAt: string;
+  reviewedAt: string | null;
+}
+
+export interface ModerationRule {
+  id: string;
+  name: string;
+  description: string;
+  reason: ModerationReason;
+  pattern: string;
+  severity: ModerationSeverity;
+  action: 'auto_approve' | 'auto_reject' | 'flag_for_review' | 'escalate';
+  enabled: boolean;
+  matchCount: number;
+  lastTriggeredAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ModerationStats {
+  pendingCases: number;
+  resolvedToday: number;
+  autoApprovedToday: number;
+  autoRejectedToday: number;
+  escalatedCases: number;
+  averageResponseTimeMs: number;
+  topReasons: Array<{ reason: ModerationReason; count: number }>;
+  falsePositiveRate: number;
+}

@@ -3,7 +3,6 @@ import { Alexandria } from 'next/font/google';
 import { GlobalProviders } from '@/providers';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { SWRegistration } from '@/components/sw-registration';
-import { DeferredStyles } from '@/components/deferred-styles';
 import './globals.css';
 
 const alexandria = Alexandria({
@@ -46,15 +45,14 @@ export default async function RootLayout({
   // in `AuthProvider` (cookie / localStorage token), while the edge middleware
   // remains the authoritative security gate for `/admin*` and `/api/admin`.
   return (
-    <html lang="ar" dir="rtl" suppressHydrationWarning className="efficiency-mode">
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
         {/* No font preconnects: next/font/google self-hosts fonts at build time. */}
         <link rel="preconnect" href="https://va.vercel-scripts.com" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className={`${alexandria.variable} font-sans`} suppressHydrationWarning>
-        <DeferredStyles />
+      <body className={`${alexandria.variable} font-sans antialiased`} suppressHydrationWarning>
         <SWRegistration />
         <ThemeProvider
           attribute="class"

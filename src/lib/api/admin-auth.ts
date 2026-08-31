@@ -52,12 +52,15 @@ export async function adminLoginApi(
 
   const user = (payload.user ?? {}) as Record<string, unknown>;
 
+  // SECURITY: the backend no longer echoes the refresh token in the response
+  // body — it is delivered only as an HttpOnly cookie. Only the short-lived
+  // access token is returned, and only for WebSocket auth (see token-mirror.ts).
   return {
     success: true,
     status: 'authenticated',
     data: {
       accessToken: payload.accessToken as string,
-      refreshToken: payload.refreshToken as string,
+      refreshToken: '',
       tokenType: 'Bearer',
       expiresIn: 900, // 15 minutes
       user: {
@@ -172,12 +175,13 @@ export async function verify2FAApi(
   const payload = (result.data ?? result) as Record<string, unknown>;
   const user = (payload.user ?? {}) as Record<string, unknown>;
 
+  // SECURITY: same as adminLoginApi above — refresh token is cookie-only.
   return {
     success: true,
     status: 'authenticated',
     data: {
       accessToken: payload.accessToken as string,
-      refreshToken: (payload.refreshToken as string) || '',
+      refreshToken: '',
       tokenType: 'Bearer',
       expiresIn: 900,
       user: {

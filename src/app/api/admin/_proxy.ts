@@ -74,7 +74,7 @@ async function getCurrentUser(request: NextRequest): Promise<AdminAuthUser | nul
     }
   }
 
-  const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+  const response = await fetch(`${BACKEND_URL}/api/v1/auth/me`, {
     method: 'GET',
     headers: upstreamAuthHeaders(request),
     credentials: 'include',
@@ -161,7 +161,14 @@ export async function forwardToGoApi(
   if (permissionError) return permissionError;
 
   const url = new URL(request.url);
-  const path = apiPath.startsWith('/') ? apiPath : `/${apiPath}`;
+  const rawPath = apiPath.startsWith('/') ? apiPath : `/${apiPath}`;
+  // Every call site here passes a version-agnostic "/api/admin/..." path;
+  // the backend itself is versioned at /api/v1 (internal/infrastructure/api/
+  // *_routes.go) — insert that segment once, here, rather than in each of
+  // the many forwardToGoApi(request, '/api/admin/...') call sites.
+  const path = rawPath.startsWith('/api/v1/')
+    ? rawPath
+    : rawPath.replace(/^\/api\//, '/api/v1/');
   const target = `${BACKEND_URL}${path}${url.search}`;
 
   const headers = new Headers(init.headers);

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useMemo } from "react";
 import { PageHeader } from "@/components/admin/ui/page-header";
@@ -40,6 +41,12 @@ import {
   MessageSquare,
   Send,
   BrainCircuit,
+  ArrowLeft,
+  ListChecks,
+  Activity,
+  ShieldCheck,
+  ChevronLeft,
+  Cpu,
 } from "lucide-react";
 import { toast } from "sonner";
 // @tanstack/react-query hooks are used inside the unified AI hooks
@@ -58,6 +65,12 @@ import {
   useAIAdminAgentExecute,
   useAIDataAnalysis,
   useAIDataAnalysisRefresh,
+  useAIAssistants,
+  useAIContentReview,
+  useAILogs,
+  useAIModeration,
+  type AILogsParams,
+  type ModerationParams,
   type AIDataAnalysisResult,
 } from "@/lib/ai/ai-hooks";
 import type {
@@ -205,6 +218,147 @@ function AiBriefingCard({
           </AdminButton>
         </div>
       </AdminCard>
+    </m.div>
+  );
+}
+
+function QuickAccessRow({
+  assistantsCount,
+  activeAssistants,
+  pendingReview,
+  highPriorityReview,
+  logsLast24h,
+  errorRate,
+  openCases,
+  criticalCases,
+}: {
+  assistantsCount: number;
+  activeAssistants: number;
+  pendingReview: number;
+  highPriorityReview: number;
+  logsLast24h: number;
+  errorRate: number;
+  openCases: number;
+  criticalCases: number;
+}) {
+  const cards = [
+    {
+      href: "/admin/ai/assistants",
+      title: "إدارة المساعدين",
+      description: "تهيئة وتكوين نماذج الذكاء الاصطناعي المتخصصة",
+      icon: Cpu,
+      color: "from-violet-500/20 to-purple-500/10",
+      iconBg: "bg-violet-500/10 text-violet-500",
+      stats: [
+        { label: "إجمالي المساعدين", value: assistantsCount },
+        { label: "نشط الآن", value: activeAssistants, highlight: true },
+      ],
+    },
+    {
+      href: "/admin/ai/content-review",
+      title: "مراجعة المحتوى",
+      description: "طابور المراجعة البشرية لتوليدات الذكاء الاصطناعي",
+      icon: ListChecks,
+      color: "from-orange-500/20 to-amber-500/10",
+      iconBg: "bg-orange-500/10 text-orange-500",
+      stats: [
+        { label: "بانتظار المراجعة", value: pendingReview },
+        { label: "أولوية عالية", value: highPriorityReview, highlight: highPriorityReview > 0 },
+      ],
+    },
+    {
+      href: "/admin/ai/logs",
+      title: "سجلات النشاط",
+      description: "تتبع كل استدعاءات الذكاء الاصطناعي وتحليل أدائها",
+      icon: Activity,
+      color: "from-blue-500/20 to-cyan-500/10",
+      iconBg: "bg-blue-500/10 text-blue-500",
+      stats: [
+        { label: "استدعاءات اليوم", value: logsLast24h },
+        {
+          label: "معدل الخطأ",
+          value: `${errorRate.toFixed(1)}%`,
+          highlight: errorRate > 5,
+        },
+      ],
+    },
+    {
+      href: "/admin/ai/moderation",
+      title: "الرقابة الذكية",
+      description: "مراجعة البلاغات والمحتوى المخالف آلياً",
+      icon: ShieldCheck,
+      color: "from-rose-500/20 to-red-500/10",
+      iconBg: "bg-rose-500/10 text-rose-500",
+      stats: [
+        { label: "قضايا مفتوحة", value: openCases },
+        {
+          label: "حالات حرجة",
+          value: criticalCases,
+          highlight: criticalCases > 0,
+        },
+      ],
+    },
+  ];
+
+  return (
+    <m.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.05 }}
+      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+    >
+      {cards.map((card, idx) => {
+        const Icon = card.icon;
+        return (
+          <Link
+            key={card.href}
+            href={card.href}
+            prefetch={false}
+            className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl"
+            aria-label={`${card.title} - ${card.description}`}
+          >
+            <AdminCard
+              variant="glass"
+              className={cn(
+                "h-full p-5 relative overflow-hidden border-border transition-all",
+                "hover:border-primary/30 hover:shadow-lg hover:-translate-y-0.5",
+                `bg-gradient-to-br ${card.color}`
+              )}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className={cn("h-11 w-11 rounded-xl flex items-center justify-center", card.iconBg)}>
+                  <Icon className="w-5 h-5" aria-hidden="true" />
+                </div>
+                <ChevronLeft
+                  className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:-translate-x-1 transition-all"
+                  aria-hidden="true"
+                />
+              </div>
+              <h3 className="font-black text-base mb-1">{card.title}</h3>
+              <p className="text-xs text-muted-foreground font-bold mb-4 line-clamp-2 leading-relaxed min-h-[2.5rem]">
+                {card.description}
+              </p>
+              <div className="grid grid-cols-2 gap-2 pt-3 border-t border-border/40">
+                {card.stats.map((stat, sIdx) => (
+                  <div key={sIdx} className="space-y-0.5">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                      {stat.label}
+                    </p>
+                    <p
+                      className={cn(
+                        "text-lg font-black",
+                        stat.highlight ? "text-primary" : "text-foreground"
+                      )}
+                    >
+                      {stat.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </AdminCard>
+          </Link>
+        );
+      })}
     </m.div>
   );
 }
@@ -1453,6 +1607,28 @@ function AdminAIContent() {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  // ── Quick Access sub-pages data ───────────────────────
+
+  const { data: assistantsData } = useAIAssistants();
+  const { data: reviewData } = useAIContentReview({ page: 1, pageSize: 1 } as Parameters<typeof useAIContentReview>[0]);
+  const { data: logsData } = useAILogs({ page: 1, pageSize: 1 } as AILogsParams);
+  const { data: moderationData } = useAIModeration({ page: 1, pageSize: 1 } as ModerationParams);
+
+  const assistantsCount = assistantsData?.assistants?.length || 0;
+  const activeAssistants =
+    assistantsData?.assistants?.filter((a) => a.status === "active").length || 0;
+  const pendingReview = reviewData?.stats?.pending || 0;
+  const highPriorityReview = reviewData?.stats?.urgentCount || 0;
+  const logsLast24h = logsData?.stats?.totalLogs || 0;
+  const errorRate =
+    logsData?.stats && logsData.stats.totalLogs > 0
+      ? (100 - logsData.stats.successRate)
+      : 0;
+  const openCases =
+    (moderationData?.stats?.pendingCases || 0) +
+    (moderationData?.stats?.escalatedCases || 0);
+  const criticalCases = moderationData?.stats?.escalatedCases || 0;
+
   // ── Derived Data ───────────────────────────────────────
 
   const pendingItems = useMemo(
@@ -1575,6 +1751,18 @@ function AdminAIContent() {
           />
         )}
       </AnimatePresence>
+
+      {/* Quick Access sub-pages */}
+      <QuickAccessRow
+        assistantsCount={assistantsCount}
+        activeAssistants={activeAssistants}
+        pendingReview={pendingReview}
+        highPriorityReview={highPriorityReview}
+        logsLast24h={logsLast24h}
+        errorRate={errorRate}
+        openCases={openCases}
+        criticalCases={criticalCases}
+      />
 
       {/* Tabs */}
       <Tabs defaultValue="studio" className="w-full">

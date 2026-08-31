@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const path = searchParams.get('path') || '';
     const response = await fetch(
-      `${BACKEND_URL}/api/admin/security/ip-whitelist${path}`,
+      `${BACKEND_URL}/api/v1/admin/security/ip-whitelist${path}`,
       {
         method: 'GET',
         headers: {
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     headers.delete('origin');
 
     const response = await fetch(
-      `${BACKEND_URL}/api/admin/security/ip-whitelist${path}`,
+      `${BACKEND_URL}/api/v1/admin/security/ip-whitelist${path}`,
       {
         method: 'POST',
         headers,
@@ -87,7 +87,7 @@ export async function DELETE(request: NextRequest) {
     headers.delete('origin');
 
     const response = await fetch(
-      `${BACKEND_URL}/api/admin/security/ip-whitelist/${id}`,
+      `${BACKEND_URL}/api/v1/admin/security/ip-whitelist/${id}`,
       {
         method: 'DELETE',
         headers,

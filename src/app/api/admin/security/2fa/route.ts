@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const path = searchParams.get('path') || '/status';
     const response = await fetch(
-      `${BACKEND_URL}/api/admin/security/2fa${path}`,
+      `${BACKEND_URL}/api/v1/admin/security/2fa${path}`,
       {
         method: 'GET',
         headers: {
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     headers.delete('origin');
 
     const response = await fetch(
-      `${BACKEND_URL}/api/admin/security/2fa${path}`,
+      `${BACKEND_URL}/api/v1/admin/security/2fa${path}`,
       {
         method: 'POST',
         headers,

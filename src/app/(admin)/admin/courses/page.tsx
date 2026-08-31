@@ -256,10 +256,9 @@ export default function AdminCoursesPage() {
   const handleDelete = async () => {
     if (!deleteDialog.id) return;
     try {
-      const response = await adminFetch(apiRoutes.admin.courses, {
+      const response = await adminFetch(`${apiRoutes.admin.courses}/${deleteDialog.id}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: deleteDialog.id })
+        headers: { "Content-Type": "application/json" }
       });
       await throwIfApiError(response, "تعذر حذف الدورة");
       toast.success("تم حذف الدورة بنجاح");

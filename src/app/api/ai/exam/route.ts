@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     let response;
     try {
-      response = await fetch(`${BACKEND_URL}/api/ai/exam`, {
+      response = await fetch(`${BACKEND_URL}/api/v1/ai/exam`, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),

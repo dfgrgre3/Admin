@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     // CRITICAL CSRF FIX: Strip the Origin header when proxying to the Go backend.
     headers.delete('origin');
 
-    const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/auth/register`, {
       method: 'POST',
       headers,
       body: body,

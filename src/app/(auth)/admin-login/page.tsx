@@ -43,7 +43,14 @@ function AdminLoginContent() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  // Defaults to true (90-day session) to preserve prior behavior, but is now
+  // user-controllable instead of silently hardcoded — see AdminLoginCredentialsStep.
+  const [rememberMe, setRememberMe] = useState(true);
   const [requires2FA, setRequires2FA] = useState(false);
+  // Seconds remaining in an active account lockout (see ACCOUNT_LOCKED:<minutes>
+  // in auth_service_lockout.go). Ticks down client-side so the button
+  // re-enables itself without the user needing to reload.
+  const [lockoutSecondsLeft, setLockoutSecondsLeft] = useState<number | null>(null);
   const [userId2FA, setUserId2FA] = useState<string | null>(null);
   const [twoFactorCode, setTwoFactorCode] = useState('');
 
@@ -71,6 +78,14 @@ function AdminLoginContent() {
     }
   }, [isAuthLoading, isAuthenticated, user, redirectAfterLogin, redirectUrl]);
 
+  useEffect(() => {
+    if (lockoutSecondsLeft === null || lockoutSecondsLeft <= 0) return;
+    const timer = setInterval(() => {
+      setLockoutSecondsLeft((s) => (s === null || s <= 1 ? null : s - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockoutSecondsLeft]);
+
   const onSubmit = async (data: AdminLoginFormValues) => {
     if (isAuthLoading || (isAuthenticated && isStaffAdminPanelRole(user?.role))) return;
     setIsSubmitting(true);
@@ -80,7 +95,7 @@ function AdminLoginContent() {
       const result = await login(
         data.email.trim().toLowerCase(),
         data.password,
-        true // Admin sessions should probably be remembered or have specific policy
+        rememberMe
       );
 
       if (result.success) {
@@ -91,6 +106,9 @@ function AdminLoginContent() {
         }
         // Success handled by useEffect
         return;
+      }
+      if (result.accountLocked && result.lockoutMinutes) {
+        setLockoutSecondsLeft(result.lockoutMinutes * 60);
       }
       setErrorStatus(result.error || 'فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.');
     } finally {
@@ -105,7 +123,7 @@ function AdminLoginContent() {
     setIsSubmitting(true);
     setErrorStatus(null);
     try {
-      const result = await verify2FA(userId2FA, twoFactorCode, true);
+      const result = await verify2FA(userId2FA, twoFactorCode, rememberMe);
       if (result.success) {
         // Success handled by useEffect
         return;
@@ -139,6 +157,9 @@ function AdminLoginContent() {
           showPassword={showPassword}
           onToggleShowPassword={() => setShowPassword((s) => !s)}
           onSubmit={handleSubmit(onSubmit)}
+          rememberMe={rememberMe}
+          onToggleRememberMe={() => setRememberMe((r) => !r)}
+          lockoutSecondsLeft={lockoutSecondsLeft}
         />
       )}
     </div>

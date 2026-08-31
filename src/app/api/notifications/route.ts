@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
   let lastError: unknown = null;
 
   for (const origin of backendOriginCandidates()) {
-    const targetUrl = `${origin}/api/notifications${search}`;
+    const targetUrl = `${origin}/api/v1/notifications${search}`;
 
     try {
       const response = await fetch(targetUrl, {

@@ -17,7 +17,10 @@ export const STATUS_TABS: Array<{ value: "all" | UserStatus; label: string; acti
   { value: UserStatus.INACTIVE, label: "غير نشط", activeClass: "data-[state=active]:bg-slate-500 data-[state=active]:text-white" },
   { value: UserStatus.SUSPENDED, label: "موقوف", activeClass: "data-[state=active]:bg-yellow-500 data-[state=active]:text-white" },
   { value: UserStatus.BANNED, label: "محظور", activeClass: "data-[state=active]:bg-red-500 data-[state=active]:text-white" },
-  { value: UserStatus.DELETED, label: "محذوف", activeClass: "data-[state=active]:bg-muted data-[state=active]:text-muted-foreground" },
+  // No UserStatus.DELETED tab: deletion is a soft-delete (deleted_at), never a
+  // `status` value, and the backend's user-list query filters on `status = ?`
+  // (internal/infrastructure/api/handlers/protected/user_list_query.go) — a
+  // DELETED tab would silently return zero rows every time it's clicked.
   { value: UserStatus.PENDING_VERIFICATION, label: "قيد التحقق", activeClass: "data-[state=active]:bg-blue-500 data-[state=active]:text-white" },
 ];
 

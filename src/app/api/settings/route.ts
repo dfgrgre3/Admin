@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 
   for (const origin of backendOriginCandidates()) {
     try {
-      const res = await fetch(`${origin}/api/settings`, {
+      const res = await fetch(`${origin}/api/v1/settings`, {
         method: 'GET',
         headers: { cookie },
         cache: 'no-store',

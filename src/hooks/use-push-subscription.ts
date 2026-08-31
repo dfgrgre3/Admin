@@ -56,7 +56,25 @@ export function usePushSubscription(): UsePushSubscriptionResult {
   const getRegistration = useCallback(async (): Promise<ServiceWorkerRegistration | null> => {
     if (registrationRef.current) return registrationRef.current;
     if (!("serviceWorker" in navigator)) return null;
-    const reg = await navigator.serviceWorker.getRegistration("/");
+
+    let reg = await navigator.serviceWorker.getRegistration("/");
+    if (!reg) {
+      // The service worker may still be installing/activating (it's often
+      // registered on a delayed timer). Wait for it to become ready instead
+      // of giving up immediately, with a timeout so we don't hang forever
+      // when no service worker is registered at all.
+      try {
+        reg = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise<ServiceWorkerRegistration | null>((resolve) =>
+            setTimeout(() => resolve(null), 5000)
+          ),
+        ]);
+      } catch {
+        reg = null;
+      }
+    }
+
     registrationRef.current = reg ?? null;
     return reg ?? null;
   }, []);
