@@ -8,22 +8,19 @@ import { apiRoutes } from "@/lib/api/routes";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { logger } from "@/lib/logger";
-import {
-  pickEditableUserFields,
-  type UserDetails,
-} from "../_components/types";
+import type { UserDetails } from "../_components/types";
+import { pickEditableUserFields } from "../_components/_lib/editable-fields";
 import type { PasswordResetFormData } from "@/lib/validations/user-schemas";
-import { getUserActionBlockReason } from "@/lib/user-action-guards";
-import type { DangerousUserAction } from "@/lib/user-action-guards";
+import { getUserActionBlockReason, type DangerousUserAction } from "@/lib/user-action-guards";
 import type { usePermission } from "@/components/auth/PermissionGuard";
 
 const RESERVED_ROUTE_SEGMENTS = new Set(["edit", "new", "create", "permissions"]);
 
 export function useUserDetails(userId: string) {
   const router = useRouter();
-  return useQuery<UserDetails, Error>({
+  return useQuery<UserDetails>({
     queryKey: ["admin", "user", userId],
-    queryFn: async ({ signal }): Promise<UserDetails> => {
+    queryFn: async ({ signal }) => {
       if (!userId || RESERVED_ROUTE_SEGMENTS.has(userId)) {
         router.replace("/admin/users");
         throw new Error("Invalid user ID");
@@ -83,21 +80,21 @@ export function useUserMutations(
     onError: (err: Error) => toast.error(err.message || "حدث خطأ أثناء حذف المستخدم"),
   });
 
-  const validateAction = React.useCallback(
-    (target: UserDetails | undefined, action: DangerousUserAction): UserDetails | null => {
-      if (!target || !canManageUsers) {
-        toast.error("غير مصرح بتنفيذ الإجراء");
-        return null;
-      }
-      const block = getUserActionBlockReason(currentUser, target, action);
-      if (block) {
-        toast.error(block);
-        return null;
-      }
-      return target;
-    },
-    [currentUser, canManageUsers],
-  );
+  const validateAction = (
+    target: UserDetails | undefined,
+    action: DangerousUserAction
+  ): UserDetails | null => {
+    if (!target || !canManageUsers) {
+      toast.error("غير مصرح بتنفيذ الإجراء");
+      return null;
+    }
+    const block = getUserActionBlockReason(currentUser, target, action);
+    if (block) {
+      toast.error(block);
+      return null;
+    }
+    return target;
+  };
 
   return {
     updateMutation,
