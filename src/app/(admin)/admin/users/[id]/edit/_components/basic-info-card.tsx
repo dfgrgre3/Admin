@@ -77,10 +77,21 @@ function Field({ name, label, type = "text", icon: Icon, ltr, form }: FieldProps
             {Icon ? (
               <div className="relative">
                 <Icon className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input {...field} type={type} className="pr-9" dir={ltr ? "ltr" : undefined} />
+                <Input
+                  {...field}
+                  value={typeof field.value === "boolean" ? "" : field.value ?? ""}
+                  type={type}
+                  className="pr-9"
+                  dir={ltr ? "ltr" : undefined}
+                />
               </div>
             ) : (
-              <Input {...field} type={type} dir={ltr ? "ltr" : undefined} />
+              <Input
+                {...field}
+                value={typeof field.value === "boolean" ? "" : field.value ?? ""}
+                type={type}
+                dir={ltr ? "ltr" : undefined}
+              />
             )}
           </FormControl>
           <FormMessage />

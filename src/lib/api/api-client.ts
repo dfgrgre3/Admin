@@ -347,42 +347,59 @@ class ApiClient {
 
         this.refreshPromise = (async () => {
             try {
-                // Ensure CSRF token exists before refresh
-                await this.ensureCsrfToken();
-                
-                const headers: Record<string, string> = {};
-                if (typeof window !== 'undefined') {
-                    const csrfToken = this.getCookie('_csrf');
-                    if (csrfToken) {
-                        headers['X-CSRF-Token'] = csrfToken;
+                for (let attempt = 0; attempt < 2; attempt++) {
+                    // Ensure CSRF token exists before refresh
+                    await this.ensureCsrfToken();
+
+                    const headers: Record<string, string> = {};
+                    if (typeof window !== 'undefined') {
+                        const csrfToken = this.getCookie('_csrf');
+                        if (csrfToken) {
+                            headers['X-CSRF-Token'] = csrfToken;
+                        }
                     }
-                }
 
-                const response = await fetch(AUTH_REFRESH_ENDPOINT, {
-                    method: 'POST',
-                    headers,
-                    credentials: 'include',
-                });
+                    const response = await fetch(AUTH_REFRESH_ENDPOINT, {
+                        method: 'POST',
+                        headers,
+                        credentials: 'include',
+                    });
 
-                if (response.ok && typeof window !== 'undefined') {
-                    // The access_token cookie is HttpOnly (by design — XSS-hardened),
-                    // which means WebSocket connections (buildAppUserWebSocketUrl) can
-                    // never read it via document.cookie and rely on this in-memory
-                    // mirror as their only viable auth source. Keep it in sync on every
-                    // successful refresh, or WS auth silently uses a stale token. The
-                    // refresh token itself is never mirrored client-side — only the
-                    // HttpOnly cookie carries it.
-                    try {
-                        const payload = await response.clone().json() as { data?: { accessToken?: string }; accessToken?: string };
-                        const accessToken = payload?.data?.accessToken ?? payload?.accessToken;
-                        if (accessToken) setAccessTokenMirror(accessToken);
-                    } catch {
-                        // Non-fatal — the refresh itself succeeded via cookies; the
-                        // in-memory mirror just won't be updated this cycle.
+                    // 429 means the backend refresh limiter (30/min/IP) was
+                    // tripped — usually by concurrent rotation from the WebSocket
+                    // layer, the auth bootstrap and page fetches all firing at
+                    // once. That is transient, not a dead session: retry once
+                    // after Retry-After instead of logging the user out.
+                    if (response.status === 429 && attempt === 0) {
+                        const retryAfterSec = parseInt(response.headers.get('Retry-After') ?? '', 10);
+                        const waitMs = Number.isFinite(retryAfterSec) && retryAfterSec > 0
+                            ? Math.min(retryAfterSec * 1000, MAX_RETRY_DELAY)
+                            : retryDelay(attempt);
+                        await sleep(waitMs);
+                        continue;
                     }
-                }
 
-                return response.ok;
+                    if (response.ok && typeof window !== 'undefined') {
+                        // The access_token cookie is HttpOnly (by design — XSS-hardened),
+                        // which means WebSocket connections (buildAppUserWebSocketUrl) can
+                        // never read it via document.cookie and rely on this in-memory
+                        // mirror as their only viable auth source. Keep it in sync on every
+                        // successful refresh, or WS auth silently uses a stale token. The
+                        // refresh token itself is never mirrored client-side — only the
+                        // HttpOnly cookie carries it.
+                        try {
+                            const payload = await response.clone().json() as { data?: { accessToken?: string }; accessToken?: string };
+                            const accessToken = payload?.data?.accessToken ?? payload?.accessToken;
+                            if (accessToken) setAccessTokenMirror(accessToken);
+                        } catch {
+                            // Non-fatal — the refresh itself succeeded via cookies; the
+                            // in-memory mirror just won't be updated this cycle.
+                        }
+                    }
+
+                    return response.ok;
+                }
+                return false;
             } catch {
                 return false;
             } finally {

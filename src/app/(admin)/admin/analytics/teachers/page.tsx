@@ -256,7 +256,7 @@ export default function TeachersAnalyticsPage() {
           delta={24.6} deltaLabel="نمو" loading={isLoading} />
         <KPICard title="متوسط التقييم" value={overview.avgRating ?? 0} unit="/5" icon={Star} color="amber"
           delta={2.4} deltaLabel="تحسن" loading={isLoading} />
-        <KPICard title="متوسط الرد" value={overview.responseHours ?? 0} unit=" ساعة" icon={Clock} color="emerald"
+        <KPICard title="متوسط الرد" value={overview.responseHours ?? 0} unit=" ساعة" icon={Clock} color="green"
           delta={-38.2} deltaLabel="تحسن" loading={isLoading} />
         <KPICard title="إجمالي الأرباح" value={overview.totalEarnings ?? 0} unit=" ج.م" icon={DollarSign} color="green"
           delta={18.4} deltaLabel="نمو" loading={isLoading} />
@@ -318,7 +318,7 @@ export default function TeachersAnalyticsPage() {
                     i === 2 ? "bg-gradient-to-br from-orange-300 to-amber-600 text-white" :
                     "bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-blue-600"
                   )}>
-                    {t.name.split(" ").slice(-1)[0].charAt(0)}
+                    {(t.name.split(" ").slice(-1)[0] ?? "").charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">

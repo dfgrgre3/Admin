@@ -17,7 +17,9 @@ export function SWRegistration() {
   }, []);
 
   useEffect(() => {
-    if (!supported || permission !== 'granted') return;
+    // Service workers (and therefore push) are intentionally disabled outside
+    // production, so attempting to subscribe there can never succeed.
+    if (!supported || permission !== 'granted' || process.env.NODE_ENV !== 'production') return;
     let active = true;
     const timer = setTimeout(() => {
       if (active) {

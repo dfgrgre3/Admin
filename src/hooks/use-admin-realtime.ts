@@ -104,56 +104,87 @@ export function useAdminRealtime() {
   return { subscribe, isConnected };
 }
 
+// Keeps a callback's latest identity in a ref so effects that use it can
+// depend on stable booleans (whether a handler is present) instead of the
+// handler's own identity — callers don't need to memoize what they pass in.
+function useLatestCallback(callback: (() => void) | undefined): () => void {
+  const ref = useRef(callback);
+  useEffect(() => {
+    ref.current = callback;
+  }, [callback]);
+  return useCallback(() => {
+    ref.current?.();
+  }, []);
+}
+
 export function useTicketRealtime(onNewTicket?: () => void, onTicketUpdate?: () => void) {
   const { subscribe, isConnected } = useAdminRealtime();
+  const latestNewTicket = useLatestCallback(onNewTicket);
+  const latestTicketUpdate = useLatestCallback(onTicketUpdate);
+  const hasNewTicket = !!onNewTicket;
+  const hasTicketUpdate = !!onTicketUpdate;
 
   useEffect(() => {
-    if (!onNewTicket && !onTicketUpdate) return;
+    if (!hasNewTicket && !hasTicketUpdate) return;
 
-    const unsubNew = onNewTicket ? subscribe('new_ticket', () => onNewTicket()) : undefined;
-    const unsubUpdate = onTicketUpdate ? subscribe('ticket_updated', () => onTicketUpdate()) : undefined;
+    const unsubNew = hasNewTicket ? subscribe('new_ticket', () => latestNewTicket()) : undefined;
+    const unsubUpdate = hasTicketUpdate
+      ? subscribe('ticket_updated', () => latestTicketUpdate())
+      : undefined;
 
     return () => {
       unsubNew?.();
       unsubUpdate?.();
     };
-  }, [subscribe, onNewTicket, onTicketUpdate]);
+  }, [subscribe, hasNewTicket, hasTicketUpdate, latestNewTicket, latestTicketUpdate]);
 
   return { isConnected };
 }
 
 export function usePaymentRealtime(onNewPayment?: () => void, onRefund?: () => void) {
   const { subscribe, isConnected } = useAdminRealtime();
+  const latestNewPayment = useLatestCallback(onNewPayment);
+  const latestRefund = useLatestCallback(onRefund);
+  const hasNewPayment = !!onNewPayment;
+  const hasRefund = !!onRefund;
 
   useEffect(() => {
-    if (!onNewPayment && !onRefund) return;
+    if (!hasNewPayment && !hasRefund) return;
 
-    const unsubNew = onNewPayment ? subscribe('new_payment', () => onNewPayment()) : undefined;
-    const unsubRefund = onRefund ? subscribe('payment_refunded', () => onRefund()) : undefined;
+    const unsubNew = hasNewPayment ? subscribe('new_payment', () => latestNewPayment()) : undefined;
+    const unsubRefund = hasRefund ? subscribe('payment_refunded', () => latestRefund()) : undefined;
 
     return () => {
       unsubNew?.();
       unsubRefund?.();
     };
-  }, [subscribe, onNewPayment, onRefund]);
+  }, [subscribe, hasNewPayment, hasRefund, latestNewPayment, latestRefund]);
 
   return { isConnected };
 }
 
 export function useLiveMonitoringRealtime(onSessionStart?: () => void, onSessionEnd?: () => void) {
   const { subscribe, isConnected } = useAdminRealtime();
+  const latestSessionStart = useLatestCallback(onSessionStart);
+  const latestSessionEnd = useLatestCallback(onSessionEnd);
+  const hasSessionStart = !!onSessionStart;
+  const hasSessionEnd = !!onSessionEnd;
 
   useEffect(() => {
-    if (!onSessionStart && !onSessionEnd) return;
+    if (!hasSessionStart && !hasSessionEnd) return;
 
-    const unsubStart = onSessionStart ? subscribe('live_session_started', () => onSessionStart()) : undefined;
-    const unsubEnd = onSessionEnd ? subscribe('live_session_ended', () => onSessionEnd()) : undefined;
+    const unsubStart = hasSessionStart
+      ? subscribe('live_session_started', () => latestSessionStart())
+      : undefined;
+    const unsubEnd = hasSessionEnd
+      ? subscribe('live_session_ended', () => latestSessionEnd())
+      : undefined;
 
     return () => {
       unsubStart?.();
       unsubEnd?.();
     };
-  }, [subscribe, onSessionStart, onSessionEnd]);
+  }, [subscribe, hasSessionStart, hasSessionEnd, latestSessionStart, latestSessionEnd]);
 
   return { isConnected };
 }

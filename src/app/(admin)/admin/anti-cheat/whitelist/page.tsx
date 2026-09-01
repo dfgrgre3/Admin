@@ -570,7 +570,7 @@ export default function WhitelistPage() {
                 setTypeFilter(typeFilter === t.value ? "all" : t.value)
               }
               label={t.label}
-              count={count}
+              count={count ?? 0}
               icon={Icon}
               color={cfg.text}
             />
@@ -766,7 +766,7 @@ function WhitelistDialog({
         targetId: item.targetId,
         targetName: item.targetName,
         reason: item.reason,
-        expiresAt: item.expiresAt ? item.expiresAt.split("T")[0] : "",
+        expiresAt: item.expiresAt ? (item.expiresAt.split("T")[0] ?? "") : "",
         status: item.status,
       });
     } else {

@@ -4,6 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { adminFetch } from "@/lib/api/admin-api";
 import { apiRoutes } from "@/lib/api/routes";
@@ -19,6 +20,7 @@ import type { CreateUserValues } from "./create-user-schema";
 
 export function useCreateUserForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = React.useState<string | null>(null);
@@ -96,6 +98,10 @@ export function useCreateUserForm() {
         }
 
         toast.success("تم إنشاء المستخدم بنجاح");
+        // Invalidate the users list cache so the new user shows up
+        // immediately when returning to the list (React Query would
+        // otherwise serve the stale cached page for `staleTime`).
+        queryClient.invalidateQueries({ queryKey: ["admin-users-list"] });
         router.push(`/admin/users/${userId}`);
       } catch (error) {
         logger.error("Error creating user:", error);
@@ -104,7 +110,7 @@ export function useCreateUserForm() {
         setIsSubmitting(false);
       }
     },
-    [avatarFile, router],
+    [avatarFile, queryClient, router],
   );
 
   return {

@@ -818,7 +818,7 @@ export default function AntiCheatPage() {
         onApply={(applied) => {
           filterHook.setStatus(applied.status);
           filterHook.setSeverity(applied.severity);
-          filterHook.setEventType(applied.eventType);
+          filterHook.setEventType(applied.eventType as typeof filters.eventType);
           filterHook.setMinRisk(applied.minRisk);
           filterHook.updateFilter("dateFrom", applied.dateFrom || undefined);
           filterHook.updateFilter("dateTo", applied.dateTo || undefined);

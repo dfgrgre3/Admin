@@ -264,7 +264,7 @@ export default function StudentsAnalyticsPage() {
           delta={24.6} deltaLabel="شهري" loading={isLoading} />
         <KPICard title="متوسط الجلسة" value={overview.avgSessionMin ?? 0} unit=" دقيقة" icon={Clock} color="violet"
           delta={5.2} deltaLabel="تحسن" loading={isLoading} />
-        <KPICard title="متوسط التقدم" value={`${overview.avgProgress ?? 0}`} unit="%" icon={Target} color="emerald"
+        <KPICard title="متوسط التقدم" value={`${overview.avgProgress ?? 0}`} unit="%" icon={Target} color="green"
           delta={2.4} deltaLabel="نمو" loading={isLoading} />
         <KPICard title="متوسط الدرجات" value={`${overview.avgGrade ?? 0}`} unit="/100" icon={Star} color="amber"
           delta={3.8} deltaLabel="تحسن" loading={isLoading} />

@@ -145,7 +145,7 @@ export function AchievementsTab({ user, canManage = true }: AchievementsTabProps
           open={grantOpen}
           onOpenChange={setGrantOpen}
           defaultUserIds={[user.id]}
-          defaultUserName={user.name}
+          defaultUserName={user.name ?? undefined}
         />
       )}
     </div>

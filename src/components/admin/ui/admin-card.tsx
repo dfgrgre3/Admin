@@ -256,7 +256,7 @@ function AdminActionCard({
 
 // Grid Card - For dashboard grids
 interface GridCardProps {
-  title: string;
+  title?: string;
   subtitle?: string;
   extra?: React.ReactNode;
   children: React.ReactNode;
@@ -274,15 +274,17 @@ export function AdminGridCard({
 }: GridCardProps) {
   return (
     <AdminCard className={cn("flex flex-col", className)}>
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="font-semibold text-lg">{title}</h3>
-          {subtitle && (
-            <p className="text-sm text-muted-foreground">{subtitle}</p>
-          )}
+      {(title || subtitle || extra) && (
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            {title && <h3 className="font-semibold text-lg">{title}</h3>}
+            {subtitle && (
+              <p className="text-sm text-muted-foreground">{subtitle}</p>
+            )}
+          </div>
+          {extra}
         </div>
-        {extra}
-      </div>
+      )}
       <div className={cn("flex-1", !noPadding && "-mx-6")}>{children}</div>
     </AdminCard>
   );

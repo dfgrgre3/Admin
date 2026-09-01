@@ -215,18 +215,10 @@
   background: hsl(var(--muted));
 }
 
-/* Fix RTL dialog positioning */
-.dialog-content {
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-
-[dir="rtl"] .dialog-content {
-  left: auto;
-  right: 50%;
-  transform: translate(50%, -50%);
-}
+/* NOTE: The old `.dialog-content` centering rules were removed.
+   Dialog centering is now handled entirely by Tailwind classes inside
+   src/components/ui/dialog.tsx (left-[50%] top-[50%] translate-*), so the
+   dialog no longer depends on this asynchronously-loaded stylesheet. */
 
 /* ── Visual Polish Layer ──────────────────────────────────────────────── */
 .card,

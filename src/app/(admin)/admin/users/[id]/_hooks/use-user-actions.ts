@@ -21,9 +21,9 @@ const RESERVED_ROUTE_SEGMENTS = new Set(["edit", "new", "create", "permissions"]
 
 export function useUserDetails(userId: string) {
   const router = useRouter();
-  return useQuery<UserDetails>({
+  return useQuery<UserDetails, Error>({
     queryKey: ["admin", "user", userId],
-    queryFn: async ({ signal }) => {
+    queryFn: async ({ signal }): Promise<UserDetails> => {
       if (!userId || RESERVED_ROUTE_SEGMENTS.has(userId)) {
         router.replace("/admin/users");
         throw new Error("Invalid user ID");
@@ -83,21 +83,21 @@ export function useUserMutations(
     onError: (err: Error) => toast.error(err.message || "حدث خطأ أثناء حذف المستخدم"),
   });
 
-  const validateAction = (
-    target: UserDetails | undefined,
-    action: DangerousUserAction,
-  ): UserDetails | null => {
-    if (!target || !canManageUsers) {
-      toast.error("غير مصرح بتنفيذ الإجراء");
-      return null;
-    }
-    const block = getUserActionBlockReason(currentUser, target, action);
-    if (block) {
-      toast.error(block);
-      return null;
-    }
-    return target;
-  };
+  const validateAction = React.useCallback(
+    (target: UserDetails | undefined, action: DangerousUserAction): UserDetails | null => {
+      if (!target || !canManageUsers) {
+        toast.error("غير مصرح بتنفيذ الإجراء");
+        return null;
+      }
+      const block = getUserActionBlockReason(currentUser, target, action);
+      if (block) {
+        toast.error(block);
+        return null;
+      }
+      return target;
+    },
+    [currentUser, canManageUsers],
+  );
 
   return {
     updateMutation,

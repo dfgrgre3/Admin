@@ -16,7 +16,7 @@ const STATUS_CONFIG: Record<
 };
 
 export function TicketStatusBadge({ status }: { status: TicketStatus }) {
-  const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.open;
+  const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.open!;
   const Icon = config.icon;
   return (
     <Badge variant={config.variant} className="gap-1">

@@ -12,21 +12,26 @@ interface CohortHeatmapProps {
   maxPeriods?: number;
 }
 
-export function CohortHeatmap({ data, className, maxPeriods = 12 }: CohortHeatmapProps) {
-  const maxRetention = 100;
+function getColor(value: number) {
+  if (value === 0) return "bg-muted/30 text-muted-foreground/40";
+  if (value >= 80) return "bg-emerald-500/80 text-white";
+  if (value >= 60) return "bg-emerald-500/60 text-white";
+  if (value >= 40) return "bg-emerald-500/40 text-emerald-50";
+  if (value >= 25) return "bg-amber-500/40 text-amber-50";
+  if (value >= 15) return "bg-amber-500/30 text-amber-100";
+  if (value >= 5) return "bg-red-500/30 text-red-100";
+  return "bg-red-500/20 text-red-200";
+}
 
-  const getColor = (value: number) => {
-    if (value === 0) return "bg-muted/30 text-muted-foreground/40";
-    if (value >= 80) return "bg-emerald-500/80 text-white";
-    if (value >= 60) return "bg-emerald-500/60 text-white";
-    if (value >= 40) return "bg-emerald-500/40 text-emerald-50";
-    if (value >= 25) return "bg-amber-500/40 text-amber-50";
-    if (value >= 15) return "bg-amber-500/30 text-amber-100";
-    if (value >= 5) return "bg-red-500/30 text-red-100";
-    return "bg-red-500/20 text-red-200";
-  };
-
-  const periodHeaders = Array.from({ length: maxPeriods }, (_, i) => `P${i}`);
+export const CohortHeatmap = React.memo(function CohortHeatmap({
+  data,
+  className,
+  maxPeriods = 12,
+}: CohortHeatmapProps) {
+  const periodHeaders = React.useMemo(
+    () => Array.from({ length: maxPeriods }, (_, i) => `P${i}`),
+    [maxPeriods]
+  );
 
   return (
     <div className={cn("overflow-x-auto rounded-2xl border border-border bg-card/50", className)}>
@@ -61,7 +66,9 @@ export function CohortHeatmap({ data, className, maxPeriods = 12 }: CohortHeatma
                     </td>
                   );
                 }
-                const retention = row.sizes[0] > 0 ? Math.round((row.sizes[colIdx] / row.sizes[0]) * 100) : 0;
+                const baseSize = row.sizes[0] ?? 0;
+                const colSize = row.sizes[colIdx] ?? 0;
+                const retention = baseSize > 0 ? Math.round((colSize / baseSize) * 100) : 0;
                 return (
                   <td key={colIdx} className="p-1">
                     <div
@@ -82,4 +89,4 @@ export function CohortHeatmap({ data, className, maxPeriods = 12 }: CohortHeatma
       </table>
     </div>
   );
-}
+});

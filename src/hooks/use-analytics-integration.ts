@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminFetch } from "@/lib/api/admin-api";
 import { apiRoutes } from "@/lib/api/routes";
@@ -64,6 +64,14 @@ export function useAnalyticsIntegration(userId?: string): AnalyticsIntegration {
   const [currentJourney, setCurrentJourney] = useState<UserJourney | null>(null);
   const [lastActivity, setLastActivity] = useState<Date>(new Date());
 
+  // Mirrors currentJourney without being a useCallback dependency, so
+  // trackPageView/trackEvent/trackConversion/endSession keep a stable
+  // identity across renders while still reading the latest journey value.
+  const currentJourneyRef = useRef<UserJourney | null>(currentJourney);
+  useEffect(() => {
+    currentJourneyRef.current = currentJourney;
+  }, [currentJourney]);
+
   // Start a new journey session
   const startSession = useCallback(() => {
     const journey: UserJourney = {
@@ -85,25 +93,28 @@ export function useAnalyticsIntegration(userId?: string): AnalyticsIntegration {
 
   // End the current session
   const endSession = useCallback(() => {
-    if (!currentJourney) return;
+    const journey = currentJourneyRef.current;
+    if (!journey) return;
 
     const endedJourney: UserJourney = {
-      ...currentJourney,
+      ...journey,
       endedAt: new Date().toISOString(),
-      totalDuration: Date.now() - new Date(currentJourney.startedAt).getTime(),
+      totalDuration: Date.now() - new Date(journey.startedAt).getTime(),
     };
 
-    // Send to analytics API
-    sendJourneyToAnalytics(endedJourney);
+    // Send to analytics API (skip no-op sessions with no tracked steps)
+    if (endedJourney.steps.length > 0) {
+      sendJourneyToAnalytics(endedJourney);
+    }
 
     setCurrentJourney(null);
     localStorage.removeItem("current_journey");
-  }, [currentJourney]);
+  }, []);
 
   // Track page view
   const trackPageView = useCallback(
     (page: string, metadata?: Record<string, unknown>) => {
-      if (!currentJourney) {
+      if (!currentJourneyRef.current) {
         startSession();
       }
 
@@ -137,24 +148,26 @@ export function useAnalyticsIntegration(userId?: string): AnalyticsIntegration {
 
       setLastActivity(now);
 
-      // Update localStorage
+      // Update localStorage (reads the latest journey via the ref so this
+      // never persists a stale snapshot)
       if (typeof window !== "undefined") {
+        const journey = currentJourneyRef.current;
         localStorage.setItem(
           "current_journey",
           JSON.stringify({
-            ...currentJourney,
-            steps: [...(currentJourney?.steps || []), step],
+            ...journey,
+            steps: [...(journey?.steps || []), step],
           })
         );
       }
     },
-    [currentJourney, sessionId, userId, startSession]
+    [sessionId, userId, startSession]
   );
 
   // Track custom event
   const trackEvent = useCallback(
     (action: string, metadata?: Record<string, unknown>) => {
-      if (!currentJourney) return;
+      if (!currentJourneyRef.current) return;
 
       const step: UserJourneyStep = {
         id: `step_${Date.now()}`,
@@ -174,13 +187,14 @@ export function useAnalyticsIntegration(userId?: string): AnalyticsIntegration {
         };
       });
     },
-    [currentJourney, sessionId, userId]
+    [sessionId, userId]
   );
 
   // Track conversion goal
   const trackConversion = useCallback(
     (goal: string, value?: number) => {
-      if (!currentJourney) return;
+      const journey = currentJourneyRef.current;
+      if (!journey) return;
 
       setCurrentJourney((prev) => {
         if (!prev) return null;
@@ -198,10 +212,10 @@ export function useAnalyticsIntegration(userId?: string): AnalyticsIntegration {
         goal,
         value,
         timestamp: new Date().toISOString(),
-        journeySteps: currentJourney.steps.length,
+        journeySteps: journey.steps.length,
       });
     },
-    [currentJourney, sessionId, userId]
+    [sessionId, userId]
   );
 
   // Auto-end session on page unload

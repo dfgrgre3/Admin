@@ -57,7 +57,8 @@ export function usePushSubscription(): UsePushSubscriptionResult {
     if (registrationRef.current) return registrationRef.current;
     if (!("serviceWorker" in navigator)) return null;
 
-    let reg = await navigator.serviceWorker.getRegistration("/");
+    let reg: ServiceWorkerRegistration | null | undefined =
+      await navigator.serviceWorker.getRegistration("/");
     if (!reg) {
       // The service worker may still be installing/activating (it's often
       // registered on a delayed timer). Wait for it to become ready instead

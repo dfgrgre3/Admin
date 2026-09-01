@@ -194,8 +194,8 @@ export default function PoliciesPage() {
       const response = await adminFetch("/api/admin/anti-cheat/policies");
       if (!response.ok) {
         return POLICY_PRESETS.map((p, i) => ({
-          id: `preset-${i}`,
           ...p,
+          id: `preset-${i}`,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           rulesCount: 0,

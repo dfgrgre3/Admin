@@ -74,7 +74,9 @@ export function useUserListQuery(params: {
         isNew: params.status === "NEW" ? true : undefined,
       }),
     placeholderData: keepPreviousData,
-    staleTime: 30_000,
+    staleTime: 5_000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   return { query, queryKey, isConnected };

@@ -1,4 +1,5 @@
-import { Database, Activity, Server, HardDrive } from "lucide-react";
+import Link from "next/link";
+import { Database, Activity, Server, HardDrive, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HealthStatusBadge } from "./health-status-badge";
 import { AdminCard } from "@/components/admin/ui/admin-card";
@@ -23,6 +24,12 @@ const getComponentIcon = (key: string) => {
   }
 };
 
+// This tab's checks object uses "redis" while the detail-page route (and the
+// backend's dashboardServiceChecks) uses "cache" for the same probe.
+const detailRouteKey: Record<string, string> = {
+  redis: "cache",
+};
+
 export function SystemHealthChecks({ system }: SystemHealthChecksProps) {
   if (!system?.checks) return null;
 
@@ -32,6 +39,7 @@ export function SystemHealthChecks({ system }: SystemHealthChecksProps) {
     <div className="grid gap-4 md:grid-cols-2">
       {Object.entries(checks).map(([key, component]) => {
         const Icon = getComponentIcon(key);
+        const routeKey = detailRouteKey[key] ?? key;
 
         return (
           <AdminCard key={key} variant="glass">
@@ -87,6 +95,14 @@ export function SystemHealthChecks({ system }: SystemHealthChecksProps) {
                     </span>
                   </div>
                 ))}
+
+              <Link
+                href={`/admin/health/${routeKey}`}
+                className="mt-2 flex items-center justify-center gap-1.5 rounded-lg border border-border/60 py-2 text-xs font-bold text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+              >
+                عرض السجل التاريخي التفصيلي
+                <ArrowLeft className="h-3.5 w-3.5" />
+              </Link>
             </div>
           </AdminCard>
         );

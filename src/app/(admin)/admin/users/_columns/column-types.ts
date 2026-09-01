@@ -1,4 +1,5 @@
 import type { AdminUserListItem } from "@/lib/api/admin-users-api";
+import type { UserActionActor } from "@/lib/user-action-guards";
 import type {
   ActivateDialogState,
   ImpersonateDialogState,
@@ -12,7 +13,7 @@ import type {
 } from "../_components/list-types";
 
 export interface ColumnPermissions {
-  currentUser: unknown;
+  currentUser: UserActionActor | null | undefined;
   canUpdateUsers: boolean;
   canManageVerification: boolean;
   canSuspendUsers: boolean;

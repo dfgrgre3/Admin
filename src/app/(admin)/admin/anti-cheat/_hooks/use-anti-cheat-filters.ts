@@ -3,6 +3,8 @@
 import * as React from "react";
 import type { AntiCheatFilters, AntiCheatSeverity, AntiCheatStatus } from "../_components/types";
 
+type AntiCheatEventTypeFilter = AntiCheatFilters["eventType"];
+
 interface UseAntiCheatFiltersOptions {
   initial?: Partial<AntiCheatFilters>;
   onChange?: (filters: AntiCheatFilters) => void;
@@ -52,7 +54,7 @@ export function useAntiCheatFilters(options: UseAntiCheatFiltersOptions = {}) {
     setFilters((prev) => ({ ...prev, severity }));
   }, []);
 
-  const setEventType = React.useCallback((eventType: string) => {
+  const setEventType = React.useCallback((eventType: AntiCheatEventTypeFilter) => {
     setFilters((prev) => ({ ...prev, eventType }));
   }, []);
 
@@ -82,9 +84,10 @@ export function useAntiCheatFilters(options: UseAntiCheatFiltersOptions = {}) {
     return count;
   }, [filters]);
 
+  const onChange = options.onChange;
   React.useEffect(() => {
-    options.onChange?.(filters);
-  }, [filters, options]);
+    onChange?.(filters);
+  }, [filters, onChange]);
 
   return {
     filters,

@@ -232,7 +232,7 @@ export default function SalesAnalyticsPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <KPICard title="إجمالي الإيرادات" value={overview.totalRevenue ?? 0} unit=" ج.م" icon={DollarSign} color="green"
           delta={18.6} deltaLabel="نمو سنوي" loading={isLoading} />
-        <KPICard title="MRR" value={overview.mrr ?? 0} unit=" ج.م" icon={Wallet} color="emerald"
+        <KPICard title="MRR" value={overview.mrr ?? 0} unit=" ج.م" icon={Wallet} color="green"
           delta={24.2} deltaLabel="شهري" loading={isLoading} />
         <KPICard title="ARR" value={overview.arr ?? 0} unit=" ج.م" icon={Banknote} color="blue"
           delta={28.4} deltaLabel="سنوي" loading={isLoading} />
@@ -240,7 +240,7 @@ export default function SalesAnalyticsPage() {
           delta={5.2} deltaLabel="تحسن" loading={isLoading} />
         <KPICard title="إيرادات التوقف" value={overview.churnRevenue ?? 0} unit=" ج.م" icon={ArrowDownRight} color="red"
           delta={-8.4} deltaLabel="انخفاض" loading={isLoading} />
-        <KPICard title="صافي الإيرادات" value={overview.netRevenue ?? 0} unit=" ج.م" icon={Coins} color="emerald"
+        <KPICard title="صافي الإيرادات" value={overview.netRevenue ?? 0} unit=" ج.م" icon={Coins} color="green"
           delta={15.2} deltaLabel="صافي" loading={isLoading} />
       </div>
 

@@ -34,7 +34,6 @@ import {
 import { ExportButton } from "../_components/export-button";
 import { SectionHeader } from "../_components/section-header";
 import { AIInsightsBanner, type AnalyticsInsight } from "../_components/ai-insights-banner";
-import { CohortHeatmap } from "../_components/cohort-heatmap";
 import { apiRoutes } from "../_components/use-analytics-data";
 import { useQuery } from "@tanstack/react-query";
 import { adminFetch } from "@/lib/api/admin-api";
@@ -47,6 +46,10 @@ const MultiLineChart = dynamic(
 );
 const StackedBarChart = dynamic(
   () => import("../charts").then((m) => m.StackedBarChart),
+  { ssr: false, loading: () => <div className="h-[300px] w-full animate-pulse bg-muted/50 rounded-xl" /> }
+);
+const CohortHeatmap = dynamic(
+  () => import("../_components/cohort-heatmap").then((m) => m.CohortHeatmap),
   { ssr: false, loading: () => <div className="h-[300px] w-full animate-pulse bg-muted/50 rounded-xl" /> }
 );
 

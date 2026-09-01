@@ -51,26 +51,35 @@ export default function UserDetailPage() {
   React.useEffect(() => {
     if (isError) {
       const errMsg = error instanceof Error ? error.message : "المستخدم غير موجود";
+      const apiError = error as { status?: number } | undefined;
       logger.error("Error fetching user:", error);
       toast.error(errMsg);
-      if (errMsg === "المستخدم غير موجود") router.push("/admin/users");
+      // Redirect back to the list only on a genuine 404 (or an invalid/empty
+      // id) — not on transient network/server errors, which would otherwise
+      // silently bounce the user back to the list after creating a user.
+      if (apiError?.status === 404 || errMsg === "Invalid user ID") {
+        router.push("/admin/users");
+      }
     }
   }, [isError, error, router]);
 
-  const handleSave = () => {
+  const handleSave = React.useCallback(() => {
     if (!validateAction(user, "role-change")) return;
     updateMutation.mutate(editedUser);
-  };
+  }, [validateAction, user, updateMutation, editedUser]);
 
-  const handleDelete = () => {
+  const handleDelete = React.useCallback(() => {
     if (!validateAction(user, "delete")) return;
     deleteMutation.mutate();
-  };
+  }, [validateAction, user, deleteMutation]);
 
-  const handleSecurityChange = (updatedUser: Partial<UserDetails>) => {
-    setEditedUser(updatedUser);
-    queryClient.invalidateQueries({ queryKey: ["admin", "user", userId] });
-  };
+  const handleSecurityChange = React.useCallback(
+    (updatedUser: Partial<UserDetails>) => {
+      setEditedUser(updatedUser);
+      queryClient.invalidateQueries({ queryKey: ["admin", "user", userId] });
+    },
+    [queryClient, userId],
+  );
 
   if (isLoading) return <UserSkeleton />;
   if (!user) return null;

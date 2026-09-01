@@ -195,6 +195,7 @@ export const ADMIN_API_RULES: ReadonlyArray<{
     { pattern: /^\/api\/admin\/lessons/, view: PERMISSIONS.SUBJECTS_VIEW, manage: PERMISSIONS.SUBJECTS_MANAGE },
     { pattern: /^\/api\/admin\/orders/, view: PERMISSIONS.ANALYTICS_VIEW },
     { pattern: /^\/api\/admin\/payments/, view: PERMISSIONS.ANALYTICS_VIEW },
+    { pattern: /^\/api\/admin\/plans/, view: PERMISSIONS.ANALYTICS_VIEW, manage: PERMISSIONS.ANALYTICS_VIEW },
     { pattern: /^\/api\/admin\/taxes/, view: PERMISSIONS.TAXES_VIEW, manage: PERMISSIONS.TAXES_MANAGE },
   ];
 

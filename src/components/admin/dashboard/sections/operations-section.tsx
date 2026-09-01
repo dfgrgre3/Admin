@@ -305,28 +305,30 @@ export const OperationsSection = React.memo(function OperationsSection({
           ) : (
             <ul className="space-y-2">
               {services.map((service) => (
-                <li
-                  key={service.serviceKey}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold">{service.serviceName}</p>
-                    <p className="truncate text-xs text-muted-foreground">{service.details}</p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      {Math.round(service.latency)} ms
-                    </span>
-                    <Badge
-                      variant="outline"
-                      className={cn("text-[11px]", healthStyles[service.status])}
-                    >
-                      {service.status === "unhealthy" && (
-                        <AlertTriangle className="me-1 h-3 w-3" aria-hidden="true" />
-                      )}
-                      {healthLabels[service.status] ?? service.status}
-                    </Badge>
-                  </div>
+                <li key={service.serviceKey}>
+                  <Link
+                    href={`/admin/health/${service.serviceKey}`}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 transition-colors hover:border-emerald-500/40 hover:bg-emerald-500/5"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold">{service.serviceName}</p>
+                      <p className="truncate text-xs text-muted-foreground">{service.details}</p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {Math.round(service.latency)} ms
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className={cn("text-[11px]", healthStyles[service.status])}
+                      >
+                        {service.status === "unhealthy" && (
+                          <AlertTriangle className="me-1 h-3 w-3" aria-hidden="true" />
+                        )}
+                        {healthLabels[service.status] ?? service.status}
+                      </Badge>
+                    </div>
+                  </Link>
                 </li>
               ))}
             </ul>
