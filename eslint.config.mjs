@@ -15,8 +15,6 @@ export default [
       "build/**",
       "dist/**",
       "generated/**",
-      "prisma/generated/**",
-      "prisma/migrations/**",
       ".venv/**",
       "venv/**",
       "env/**",

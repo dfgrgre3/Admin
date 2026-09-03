@@ -2,6 +2,7 @@ import { apiClient } from '@/lib/api/api-client';
 import type {
   CoursesListResponse,
   CourseFilters,
+  CourseListItem,
   CourseMetaResponse,
   CourseDetails,
   CourseFormValues,
@@ -15,8 +16,34 @@ import type {
   BulkActionResponse,
 } from '../types';
 
-function prepareCoursePayload<T extends Record<string, any>>(data: T): Record<string, any> {
-  const payload: Record<string, any> = { ...data };
+/** الاستجابة الأولية من GET /api/admin/courses قبل تسويتها في CoursesListResponse */
+type RawCoursePagination = {
+  page?: number | string | null;
+  currentPage?: number | string | null;
+  per_page?: number | string | null;
+  limit?: number | string | null;
+  perPage?: number | string | null;
+  total?: number | string | null;
+  total_pages?: number | string | null;
+  totalPages?: number | string | null;
+  has_next?: boolean | null;
+  has_prev?: boolean | null;
+};
+
+type RawCourseListResponse = {
+  items?: CourseListItem[];
+  courses?: CourseListItem[];
+  data?: {
+    courses?: CourseListItem[];
+    items?: CourseListItem[];
+    pagination?: RawCoursePagination;
+  };
+  pagination?: RawCoursePagination;
+  filters_used?: CourseFilters;
+};
+
+function prepareCoursePayload<T extends object>(data: T): Record<string, unknown> {
+  const payload: Record<string, unknown> = { ...data };
 
   let targetAudienceStr: string | undefined = undefined;
   if (Array.isArray(payload.target_audience)) {
@@ -69,9 +96,10 @@ export const courseService = {
 
     const queryString = params.toString();
     const endpoint = `/api/admin/courses${queryString ? `?${queryString}` : ''}`;
-    const res = await apiClient.get<any>(endpoint);
+    const res = await apiClient.get<RawCourseListResponse>(endpoint);
 
-    const rawItems = res?.items || res?.courses || res?.data?.courses || res?.data?.items || [];
+    const rawItems =
+      res?.items || res?.courses || res?.data?.courses || res?.data?.items || ([] as CourseListItem[]);
     const rawPagination = res?.pagination || res?.data?.pagination || {};
 
     const page = Number(rawPagination.page || rawPagination.currentPage || filters.page || 1);
@@ -133,9 +161,13 @@ export const courseService = {
     return apiClient.post(`/api/admin/courses/${courseId}/archive`, {});
   },
 
-  /** POST /api/admin/courses/{courseId}/restore */
+  /**
+   * POST /api/admin/courses/{courseId}/unarchive
+   * يُرجع الكورس المؤرشف إلى حالة DRAFT. الباكند لا يوفّر مسار /restore للكورسات؛
+   * المسار الصحيح (المُسجّل في hexagonal_routes.go) هو /unarchive.
+   */
   async restoreCourse(courseId: string): Promise<CourseDetails> {
-    return apiClient.post(`/api/admin/courses/${courseId}/restore`, {});
+    return apiClient.post(`/api/admin/courses/${courseId}/unarchive`, {});
   },
 
   /** POST /api/admin/courses/{courseId}/duplicate */

@@ -47,9 +47,6 @@
     "build",
     "dist",
     "generated",
-    "prisma/generated",
-    "prisma/migrations",
-    "prisma/seed",
     "scratch",
     "backend"
   ]

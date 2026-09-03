@@ -1,0 +1,397 @@
+﻿=== S. MIGRATIONS (last 15) ===
+                         id                         |           appliedAt           
+----------------------------------------------------+-------------------------------
+ 0176_deleted_at_removal_phase_a                    | 2026-09-03 11:42:44.58797+00
+ 0175_legacy_compat_views                           | 2026-09-03 11:34:49.758687+00
+ 0174_per_table_autovacuum_tuning                   | 2026-09-03 11:30:32.293316+00
+ 0173_production_postgres_tuning                    | 2026-09-03 11:29:49.347802+00
+ 0172_install_pg_cron_and_examresult_partition_mgmt | 2026-09-03 11:40:49.830148+00
+ 0171_phase1_hardening                              | 2026-09-03 11:29:07.109848+00
+ 0170_perf_indexes                                  | 2026-09-03 10:38:58.385484+00
+ 0169_seed_system_roles_and_assignments             | 2026-09-03 10:36:46.257984+00
+ 0168_permissions_action_and_catalog                | 2026-09-03 07:48:24.497691+00
+ 0167_create_ip_whitelist_tables                    | 2026-09-03 07:06:21.437571+00
+ 0166_drop_duplicate_http_metric_buckets_index      | 2026-09-03 07:06:21.403094+00
+ 0165_disable_rls_on_service_health_checks          | 2026-09-03 07:06:21.329204+00
+ 0164_add_service_health_checks                     | 2026-09-03 07:06:21.319003+00
+ 0163_add_anti_cheat                                | 2026-09-03 07:06:21.303556+00
+ 0162_drop_auditlog_event_type_check                | 2026-09-03 07:06:21.263864+00
+(15 rows)
+
+=== S2. UserSession indexes vs FK ===
+    indexname     |                                    indexdef                                     
+------------------+---------------------------------------------------------------------------------
+ UserSession_pkey | CREATE UNIQUE INDEX "UserSession_pkey" ON public."UserSession" USING btree (id)
+(1 row)
+
+            conname            |                                                     pg_get_constraintdef                                                      
+-------------------------------+-------------------------------------------------------------------------------------------------------------------------------
+ UserSession_device_type_check | CHECK ((device_type = ANY (ARRAY['web'::text, 'mobile'::text, 'tablet'::text, 'desktop'::text, 'unknown'::text])))
+ UserSession_pkey              | PRIMARY KEY (id)
+ UserSession_status_check      | CHECK ((status = ANY (ARRAY['active'::text, 'expired'::text, 'revoked'::text, 'logged_out'::text])))
+ chk_revocation_consistency    | CHECK ((((status = 'revoked'::text) AND (revoked_at IS NOT NULL)) OR ((status <> 'revoked'::text) AND (revoked_at IS NULL))))
+ chk_session_dates             | CHECK ((expires_at > created_at))
+ fk_usersession_user           | FOREIGN KEY (user_id) REFERENCES "User"(id) ON DELETE RESTRICT
+(6 rows)
+
+=== S3. app_user grants sample ===
+ total_grants 
+--------------
+         1694
+(1 row)
+
+  table_name   | privilege_type 
+---------------+----------------
+ UserGrade     | INSERT
+ UserGrade     | SELECT
+ UserGrade     | UPDATE
+ UserGrade     | DELETE
+ UserGrade     | TRUNCATE
+ UserGrade     | REFERENCES
+ UserGrade     | TRIGGER
+ _GroupMembers | INSERT
+ _GroupMembers | SELECT
+ _GroupMembers | UPDATE
+(10 rows)
+
+=== S4. CASCADE RISK: FKs with CASCADE grouped by referencing table (top 20) ===
+  referencing_table  | cascade_fks 
+---------------------+-------------
+ "SubjectEnrollment" |           4
+ "CourseQuestion"    |           3
+ "TopicProgress"     |           3
+ "Topic"             |           2
+ "AntiCheatEvent"    |           2
+ examresult_p2026_12 |           2
+ examresult_p2026_02 |           2
+ bundle_courses      |           2
+ course_assistants   |           2
+ "CartItem"          |           2
+ bundle_enrollments  |           2
+ "Payment"           |           2
+ examresult_p2026_07 |           2
+ "SubTopic"          |           2
+ "UserSettings"      |           2
+ lesson_view_stats   |           2
+ user_roles          |           2
+ "CourseChangelog"   |           2
+ "EventAttendee"     |           2
+ "Question"          |           2
+(20 rows)
+
+=== S5. EMPTY TABLES COUNT ===
+ empty_tables 
+--------------
+          221
+(1 row)
+
+=== S6. shared_preload_libraries / data_checksums ===
+           name           |         setting          
+--------------------------+--------------------------
+ data_directory           | /var/lib/postgresql/data
+ shared_preload_libraries | 
+(2 rows)
+
+=== S7. DEFAULT PARTITION rows ===
+ count 
+-------
+     0
+(1 row)
+
+=== S8. MATVIEWS freshness ===
+       matviewname        | ispopulated 
+--------------------------+-------------
+ mv_user_weekly_analytics | t
+ mv_user_progress_summary | t
+ mv_user_watch_time       | t
+(3 rows)
+
+=== S9. PascalCase tables that are EMPTY but have heavy index footprint (top 15 idx/heap ratio) ===
+         tbl         | idx_size | heap_size  | n_live_tup 
+---------------------+----------+------------+------------
+ "Subject"           | 344 kB   | 0 bytes    |          0
+ "Payment"           | 184 kB   | 0 bytes    |          0
+ "Notification"      | 176 kB   | 0 bytes    |          0
+ "Task"              | 144 kB   | 0 bytes    |          0
+ "StudySession"      | 128 kB   | 0 bytes    |          0
+ "SubjectEnrollment" | 112 kB   | 0 bytes    |          0
+ "AuditLog"          | 104 kB   | 8192 bytes |          0
+ "LmsCourse"         | 96 kB    | 0 bytes    |          0
+ "TopicProgress"     | 80 kB    | 0 bytes    |          0
+ "Exam"              | 80 kB    | 0 bytes    |          0
+ "SecurityLog"       | 72 kB    | 0 bytes    |          0
+ "BlogPost"          | 72 kB    | 0 bytes    |          0
+ security_events     | 72 kB    | 0 bytes    |          0
+ "SubTopic"          | 72 kB    | 0 bytes    |          0
+ "Session"           | 72 kB    | 0 bytes    |          0
+(15 rows)
+
+=== S10. Views shadowing tables (naming collisions case-insensitive) ===
+         name_lower          | relkind |             obj             
+-----------------------------+---------+-----------------------------
+ _groupmembers               | r       | "_GroupMembers"
+ _subjecttoteacher           | r       | "_SubjectToTeacher"
+ abexperiment                | r       | "ABExperiment"
+ achievement                 | r       | "Achievement"
+ active_user_stats           | r       | active_user_stats
+ activitylog                 | r       | "ActivityLog"
+ addon                       | r       | "Addon"
+ affiliate                   | r       | "Affiliate"
+ affiliateaudit              | r       | "AffiliateAudit"
+ affiliatecampaign           | r       | "AffiliateCampaign"
+ affiliatelink               | r       | "AffiliateLink"
+ affiliatelinkclick          | r       | "AffiliateLinkClick"
+ affiliatepayout             | r       | "AffiliatePayout"
+ affiliatereferral           | r       | "AffiliateReferral"
+ affiliatesetting            | r       | "AffiliateSetting"
+ affiliatetierrule           | r       | "AffiliateTierRule"
+ aichatmessage               | r       | "AiChatMessage"
+ aiconversation              | r       | "AIConversation"
+ aigeneratedcontent          | r       | "AiGeneratedContent"
+ aigeneratedexam             | r       | "AiGeneratedExam"
+ aimessage                   | r       | "AIMessage"
+ aiquestion                  | r       | "AiQuestion"
+ analyticsevent              | r       | "AnalyticsEvent"
+ announcement                | r       | "Announcement"
+ anticheatevent              | r       | "AntiCheatEvent"
+ anticheatflag               | r       | "AntiCheatFlag"
+ audit_log_view              | v       | audit_log_view
+ auditlog                    | r       | "AuditLog"
+ automation                  | r       | "Automation"
+ automationlog               | r       | "AutomationLog"
+ automationrule              | r       | "AutomationRule"
+ backup_codes                | r       | backup_codes
+ backups                     | r       | backups
+ biometricchallenge          | r       | "BiometricChallenge"
+ biometriccredential         | r       | "BiometricCredential"
+ blacklisted_ips             | r       | blacklisted_ips
+ blocked_ip_attempts         | r       | blocked_ip_attempts
+ blocked_tokens              | r       | blocked_tokens
+ blockedipattempt            | r       | "BlockedIpAttempt"
+ blogpost                    | r       | "BlogPost"
+ book                        | r       | "Book"
+ bookprogress                | r       | "BookProgress"
+ bookreview                  | r       | "BookReview"
+ books                       | v       | books
+ broadcasts                  | r       | broadcasts
+ bundle_courses              | r       | bundle_courses
+ bundle_enrollments          | r       | bundle_enrollments
+ campaign                    | r       | "Campaign"
+ cartitem                    | r       | "CartItem"
+ category                    | r       | "Category"
+ certificate                 | r       | "Certificate"
+ challenge                   | r       | "Challenge"
+ challengecompletion         | r       | "ChallengeCompletion"
+ contentpreference           | r       | "ContentPreference"
+ contentreport               | r       | "ContentReport"
+ contest                     | r       | "Contest"
+ contestquestion             | r       | "ContestQuestion"
+ conversion_events           | r       | conversion_events
+ coupon                      | r       | "Coupon"
+ course_assistants           | r       | course_assistants
+ course_availability_windows | r       | course_availability_windows
+ course_bundles              | r       | course_bundles
+ course_changelogs           | r       | course_changelogs
+ course_pricing              | r       | course_pricing
+ course_review_submissions   | r       | course_review_submissions
+ course_versions             | r       | course_versions
+ courseanswer                | r       | "CourseAnswer"
+ coursechangelog             | r       | "CourseChangelog"
+ coursequestion              | r       | "CourseQuestion"
+ coursereview                | r       | "CourseReview"
+ coursereviewcomment         | r       | "CourseReviewComment"
+ coursetag                   | r       | "CourseTag"
+ custom_reports              | r       | custom_reports
+ customgoal                  | r       | "CustomGoal"
+ dashboardalert              | r       | "DashboardAlert"
+ dashboardexportjob          | r       | "DashboardExportJob"
+ dashboardsavedfilter        | r       | "DashboardSavedFilter"
+ delete_audit                | r       | delete_audit
+ deletedrecordarchive        | r       | "DeletedRecordArchive"
+ event                       | r       | "Event"
+ eventattendee               | r       | "EventAttendee"
+ exam                        | r       | "Exam"
+ exam_results                | v       | exam_results
+ examresult_p2026_02         | r       | examresult_p2026_02
+ examresult_p2026_03         | r       | examresult_p2026_03
+ examresult_p2026_04         | r       | examresult_p2026_04
+ examresult_p2026_05         | r       | examresult_p2026_05
+ examresult_p2026_06         | r       | examresult_p2026_06
+ examresult_p2026_07         | r       | examresult_p2026_07
+ examresult_p2026_08         | r       | examresult_p2026_08
+ examresult_p2026_09         | r       | examresult_p2026_09
+ examresult_p2026_10         | r       | examresult_p2026_10
+ examresult_p2026_11         | r       | examresult_p2026_11
+ examresult_p2026_12         | r       | examresult_p2026_12
+ examresult_pdefault         | r       | examresult_pdefault
+ experiment                  | r       | "Experiment"
+ forumcategory               | r       | "ForumCategory"
+ forumpost                   | r       | "ForumPost"
+ forumreply                  | r       | "ForumReply"
+ forumtopic                  | r       | "ForumTopic"
+ groupsubscription           | r       | "GroupSubscription"
+ http_metric_buckets         | r       | http_metric_buckets
+ invoice                     | r       | "Invoice"
+ ip_whitelist_entries        | r       | ip_whitelist_entries
+ ip_whitelist_settings       | r       | ip_whitelist_settings
+ ipwhitelistentry            | r       | "IpWhitelistEntry"
+ ipwhitelistsetting          | r       | "IpWhitelistSetting"
+ leaderboardentry            | r       | "LeaderboardEntry"
+ lesson                      | r       | "Lesson"
+ lesson_drip_schedules       | r       | lesson_drip_schedules
+ lesson_subtitles            | r       | lesson_subtitles
+ lesson_view_stats           | r       | lesson_view_stats
+ lessonanswer                | r       | "LessonAnswer"
+ lessonattachment            | r       | "LessonAttachment"
+ lessonnote                  | r       | "LessonNote"
+ lessonnotecontent           | r       | "LessonNoteContent"
+ lessonquestion              | r       | "LessonQuestion"
+ lessontranscript            | r       | "LessonTranscript"
+ liveevent                   | r       | "LiveEvent"
+ livesession                 | r       | "LiveSession"
+ lmsassignment               | r       | "LmsAssignment"
+ lmsattachment               | r       | "LmsAttachment"
+ lmsbundle                   | r       | "LmsBundle"
+ lmsbundlecourse             | r       | "LmsBundleCourse"
+ lmscategory                 | r       | "LmsCategory"
+ lmscertificate              | r       | "LmsCertificate"
+ lmscertificatetemplate      | r       | "LmsCertificateTemplate"
+ lmscourse                   | r       | "LmsCourse"
+ lmscoursecategory           | r       | "LmsCourseCategory"
+ lmscoursechangelog          | r       | "LmsCourseChangelog"
+ lmscourseprerequisite       | r       | "LmsCoursePrerequisite"
+ lmscoursetag                | r       | "LmsCourseTag"
+ lmscourseversion            | r       | "LmsCourseVersion"
+ lmsenrollment               | r       | "LmsEnrollment"
+ lmsinstructor               | r       | "LmsInstructor"
+ lmsinteractivequiz          | r       | "LmsInteractiveQuiz"
+ lmslesson                   | r       | "LmsLesson"
+ lmslessoninteraction        | r       | "LmsLessonInteraction"
+ lmspricing                  | r       | "LmsPricing"
+ lmsrelatedcourse            | r       | "LmsRelatedCourse"
+ lmsreview                   | r       | "LmsReview"
+ lmsreviewcomment            | r       | "LmsReviewComment"
+ lmssection                  | r       | "LmsSection"
+ lmssubtitle                 | r       | "LmsSubtitle"
+ lmstag                      | r       | "LmsTag"
+ lmsvideonote                | r       | "LmsVideoNote"
+ login_history               | r       | login_history
+ mailtask                    | r       | "MailTask"
+ marketingcampaign           | r       | "MarketingCampaign"
+ message                     | r       | "Message"
+ mlrecommendation            | r       | "MlRecommendation"
+ notification                | r       | "Notification"
+ notification_view           | v       | notification_view
+ notifications_view          | v       | notifications_view
+ oauth_accounts              | r       | oauth_accounts
+ offlinelesson               | r       | "OfflineLesson"
+ order                       | r       | "Order"
+ orderitem                   | r       | "OrderItem"
+ orders_view                 | v       | orders_view
+ page_views                  | r       | page_views
+ passwordhistory             | r       | "PasswordHistory"
+ passwordpolicy              | r       | "PasswordPolicy"
+ payment                     | r       | "Payment"
+ payments_view               | v       | payments_view
+ paymentstatuslookup         | r       | "PaymentStatusLookup"
+ permissions                 | r       | permissions
+ progresssnapshot            | r       | "ProgressSnapshot"
+ push_tokens                 | r       | push_tokens
+ quest                       | r       | "Quest"
+ questchain                  | r       | "QuestChain"
+ question                    | r       | "Question"
+ questions                   | r       | questions
+ questprogress               | r       | "QuestProgress"
+ referralreward              | r       | "ReferralReward"
+ relatedcourse               | r       | "RelatedCourse"
+ reminder                    | r       | "Reminder"
+ resource                    | r       | "Resource"
+ reward                      | r       | "Reward"
+ role_permissions            | r       | role_permissions
+ roles                       | r       | roles
+ schedule                    | r       | "Schedule"
+ scheduled_items             | r       | scheduled_items
+ schema_migrations           | r       | schema_migrations
+ season                      | r       | "Season"
+ seasonparticipation         | r       | "SeasonParticipation"
+ security_events             | r       | security_events
+ securitylog                 | r       | "SecurityLog"
+ securityquestion            | r       | "SecurityQuestion"
+ sentimentanalysis           | r       | "SentimentAnalysis"
+ service_health_checks       | r       | service_health_checks
+ session                     | r       | "Session"
+ sessioncredential           | r       | "SessionCredential"
+ student_parents             | r       | student_parents
+ studysession                | r       | "StudySession"
+ subject                     | r       | "Subject"
+ subjectcertificate          | r       | "SubjectCertificate"
+ subjectenrollment           | r       | "SubjectEnrollment"
+ subjectreview               | r       | "SubjectReview"
+ subjecttag                  | r       | "SubjectTag"
+ subscription                | r       | "Subscription"
+ subscriptionplan            | r       | "SubscriptionPlan"
+ subscriptions_view          | v       | subscriptions_view
+ subtopic                    | r       | "SubTopic"
+ support_tickets             | r       | support_tickets
+ systemsetting               | r       | "SystemSetting"
+ task                        | r       | "Task"
+ teacher                     | r       | "Teacher"
+ teacherearnings             | r       | "TeacherEarnings"
+ testresult                  | r       | "TestResult"
+ ticket_messages             | r       | ticket_messages
+ topic                       | r       | "Topic"
+ topicprogress               | r       | "TopicProgress"
+ trusted_devices             | r       | trusted_devices
+ two_factor_secrets          | r       | two_factor_secrets
+ two_factor_settings         | r       | two_factor_settings
+ twofactorchallenge          | r       | "TwoFactorChallenge"
+ twofactorcredential         | r       | "TwoFactorCredential"
+ user                        | r       | "User"
+ user_flows                  | r       | user_flows
+ user_journey_steps          | r       | user_journey_steps
+ user_journeys               | r       | user_journeys
+ user_permissions            | r       | user_permissions
+ user_roles                  | r       | user_roles
+ userachievement             | r       | "UserAchievement"
+ useractivity                | r       | "UserActivity"
+ useradminnote               | r       | "UserAdminNote"
+ userchallenge               | r       | "UserChallenge"
+ usercredential              | r       | "UserCredential"
+ usergrade                   | r       | "UserGrade"
+ userinteraction             | r       | "UserInteraction"
+ userreward                  | r       | "UserReward"
+ users                       | v       | users
+ usersession                 | r       | "UserSession"
+ usersettings                | r       | "UserSettings"
+ usersubscription            | r       | "UserSubscription"
+ userwallet                  | r       | "UserWallet"
+ userxp                      | r       | "UserXP"
+ verification_codes          | r       | verification_codes
+ video_chapters              | r       | video_chapters
+ wallettransaction           | r       | "WalletTransaction"
+ wishlist                    | r       | "Wishlist"
+(241 rows)
+
+=== S11. Orphan check sample: user_roles.user_id -> "User" ===
+ orphan_user_roles 
+-------------------
+                 0
+(1 row)
+
+S12. role_permissions orphans:
+ orphan_role_permissions 
+-------------------------
+                       0
+(1 row)
+
+=== S13. Autovacuum per-table reloptions ===
+   relname    |                                                                                 reloptions                                                                                 
+--------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ User         | {autovacuum_vacuum_scale_factor=0.05,autovacuum_vacuum_threshold=100,autovacuum_analyze_scale_factor=0.02,autovacuum_analyze_threshold=100}
+ Coupon       | {autovacuum_vacuum_scale_factor=0.1,autovacuum_vacuum_threshold=50}
+ UserSession  | {autovacuum_vacuum_scale_factor=0.05,autovacuum_vacuum_threshold=200,autovacuum_analyze_scale_factor=0.02}
+ Notification | {autovacuum_vacuum_scale_factor=0.03,autovacuum_vacuum_threshold=500,autovacuum_analyze_scale_factor=0.02,autovacuum_analyze_threshold=500,autovacuum_vacuum_cost_delay=5}
+ AuditLog     | {autovacuum_analyze_scale_factor=0.02,autovacuum_analyze_threshold=500}
+ roles        | {autovacuum_vacuum_scale_factor=0.05,autovacuum_vacuum_threshold=50,autovacuum_analyze_scale_factor=0.02,autovacuum_analyze_threshold=50,autovacuum_vacuum_cost_delay=5}
+(6 rows)
+

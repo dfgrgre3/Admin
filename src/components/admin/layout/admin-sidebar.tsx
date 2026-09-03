@@ -73,6 +73,45 @@ import {
   Languages,
   Braces,
   Gauge,
+  Archive,
+  ArrowLeftRight,
+  BadgePercent,
+  Banknote,
+  BellRing,
+  ClipboardCheck,
+  FileCheck2,
+  Flag,
+  FolderOpen,
+  Gem,
+  Globe,
+  HelpCircle,
+  History,
+  Inbox,
+  Info,
+  Landmark,
+  LayoutGrid,
+  LifeBuoy,
+  ListTodo,
+  LogIn,
+  Mail,
+  Megaphone,
+  MessageCircle,
+  PenLine,
+  Plug,
+  ReceiptText,
+  RotateCcw,
+  Share2,
+  ShieldAlert,
+  Smartphone,
+  Tags,
+  Terminal,
+  Timer,
+  Trash2,
+  Type,
+  Wallet,
+  Wrench,
+  XCircle,
+  Zap,
 } from "lucide-react";
 import { IconButton } from "@/components/admin/ui/admin-button";
 import {
@@ -193,6 +232,34 @@ const mainNavItems: SidebarNavItem[] = [
     icon: TableProperties,
     color: "bg-orange-600",
     permission: "REPORTS_VIEW",
+  },
+  {
+    title: "أولياء الأمور",
+    href: "/admin/parents",
+    icon: Users,
+    color: "bg-sky-500",
+    permission: "PARENTS_VIEW",
+  },
+  {
+    title: "المدربون",
+    href: "/admin/instructors",
+    icon: GraduationCap,
+    color: "bg-teal-500",
+    permission: "TEACHERS_VIEW",
+  },
+  {
+    title: "مجموعات المستخدمين",
+    href: "/admin/user-groups",
+    icon: UserPlus,
+    color: "bg-indigo-500",
+    permission: "USERS_VIEW",
+  },
+  {
+    title: "سجل الحضور",
+    href: "/admin/attendance",
+    icon: ClipboardCheck,
+    color: "bg-emerald-500",
+    permission: "STUDENTS_VIEW",
   },
 ];
 
@@ -330,6 +397,62 @@ const contentNavItems: SidebarNavItem[] = [
     color: "bg-rose-500",
     permission: "AI_MANAGE",
   },
+  {
+    title: "الأرشيف",
+    href: "/admin/archive",
+    icon: Archive,
+    color: "bg-slate-500",
+    permission: "RESOURCES_VIEW",
+  },
+  {
+    title: "وسوم الدورات",
+    href: "/admin/course-tags",
+    icon: Tags,
+    color: "bg-orange-400",
+    permission: "SUBJECTS_VIEW",
+  },
+  {
+    title: "مركز الدرجات",
+    href: "/admin/grade-center",
+    icon: ClipboardList,
+    color: "bg-emerald-500",
+    permission: "EXAMS_VIEW",
+  },
+  {
+    title: "محاولات الاختبارات",
+    href: "/admin/exam-attempts",
+    icon: Timer,
+    color: "bg-cyan-600",
+    permission: "EXAMS_VIEW",
+  },
+  {
+    title: "نتائج الاختبارات",
+    href: "/admin/exam-results",
+    icon: FileCheck2,
+    color: "bg-green-600",
+    permission: "EXAMS_VIEW",
+  },
+  {
+    title: "مدير الملفات",
+    href: "/admin/file-manager",
+    icon: FolderOpen,
+    color: "bg-blue-500",
+    permission: "RESOURCES_VIEW",
+  },
+  {
+    title: "التسجيلات",
+    href: "/admin/recordings",
+    icon: Video,
+    color: "bg-violet-500",
+    permission: "RESOURCES_VIEW",
+  },
+  {
+    title: "سلة المحذوفات",
+    href: "/admin/trash",
+    icon: Trash2,
+    color: "bg-rose-500",
+    permission: "RESOURCES_VIEW",
+  },
 ];
 
 const engagementNavItems: SidebarNavItem[] = [
@@ -381,6 +504,41 @@ const engagementNavItems: SidebarNavItem[] = [
     icon: Split,
     color: "bg-fuchsia-600",
     permission: "AB_TESTING_VIEW",
+  },
+  {
+    title: "الشارات",
+    href: "/admin/badges",
+    icon: Gem,
+    color: "bg-amber-400",
+    permission: "ACHIEVEMENTS_VIEW",
+  },
+  {
+    title: "الحملات التسويقية",
+    href: "/admin/campaigns",
+    icon: Megaphone,
+    color: "bg-fuchsia-500",
+    permission: "MARKETING_VIEW",
+  },
+  {
+    title: "العروض الترويجية",
+    href: "/admin/promotions",
+    icon: BadgePercent,
+    color: "bg-orange-500",
+    permission: "MARKETING_VIEW",
+  },
+  {
+    title: "برنامج الإحالة",
+    href: "/admin/referral",
+    icon: Share2,
+    color: "bg-cyan-500",
+    permission: "MARKETING_VIEW",
+  },
+  {
+    title: "البنرات الإعلانية",
+    href: "/admin/banners",
+    icon: ImageIcon,
+    color: "bg-purple-500",
+    permission: "MARKETING_VIEW",
   },
 ];
 
@@ -440,6 +598,27 @@ const communityNavItems: SidebarNavItem[] = [
     icon: Trophy,
     color: "bg-orange-500",
     permission: "CONTESTS_VIEW",
+  },
+  {
+    title: "التعليقات",
+    href: "/admin/comments",
+    icon: MessageCircle,
+    color: "bg-emerald-500",
+    permission: "COMMENTS_VIEW",
+  },
+  {
+    title: "أسئلة المجتمع",
+    href: "/admin/questions",
+    icon: HelpCircle,
+    color: "bg-sky-500",
+    permission: "FORUM_VIEW",
+  },
+  {
+    title: "المقالات",
+    href: "/admin/articles",
+    icon: PenLine,
+    color: "bg-orange-500",
+    permission: "BLOG_VIEW",
   },
 ];
 
@@ -521,6 +700,41 @@ const financialNavItems: SidebarNavItem[] = [
     color: "bg-orange-600",
     permission: "ANALYTICS_VIEW",
   },
+  {
+    title: "المدفوعات الفاشلة",
+    href: "/admin/failed-payments",
+    icon: XCircle,
+    color: "bg-rose-500",
+    permission: "ANALYTICS_VIEW",
+  },
+  {
+    title: "سجلات الدفع التفصيلية",
+    href: "/admin/payment-logs",
+    icon: ReceiptText,
+    color: "bg-orange-400",
+    permission: "ANALYTICS_VIEW",
+  },
+  {
+    title: "سجل المعاملات",
+    href: "/admin/transactions",
+    icon: ArrowLeftRight,
+    color: "bg-blue-500",
+    permission: "ANALYTICS_VIEW",
+  },
+  {
+    title: "طلبات الاسترداد",
+    href: "/admin/refunds",
+    icon: RotateCcw,
+    color: "bg-cyan-500",
+    permission: "ANALYTICS_VIEW",
+  },
+  {
+    title: "مستحقات المدربين",
+    href: "/admin/instructor-payouts",
+    icon: Wallet,
+    color: "bg-teal-500",
+    permission: "TEACHERS_VIEW",
+  },
 ];
 
 const infrastructureNavItems: SidebarNavItem[] = [
@@ -600,7 +814,222 @@ const infrastructureNavItems: SidebarNavItem[] = [
     icon: Gauge,
     color: "bg-emerald-500",
     permission: PERMISSIONS.SETTINGS_VIEW,
-  }
+  },
+  {
+    title: "سجلات API",
+    href: "/admin/api-logs",
+    icon: Terminal,
+    color: "bg-blue-400",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+  {
+    title: "سجلات النظام",
+    href: "/admin/system-logs",
+    icon: ScrollText,
+    color: "bg-slate-500",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+  {
+    title: "إدارة الكاش",
+    href: "/admin/cache-management",
+    icon: Zap,
+    color: "bg-amber-500",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+  {
+    title: "مفاتيح المزايا",
+    href: "/admin/feature-flags",
+    icon: Flag,
+    color: "bg-indigo-500",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+  {
+    title: "الخدمات المتكاملة",
+    href: "/admin/integrations",
+    icon: Plug,
+    color: "bg-violet-500",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+  {
+    title: "وضع الصيانة",
+    href: "/admin/maintenance-mode",
+    icon: Wrench,
+    color: "bg-rose-500",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+  {
+    title: "المهام المجدولة",
+    href: "/admin/scheduled-tasks",
+    icon: Timer,
+    color: "bg-orange-500",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+  {
+    title: "استيراد وتصدير البيانات",
+    href: "/admin/data-import-export",
+    icon: ArrowLeftRight,
+    color: "bg-teal-500",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+  {
+    title: "إدارة العملات",
+    href: "/admin/currency",
+    icon: Banknote,
+    color: "bg-emerald-500",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+  {
+    title: "المناطق الزمنية",
+    href: "/admin/timezone",
+    icon: Globe,
+    color: "bg-cyan-500",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+  {
+    title: "إدارة الترجمة",
+    href: "/admin/translation",
+    icon: Type,
+    color: "bg-fuchsia-500",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+  {
+    title: "بوابات الدفع",
+    href: "/admin/payment-gateways",
+    icon: Landmark,
+    color: "bg-blue-600",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+];
+
+const siteNavItems: SidebarNavItem[] = [
+  {
+    title: "إدارة المحتوى (CMS)",
+    href: "/admin/cms",
+    icon: LayoutTemplate,
+    color: "bg-amber-500",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+  {
+    title: "الصفحات",
+    href: "/admin/pages",
+    icon: FileText,
+    color: "bg-blue-500",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+  {
+    title: "أقسام الصفحة الرئيسية",
+    href: "/admin/homepage-sections",
+    icon: LayoutGrid,
+    color: "bg-violet-500",
+    permission: PERMISSIONS.SETTINGS_VIEW,
+  },
+];
+
+const commsNavItems: SidebarNavItem[] = [
+  {
+    title: "البريد الإلكتروني",
+    href: "/admin/email",
+    icon: Mail,
+    color: "bg-blue-500",
+    permission: "NOTIFICATIONS_MANAGE",
+  },
+  {
+    title: "قوالب البريد",
+    href: "/admin/email-templates",
+    icon: FilePlus,
+    color: "bg-indigo-500",
+    permission: "NOTIFICATIONS_MANAGE",
+  },
+  {
+    title: "رسائل SMS",
+    href: "/admin/sms",
+    icon: Smartphone,
+    color: "bg-emerald-500",
+    permission: "NOTIFICATIONS_MANAGE",
+  },
+  {
+    title: "الإشعارات المباشرة",
+    href: "/admin/push-notifications",
+    icon: BellRing,
+    color: "bg-rose-500",
+    permission: "NOTIFICATIONS_MANAGE",
+  },
+];
+
+const securityNavItems: SidebarNavItem[] = [
+  {
+    title: "سجل النشاط",
+    href: "/admin/activity-log",
+    icon: History,
+    color: "bg-amber-500",
+    permission: "AUDIT_LOGS_VIEW",
+  },
+  {
+    title: "النشاط العام",
+    href: "/admin/global-activity",
+    icon: Globe,
+    color: "bg-cyan-500",
+    permission: "AUDIT_LOGS_VIEW",
+  },
+  {
+    title: "محاولات تسجيل الدخول",
+    href: "/admin/login-attempts",
+    icon: LogIn,
+    color: "bg-blue-500",
+    permission: "AUDIT_LOGS_VIEW",
+  },
+  {
+    title: "مكافحة الغش",
+    href: "/admin/anti-cheat",
+    icon: ShieldAlert,
+    color: "bg-rose-500",
+    permission: "LIVE_MONITOR_VIEW",
+  },
+  {
+    title: "الدردشة المباشرة",
+    href: "/admin/live-chat",
+    icon: MessageSquare,
+    color: "bg-violet-500",
+    permission: "LIVE_MONITOR_VIEW",
+  },
+];
+
+const supportNavItems: SidebarNavItem[] = [
+  {
+    title: "الأسئلة الشائعة",
+    href: "/admin/faq",
+    icon: HelpCircle,
+    color: "bg-amber-500",
+    permission: "FAQS_MANAGE",
+  },
+  {
+    title: "رسائل التواصل",
+    href: "/admin/contact-messages",
+    icon: Inbox,
+    color: "bg-blue-500",
+    permission: "TICKETS_VIEW",
+  },
+  {
+    title: "طابور المهام",
+    href: "/admin/queue-management",
+    icon: ListTodo,
+    color: "bg-emerald-500",
+    permission: "TICKETS_VIEW",
+  },
+  {
+    title: "مركز المساعدة",
+    href: "/admin/help-center",
+    icon: LifeBuoy,
+    color: "bg-cyan-500",
+    permission: "DASHBOARD_VIEW",
+  },
+  {
+    title: "حول المنصة",
+    href: "/admin/about",
+    icon: Info,
+    color: "bg-slate-500",
+    permission: "DASHBOARD_VIEW",
+  },
 ];
 
 function SidebarNavLink({ item, pathname, collapsed, onBookmarkToggle }: SidebarNavLinkProps) {
@@ -797,6 +1226,45 @@ const BOOKMARK_ICON_MAP: Record<string, React.ElementType> = {
   Languages,
   Braces,
   Gauge,
+  Archive,
+  ArrowLeftRight,
+  BadgePercent,
+  Banknote,
+  BellRing,
+  ClipboardCheck,
+  FileCheck2,
+  Flag,
+  FolderOpen,
+  Gem,
+  Globe,
+  HelpCircle,
+  History,
+  Inbox,
+  Info,
+  Landmark,
+  LayoutGrid,
+  LifeBuoy,
+  ListTodo,
+  LogIn,
+  Mail,
+  Megaphone,
+  MessageCircle,
+  PenLine,
+  Plug,
+  ReceiptText,
+  RotateCcw,
+  Share2,
+  ShieldAlert,
+  Smartphone,
+  Tags,
+  Terminal,
+  Timer,
+  Trash2,
+  Type,
+  Wallet,
+  Wrench,
+  XCircle,
+  Zap,
 };
 
 export function AdminSidebar() {
@@ -814,7 +1282,11 @@ export function AdminSidebar() {
       ...contentNavItems,
       ...engagementNavItems,
       ...communityNavItems,
+      ...siteNavItems,
       ...financialNavItems,
+      ...commsNavItems,
+      ...securityNavItems,
+      ...supportNavItems,
       ...infrastructureNavItems,
     ],
     []
@@ -865,7 +1337,11 @@ export function AdminSidebar() {
   const filteredContentNav = React.useMemo(() => filterBySearchAndPermission(contentNavItems), [filterBySearchAndPermission]);
   const filteredEngagementNav = React.useMemo(() => filterBySearchAndPermission(engagementNavItems), [filterBySearchAndPermission]);
   const filteredCommunityNav = React.useMemo(() => filterBySearchAndPermission(communityNavItems), [filterBySearchAndPermission]);
+  const filteredSiteNav = React.useMemo(() => filterBySearchAndPermission(siteNavItems), [filterBySearchAndPermission]);
   const filteredFinancialNav = React.useMemo(() => filterBySearchAndPermission(financialNavItems), [filterBySearchAndPermission]);
+  const filteredCommsNav = React.useMemo(() => filterBySearchAndPermission(commsNavItems), [filterBySearchAndPermission]);
+  const filteredSecurityNav = React.useMemo(() => filterBySearchAndPermission(securityNavItems), [filterBySearchAndPermission]);
+  const filteredSupportNav = React.useMemo(() => filterBySearchAndPermission(supportNavItems), [filterBySearchAndPermission]);
   const filteredInfrastructureNav = React.useMemo(() => filterBySearchAndPermission(infrastructureNavItems), [filterBySearchAndPermission]);
 
   // Load bookmarks from localStorage via lazy initializer — runs once during
@@ -1129,6 +1605,15 @@ export function AdminSidebar() {
           onToggle={() => toggleSection("المجتمع")}
         />
         <SidebarNavSection
+          title="إدارة الموقع"
+          items={filteredSiteNav}
+          pathname={pathname}
+          collapsed={collapsed}
+          onBookmarkToggle={toggleBookmark}
+          isCollapsed={searchQuery ? false : !!collapsedSections["إدارة الموقع"]}
+          onToggle={() => toggleSection("إدارة الموقع")}
+        />
+        <SidebarNavSection
           title="الإدارة المالية"
           items={filteredFinancialNav}
           pathname={pathname}
@@ -1138,6 +1623,15 @@ export function AdminSidebar() {
           onToggle={() => toggleSection("الإدارة المالية")}
         />
         <SidebarNavSection
+          title="المراسلات والإشعارات"
+          items={filteredCommsNav}
+          pathname={pathname}
+          collapsed={collapsed}
+          onBookmarkToggle={toggleBookmark}
+          isCollapsed={searchQuery ? false : !!collapsedSections["المراسلات والإشعارات"]}
+          onToggle={() => toggleSection("المراسلات والإشعارات")}
+        />
+        <SidebarNavSection
           title="البنية التحتية"
           items={filteredInfrastructureNav}
           pathname={pathname}
@@ -1145,6 +1639,24 @@ export function AdminSidebar() {
           onBookmarkToggle={toggleBookmark}
           isCollapsed={searchQuery ? false : !!collapsedSections["البنية التحتية"]}
           onToggle={() => toggleSection("البنية التحتية")}
+        />
+        <SidebarNavSection
+          title="الأمان والمراجعة"
+          items={filteredSecurityNav}
+          pathname={pathname}
+          collapsed={collapsed}
+          onBookmarkToggle={toggleBookmark}
+          isCollapsed={searchQuery ? false : !!collapsedSections["الأمان والمراجعة"]}
+          onToggle={() => toggleSection("الأمان والمراجعة")}
+        />
+        <SidebarNavSection
+          title="الدعم والمعلومات"
+          items={filteredSupportNav}
+          pathname={pathname}
+          collapsed={collapsed}
+          onBookmarkToggle={toggleBookmark}
+          isCollapsed={searchQuery ? false : !!collapsedSections["الدعم والمعلومات"]}
+          onToggle={() => toggleSection("الدعم والمعلومات")}
         />
       </nav>
 

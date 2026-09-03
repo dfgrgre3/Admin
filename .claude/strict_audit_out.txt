@@ -1,0 +1,329 @@
+﻿=== A. GENERAL ===
+          audit_time           |                                         version                                         
+-------------------------------+-----------------------------------------------------------------------------------------
+ 2026-09-03 12:21:54.613844+00 | PostgreSQL 17.6 on x86_64-pc-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+(1 row)
+
+ db_size 
+---------
+ 24 MB
+(1 row)
+
+                name                 |    setting     
+-------------------------------------+----------------
+ TimeZone                            | UTC
+ autovacuum                          | on
+ data_checksums                      | off
+ default_transaction_isolation       | read committed
+ effective_cache_size                | 393216
+ idle_in_transaction_session_timeout | 60000
+ log_min_duration_statement          | 200
+ max_connections                     | 100
+ shared_buffers                      | 16384
+ statement_timeout                   | 30000
+ wal_level                           | replica
+ work_mem                            | 5120
+(12 rows)
+
+=== B. TABLE INVENTORY ===
+ schemaname | tables 
+------------+--------
+ public     |    233
+(1 row)
+
+ relkind | count 
+---------+-------
+ r       |   232
+ v       |     9
+ p       |     1
+ m       |     3
+ S       |     1
+(5 rows)
+
+=== C. TOP 30 TABLES BY SIZE ===
+          tbl          | total  |    heap    |  idx   | n_live_tup | n_dead_tup | dead_pct |  last_av   |  last_aa   
+-----------------------+--------+------------+--------+------------+------------+----------+------------+------------
+ "User"                | 784 kB | 8192 bytes | 768 kB |          1 |          0 |      0.0 |            | 
+ "Subject"             | 352 kB | 0 bytes    | 344 kB |          0 |          0 |      0.0 |            | 
+ "Payment"             | 192 kB | 0 bytes    | 184 kB |          0 |          0 |      0.0 |            | 
+ "Notification"        | 184 kB | 0 bytes    | 176 kB |          0 |          0 |      0.0 |            | 
+ role_permissions      | 176 kB | 48 kB      | 96 kB  |        341 |          0 |      0.0 | 2026-09-03 | 2026-09-03
+ "Task"                | 152 kB | 0 bytes    | 144 kB |          0 |          0 |      0.0 |            | 
+ service_health_checks | 144 kB | 40 kB      | 72 kB  |        350 |          0 |      0.0 |            | 2026-09-03
+ "StudySession"        | 136 kB | 0 bytes    | 128 kB |          0 |          0 |      0.0 |            | 
+ permissions           | 128 kB | 24 kB      | 64 kB  |        121 |          0 |      0.0 | 2026-09-03 | 2026-09-03
+ http_metric_buckets   | 120 kB | 40 kB      | 48 kB  |        281 |          3 |      1.1 |            | 2026-09-03
+ "AuditLog"            | 120 kB | 8192 bytes | 104 kB |          0 |          1 |    100.0 |            | 
+ "SubjectEnrollment"   | 112 kB | 0 bytes    | 112 kB |          0 |          0 |      0.0 |            | 
+ login_history         | 112 kB | 8192 bytes | 96 kB  |          1 |          0 |      0.0 |            | 
+ "LmsCourse"           | 104 kB | 0 bytes    | 96 kB  |          0 |          0 |      0.0 |            | 
+ roles                 | 96 kB  | 8192 bytes | 48 kB  |          7 |          0 |      0.0 |            | 
+ "Exam"                | 88 kB  | 0 bytes    | 80 kB  |          0 |          0 |      0.0 |            | 
+ "TopicProgress"       | 88 kB  | 0 bytes    | 80 kB  |          0 |          0 |      0.0 |            | 
+ "BlogPost"            | 80 kB  | 0 bytes    | 72 kB  |          0 |          0 |      0.0 |            | 
+ "AffiliateTierRule"   | 80 kB  | 8192 bytes | 64 kB  |          4 |          0 |      0.0 |            | 
+ security_events       | 80 kB  | 0 bytes    | 72 kB  |          0 |          0 |      0.0 |            | 
+ "SubTopic"            | 80 kB  | 0 bytes    | 72 kB  |          0 |          0 |      0.0 |            | 
+ "SecurityLog"         | 80 kB  | 0 bytes    | 72 kB  |          0 |          0 |      0.0 |            | 
+ "MailTask"            | 80 kB  | 0 bytes    | 72 kB  |          0 |          0 |      0.0 |            | 
+ "Session"             | 80 kB  | 0 bytes    | 72 kB  |          0 |          0 |      0.0 |            | 
+ "Affiliate"           | 80 kB  | 0 bytes    | 72 kB  |          0 |          0 |      0.0 |            | 
+ "UserCredential"      | 72 kB  | 8192 bytes | 56 kB  |          0 |          0 |      0.0 |            | 
+ "Lesson"              | 72 kB  | 0 bytes    | 64 kB  |          0 |          0 |      0.0 |            | 
+ "Message"             | 72 kB  | 0 bytes    | 64 kB  |          0 |          0 |      0.0 |            | 
+ "UserAchievement"     | 72 kB  | 0 bytes    | 64 kB  |          0 |          0 |      0.0 |            | 
+ "Invoice"             | 72 kB  | 0 bytes    | 64 kB  |          0 |          0 |      0.0 |            | 
+(30 rows)
+
+=== D. BLOAT / DEAD TUPLES HOTSPOTS ===
+           relname           | n_live_tup | n_dead_tup | last_autovacuum | last_vacuum 
+-----------------------------+------------+------------+-----------------+-------------
+ mv_user_progress_summary    |          0 |          8 |                 | 
+ mv_user_weekly_analytics    |          0 |          8 |                 | 
+ http_metric_buckets         |        281 |          3 |                 | 
+ AuditLog                    |          0 |          1 |                 | 
+ schema_migrations           |         30 |          1 |                 | 
+ CourseChangelog             |          0 |          0 |                 | 
+ _SubjectToTeacher           |          0 |          0 |                 | 
+ AIMessage                   |          0 |          0 |                 | 
+ UserWallet                  |          0 |          0 |                 | 
+ support_tickets             |          0 |          0 |                 | 
+ LmsPricing                  |          0 |          0 |                 | 
+ course_availability_windows |          0 |          0 |                 | 
+ LmsAssignment               |          0 |          0 |                 | 
+ AffiliateCampaign           |          0 |          0 |                 | 
+ ContestQuestion             |          0 |          0 |                 | 
+(15 rows)
+
+=== E. NEVER VACUUMED / NEVER ANALYZED ===
+        relname        | n_live_tup | last_autovacuum |       last_autoanalyze        
+-----------------------+------------+-----------------+-------------------------------
+ service_health_checks |        350 |                 | 2026-09-03 12:16:34.631451+00
+ http_metric_buckets   |        281 |                 | 2026-09-03 11:29:34.140278+00
+ schema_migrations     |         30 |                 | 
+ AffiliateTierRule     |          4 |                 | 
+ user_roles            |          1 |                 | 
+ AffiliateSetting      |          1 |                 | 
+ User                  |          1 |                 | 
+ login_history         |          1 |                 | 
+ AiGeneratedContent    |          0 |                 | 
+ AutomationLog         |          0 |                 | 
+ AiChatMessage         |          0 |                 | 
+ AutomationRule        |          0 |                 | 
+ BiometricChallenge    |          0 |                 | 
+ BiometricCredential   |          0 |                 | 
+ SubjectEnrollment     |          0 |                 | 
+ Automation            |          0 |                 | 
+ Category              |          0 |                 | 
+ Announcement          |          0 |                 | 
+ Addon                 |          0 |                 | 
+ BookReview            |          0 |                 | 
+(20 rows)
+
+=== F. INDEXES SUMMARY ===
+ total_indexes | invalid | not_ready 
+---------------+---------+-----------
+          1066 |       0 |         0
+(1 row)
+
+=== F2. INVALID INDEXES ===
+ invalid_index | tbl 
+---------------+-----
+(0 rows)
+
+=== F3. DUPLICATE INDEXES ===
+        tbl        |                idx_a                 |                     idx_b                     
+-------------------+--------------------------------------+-----------------------------------------------
+ "Subject"         | "idx_Subject_name_ar"                | subject_name_ar_trgm_idx
+ "User"            | "idx_User_name"                      | idx_user_name_trgm
+ "UserAchievement" | idx_achievement_user_unlocked_active | idx_user_achievement_user_unlocked_safe
+ "Notification"    | idx_notification_user_created        | idx_notifications_user_id_created_at_covering
+(4 rows)
+
+=== F4. LARGEST INDEXES ===
+                  idx                   |                relname                 | size  | scans 
+----------------------------------------+----------------------------------------+-------+-------
+ role_permissions_pkey                  | role_permissions_pkey                  | 40 kB |  1759
+ idx_service_health_checks_service_time | idx_service_health_checks_service_time | 40 kB |     0
+ http_metric_buckets_pkey               | http_metric_buckets_pkey               | 32 kB |    82
+ service_health_checks_pkey             | service_health_checks_pkey             | 32 kB |     0
+ idx_user_email_trgm                    | idx_user_email_trgm                    | 24 kB |     0
+ idx_auditlog_changes_gin               | idx_auditlog_changes_gin               | 24 kB |     0
+ idx_user_name_trgm                     | idx_user_name_trgm                     | 24 kB |     0
+ idx_user_username_trgm                 | idx_user_username_trgm                 | 24 kB |     0
+ idx_user_name_username_trgm            | idx_user_name_username_trgm            | 24 kB |     0
+ idx_role_permissions_role              | idx_role_permissions_role              | 16 kB |    14
+ idx_user_google_id_unique              | idx_user_google_id_unique              | 16 kB |     0
+ idx_user_github_id_unique              | idx_user_github_id_unique              | 16 kB |     0
+ idx_user_referral_code_unique          | idx_user_referral_code_unique          | 16 kB |     0
+ idx_permissions_module_name            | idx_permissions_module_name            | 16 kB |     1
+ "User_isDeleted_status_role_idx"       | User_isDeleted_status_role_idx         | 16 kB |     0
+ idx_user_roles_user                    | idx_user_roles_user                    | 16 kB |     0
+ schema_migrations_pkey                 | schema_migrations_pkey                 | 16 kB |    44
+ "User_pkey"                            | User_pkey                              | 16 kB |     0
+ "AffiliateSetting_pkey"                | AffiliateSetting_pkey                  | 16 kB |     0
+ "AffiliateTierRule_sort_order_idx"     | AffiliateTierRule_sort_order_idx       | 16 kB |     0
+(20 rows)
+
+=== F5. UNUSED INDEXES (0 scans >64KB) ===
+ tbl | idx | size | idx_scan | is_unique | supports_constraint 
+-----+-----+------+----------+-----------+---------------------
+(0 rows)
+
+=== G. FK INTEGRITY ===
+G1. FKs WITHOUT supporting index on referencing table:
+      tbl      |       conname       |  tbl_size  
+---------------+---------------------+------------
+ "UserSession" | fk_usersession_user | 8192 bytes
+(1 row)
+
+G2. FK delete/update actions:
+ total_fks | no_action_on_delete | cascade_on_delete | no_action_on_update 
+-----------+---------------------+-------------------+---------------------
+       198 |                  11 |               157 |                 198
+(1 row)
+
+G3. FKs with type mismatch:
+ from_tbl | conname | from_col | from_type | to_tbl | to_col | to_type 
+----------+---------+----------+-----------+--------+--------+---------
+(0 rows)
+
+G4. FKs pointing to non-unique targets:
+ from_tbl | conname | to_tbl 
+----------+---------+--------
+(0 rows)
+
+=== H. PK COVERAGE ===
+ tables | pks | tables_without_pk 
+--------+-----+-------------------
+    233 | 233 |                 0
+(1 row)
+
+H2. Tables without PK:
+ tbl | size 
+-----+------
+(0 rows)
+
+=== I. PARTITIONED TABLES ===
+    parent    | partstrat |       key        
+--------------+-----------+------------------
+ "ExamResult" | r         | RANGE (taken_at)
+(1 row)
+
+I2. ExamResult partitions:
+      partition      |  size   |                                  bounds                                  
+---------------------+---------+--------------------------------------------------------------------------
+ examresult_p2026_02 | 0 bytes | FOR VALUES FROM ('2026-01-31 22:00:00+00') TO ('2026-02-28 22:00:00+00')
+ examresult_p2026_03 | 0 bytes | FOR VALUES FROM ('2026-02-28 22:00:00+00') TO ('2026-03-31 22:00:00+00')
+ examresult_p2026_04 | 0 bytes | FOR VALUES FROM ('2026-03-31 22:00:00+00') TO ('2026-04-30 21:00:00+00')
+ examresult_p2026_05 | 0 bytes | FOR VALUES FROM ('2026-04-30 21:00:00+00') TO ('2026-05-31 21:00:00+00')
+ examresult_p2026_06 | 0 bytes | FOR VALUES FROM ('2026-05-31 21:00:00+00') TO ('2026-06-30 21:00:00+00')
+ examresult_p2026_07 | 0 bytes | FOR VALUES FROM ('2026-06-30 21:00:00+00') TO ('2026-07-31 21:00:00+00')
+ examresult_p2026_08 | 0 bytes | FOR VALUES FROM ('2026-07-31 21:00:00+00') TO ('2026-08-31 21:00:00+00')
+ examresult_p2026_09 | 0 bytes | FOR VALUES FROM ('2026-08-31 21:00:00+00') TO ('2026-09-30 21:00:00+00')
+ examresult_p2026_10 | 0 bytes | FOR VALUES FROM ('2026-09-30 21:00:00+00') TO ('2026-10-31 22:00:00+00')
+ examresult_p2026_11 | 0 bytes | FOR VALUES FROM ('2026-10-31 22:00:00+00') TO ('2026-11-30 22:00:00+00')
+ examresult_p2026_12 | 0 bytes | FOR VALUES FROM ('2026-11-30 22:00:00+00') TO ('2026-12-31 22:00:00+00')
+ examresult_pdefault | 0 bytes | DEFAULT
+(12 rows)
+
+=== J. EXTENSIONS ===
+ extname | extversion 
+---------+------------
+ pg_trgm | 1.6
+ plpgsql | 1.0
+(2 rows)
+
+=== K. VIEWS / MATVIEWS ===
+ relkind |           name           |  size   
+---------+--------------------------+---------
+ m       | mv_user_progress_summary | 32 kB
+ m       | mv_user_weekly_analytics | 32 kB
+ m       | mv_user_watch_time       | 32 kB
+ v       | notification_view        | 0 bytes
+ v       | users                    | 0 bytes
+ v       | exam_results             | 0 bytes
+ v       | books                    | 0 bytes
+ v       | payments_view            | 0 bytes
+ v       | orders_view              | 0 bytes
+ v       | subscriptions_view       | 0 bytes
+ v       | notifications_view       | 0 bytes
+ v       | audit_log_view           | 0 bytes
+(12 rows)
+
+=== L. SEQUENCES (top by last_value) ===
+ schemaname |  sequencename   | data_type | last_value | val 
+------------+-----------------+-----------+------------+-----
+ public     | MailTask_id_seq | bigint    |            |   0
+(1 row)
+
+=== M. ROLES & SECURITY ===
+ rolname  | rolsuper | rolcreaterole | rolcreatedb | rolcanlogin | rolbypassrls 
+----------+----------+---------------+-------------+-------------+--------------
+ thanawy  | t        | t             | t           | t           | t
+ app_user | f        | f             | f           | f           | f
+(2 rows)
+
+M2. Grants to PUBLIC:
+ table_name | privilege_type 
+------------+----------------
+(0 rows)
+
+M3. Table owners:
+  owner  | tables 
+---------+--------
+ thanawy |    233
+(1 row)
+
+M4. RLS status:
+ rls_enabled | rls_not_forced 
+-------------+----------------
+           0 |              0
+(1 row)
+
+M5. Current connections:
+ usename | application_name | state  | count 
+---------+------------------+--------+-------
+ thanawy | thanawy-default  | idle   |     5
+ thanawy | psql             | active |     1
+(2 rows)
+
+=== N. MIGRATIONS STATE ===
+ migrations |         last_applied         
+------------+------------------------------
+        103 | 2026-09-03 11:42:44.58797+00
+(1 row)
+
+                         id                         |           appliedAt           
+----------------------------------------------------+-------------------------------
+ 0176_deleted_at_removal_phase_a                    | 2026-09-03 11:42:44.58797+00
+ 0175_legacy_compat_views                           | 2026-09-03 11:34:49.758687+00
+ 0174_per_table_autovacuum_tuning                   | 2026-09-03 11:30:32.293316+00
+ 0173_production_postgres_tuning                    | 2026-09-03 11:29:49.347802+00
+ 0172_install_pg_cron_and_examresult_partition_mgmt | 2026-09-03 11:40:49.830148+00
+ 0171_phase1_hardening                              | 2026-09-03 11:29:07.109848+00
+ 0170_perf_indexes                                  | 2026-09-03 10:38:58.385484+00
+ 0169_seed_system_roles_and_assignments             | 2026-09-03 10:36:46.257984+00
+ 0168_permissions_action_and_catalog                | 2026-09-03 07:48:24.497691+00
+ 0167_create_ip_whitelist_tables                    | 2026-09-03 07:06:21.437571+00
+(10 rows)
+
+=== O. NAMING CONVENTION MIX ===
+ pascal_case | snake_case 
+-------------+------------
+         169 |         62
+(1 row)
+
+=== P. pg_stat_statements ===
+NOT INSTALLED (finding): shared_preload_libraries lacks pg_stat_statements
+=== Q. STALE STATS ===
+      relname      | n_live_tup | n_mod_since_analyze |    flag     
+-------------------+------------+---------------------+-------------
+ schema_migrations |         30 |                  31 | STALE_STATS
+(1 row)
+
+=== R. LONG RUNNING TRANSACTIONS ===
+ pid | state | xact_age | query 
+-----+-------+----------+-------
+(0 rows)
+

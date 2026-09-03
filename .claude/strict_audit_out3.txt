@@ -1,0 +1,96 @@
+﻿=== T1. ID column type distribution ===
+ id_type | tables 
+---------+--------
+ uuid    |    158
+ text    |     54
+ bigint  |      1
+(3 rows)
+
+=== T2. Nullable FK columns (integrity smell) ===
+             tbl             |      col       
+-----------------------------+----------------
+ "User"                      | referred_by_id
+ "BlogPost"                  | author_id
+ "Challenge"                 | subject_id
+ "ForumTopic"                | author_id
+ "Invoice"                   | user_id
+ "LiveEvent"                 | subject_id
+ "Payment"                   | order_id
+ "Payment"                   | subject_id
+ "SecurityLog"               | user_id
+ "StudySession"              | subject_id
+ "SubTopic"                  | exam_id
+ "Task"                      | subject_id
+ "Task"                      | subject_id
+ "AuditLog"                  | user_id
+ "BlockedIpAttempt"          | user_id
+ security_events             | user_id
+ security_events             | resolved_by
+ blocked_tokens              | user_id
+ blacklisted_ips             | blocked_by
+ course_versions             | created_by
+ course_review_submissions   | reviewer_id
+ course_assistants           | invited_by
+ course_changelogs           | changed_by
+ lesson_drip_schedules       | created_by
+ course_availability_windows | created_by
+(25 rows)
+
+=== T3. Who is connected (role identity check) ===
+ usename | count |            oldest             
+---------+-------+-------------------------------
+ thanawy |     5 | 2026-09-03 12:25:27.926769+00
+(1 row)
+
+=== T4. app_user membership ===
+         role         |   member   
+----------------------+------------
+ pg_read_all_settings | pg_monitor
+ pg_read_all_stats    | pg_monitor
+ pg_stat_scan_tables  | pg_monitor
+ app_user             | thanawy
+(4 rows)
+
+=== T5. Text-typed PKs (uuid as text smell) ===
+          tbl          | pk_type 
+-----------------------+---------
+ "Addon"               | text
+ "AiChatMessage"       | text
+ "AiGeneratedContent"  | text
+ "AiGeneratedExam"     | text
+ "AiQuestion"          | text
+ "Announcement"        | text
+ "AutomationLog"       | text
+ "AutomationRule"      | text
+ "BiometricChallenge"  | text
+ "BiometricCredential" | text
+ "BookProgress"        | text
+ "BookReview"          | text
+ "ChallengeCompletion" | text
+ "ContentPreference"   | text
+ "CourseReview"        | text
+ "CustomGoal"          | text
+ "EventAttendee"       | text
+ "Experiment"          | text
+ "ForumPost"           | text
+ "ForumReply"          | text
+ "GroupSubscription"   | text
+ "LeaderboardEntry"    | text
+ "LessonAnswer"        | text
+ "LessonNote"          | text
+ "LessonQuestion"      | text
+(25 rows)
+
+=== T6. Records with isDeleted/deletedAt legacy columns count ===
+ tables_with_soft_delete 
+-------------------------
+                       9
+(1 row)
+
+T6b. Breakdown:
+    col    | tables 
+-----------+--------
+ deletedAt |      5
+ isDeleted |      4
+(2 rows)
+
